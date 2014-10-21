@@ -290,9 +290,6 @@ object CReportDemoForm: TCReportDemoForm
   object ReportRunTime1: TReportRunTime
     EnableEdit = True
     EditEpt = True
-    SetData.Strings = (
-      'SetDataSet(t1,dataform.table1);'
-      'SetDataSet(t2,dataform.table2);')
     AddSpace = True
     Left = 519
     Top = 8

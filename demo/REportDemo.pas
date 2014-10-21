@@ -69,9 +69,8 @@ end;
 
 procedure TCReportDemoForm.Button5Click(Sender: TObject);
 begin
-  //ReportRunTime1.SetDataSet('t1',dataform.table1);
-  //ReportRunTime1.SetDataSet('t2',dataform.table2);
-
+  ReportRunTime1.SetDataSet('t1',dataform.table1);
+  ReportRunTime1.SetDataSet('t2',dataform.table2);
   dataform.Table1.DisableControls;
   ReportRunTime1.ReportFile:=ExtractFilepath(application.ExeName)+'creport_demo.ept';//??̬??дģ??????ѡcreport_demo1.ept
   ReportRunTime1.Setvarvalue('jgtw','???λ:Ԫ');
@@ -97,6 +96,9 @@ procedure TCReportDemoForm.FormCreate(Sender: TObject);
 begin
 dataform.table1.open;
 dataform.table2.open;
+  ReportRunTime1.SetDataSet('t1',dataform.table1);
+  ReportRunTime1.SetDataSet('t2',dataform.table2);
+
 end;
 
 procedure TCReportDemoForm.Button1Click(Sender: TObject);
