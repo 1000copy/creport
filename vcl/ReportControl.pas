@@ -5531,7 +5531,7 @@ Var
   begin
     result := false;
   end;
-  functin HasEmptyRoomLastPage:Boolean;
+  function HasEmptyRoomLastPage:Boolean;
   begin
     result := FtopMargin + nHandHeight +
         nDataHeight +
@@ -5666,6 +5666,9 @@ Begin
     Begin
 
       If (Faddspace) And ((i = TempDataSetCount) And (HasEmptyRoomLastPage)) Then
+      //If (Faddspace) And ((i = TempDataSetCount) And (FtopMargin + nHandHeight +
+      //  nDataHeight +
+      //  nSumAllHeight + FBottomMargin < height)) Then
       Begin
         thisline := Treportline(FLineList[hasdatano]);  //按数据行的表格属性补空表格
         templine := Treportline.Create;
@@ -5686,6 +5689,8 @@ Begin
           TempLine.CalcLineHeight;
           ndataHeight := ndataHeight + templine.GetLineHeight;
           If IsLastPageFull Then
+          //If (FtopMargin + nHandHeight + nDataHeight + nSumAllHeight +
+          //  FBottomMargin) > height Then
           Begin
             dataLineList.Delete(dataLineList.Count - 1);
             khbz := true;
