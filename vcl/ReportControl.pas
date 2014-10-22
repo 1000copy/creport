@@ -5531,10 +5531,7 @@ Var
     result := (FtopMargin + nHandHeight + nDataHeight + nSumAllHeight +
             FBottomMargin) > height;
   end;
-  function IsPageFull:Boolean ;
-  begin
-    result := false;
-  end;
+
   function HasEmptyRoomLastPage:Boolean;
   begin
     result := FtopMargin + nHandHeight +
@@ -5557,6 +5554,10 @@ Var
         End;
 
     result := templine;
+  end;
+  function isPageFull:boolean;
+  begin
+    result := (FtopMargin + nHandHeight + nDataHeight + nHootHeight + FBottomMargin >height);
   end;
 Begin
 
@@ -5685,13 +5686,11 @@ Begin
     //将数据填入 dataLineList中
     While (i <= TempDataSetCount) Or (Not tempdataset.eof) Do
     Begin
-
+      //按数据行的表格属性补空表格
       If (Faddspace) And ((i = TempDataSetCount) And (HasEmptyRoomLastPage)) Then
       Begin
-        //按数据行的表格属性补空表格
         thisline := Treportline(FLineList[hasdatano]);
         templine := CloneEmptyLine(thisLine);
-
         While true Do
         Begin
           dataLineList.Add(templine);
@@ -5704,10 +5703,9 @@ Begin
             break;
           End;
         End;
-      End; // if (i= TempDataSetCount) and (FtopMargin + nHandHeight +nDataHeight + nHootHeight + FBottomMargin < height) then
+      End; 
 
-      If (FtopMargin + nHandHeight + nDataHeight + nHootHeight + FBottomMargin >
-        height) Or (i = TempDataSetCount) Then
+      If isPageFull Or (i = TempDataSetCount) Then
       Begin
         If i < TempDataSetCount Then
         Begin
