@@ -5645,7 +5645,7 @@ Begin
     TempLine.CalcLineHeight;
     nHandHeight := nHandHeight + TempLine.GetLineHeight;
   End;                                  //    for i:=0 to FlineList.Count -1 do
-
+  // 数据行只有一行，多了都算表尾。不好。
   If hastable Then                      //有数据库的处理(#打头)
   Begin
     //将每页的表尾存入另一个列表中
@@ -5683,6 +5683,7 @@ Begin
     End; //for i:=HasDataNo + 1 to FlineList.Count -1 do
 
     //将有合计的行(`SumAll)存入一个列表中
+
     nSumAllHeight := 0;
     sumAllList := TList.Create;
     For i := HasDataNo + 1 To FlineList.Count - 1 Do
