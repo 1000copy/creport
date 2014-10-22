@@ -5582,6 +5582,8 @@ Var
   ThisCell, NewCell: TReportCell;
   TempDataSet: TDataset;
   HasTable, khbz: boolean;
+  //khbz - 空行标志 - 是否曾经补齐空行并且因为页面溢出而回删过行。我真是天才，猜出了他的意思 ：）
+  // 作为一种信息的有损压缩，从空行标记到khbz容易，反过来真难。我用百度拼音，翻5页也看不明白，考核？客户？考号？
 Begin
 
   //  if assigned(Fonsetept) then
