@@ -5522,6 +5522,21 @@ Var
   HasTable, khbz: boolean;
   //khbz - 空行标志 - 是否曾经补齐空行并且因为页面溢出而回删过行。我真是天才，猜出了他的意思 ：）
   // 作为一种信息的有损压缩，从空行标记到khbz容易，反过来真难。我用百度拼音，翻5页也看不明白，考核？客户？考号？
+  function IsLastPageFull:Boolean ;
+  begin
+    result := (FtopMargin + nHandHeight + nDataHeight + nSumAllHeight +
+            FBottomMargin) > height;
+  end;
+  function IsPageFull:Boolean ;
+  begin
+    result := false;
+  end;
+  functin HasEmptyRoomLastPage:Boolean;
+  begin
+    result := FtopMargin + nHandHeight +
+        nDataHeight +
+        nSumAllHeight + FBottomMargin < height;
+  end;
 Begin
 
   //  if assigned(Fonsetept) then
@@ -5650,9 +5665,7 @@ Begin
     While (i <= TempDataSetCount) Or (Not tempdataset.eof) Do
     Begin
 
-      If (Faddspace) And ((i = TempDataSetCount) And (FtopMargin + nHandHeight +
-        nDataHeight +
-        nSumAllHeight + FBottomMargin < height)) Then
+      If (Faddspace) And ((i = TempDataSetCount) And (HasEmptyRoomLastPage)) Then
       Begin
         thisline := Treportline(FLineList[hasdatano]);  //按数据行的表格属性补空表格
         templine := Treportline.Create;
@@ -5672,9 +5685,7 @@ Begin
           dataLineList.Add(templine);
           TempLine.CalcLineHeight;
           ndataHeight := ndataHeight + templine.GetLineHeight;
-          //if (FtopMargin + nHandHeight +nDataHeight + nHootHeight + FBottomMargin ) > height then
-          If (FtopMargin + nHandHeight + nDataHeight + nSumAllHeight +
-            FBottomMargin) > height Then
+          If IsLastPageFull Then
           Begin
             dataLineList.Delete(dataLineList.Count - 1);
             khbz := true;
