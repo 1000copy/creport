@@ -5858,7 +5858,7 @@ Begin
         FPrintLineList.Clear;
         datalinelist.clear;
         ndataHeight := 0;               //每页每行累加高度
-      End;
+      End;  // add space if end . bigger than bigger  ! 接下来才是正主的代码
       //未打满一页,增加下一行记录
       ThisLine := TReportLine(FlineList[HasDataNo]);
       TempLine := TReportLine.Create;
@@ -5872,6 +5872,7 @@ Begin
         TempLine.FCells.Add(NewCell);
         NewCell.FOwnerLine := TempLine;
         setnewcell(false, newcell, thiscell, TempDataSet);
+        // sum every data line
         Try
           If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] = '#')
             Then
@@ -5893,7 +5894,7 @@ Begin
             [mbOk], 0);
           exit;
         End;
-
+        // end : sum every data line
       End;                              //for j
 
       TempLine.CalcLineHeight;
