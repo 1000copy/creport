@@ -5334,93 +5334,8 @@ Begin
 
 End;
 Procedure TReportRunTime.SetEmptyCell(NewCell, ThisCell:TReportCell);
-Var
-  TempCellTable: TCellTable;
-  L: integer;
-  TempOwnerCell: TReportCell;
 Begin
-
-  With NewCell Do
-  Begin
-    FLeftMargin := ThisCell.FLeftMargin;
-    // Index
-    FCellIndex := ThisCell.FCellIndex;
-    // size & position
-    FCellLeft := ThisCell.FCellLeft;
-    FCellWidth := ThisCell.FCellWidth;
-    FCellRect.Left := 0;
-    FCellRect.Top := 0;
-    FCellRect.Right := 0;
-    FCellRect.Bottom := 0;
-    FTextRect.Left := 0;
-    FTextRect.Top := 0;
-    FTextRect.Right := 0;
-    FTextRect.Bottom := 0;
-    FDragCellHeight := ThisCell.FDragCellHeight;
-    FDragCellHeight := 0;
-    FMinCellHeight := ThisCell.FMinCellHeight;
-    FMinCellHeight := 0;
-    // border
-    FLeftLine := ThisCell.FLeftLine;
-    FLeftLineWidth := ThisCell.FLeftLineWidth;
-    FTopLine := ThisCell.FTopLine;
-    FTopLineWidth := ThisCell.FTopLineWidth;
-    FRightLine := ThisCell.FRightLine;
-    FRightLineWidth := ThisCell.FRightLineWidth;
-    FBottomLine := ThisCell.FBottomLine;
-    FBottomLineWidth := ThisCell.FBottomLineWidth;
-    // 斜线
-    Diagonal := ThisCell.FDiagonal;
-    // color
-
-    FTextColor := ThisCell.FTextColor;
-    FBackGroundColor := ThisCell.FBackGroundColor;
-    // align
-    FHorzAlign := ThisCell.FHorzAlign;
-    FVertAlign := ThisCell.FVertAlign;
-    Fcelldispformat := thiscell.fCellDispformat;
-
-    Fbmp := Thiscell.FBmp;
-    FbmpYn := Thiscell.FbmpYn;
-
-    CellText := '';
-
-    flogfont := thiscell.FLogFont;
-
-    If ThisCell.OwnerCell <> Nil Then
-    Begin
-      // 若隶属的CELL不为空则判断是否在同一页，若不在同一页则将自己加入到CELL对照表中去
-      TempOwnerCell := Nil;
-
-      // 若找到隶属的CELL则将自己加入到该CELL中去
-      For L := 0 To FOwnerCellList.Count - 1 Do
-      Begin
-        If ThisCell.OwnerCell = TCellTable(FOwnerCellList[L]).PrevCell Then
-          TempOwnerCell := TReportCell(TCellTable(FOwnerCellList[L]).ThisCell);
-      End;
-
-      If TempOwnerCell = Nil Then
-      Begin
-        TempCellTable := TCellTable.Create;
-        TempCellTable.PrevCell := ThisCell.OwnerCell;
-        TempCellTable.ThisCell := NewCell;
-        FOwnerCellList.Add(TempCellTable);
-      End
-      Else
-        TempOwnerCell.AddOwnedCell(NewCell);
-    End;
-
-    If ThisCell.FCellsList.Count > 0 Then
-    Begin
-      // 将自己加入到对照表中去
-      TempCellTable := TCellTable.Create;
-      TempCellTable.PrevCell := ThisCell;
-      TempCellTable.ThisCell := NewCell;
-      FOwnerCellList.Add(TempCellTable);
-    End;
-
-    CalcMinCellHeight;
-  End;
+  setNewCell(true,NewCell,ThisCell,nil);
 End;
 Procedure TReportRunTime.SetNewCell(spyn: boolean; NewCell, ThisCell:
   TReportCell; TempDataSet: TDataset);
@@ -5756,7 +5671,8 @@ Begin
 
       If (Faddspace) And ((i = TempDataSetCount) And (HasEmptyRoomLastPage)) Then
       Begin
-        thisline := Treportline(FLineList[hasdatano]);  //按数据行的表格属性补空表格
+        //按数据行的表格属性补空表格
+        thisline := Treportline(FLineList[hasdatano]);
         templine := Treportline.Create;
         TempLine.FMinHeight := ThisLine.FMinHeight;
         TempLine.FDragHeight := ThisLine.FDragHeight;
