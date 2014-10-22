@@ -5793,7 +5793,7 @@ Begin
             i := i - 1;
             kk := 0;                    //
             //x1
-                     //合计数中减去最后一行数据  (当最后1页只打印一行数据记录时)
+            //合计数中减去最后一行数据  (当最后1页只打印一行数据记录时)
 
             ThisLine := TReportLine(FlineList[HasDataNo]);
             For j := 0 To ThisLine.FCells.Count - 1 Do
