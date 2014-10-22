@@ -5541,6 +5541,23 @@ Var
         nDataHeight +
         nSumAllHeight + FBottomMargin < height;
   end;
+  function CloneEmptyLine(thisLine:TReportLine):TReportLine;var j:integer; templine:treportline;
+  begin
+    templine := Treportline.Create;
+        TempLine.FMinHeight := ThisLine.FMinHeight;
+        TempLine.FDragHeight := ThisLine.FDragHeight;
+        For j := 0 To ThisLine.FCells.Count - 1 Do
+        Begin
+          ThisCell := TreportCell(ThisLine.FCells[j]);
+          NewCell := TReportCell.Create;
+          TempLine.FCells.Add(NewCell);
+          NewCell.FOwnerLine := TempLine;
+          //setnewcell(true, newcell, thiscell, TempDataSet);
+          SetEmptyCell(newcell, thiscell);
+        End;
+
+    result := templine;
+  end;
 Begin
 
   //  if assigned(Fonsetept) then
@@ -5673,18 +5690,7 @@ Begin
       Begin
         //按数据行的表格属性补空表格
         thisline := Treportline(FLineList[hasdatano]);
-        templine := Treportline.Create;
-        TempLine.FMinHeight := ThisLine.FMinHeight;
-        TempLine.FDragHeight := ThisLine.FDragHeight;
-        For j := 0 To ThisLine.FCells.Count - 1 Do
-        Begin
-          ThisCell := TreportCell(ThisLine.FCells[j]);
-          NewCell := TReportCell.Create;
-          TempLine.FCells.Add(NewCell);
-          NewCell.FOwnerLine := TempLine;
-          //setnewcell(true, newcell, thiscell, TempDataSet);
-          SetEmptyCell(newcell, thiscell);
-        End;
+        templine := CloneEmptyLine(thisLine);
 
         While true Do
         Begin
