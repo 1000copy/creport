@@ -5904,7 +5904,7 @@ Begin
       //未打满一页,增加下一行记录
       TempLine := ExpandLine(HasDataNo,ndataHeight);
       DataLineList.add(tempLine);
-      // 怎么又对了?
+      // 怎么又对了? //
       {*
       ThisLine := TReportLine(FlineList[HasDataNo]);
       TempLine := TReportLine.Create;
