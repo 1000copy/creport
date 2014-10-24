@@ -5702,6 +5702,57 @@ label nextlabel;
     
     result :=  dataLineList;
   end ;
+  procedure PaddingEmptyLine(hasdatano:integer; var dataLineList:TList;var ndataHeight:integer;var khbz :boolean);
+  var
+    thisline,templine : Treportline ;
+  begin
+        thisline := Treportline(FLineList[hasdatano]);
+        templine := CloneEmptyLine(thisLine);
+        While true Do
+        Begin
+          dataLineList.Add(templine);
+          TempLine.CalcLineHeight;
+          ndataHeight := ndataHeight + templine.GetLineHeight;
+          If IsLastPageFull Then
+          Begin
+            dataLineList.Delete(dataLineList.Count - 1);
+            khbz := true;
+            break;
+          End;
+        End;
+  end;
+  //合计数中减去最后一行数据
+  // result = false -> 运算时出现了异常
+  function RemoveLastSum(var HasDataNo:Integer):boolean;var i,j:integer;
+  begin
+          result := true;
+          ThisLine := TReportLine(FlineList[HasDataNo]);
+          For j := 0 To ThisLine.FCells.Count - 1 Do
+          Begin
+            ThisCell := TreportCell(ThisLine.FCells[j]);
+            Try
+              If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] =
+                '#') Then
+              Begin
+                If TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)) Is
+                  tnumericField Then
+                  If Not
+                    (TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).IsNull) Then
+                  Begin
+                    SumPage[j] := SumPage[j] -
+                      TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).Value;
+                    SumAll[j] := SumAll[j] -
+                      TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).Value;
+                  End;
+              End;
+            Except
+              MessageDlg('统计时发生错误，请检查模板设置是否正确',
+                mtInformation,
+                [mbOk], 0);
+              result := false;
+            End;
+          End;//for j
+    end;
 Begin
 
   //  if assigned(Fonsetept) then
@@ -5752,57 +5803,15 @@ Begin
     Begin
       //按数据行的表格属性补空表格
       If (Faddspace) And ((i = TempDataSetCount) And (HasEmptyRoomLastPage)) Then
-      Begin
-        //proc PaddingEmptyLine(hasdatano:integer; var dataLineList:TList;var ndataHeight:integer;var khbz boolean) 
-        thisline := Treportline(FLineList[hasdatano]);
-        templine := CloneEmptyLine(thisLine);
-        While true Do
-        Begin
-          dataLineList.Add(templine);
-          TempLine.CalcLineHeight;
-          ndataHeight := ndataHeight + templine.GetLineHeight;
-          If IsLastPageFull Then
-          Begin
-            dataLineList.Delete(dataLineList.Count - 1);
-            khbz := true;
-            break;
-          End;
-        End;
-      End;
+        PaddingEmptyLine(hasdatano,dataLineList,ndataHeight,khbz );
       If isPageFull Or (i = TempDataSetCount) Then
       Begin
-        If i < TempDataSetCount Then
+        If isPageFull Then
         Begin
           dataLineList.Delete(dataLineList.Count - 1);
           Tempdataset.Prior;
-          //合计数中减去最后一行数据
-          ThisLine := TReportLine(FlineList[HasDataNo]);
-          For j := 0 To ThisLine.FCells.Count - 1 Do
-          Begin
-            ThisCell := TreportCell(ThisLine.FCells[j]);
-            Try
-              If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] =
-                '#') Then
-              Begin
-                If TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)) Is
-                  tnumericField Then
-                  If Not
-                    (TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).IsNull) Then
-                  Begin
-                    SumPage[j] := SumPage[j] -
-                      TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).Value;
-                    SumAll[j] := SumAll[j] -
-                      TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).Value;
-                  End;
-              End;
-            Except
-              MessageDlg('统计时发生错误，请检查模板设置是否正确',
-                mtInformation,
-                [mbOk], 0);
-              exit;
-            End;
-          End;                          //for j
-          //x
+          if not RemoveLastSum(HasDataNo) then
+            exit;
           i := i - 1;
         End;
 
