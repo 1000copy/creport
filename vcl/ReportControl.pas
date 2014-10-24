@@ -5512,10 +5512,10 @@ Begin
     CalcMinCellHeight;
   End;
 End;
-
-Function TReportRunTime.PreparePrintk(SaveYn: boolean; FpageAll: integer):
-  integer; //李泽伦增加 ,完全重写的 PreparePrint,并增加了用空行补满一页 统计等功能
+//李泽伦增加 ,完全重写的 PreparePrint,并增加了用空行补满一页 统计等功能
 //返回数用于在预览中确定代＃字头数据库是在模板的第几行
+Function TReportRunTime.PreparePrintk(SaveYn: boolean; FpageAll: integer):
+  integer;
 Var
   kk, I, J, n, hasdatano, TempDataSetCount,
     nDataHeight, nHandHeight, nHootHeight, nSumAllHeight: Integer;
