@@ -5902,9 +5902,9 @@ Begin
       End;  // PageFull if end .
       // bigger than bigger  ! 接下来才是正主的代码
       //未打满一页,增加下一行记录
-      TempLine := ExpandLine(HasDataNo,ndataHeight);
-      DataLineList.add(tempLine);
-      {*
+      //TempLine := ExpandLine(HasDataNo,ndataHeight);
+      //DataLineList.add(tempLine);
+      //{*
       ThisLine := TReportLine(FlineList[HasDataNo]);
       TempLine := TReportLine.Create;
       TempLine.FMinHeight := ThisLine.FMinHeight;
@@ -5921,7 +5921,7 @@ Begin
       End; //for j
       TempLine.CalcLineHeight;
       ndataHeight := ndataHeight + TempLine.GetLineHeight;
-      *}
+      //*}
       If kk <> 0 Then
         TempDataSet.Next;
       i := i + 1;
