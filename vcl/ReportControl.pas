@@ -5531,6 +5531,8 @@ Var
     result := (FtopMargin + nHandHeight + nDataHeight + nSumAllHeight +
             FBottomMargin) > height;
   end;
+
+
   function isPageFull:boolean;
   begin
     result := (FtopMargin + nHandHeight + nDataHeight + nHootHeight + FBottomMargin >height);
@@ -5814,11 +5816,12 @@ Begin
             exit;
           i := i - 1;
         End;
-
-        //if (i = TempDataSetCount) and (FtopMargin + nHandHeight +nDataHeight + nHootHeight + FBottomMargin > height)  then
-        If (i = TempDataSetCount) And (FtopMargin + nHandHeight + nDataHeight +
-          nSumAllHeight + FBottomMargin > height) Then
+        If (i = TempDataSetCount) And
+        //(FtopMargin + nHandHeight + nDataHeight +nSumAllHeight + FBottomMargin > height)
+        IsLastPageFull
+        Then
         Begin
+          exit;
           If Not khbz Then
           Begin
             dataLineList.Delete(dataLineList.Count - 1);
