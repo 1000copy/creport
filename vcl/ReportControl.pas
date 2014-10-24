@@ -5559,6 +5559,62 @@ Var
   begin
     result := (FtopMargin + nHandHeight + nDataHeight + nHootHeight + FBottomMargin >height);
   end;
+  function FillHeadList:TList;
+    var HandLineList:TList;        i,j:integer;
+  begin
+   HandLineList := TList.Create;
+   For i := 0 To FlineList.Count - 1 Do
+   Begin
+    ThisLine := TReportLine(FlineList[i]);
+    TempLine := TReportLine.Create;
+    TempLine.FMinHeight := ThisLine.FMinHeight;
+    TempLine.FDragHeight := ThisLine.FDragHeight;
+    HandLineList.Add(TempLine);
+    For j := 0 To ThisLine.FCells.Count - 1 Do
+    Begin
+      ThisCell := TreportCell(ThisLine.FCells[j]);
+      NewCell := TReportCell.Create;
+      TempLine.FCells.Add(NewCell);
+      NewCell.FOwnerLine := TempLine;
+      //能得到FDragHeight(代表线段拖动的高度)的值 Fminheight代表字高,二者取其高者为行高
+      With NewCell Do
+      Begin
+        If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] = '#')
+          Then
+        Begin
+          HandLineList.Delete(HandLineList.count - 1);
+          result :=   HandLineList;
+          exit ;
+        End;
+        setnewcell(false, newcell, thiscell, TempDataSet);
+      End;                              //with  NewCell do
+    End;                                //for j
+    TempLine.CalcLineHeight;
+    nHandHeight := nHandHeight + TempLine.GetLineHeight;
+   End;
+   result :=   HandLineList ;
+  end;
+label nextlabel;
+  var cellIndex :Integer;
+  function GetHasDataPosition(var HasDataNo,cellIndex:integer):Boolean;
+    var i,j:integer;
+   begin
+      For i := 0 To FlineList.Count - 1 Do
+      Begin
+        ThisLine := TReportLine(FlineList[i]);
+        For j := 0 To ThisLine.FCells.Count - 1 Do
+        Begin
+            ThisCell := TreportCell(ThisLine.FCells[j]);
+            If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] = '#') Then
+            Begin
+              HasTable := true;
+              HasDataNo := i;
+              cellIndex := j ;
+              exit;
+            End;
+        End;                                //for j
+      End;
+  end;
 Begin
 
   //  if assigned(Fonsetept) then
@@ -5584,42 +5640,17 @@ Begin
   khbz := false;
 
   //将每页的表头存入一个列表中
-  HandLineList := TList.Create;
-  For i := 0 To FlineList.Count - 1 Do
-  Begin
-    ThisLine := TReportLine(FlineList[i]);
-    TempLine := TReportLine.Create;
-    TempLine.FMinHeight := ThisLine.FMinHeight;
-    TempLine.FDragHeight := ThisLine.FDragHeight;
-    HandLineList.Add(TempLine);
-    For j := 0 To ThisLine.FCells.Count - 1 Do
-    Begin
-      ThisCell := TreportCell(ThisLine.FCells[j]);
-      NewCell := TReportCell.Create;
-      TempLine.FCells.Add(NewCell);
-      NewCell.FOwnerLine := TempLine;
-      //能得到FDragHeight(代表线段拖动的高度)的值 Fminheight代表字高,二者取其高者为行高
-      With NewCell Do
-      Begin
-        If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] = '#')
-          Then
-        Begin
-          HasTable := true;
-          TempDataSet := GetDataSet(ThisCell.CellText);
-          TempDataSetCount := TempDataSet.RecordCount;
-          HasDataNo := i;
-          TempDataSet.First;
-          HandLineList.Delete(HandLineList.count - 1);
-          break;
-        End;
-        setnewcell(false, newcell, thiscell, TempDataSet);
-      End;                              //with  NewCell do
-    End;                                //for j
-    If hastable Then
-      break;
-    TempLine.CalcLineHeight;
-    nHandHeight := nHandHeight + TempLine.GetLineHeight;
-  End;                                  //    for i:=0 to FlineList.Count -1 do
+  HandLineList := FillHeadList;
+
+  GetHasDataPosition(HasDataNo,CellIndex) ;
+  if HasDataNo <> -1 then begin
+        HasTable := true;
+        TempDataSet := GetDataSet(TReportCell(TReportLine(FlineList[HasDataNo]).FCells[CellIndex]).FCellText);
+        TempDataSetCount := TempDataSet.RecordCount;
+        TempDataSet.First;
+  end;
+
+  // end 
   // 数据行只有一行，多了都算表尾。不好。
   If hastable Then                      //有数据库的处理(#打头)
   Begin
