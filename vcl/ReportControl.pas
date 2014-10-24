@@ -5843,47 +5843,34 @@ Begin
     i := 0;
     //将数据填入 dataLineList中
     While (i <= TempDataSetCount) Or (Not tempdataset.eof) Do
-    //While (i <= TempDataSetCount)  Do
     Begin
       //按数据行的表格属性补空表格
       If (Faddspace) And ((i = TempDataSetCount) And (HasEmptyRoomLastPage)) Then
         PaddingEmptyLine(hasdatano,dataLineList,ndataHeight,khbz );
-      //case 1
+
       If isPageFull or (i = TempDataSetCount) Then
       Begin
         If isPageFull Then
         Begin
           dataLineList.Delete(dataLineList.Count - 1);
           Tempdataset.Prior;
-          if not RemoveLastSum(HasDataNo) then
-            exit;
+          RemoveLastSum(HasDataNo) ;
           i := i - 1;
         End;
-        If  (i = TempDataSetCount) and IsLastPageFull Then
+        If  (i = TempDataSetCount) and IsLastPageFull and (Not khbz) Then
         Begin
-          If Not khbz Then // 没有补齐过空格行
-
-          Begin
             dataLineList.Delete(dataLineList.Count - 1);
             Tempdataset.last;
             i := i - 1;
             kk := 0;                    //
             RemoveLastSum(HasDataNo) ;
-          End;
         End;
-
-        //加表头
-        // function AppendList( FPrintLineList, HandLineList:TList):Boolean;
+        // join all
         AppendList(  FPrintLineList, HandLineList);
         AppendList(  FPrintLineList, dataLineList);
         If dataLineList.Count = 0 Then
-        Begin
-          MessageDlg('表格未能完全处理,请调整单元格宽度或页边距等设置',
-            mtInformation, [mbOk], 0);
-          break;
-        End;
+          raise Exception.create('表格未能完全处理,请调整单元格宽度或页边距等设置');
         FhootNo := FPrintLineList.Count;
-
         If (i = TempDataSetCount) Then
           AppendList(  FPrintLineList, SumAllList)
         Else
@@ -5891,10 +5878,8 @@ Begin
         UpdatePrintLines;
         If saveyn Then                  //
           SaveTempFile(fpagecount, FpageAll);
-
         For n := 0 To 40 Do
-          SumPage[n] := 0;
-
+          SumPage[n] := 0;   
         fpagecount := fpagecount + 1;
         FPrintLineList.Clear;
         datalinelist.clear;
@@ -5904,25 +5889,6 @@ Begin
       //未打满一页,增加下一行记录
       TempLine := ExpandLine(HasDataNo,ndataHeight);
       DataLineList.add(tempLine);
-      // 怎么又对了? //
-      {*
-      ThisLine := TReportLine(FlineList[HasDataNo]);
-      TempLine := TReportLine.Create;
-      TempLine.FMinHeight := ThisLine.FMinHeight;
-      TempLine.FDragHeight := ThisLine.FDragHeight;
-      DataLineList.add(tempLine);
-      For j := 0 To ThisLine.FCells.Count - 1 Do
-      Begin
-        ThisCell := TreportCell(ThisLine.FCells[j]);
-        NewCell := TReportCell.Create;
-        TempLine.FCells.Add(NewCell);
-        NewCell.FOwnerLine := TempLine;
-        setnewcell(false, newcell, thiscell, TempDataSet);
-        SumCell(ThisCell,j) ;
-      End; //for j
-      TempLine.CalcLineHeight;
-      ndataHeight := ndataHeight + TempLine.GetLineHeight;
-      *}
       If kk <> 0 Then
         TempDataSet.Next;
       i := i + 1;
