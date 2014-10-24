@@ -5532,8 +5532,6 @@ Var
     result := (FtopMargin + nHandHeight + nDataHeight + nSumAllHeight +
             FBottomMargin) > height;
   end;
-
-
   function isPageFull:boolean;
   begin
     result := (FtopMargin + nHandHeight + nDataHeight + nHootHeight + FBottomMargin >height);
@@ -5782,7 +5780,8 @@ label nextlabel;
           l1.Add(l2[n]);
         result := true;
     end;
-    function ExpandLine(var HasDataNo,ndataHeight:integer):TReportLine;var thisLine : TReportLine;
+    function ExpandLine(var HasDataNo,ndataHeight:integer):TReportLine;
+    var j:integer;var thisLine : TReportLine;
     begin
       ThisLine := TReportLine(FlineList[HasDataNo]);
       TempLine := TReportLine.Create;
@@ -5799,6 +5798,7 @@ label nextlabel;
       End; //for j
       TempLine.CalcLineHeight;
       ndataHeight := ndataHeight + TempLine.GetLineHeight;
+      result := TempLine;
     end;
 Begin
   try
@@ -5862,7 +5862,8 @@ Begin
         If  (i = TempDataSetCount) and IsLastPageFull Then
         Begin
           If Not khbz Then // 没有补齐过空格行
-          Begin
+
+          Begin
             dataLineList.Delete(dataLineList.Count - 1);
             Tempdataset.last;
             i := i - 1;
@@ -5902,7 +5903,25 @@ Begin
       // bigger than bigger  ! 接下来才是正主的代码
       //未打满一页,增加下一行记录
       TempLine := ExpandLine(HasDataNo,ndataHeight);
-      dataLineList.Add(TempLine);
+      DataLineList.add(tempLine);
+      {*
+      ThisLine := TReportLine(FlineList[HasDataNo]);
+      TempLine := TReportLine.Create;
+      TempLine.FMinHeight := ThisLine.FMinHeight;
+      TempLine.FDragHeight := ThisLine.FDragHeight;
+      DataLineList.add(tempLine);
+      For j := 0 To ThisLine.FCells.Count - 1 Do
+      Begin
+        ThisCell := TreportCell(ThisLine.FCells[j]);
+        NewCell := TReportCell.Create;
+        TempLine.FCells.Add(NewCell);
+        NewCell.FOwnerLine := TempLine;
+        setnewcell(false, newcell, thiscell, TempDataSet);
+        SumCell(ThisCell,j) ;
+      End; //for j
+      TempLine.CalcLineHeight;
+      ndataHeight := ndataHeight + TempLine.GetLineHeight;
+      *}
       If kk <> 0 Then
         TempDataSet.Next;
       i := i + 1;
