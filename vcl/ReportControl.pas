@@ -520,7 +520,7 @@ Type
     FTopMargin1: Integer;
     FBottomMargin1: Integer;
 
-    FPageCount: Integer;                // page count in print preview
+    FPageCount: Integer;                // page count in print preview //总页数
 
     FHootNo: integer;
     FEditEpt: boolean;                  //表尾的第一行在整个页的第几行 李泽伦
@@ -5517,6 +5517,7 @@ End;
 Function TReportRunTime.PreparePrintk(SaveYn: boolean; FpageAll: integer):
   integer;
 Var
+  // kk -> 是否做dataset.next ,1 :yes ,0 :no 
   kk, I, J, n, hasdatano, TempDataSetCount,
     nDataHeight, nHandHeight, nHootHeight, nSumAllHeight: Integer;
   HandLineList, datalinelist, HootLineList, sumAllList: TList;
@@ -5723,6 +5724,29 @@ label nextlabel;
           End;
         End;
   end;
+  function SumCell(ThisCell:TReportCell;j:Integer):Boolean;begin
+        result := true ;
+        Try
+          If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] = '#')
+            Then
+          Begin
+            If TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)) Is
+              tnumericField Then
+              If Not
+                (TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).IsNull)
+                  Then
+              Begin
+                SumPage[j] := SumPage[j] +
+                  TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).Value;
+                SumAll[j] := SumAll[j] +
+                  TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).Value;
+              End;
+          End;
+        Except
+          raise Exception.create('统计时发生错误，请检查模板设置是否正确');
+          result := false ;
+        End;
+  end;
   //合计数中减去最后一行数据
   // result = false -> 运算时出现了异常
   function RemoveLastSum(var HasDataNo:Integer):boolean;var i,j:integer;
@@ -5748,19 +5772,36 @@ label nextlabel;
                   End;
               End;
             Except
-              MessageDlg('统计时发生错误，请检查模板设置是否正确',
-                mtInformation,
-                [mbOk], 0);
+              raise Exception.create('统计时发生错误，请检查模板设置是否正确');
               result := false;
             End;
           End;//for j
     end;
+    function AppendList( l1, l2:TList):Boolean;var n :integer; begin
+        For n := 0 To l2.Count - 1 Do
+          l1.Add(l2[n]);
+        result := true;
+    end;
+    function ExpandLine(var HasDataNo,ndataHeight:integer):TReportLine;var thisLine : TReportLine;
+    begin
+      ThisLine := TReportLine(FlineList[HasDataNo]);
+      TempLine := TReportLine.Create;
+      TempLine.FMinHeight := ThisLine.FMinHeight;
+      TempLine.FDragHeight := ThisLine.FDragHeight;
+      For j := 0 To ThisLine.FCells.Count - 1 Do
+      Begin
+        ThisCell := TreportCell(ThisLine.FCells[j]);
+        NewCell := TReportCell.Create;
+        TempLine.FCells.Add(NewCell);
+        NewCell.FOwnerLine := TempLine;
+        setnewcell(false, newcell, thiscell, TempDataSet);
+        SumCell(ThisCell,j) ;
+      End; //for j
+      TempLine.CalcLineHeight;
+      ndataHeight := ndataHeight + TempLine.GetLineHeight;
+    end;
 Begin
-
-  //  if assigned(Fonsetept) then
-  //    Fonsetept(self);
-  //  repmessForm := TrepmessForm.Create(Self); //  李泽伦
-
+  try
   For n := 0 To 40 Do //最多40列单元格,否则统计汇总时要出错. 拟换为动态的
   Begin
     SumPage[n] := 0;
@@ -5802,11 +5843,13 @@ Begin
     i := 0;
     //将数据填入 dataLineList中
     While (i <= TempDataSetCount) Or (Not tempdataset.eof) Do
+    //While (i <= TempDataSetCount)  Do
     Begin
       //按数据行的表格属性补空表格
       If (Faddspace) And ((i = TempDataSetCount) And (HasEmptyRoomLastPage)) Then
         PaddingEmptyLine(hasdatano,dataLineList,ndataHeight,khbz );
-      If isPageFull Or (i = TempDataSetCount) Then
+      //case 1
+      If isPageFull or (i = TempDataSetCount) Then
       Begin
         If isPageFull Then
         Begin
@@ -5816,56 +5859,22 @@ Begin
             exit;
           i := i - 1;
         End;
-        If (i = TempDataSetCount) And
-        //(FtopMargin + nHandHeight + nDataHeight +nSumAllHeight + FBottomMargin > height)
-        IsLastPageFull
-        Then
+        If  (i = TempDataSetCount) and IsLastPageFull Then
         Begin
-          exit;
-          If Not khbz Then
+          If Not khbz Then // 没有补齐过空格行
           Begin
             dataLineList.Delete(dataLineList.Count - 1);
             Tempdataset.last;
             i := i - 1;
             kk := 0;                    //
-            //x1
-            //合计数中减去最后一行数据  (当最后1页只打印一行数据记录时)
-
-            ThisLine := TReportLine(FlineList[HasDataNo]);
-            For j := 0 To ThisLine.FCells.Count - 1 Do
-            Begin
-              ThisCell := TreportCell(ThisLine.FCells[j]);
-              Try
-                If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] =
-                  '#') Then
-                Begin
-                  If TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)) Is
-                    tnumericField Then
-                    If Not
-                      (TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).IsNull) Then
-                    Begin
-                      SumPage[j] := SumPage[j] -
-                        TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).Value;
-                      SumAll[j] := SumAll[j] -
-                        TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).Value;
-                    End;
-                End;
-              Except
-                MessageDlg('统计时发生错误，请检查模板设置是否正确',
-                  mtInformation, [mbOk], 0);
-                exit;
-              End;
-            End;                        //for j
-            //x2
-
+            RemoveLastSum(HasDataNo) ;
           End;
         End;
+
         //加表头
-        For n := 0 To HandLineList.Count - 1 Do
-          FPrintLineList.Add(TReportLine(HandLineList[n]));
-        //加数据段
-        For n := 0 To dataLineList.Count - 1 Do //追加表尾
-          FPrintLineList.Add(TReportLine(dataLineList[n]));
+        // function AppendList( FPrintLineList, HandLineList:TList):Boolean;
+        AppendList(  FPrintLineList, HandLineList);
+        AppendList(  FPrintLineList, dataLineList);
         If dataLineList.Count = 0 Then
         Begin
           MessageDlg('表格未能完全处理,请调整单元格宽度或页边距等设置',
@@ -5875,13 +5884,9 @@ Begin
         FhootNo := FPrintLineList.Count;
 
         If (i = TempDataSetCount) Then
-        Begin
-          For n := 0 To SumAllList.Count - 1 Do //追加表尾(含合计项)
-            FPrintLineList.Add(TReportLine(SumAllList[n]));
-        End
+          AppendList(  FPrintLineList, SumAllList)
         Else
-          For n := 0 To HootLineList.Count - 1 Do  //追加表尾(不含合计项,含每页的小计项)
-            FPrintLineList.Add(TReportLine(HootLineList[n]));
+          AppendList(  FPrintLineList, HootLineList);
         UpdatePrintLines;
         If saveyn Then                  //
           SaveTempFile(fpagecount, FpageAll);
@@ -5889,56 +5894,19 @@ Begin
         For n := 0 To 40 Do
           SumPage[n] := 0;
 
-        fpagecount := fpagecount + 1;   //总页数
+        fpagecount := fpagecount + 1;
         FPrintLineList.Clear;
         datalinelist.clear;
-        ndataHeight := 0;               //每页每行累加高度
-      End;  // add space if end .
+        ndataHeight := 0;
+      End;  // PageFull if end .
       // bigger than bigger  ! 接下来才是正主的代码
       //未打满一页,增加下一行记录
-      ThisLine := TReportLine(FlineList[HasDataNo]);
-      TempLine := TReportLine.Create;
-      TempLine.FMinHeight := ThisLine.FMinHeight;
-      TempLine.FDragHeight := ThisLine.FDragHeight;
+      TempLine := ExpandLine(HasDataNo,ndataHeight);
       dataLineList.Add(TempLine);
-      For j := 0 To ThisLine.FCells.Count - 1 Do
-      Begin
-        ThisCell := TreportCell(ThisLine.FCells[j]);
-        NewCell := TReportCell.Create;
-        TempLine.FCells.Add(NewCell);
-        NewCell.FOwnerLine := TempLine;
-        setnewcell(false, newcell, thiscell, TempDataSet);
-        // sum every data line
-        Try
-          If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] = '#')
-            Then
-          Begin
-            If TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)) Is
-              tnumericField Then
-              If Not
-                (TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).IsNull)
-                  Then
-              Begin
-                SumPage[j] := SumPage[j] +
-                  TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).Value;
-                SumAll[j] := SumAll[j] +
-                  TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).Value;
-              End;
-          End;
-        Except
-          MessageDlg('统计时发生错误，请检查模板设置是否正确', mtInformation,
-            [mbOk], 0);
-          exit;
-        End;
-        // end : sum every data line
-      End;                              //for j
-
-      TempLine.CalcLineHeight;
-      ndataHeight := ndataHeight + TempLine.GetLineHeight;
       If kk <> 0 Then
         TempDataSet.Next;
       i := i + 1;
-    End;                                //for i:=0 to TempDataSetCount do
+    End; // end while
     fpagecount := fpagecount - 1;       //总页数
     HootLineList.Free;
     dataLineList.free;
@@ -5969,6 +5937,10 @@ Begin
     result := HasDataNo
   Else
     result := fpagecount;
+  except
+    on E:Exception do
+         MessageDlg(e.Message,mtInformation,[mbOk], 0);
+  end;
 End;
 
 
