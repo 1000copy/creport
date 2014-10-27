@@ -5801,6 +5801,15 @@ Var
       ndataHeight := ndataHeight + TempLine.GetLineHeight;
       result := TempLine;
     end;
+    procedure    JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList:TList);
+    begin
+        AppendList(  FPrintLineList, HandLineList);
+        AppendList(  FPrintLineList, dataLineList);
+        If (i = TempDataSetCount) Then
+          AppendList(  FPrintLineList, SumAllList)
+        Else
+          AppendList(  FPrintLineList, HootLineList);
+    end;
 Begin
   try
   For n := 0 To 40 Do //最多40列单元格,否则统计汇总时要出错. 拟换为动态的
@@ -5841,13 +5850,11 @@ Begin
     ndataHeight := 0;
     dataLineList := TList.Create;
     i := 0;
-    //将数据填入 dataLineList中
+
     While (i <= TempDataSetCount) Or (Not tempdataset.eof) Do
     Begin
-      //按数据行的表格属性补空表格
       If (Faddspace) And ((i = TempDataSetCount) And (HasEmptyRoomLastPage)) Then
         PaddingEmptyLine(hasdatano,dataLineList,ndataHeight,khbz );
-
       If isPageFull or (i = TempDataSetCount) Then
       Begin
         //{
@@ -5862,13 +5869,7 @@ Begin
         If dataLineList.Count = 0 Then
           raise Exception.create('表格未能完全处理,请调整单元格宽度或页边距等设置');
         FhootNo := HandLineList.Count+dataLineList.Count ;
-        // join all
-        AppendList(  FPrintLineList, HandLineList);
-        AppendList(  FPrintLineList, dataLineList);
-        If (i = TempDataSetCount) Then
-          AppendList(  FPrintLineList, SumAllList)
-        Else
-          AppendList(  FPrintLineList, HootLineList);
+        JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList);
         UpdatePrintLines;
         If saveyn Then                  //
           SaveTempFile(fpagecount, FpageAll);
