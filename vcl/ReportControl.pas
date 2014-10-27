@@ -581,8 +581,6 @@ Type
     procedure SumLine(var HasDataNo: integer);
 
   Protected
-    Procedure IEditEpt; Virtual;        //add lzl 双击控件调用
-    Procedure IPreview; Virtual;
 
   Public
     Constructor Create(AOwner: TComponent); Override;
@@ -623,12 +621,6 @@ Type
 
   End;
 
-  TCreportEditor = Class(TComponentEditor)
-  Public
-    Procedure ExecuteVerb(Index: Integer); Override;
-    Function GetVerb(Index: Integer): String; Override;
-    Function GetVerbCount: Integer; Override;
-  End;
 
   TCellTable = Class(TObject)
     PrevCell: TReportCell;
@@ -737,7 +729,6 @@ Begin
   RegisterComponents('CReport', [TReportControl]);
   RegisterComponents('CReport', [TReportRunTime]);
   RegisterComponents('CReport', [TDatasetToExcel]); //add lzl
-  RegisterComponentEditor(TReportRunTime, TCreportEditor); //add lzl
 End;
 
 ///////////////////////////////////////////////////////////////////////////
@@ -745,123 +736,8 @@ End;
 
 {TReportCell}
 
-Procedure TReportRunTime.IPreview;      //add lzl
-Var
-  i, HasDataNo: integer;
-Begin
-  For I := Cp_DFdList.Count - 1 Downto 0 Do
-    TDataSetItem(Cp_DFdList[I]).Free;
-  Cp_DFdList.clear;
-  If (Reportfile = '') Or (SetData.Count = 0) Then
-  Begin
-    MessageDlg('ReportFile或SetData属性未填列，不能预览。', mtInformation,
-      [mbOk], 0);
-    exit;
-  End;
 
-  reportfile := reportfile;
-  Try
-    For i := 0 To setdata.Count - 1 Do
-      setpar(true, true, setdata[i]);   //参数设置
-    //i:=PreparePrintk(FALSE,0);
-    HasDataNo := PreparePrintk(TRUE, i);
-  Except
-    MessageDlg('形成报表时发生错误，请检查各项参数与模板设置等是否正确',
-      mtInformation, [mbOk], 0);
-    exit;
-  End;
-  Application.CreateForm(TPreviewForm, PreviewForm);
-  CreportIde := true;                   //处于IDE中调用
 
-  PreviewForm.reportcontrol1.enabled := Fenableedit;
-  PreviewForm.SpeedButton1.Enabled := false; //预览中页面设置无效
-  PreviewForm.PrintBtn.Enabled := false;
-  PreviewForm.filename.Caption := ReportFile;
-  PreviewForm.PageCount := FPageCount;
-
-  PreviewForm.StatusBar1.Panels[0].Text := '第' +
-    IntToStr(PreviewForm.CurrentPage) + '／' + IntToStr(PreviewForm.PageCount) +
-    '页';
-  PreviewForm.filename.Caption := ReportFile;
-  PreviewForm.tag := HasDataNo;
-
-  preview.EnableBz := fenableedit;      //预览中是否允许编辑
-  PreviewForm.SetPreviewMode(true);
-
-  cp_prewYn := true;                    //代表处于预览状态,调用打印时以便区分
-  PreviewForm.ShowModal;
-  cp_prewYn := false;
-
-  PreviewForm.Free;
-  DeleteAllTempFiles;
-  For i := 0 To setdata.Count - 1 Do
-    setpar(true, false, setdata[i]);    //关闭打开的数据库
-
-  CreportIde := false;
-
-End;
-
-Procedure TReportRunTime.IEditEpt;      //add lzl
-Var
-  dd: Tdate;
-Begin
-  dd := strtodate('2003-11-25');
-  If date > dd Then
-  Begin
-    MessageDlg('试用到期,请联系作者,Lzl-Self@sohu.com', mtInformation, [mbOk],
-      0);
-    exit;
-  End;
-  Application.CreateForm(TCreportform, Creportform);
-  Application.CreateForm(Tfrm_About, frm_About);
-  Application.CreateForm(TBorderform, Borderform);
-  Application.CreateForm(TColorform, Colorform);
-  Application.CreateForm(Tdiagonalform, diagonalform);
-  Application.CreateForm(Tmarginkform, marginkform);
-  Application.CreateForm(TfrmNewTable, frmNewTable);
-  Application.CreateForm(Tvsplitform, vsplitform);
-  Try
-    If ReportFile <> '' Then
-    Begin
-      Creportform.ReportControl1.LoadFromFile(reportfile);
-      Creportform.Caption := reportfile;
-      Creportform.Thefile := reportfile;
-      Creportform.savefilename := reportfile;
-    End;
-    Creportform.showmodal;
-    Creportform.Free;
-    frm_About.Free;
-    Borderform.Free;
-    Colorform.free;
-    diagonalform.free;
-    marginkform.free;
-    frmNewTable.free;
-    vsplitform.Free;
-  Finally
-  End;
-
-End;
-
-Procedure TCreportEditor.ExecuteVerb(index: integer);
-Begin
-  Case index Of
-    0: TReportRunTime(Component).IEditEpt;
-    1: TReportRunTime(Component).IPreview;
-  End;
-End;
-
-Function TCreportEditor.GetVerb(Index: Integer): String;
-Begin
-  Case index Of
-    0: result := 'IEditEpt4.0';
-    1: result := 'IPreview';            // do priew
-  End;
-End;
-
-Function TCreportEditor.GetVerbCount: Integer;
-Begin
-  Result := 2;
-End;
 
 Procedure TReportCell.SetLeftMargin(LeftMargin: Integer);
 Begin
