@@ -4,7 +4,9 @@ Unit ReportControl;
 Interface
 
 Uses
-  Windows, Messages, SysUtils, FileCtrl, Classes, Graphics, Controls,
+  Windows, Messages, SysUtils,
+  {$WARNINGS OFF}FileCtrl,{$WARNINGS ON}
+   Classes, Graphics, Controls,
   Forms, Dialogs, Math, Printers, Menus, dbgrids, Db, jpeg, dbtables,
   DesignEditors, DesignIntf, ShellAPI, ExtCtrls;
 //dsgnintf d5
@@ -704,16 +706,20 @@ Begin
     If Not (DeleteFilesSearchRec.Name = '') Then
     Begin
       Result := True;
+      {$WARNINGS OFF}
       Attributes := FileGetAttr(FilePath + '\' + DeleteFilesSearchRec.Name);
       //Attributes := Attributes And Not (faReadonly Or faHidden Or fasysfile);
       FileSetAttr(FilePath + '\' + DeleteFilesSearchRec.Name, Attributes);
+      {$WARNINGS ON}
       DeleteFile(FilePath + '\' + DeleteFilesSearchRec.Name);
 
       While FindNext(DeleteFilesSearchRec) = 0 Do
       Begin
+        {$WARNINGS OFF}
         Attributes := FileGetAttr(FilePath + '\' + DeleteFilesSearchRec.Name);
         //Attributes := Attributes And Not (faReadOnly Or faHidden Or fasysfile);
         FileSetAttr(FilePath + '\' + DeleteFilesSearchRec.Name, Attributes);
+        {$WARNINGS ON}
         DeleteFile(FilePath + '\' + DeleteFilesSearchRec.Name);
       End;
     End;
