@@ -5518,7 +5518,7 @@ Function TReportRunTime.PreparePrintk(SaveYn: boolean; FpageAll: integer):
   integer;
 Var
   // kk -> 是否做dataset.next ,1 :yes ,0 :no 
-  kk, I, J, n, hasdatano, TempDataSetCount,
+  I, J, n, hasdatano, TempDataSetCount,
     nDataHeight, nHandHeight, nHootHeight, nSumAllHeight: Integer;
   HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisLine, TempLine: TReportLine;
@@ -5795,11 +5795,21 @@ Var
         TempLine.FCells.Add(NewCell);
         NewCell.FOwnerLine := TempLine;
         setnewcell(false, newcell, thiscell, TempDataSet);
-        SumCell(ThisCell,j) ;
+        //SumCell(ThisCell,j) ;
       End; //for j
       TempLine.CalcLineHeight;
       ndataHeight := ndataHeight + TempLine.GetLineHeight;
       result := TempLine;
+    end;
+    procedure SumLine(var HasDataNo,ndataHeight:integer);
+    var j:integer;var thisLine ,TempLine: TReportLine;
+    begin
+      ThisLine := TReportLine(FlineList[HasDataNo]);
+      For j := 0 To ThisLine.FCells.Count - 1 Do
+      Begin
+        ThisCell := TreportCell(ThisLine.FCells[j]);
+        SumCell(ThisCell,j) ;
+      End; //for j
     end;
     procedure    JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList:TList);
     begin
@@ -5823,7 +5833,6 @@ Begin
   nHandHeight := 0;                     //该页数据库行之前每行累加高度
   FpageCount := 1;                      //正处理的页数
   HasDataNo := 0;
-  kk := 1;
   nHootHeight := 0;
   TempDataSetCount := 0;
   khbz := false;
@@ -5855,17 +5864,13 @@ Begin
     Begin
       If (Faddspace) And ((i = TempDataSetCount) And (HasEmptyRoomLastPage)) Then
         PaddingEmptyLine(hasdatano,dataLineList,ndataHeight,khbz );
+
+      // bigger than bigger  ! 接下来才是正主的代码
+      //未打满一页,增加下一行记录
+      TempLine := ExpandLine(HasDataNo,ndataHeight);
       If isPageFull or (i = TempDataSetCount) Then
       Begin
-        //{
-        If isPageFull or ( (i = TempDataSetCount) and IsLastPageFull and (Not khbz) ) Then
-        Begin
-          dataLineList.Delete(dataLineList.Count - 1);
-          Tempdataset.Prior;
-          RemoveLastSum(HasDataNo) ;
-          i := i - 1;
-        End;
-        //}
+        //ndataHeight := nPredataHeight ;
         If dataLineList.Count = 0 Then
           raise Exception.create('表格未能完全处理,请调整单元格宽度或页边距等设置');
         FhootNo := HandLineList.Count+dataLineList.Count ;
@@ -5874,18 +5879,18 @@ Begin
         If saveyn Then                  //
           SaveTempFile(fpagecount, FpageAll);
         For n := 0 To 40 Do
-          SumPage[n] := 0;   
+          SumPage[n] := 0;
         fpagecount := fpagecount + 1;
         FPrintLineList.Clear;
         datalinelist.clear;
         ndataHeight := 0;
-      End;  // PageFull if end .
-      // bigger than bigger  ! 接下来才是正主的代码
-      //未打满一页,增加下一行记录
-      TempLine := ExpandLine(HasDataNo,ndataHeight);
-      DataLineList.add(tempLine);
-      TempDataSet.Next;
-      i := i + 1;
+        if (i = TempDataSetCount) then break;
+      End else begin
+        DataLineList.add(tempLine);
+        SumLine(HasDataNo,ndataHeight);
+        TempDataSet.Next;
+        i := i + 1;
+      end;         
     End; // end while
     fpagecount := fpagecount - 1;       //总页数
     HootLineList.Free;
