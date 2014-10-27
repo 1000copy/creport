@@ -525,7 +525,8 @@ Type
     FHootNo: integer;
     FEditEpt: boolean;                  //表尾的第一行在整个页的第几行 李泽伦
     nDataHeight, nHandHeight, nHootHeight, nSumAllHeight: Integer;
-
+    TempDataSet: TDataset;
+    hasdatano: integer;
     Procedure UpdateLines;
     Procedure UpdatePrintLines;
     Procedure PrintOnePage;
@@ -555,8 +556,7 @@ Type
     Procedure DeleteAllTempFiles;
     Procedure SetEnableEdit(Value: Boolean);
     Procedure SetEditept(Value: Boolean); //add lzl
-    Procedure SetNewCell(spyn: boolean; NewCell, ThisCell: TReportCell;
-      TempDataSet: TDataset);
+    Procedure SetNewCell(spyn: boolean; NewCell, ThisCell: TReportCell);
     Procedure SetAddSpace(Const Value: boolean);
     procedure SetEmptyCell(NewCell, ThisCell: TReportCell);
     function HasEmptyRoomLastPage: Boolean;
@@ -566,6 +566,17 @@ Type
     function FillHeadList(var nHandHeight: integer): TList;
     function GetHasDataPosition(var HasDataNo,
       cellIndex: integer): Boolean;
+    function AppendList(l1, l2: TList): Boolean;
+    function ExpandLine(var HasDataNo, ndataHeight: integer): TReportLine;
+    function FillFootList(var nHootHeight: integer): TList;
+    function FillSumList(var nSumAllHeight: integer): TList;
+    function GetNhassumall(): Integer;
+    procedure JoinAllList(FPrintLineList, HandLineList, dataLineList,
+      SumAllList, HootLineList: TList;IsLastPage:Boolean);
+    procedure PaddingEmptyLine(hasdatano: integer; var dataLineList: TList;
+      var ndataHeight: integer; var khbz: boolean);
+    function SumCell(ThisCell: TReportCell; j: Integer): Boolean;
+    procedure SumLine(var HasDataNo: integer);
 
   Protected
     Procedure IEditEpt; Virtual;        //add lzl 双击控件调用
@@ -5343,10 +5354,10 @@ Begin
 End;
 Procedure TReportRunTime.SetEmptyCell(NewCell, ThisCell:TReportCell);
 Begin
-  setNewCell(true,NewCell,ThisCell,nil);
+  setNewCell(true,NewCell,ThisCell);
 End;
 Procedure TReportRunTime.SetNewCell(spyn: boolean; NewCell, ThisCell:
-  TReportCell; TempDataSet: TDataset);
+  TReportCell);
 Var
   TempCellTable: TCellTable;
   L: integer;
@@ -5588,7 +5599,7 @@ function TReportRunTime.FillHeadList(var nHandHeight:integer):TList;
           result :=   HandLineList;
           exit ;
         End;
-        setnewcell(false, newcell, thiscell, nil);
+        setnewcell(false, newcell, thiscell);
       End;                              //with  NewCell do
     End;                                //for j
     TempLine.CalcLineHeight;
@@ -5621,24 +5632,13 @@ function TReportRunTime.GetHasDataPosition(var HasDataNo,cellIndex:integer):Bool
         End;                                //for j
       End;
   end;
-Function TReportRunTime.PreparePrintk(SaveYn: boolean; FpageAll: integer):
-  integer;
-Var
-  I, J, n, hasdatano, TempDataSetCount:Integer;
+function TReportRunTime.FillFootList(var nHootHeight:integer ):TList;
+  Var
+  I, J, n,  TempDataSetCount:Integer;
   HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisLine, TempLine: TReportLine;
   ThisCell, NewCell: TReportCell;
-  TempDataSet: TDataset;
   khbz: boolean;
-  //khbz - 空行标志 - 是否曾经补齐空行并且因为页面溢出而回删过行。我真是天才，猜出了他的意思 ：）
-  // 作为一种信息的有损压缩，从空行标记到khbz容易，反过来真难。我用百度拼音，翻5页也看不明白，考核？客户？考号？
-
-
-  var cellIndex :Integer;
-
-  //将每页的表尾存入另一个列表中
-  function FillFootList(var nHootHeight:integer ):TList;
-  var i,j:integer;
   begin
     HootLineList := TList.Create;
     For i := HasDataNo + 1 To FlineList.Count - 1 Do
@@ -5660,7 +5660,7 @@ Var
         NewCell := TReportCell.Create;
         TempLine.FCells.Add(NewCell);
         NewCell.FOwnerLine := TempLine;
-        setnewcell(false, newcell, thiscell, TempDataSet);
+        setnewcell(false, newcell, thiscell);
       End;
       If (UpperCase(copy(ThisCell.FCellText, 1, 7)) <> '`SUMALL') Then
       Begin
@@ -5670,8 +5670,15 @@ Var
     End;
     result := HootLineList;
   end;
-  function GetNhassumall(HasDataNo:Integer):Integer;var i,j:integer;
+  function TReportRunTime.GetNhassumall():Integer;
   var NhasSumALl : integer;
+  Var
+  I, J, n,  TempDataSetCount:Integer;
+  HandLineList, datalinelist, HootLineList, sumAllList: TList;
+  ThisLine, TempLine: TReportLine;
+  ThisCell, NewCell: TReportCell;
+  TempDataSet: TDataset;
+  khbz: boolean;
   begin
   //   Nsumall
     For i := HasDataNo + 1 To FlineList.Count - 1 Do
@@ -5693,8 +5700,14 @@ Var
     result  :=  0 ;
   end;
   //将有合计的行(`SumAll)存入一个列表中
-  function FillSumList(var nSumAllHeight:integer ):TList;
-  var i,j:integer;
+  function TReportRunTime.FillSumList(var nSumAllHeight:integer ):TList;
+  Var
+  I, J, n,  TempDataSetCount:Integer;
+  HandLineList, datalinelist, HootLineList, sumAllList: TList;
+  ThisLine, TempLine: TReportLine;
+  ThisCell, NewCell: TReportCell;
+  TempDataSet: TDataset;
+  khbz: boolean;
   begin
     nSumAllHeight := 0;
     sumAllList := TList.Create;
@@ -5711,21 +5724,14 @@ Var
         NewCell := TReportCell.Create;
         TempLine.FCells.Add(NewCell);
         NewCell.FOwnerLine := TempLine;
-        setnewcell(false, newcell, thiscell, TempDataSet);
+        setnewcell(false, newcell, thiscell);
       End;                              //for j
       TempLine.CalcLineHeight;
       nSumAllHeight := nSumAllHeight + TempLine.GetLineHeight;
     End;
     result :=  sumAllList;
   end ;
-  // data line
-  function FillDataList(var ndataHeight:integer;var khbz: boolean):TList;
-  var i,j:integer;
-  begin
-    
-    result :=  dataLineList;
-  end ;
-  procedure PaddingEmptyLine(hasdatano:integer; var dataLineList:TList;var ndataHeight:integer;var khbz :boolean);
+  procedure TReportRunTime.PaddingEmptyLine(hasdatano:integer; var dataLineList:TList;var ndataHeight:integer;var khbz :boolean);
   var
     thisline,templine : Treportline ;
   begin
@@ -5744,7 +5750,15 @@ Var
           End;
         End;
   end;
-  function SumCell(ThisCell:TReportCell;j:Integer):Boolean;begin
+  function TReportRunTime.SumCell(ThisCell:TReportCell;j:Integer):Boolean;
+  Var
+  I,  n, hasdatano, TempDataSetCount:Integer;
+  HandLineList, datalinelist, HootLineList, sumAllList: TList;
+  ThisLine, TempLine: TReportLine;
+  NewCell: TReportCell;
+  
+  khbz: boolean;
+  begin
         result := true ;
         Try
           If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] = '#')
@@ -5768,13 +5782,19 @@ Var
         End;
   end;
  
-    function AppendList( l1, l2:TList):Boolean;var n :integer; begin
+    function TReportRunTime.AppendList( l1, l2:TList):Boolean;var n :integer; begin
         For n := 0 To l2.Count - 1 Do
           l1.Add(l2[n]);
         result := true;
     end;
-    function ExpandLine(var HasDataNo,ndataHeight:integer):TReportLine;
-    var j:integer;var thisLine ,TempLine: TReportLine;
+    function TReportRunTime.ExpandLine(var HasDataNo,ndataHeight:integer):TReportLine;
+var thisLine ,TempLine: TReportLine;
+    Var
+  I, J, n,  TempDataSetCount:Integer;
+  HandLineList, datalinelist, HootLineList, sumAllList: TList;
+  ThisCell, NewCell: TReportCell;
+
+  khbz: boolean;
     begin
       ThisLine := TReportLine(FlineList[HasDataNo]);
       TempLine := TReportLine.Create;
@@ -5786,15 +5806,20 @@ Var
         NewCell := TReportCell.Create;
         TempLine.FCells.Add(NewCell);
         NewCell.FOwnerLine := TempLine;
-        setnewcell(false, newcell, thiscell, TempDataSet);
+        setnewcell(false, newcell, thiscell);
         //SumCell(ThisCell,j) ;
       End; //for j
       TempLine.CalcLineHeight;
       ndataHeight := ndataHeight + TempLine.GetLineHeight;
       result := TempLine;
     end;
-    procedure SumLine(var HasDataNo:integer);
+    procedure TReportRunTime.SumLine(var HasDataNo:integer);
     var j:integer;var thisLine ,TempLine: TReportLine;
+    Var
+  I,  n,  TempDataSetCount:Integer;
+  HandLineList, datalinelist, HootLineList, sumAllList: TList;
+  ThisCell, NewCell: TReportCell;
+  khbz: boolean;
     begin
       ThisLine := TReportLine(FlineList[HasDataNo]);
       For j := 0 To ThisLine.FCells.Count - 1 Do
@@ -5803,15 +5828,27 @@ Var
         SumCell(ThisCell,j) ;
       End; //for j
     end;
-    procedure    JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList:TList);
+    procedure    TReportRunTime.JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList:TList;IsLastPage:Boolean);
+
     begin
         AppendList(  FPrintLineList, HandLineList);
         AppendList(  FPrintLineList, dataLineList);
-        If (i = TempDataSetCount) Then
+        If (IsLastPage) Then
           AppendList(  FPrintLineList, SumAllList)
         Else
           AppendList(  FPrintLineList, HootLineList);
     end;
+Function TReportRunTime.PreparePrintk(SaveYn: boolean; FpageAll: integer):
+  integer;
+Var
+  CellIndex,I, J, n,  TempDataSetCount:Integer;
+  HandLineList, datalinelist, HootLineList, sumAllList: TList;
+  ThisLine, TempLine: TReportLine;
+  ThisCell, NewCell: TReportCell;
+  
+  khbz: boolean;
+  //khbz - 空行标志 - 是否曾经补齐空行并且因为页面溢出而回删过行。我真是天才，猜出了他的意思 ：）
+  // 作为一种信息的有损压缩，从空行标记到khbz容易，反过来真难。我用百度拼音，翻5页也看不明白，考核？客户？考号？
 Begin
   try
   For n := 0 To 40 Do //最多40列单元格,否则统计汇总时要出错. 拟换为动态的
@@ -5819,7 +5856,7 @@ Begin
     SumPage[n] := 0;
     SumAll[n] := 0;
   End;
-  NhasSumALl := 0;    
+  NhasSumALl := 0;
   TempDataSet := Nil;
   FhootNo := 0;
   nHandHeight := 0;                     //该页数据库行之前每行累加高度
@@ -5844,7 +5881,7 @@ Begin
     TempDataSetCount := TempDataSet.RecordCount;
     TempDataSet.First;
     HootLineList := FillFootList(nHootHeight);
-    NhasSumALl := GetNhasSumALl(HasDataNo);
+    NhasSumALl := GetNhasSumALl();//
     sumAllList := FillSumList(nSumAllHeight);
     //dataLineList := FillDataList(ndataHeight,khbz);
 
@@ -5863,7 +5900,7 @@ Begin
         If dataLineList.Count = 0 Then
           raise Exception.create('表格未能完全处理,请调整单元格宽度或页边距等设置');
         FhootNo := HandLineList.Count+dataLineList.Count ;
-        JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList);
+        JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList,i = TempDataSetCount);
         UpdatePrintLines;
         If saveyn Then                  //
           SaveTempFile(fpagecount, FpageAll);
@@ -6910,6 +6947,7 @@ Procedure TDatasetToExcel.Setdataset(Const value: Tdataset);
 Begin
   Fdataset := value;
 End;
+
 
 End.
 //ReportControl.pas
