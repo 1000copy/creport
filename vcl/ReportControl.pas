@@ -5884,7 +5884,6 @@ Begin
       //未打满一页,增加下一行记录
       TempLine := ExpandLine(HasDataNo,ndataHeight);
       DataLineList.add(tempLine);
-      //If kk <> 0 Then
       TempDataSet.Next;
       i := i + 1;
     End; // end while
