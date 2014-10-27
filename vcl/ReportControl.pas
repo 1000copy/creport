@@ -5524,7 +5524,8 @@ Var
   ThisLine, TempLine: TReportLine;
   ThisCell, NewCell: TReportCell;
   TempDataSet: TDataset;
-  HasTable, khbz: boolean;
+  //HasTable,
+   khbz: boolean;
   //khbz - 空行标志 - 是否曾经补齐空行并且因为页面溢出而回删过行。我真是天才，猜出了他的意思 ：）
   // 作为一种信息的有损压缩，从空行标记到khbz容易，反过来真难。我用百度拼音，翻5页也看不明白，考核？客户？考号？
   function IsLastPageFull:Boolean ;
@@ -5594,7 +5595,7 @@ Var
    End;
    result :=   HandLineList ;
   end;
-label nextlabel;
+
   var cellIndex :Integer;
   function GetHasDataPosition(var HasDataNo,cellIndex:integer):Boolean;
     var i,j:integer;
@@ -5607,7 +5608,7 @@ label nextlabel;
             ThisCell := TreportCell(ThisLine.FCells[j]);
             If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] = '#') Then
             Begin
-              HasTable := true;
+              //HasTable := true;
               HasDataNo := i;
               cellIndex := j ;
               exit;
@@ -5807,10 +5808,8 @@ Begin
     SumPage[n] := 0;
     SumAll[n] := 0;
   End;
-  NhasSumALl := 0;
-
+  NhasSumALl := 0;    
   TempDataSet := Nil;
-  HasTable := false;
   FhootNo := 0;
   nHandHeight := 0;                     //该页数据库行之前每行累加高度
   FpageCount := 1;                      //正处理的页数
@@ -5822,17 +5821,18 @@ Begin
 
   //将每页的表头存入一个列表中
   HandLineList := FillHeadList(nHandHeight);
-
   GetHasDataPosition(HasDataNo,CellIndex) ;
-  if HasDataNo <> -1 then begin
-        HasTable := true;
-        TempDataSet := GetDataSet(TReportCell(TReportLine(FlineList[HasDataNo]).FCells[CellIndex]).FCellText);
-        TempDataSetCount := TempDataSet.RecordCount;
-        TempDataSet.First;
-  end;       
-
-  If hastable Then                      //有数据库的处理(#打头)
+  If HasDataNo = -1 Then
   Begin
+    AppendList(  FPrintLineList, HandLineList);
+    UpdatePrintLines;
+    If saveyn Then
+      SaveTempFile(fpagecount, FpageAll);       
+  End else
+  Begin
+    TempDataSet := GetDataSet(TReportCell(TReportLine(FlineList[HasDataNo]).FCells[CellIndex]).FCellText);
+    TempDataSetCount := TempDataSet.RecordCount;
+    TempDataSet.First;
     HootLineList := FillFootList(nHootHeight);
     NhasSumALl := GetNhasSumALl(HasDataNo);
     sumAllList := FillSumList(nSumAllHeight);
@@ -5850,23 +5850,6 @@ Begin
 
       If isPageFull or (i = TempDataSetCount) Then
       Begin
-        {
-        If isPageFull Then
-        Begin
-          dataLineList.Delete(dataLineList.Count - 1);
-          Tempdataset.Prior;
-          RemoveLastSum(HasDataNo) ;
-          i := i - 1;
-        End;
-        If  (i = TempDataSetCount) and IsLastPageFull and (Not khbz) Then
-        Begin
-            dataLineList.Delete(dataLineList.Count - 1);
-            Tempdataset.last;
-            i := i - 1;
-            kk := 0;                    //
-            RemoveLastSum(HasDataNo) ;
-        End;
-        }
         //{
         If isPageFull or ( (i = TempDataSetCount) and IsLastPageFull and (Not khbz) ) Then
         Begin
@@ -5876,12 +5859,12 @@ Begin
           i := i - 1;
         End;
         //}
+        If dataLineList.Count = 0 Then
+          raise Exception.create('表格未能完全处理,请调整单元格宽度或页边距等设置');
+        FhootNo := HandLineList.Count+dataLineList.Count ;
         // join all
         AppendList(  FPrintLineList, HandLineList);
         AppendList(  FPrintLineList, dataLineList);
-        If dataLineList.Count = 0 Then
-          raise Exception.create('表格未能完全处理,请调整单元格宽度或页边距等设置');
-        FhootNo := FPrintLineList.Count;
         If (i = TempDataSetCount) Then
           AppendList(  FPrintLineList, SumAllList)
         Else
@@ -5907,18 +5890,8 @@ Begin
     fpagecount := fpagecount - 1;       //总页数
     HootLineList.Free;
     dataLineList.free;
-  End                                   //if hastable then
-  Else
-  Begin                                 //无数据库时只有表头时
+  End ;
 
-    For n := 0 To HandLineList.Count - 1 Do
-      FPrintLineList.Add(TReportLine(HandLineList[n]));
-
-    UpdatePrintLines;
-    If saveyn Then
-      SaveTempFile(fpagecount, FpageAll);
-
-  End;
 
   //  for N := FPrintLineList.Count - 1 downto 0 do
   //    TReportLine(FPrintLineList[N]).Free;
