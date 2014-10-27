@@ -5767,36 +5767,7 @@ Var
           result := false ;
         End;
   end;
-  //合计数中减去最后一行数据
-  // result = false -> 运算时出现了异常
-  function RemoveLastSum(var HasDataNo:Integer):boolean;var i,j:integer;
-  begin
-          result := true;
-          ThisLine := TReportLine(FlineList[HasDataNo]);
-          For j := 0 To ThisLine.FCells.Count - 1 Do
-          Begin
-            ThisCell := TreportCell(ThisLine.FCells[j]);
-            Try
-              If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] =
-                '#') Then
-              Begin
-                If TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)) Is
-                  tnumericField Then
-                  If Not
-                    (TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).IsNull) Then
-                  Begin
-                    SumPage[j] := SumPage[j] -
-                      TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).Value;
-                    SumAll[j] := SumAll[j] -
-                      TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).Value;
-                  End;
-              End;
-            Except
-              raise Exception.create('统计时发生错误，请检查模板设置是否正确');
-              result := false;
-            End;
-          End;//for j
-    end;
+ 
     function AppendList( l1, l2:TList):Boolean;var n :integer; begin
         For n := 0 To l2.Count - 1 Do
           l1.Add(l2[n]);
