@@ -5850,6 +5850,7 @@ Begin
 
       If isPageFull or (i = TempDataSetCount) Then
       Begin
+        {
         If isPageFull Then
         Begin
           dataLineList.Delete(dataLineList.Count - 1);
@@ -5865,6 +5866,16 @@ Begin
             kk := 0;                    //
             RemoveLastSum(HasDataNo) ;
         End;
+        }
+        //{
+        If isPageFull or ( (i = TempDataSetCount) and IsLastPageFull and (Not khbz) ) Then
+        Begin
+          dataLineList.Delete(dataLineList.Count - 1);
+          Tempdataset.Prior;
+          RemoveLastSum(HasDataNo) ;
+          i := i - 1;
+        End;
+        //}
         // join all
         AppendList(  FPrintLineList, HandLineList);
         AppendList(  FPrintLineList, dataLineList);
@@ -5889,8 +5900,8 @@ Begin
       //未打满一页,增加下一行记录
       TempLine := ExpandLine(HasDataNo,ndataHeight);
       DataLineList.add(tempLine);
-      If kk <> 0 Then
-        TempDataSet.Next;
+      //If kk <> 0 Then
+      TempDataSet.Next;
       i := i + 1;
     End; // end while
     fpagecount := fpagecount - 1;       //总页数
