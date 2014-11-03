@@ -576,9 +576,15 @@ Type
     procedure JoinAllList(FPrintLineList, HandLineList, dataLineList,
       SumAllList, HootLineList: TList;IsLastPage:Boolean);
     procedure PaddingEmptyLine(hasdatano: integer; var dataLineList: TList;
-      var ndataHeight: integer; var khbz: boolean);
+      var ndataHeight: integer; var khbz: boolean);overload;
+    procedure PaddingEmptyLine(hasdatano: integer;
+      var ndataHeight: integer; var khbz: boolean);overload;
     function SumCell(ThisCell: TReportCell; j: Integer): Boolean;
     procedure SumLine(var HasDataNo: integer);
+    function PreparePrintk_PageCount(): integer;
+    function ExpandLine_Height(var HasDataNo,
+      ndataHeight: integer): TReportLine;
+    function GetDataSetFromCell(HasDataNo,CellIndex:Integer):TDataset;
 
   Protected
 
@@ -761,7 +767,6 @@ End;
 Procedure TReportCell.SetOwnerCell(Cell: TReportCell);
 Begin
   FOwnerCell := Cell;
-  //CalcMinCellHeight;
 End;
 
 Function TReportCell.GetOwnedCellCount: Integer;
@@ -795,7 +800,6 @@ Begin
     TReportCell(TempCellList[I]).OwnerCell := Self;
   End;
 
-  //   CalcMinCellHeight;
 End;
 
 Procedure TReportCell.RemoveAllOwnedCell;
@@ -812,7 +816,6 @@ Begin
   End;
 
   FCellsList.Clear;
-  //  CalcMinCellHeight;
 End;
 
 Function TReportCell.IsCellOwned(Cell: TReportCell): Boolean;
@@ -880,7 +883,6 @@ Begin
   FLeftLine := LeftLine;
   CalcMinCellHeight;
   CalcCellRect;
-  // InvalidateRect here because Cell;s Rect no change
 End;
 
 Procedure TReportCell.SetLeftLineWidth(LeftLineWidth: Integer);
@@ -1048,7 +1050,9 @@ Begin
       Exit;
     End;
   End;
-
+  // LCJ : 最小高度需要能够放下文字，并且留下直线的宽度和2个点的空间出来。
+  //       因此，需要实际绘制文字在DC 0 上，获得它的TempRect-文字所占的空间
+  //       - FLeftMargin : Cell 内文字和边线之间留下的空的宽度
   hTempFont := CreateFontIndirect(FLogFont);
 
   // 此处取得窗口的指针用于计算大小
@@ -1082,7 +1086,7 @@ Begin
   End;
 
   Format := Format Or DT_CALCRECT;
-
+  // lpRect [in, out] !  TempRect.Bottom 会被修改 。但是手册上没有提到。
   DrawText(hTempDC, PChar(TempString), Length(TempString), TempRect, Format);
   //  DrawText(hTempDC, PChar(TempString), -1, TempRect, Format);
 
@@ -2975,12 +2979,9 @@ Var
   CellsToCombine: TList;
   TempRect: TMyRect;
 Begin
-  // 判断是否可以合并
-
-  // 选中的CELL数量小于2
+  // 判断是否可以合并：如果选中的CELL数量小于2
   If FSelectCells.Count < 2 Then
     Exit;
-
   Count := FSelectCells.Count - 1;
   For I := 0 To Count Do
   Begin
@@ -2990,7 +2991,7 @@ Begin
       FSelectCells.Add(ThisCell.FCellsList[J]);
   End;
 
-  // 各个行的宽度不同
+  // LCJ : 描绘被选中的单元格的轮廓
   LineArray := TList.Create;
   For I := 0 To FLineList.Count - 1 Do
   Begin
@@ -3001,7 +3002,6 @@ Begin
     TempRect.Bottom := 0;
     LineArray.Add(TempRect);
   End;
-
   For I := 0 To FSelectCells.Count - 1 Do
   Begin
     ThisCell := TReportCell(FSelectCells[I]);
@@ -3014,7 +3014,7 @@ Begin
       TMyRect(LineArray[ThisCell.OwnerLine.Index]).Right :=
         ThisCell.CellRect.Right;
   End;
-
+  // LCJ: 跨多行的，如果左边，右边不对齐，是无法合并的
   TempLeft := 0;
   TempRight := 0;
   For I := 0 To LineArray.Count - 1 Do
@@ -3029,10 +3029,7 @@ Begin
     End
     Else
     Begin
-      If TempLeft <> TMyRect(LineArray[I]).Left Then
-        Exit;
-
-      If TempRight <> TMyRect(LineArray[I]).Right Then
+      If (TempLeft <> TMyRect(LineArray[I]).Left) or (TempRight <> TMyRect(LineArray[I]).Right) Then
         Exit;
     End;
   End;
@@ -3078,15 +3075,13 @@ Begin
 
   CellsToDelete.Free;
 
-  // 合并同一列的单元格
+  // 合并同一列的单元格 -- 只要将下面行的Cell加入到第一行内cell的OwneredCell即可
   For I := 0 To CellsToCombine.Count - 1 Do
   Begin
     If I > 0 Then
     Begin
       TReportCell(CellsToCombine[0]).AddOwnedCell(TReportCell(CellsToCombine[I]));
     End;
-
-    //    InvalidateRect(Handle, @TReportCell(FSelectCells[I]).CellRect, True);
     InvalidateRect(Handle, @TReportCell(FSelectCells[I]).CellRect, False);
   End;
 
@@ -3102,10 +3097,6 @@ Begin
   RemoveAllSelectedCell;
   AddSelectedCell(OwnerCell);
   UpdateLines;
-
-  //  ShowWindow(Handle, SW_HIDE); // del lzl   有了此两行vibsie不起作用
-  //  ShowWindow(Handle, SW_SHOW); // del lzl
-
 End;
 
 Procedure TReportControl.DeleteLine;
@@ -4342,8 +4333,8 @@ Var
   i: integer;
 Begin
   ReportFile := reportfile;             //从新装入修改后的模版文件
-  i := PreparePrintk(FALSE, 0);
-
+  //i := PreparePrintk(FALSE, 0);
+  i := PreparePrintk_PageCount;
   REPmessform.show;                     //李泽伦加2001.4.27
   PreparePrintk(TRUE, i);
   REPmessform.Close;
@@ -5632,6 +5623,25 @@ function TReportRunTime.FillFootList(var nHootHeight:integer ):TList;
           End;
         End;
   end;
+    procedure TReportRunTime.PaddingEmptyLine(hasdatano:integer; var ndataHeight:integer;var khbz :boolean);
+  var
+    thisline,templine : Treportline ;nPrevdataHeight :integer;
+  begin
+        thisline := Treportline(FLineList[hasdatano]);
+        templine := CloneEmptyLine(thisLine);
+        While true Do
+        Begin
+          TempLine.CalcLineHeight;
+          nPrevdataHeight := ndataHeight ;
+          ndataHeight := ndataHeight + templine.GetLineHeight;
+          If IsLastPageFull Then
+          Begin
+            ndataHeight := nPrevdataHeight ;
+            khbz := true;
+            break;
+          End;
+        End;
+  end;
   function TReportRunTime.SumCell(ThisCell:TReportCell;j:Integer):Boolean;
   Var
   I,  n, hasdatano, TempDataSetCount:Integer;
@@ -5669,7 +5679,7 @@ function TReportRunTime.FillFootList(var nHootHeight:integer ):TList;
           l1.Add(l2[n]);
         result := true;
     end;
-    function TReportRunTime.ExpandLine(var HasDataNo,ndataHeight:integer):TReportLine;
+function TReportRunTime.ExpandLine(var HasDataNo,ndataHeight:integer):TReportLine;
 var thisLine ,TempLine: TReportLine;
     Var
   I, J, n,  TempDataSetCount:Integer;
@@ -5690,6 +5700,30 @@ var thisLine ,TempLine: TReportLine;
         NewCell.FOwnerLine := TempLine;
         setnewcell(false, newcell, thiscell);
         //SumCell(ThisCell,j) ;
+      End; //for j
+      TempLine.CalcLineHeight;
+      ndataHeight := ndataHeight + TempLine.GetLineHeight;
+      result := TempLine;
+    end;
+function TReportRunTime.ExpandLine_Height(var HasDataNo,ndataHeight:integer):TReportLine;
+var thisLine ,TempLine: TReportLine;
+    Var
+  I, J, n,  TempDataSetCount:Integer;
+  HandLineList, datalinelist, HootLineList, sumAllList: TList;
+  ThisCell, NewCell: TReportCell;
+
+  khbz: boolean;
+    begin
+      ThisLine := TReportLine(FlineList[HasDataNo]);
+      TempLine := TReportLine.Create;
+      TempLine.FMinHeight := ThisLine.FMinHeight;
+      TempLine.FDragHeight := ThisLine.FDragHeight;
+      For j := 0 To ThisLine.FCells.Count - 1 Do
+      Begin
+        ThisCell := TreportCell(ThisLine.FCells[j]);
+        NewCell := TReportCell.Create;
+        TempLine.FCells.Add(NewCell);
+        NewCell.FOwnerLine := TempLine;
       End; //for j
       TempLine.CalcLineHeight;
       ndataHeight := ndataHeight + TempLine.GetLineHeight;
@@ -5720,6 +5754,7 @@ var thisLine ,TempLine: TReportLine;
         Else
           AppendList(  FPrintLineList, HootLineList);
     end;
+
 Function TReportRunTime.PreparePrintk(SaveYn: boolean; FpageAll: integer):
   integer;
 Var
@@ -5824,6 +5859,68 @@ Begin
          MessageDlg(e.Message,mtInformation,[mbOk], 0);
   end;
 End;
+function TReportRunTime.GetDataSetFromCell(HasDataNo,CellIndex:Integer):TDataset;
+begin
+  result := GetDataSet(TReportCell(TReportLine(FlineList[HasDataNo]).FCells[CellIndex]).FCellText);
+end;
+Function TReportRunTime.PreparePrintk_PageCount():integer;
+Var
+  CellIndex,I, J, n,  TempDataSetCount:Integer;
+  ThisLine, TempLine: TReportLine;
+  ThisCell, NewCell: TReportCell;
+  SaveYn: boolean;
+  khbz: boolean;
+Begin
+
+  try
+  TempDataSet := Nil;
+  FhootNo := 0;
+  nHandHeight := 0;                     //该页数据库行之前每行累加高度
+  FpageCount := 1;                      //正处理的页数
+  HasDataNo := 0;
+  nHootHeight := 0;
+  TempDataSetCount := 0;
+  khbz := false;
+
+  FillHeadList(nHandHeight);
+  GetHasDataPosition(HasDataNo,CellIndex) ;
+  If HasDataNo <> -1 Then
+  Begin
+    TempDataSet := GetDataSetFromCell(HasDataNo,CellIndex);
+    TempDataSetCount := TempDataSet.RecordCount;
+    TempDataSet.First;
+    FillFootList(nHootHeight);
+    FillSumList(nSumAllHeight);
+
+    ndataHeight := 0;
+    i := 0;
+    While (i <= TempDataSetCount)  Do
+    Begin
+      If (Faddspace) And ((i = TempDataSetCount) And (HasEmptyRoomLastPage)) Then begin
+        PaddingEmptyLine(hasdatano,ndataHeight,khbz );
+      end;
+      TempLine := ExpandLine_Height(HasDataNo,ndataHeight);
+      If isPageFull or (i = TempDataSetCount) Then
+      Begin
+        If ndataHeight  = 0 Then
+          raise Exception.create('表格未能完全处理,请调整单元格宽度或页边距等设置');
+        fpagecount := fpagecount + 1;
+
+        ndataHeight := 0;
+        if (i = TempDataSetCount) then break;
+      End else begin
+        TempDataSet.Next;
+        i := i + 1;
+      end;
+    End; 
+    fpagecount := fpagecount - 1;       //总页数
+  End ;
+  result := fpagecount;
+  except
+    on E:Exception do
+         MessageDlg(e.Message,mtInformation,[mbOk], 0);
+  end;
+End;
 
 
 
@@ -5860,7 +5957,8 @@ Begin
     If cp_prewYn <> true Then
     Begin
       REPmessform.show;                 //李泽伦加2001.4.27
-      i := PreparePrintk(FALSE, 0);
+      //i := PreparePrintk(FALSE, 0);
+      i := PreparePrintk_PageCount;
       PreparePrintk(TRUE, i);
     End;
     REPmessform.Close;
@@ -6024,7 +6122,8 @@ Begin
     End
     Else
     Begin
-      i := PreparePrintk(FALSE, 0);
+      //i := PreparePrintk(FALSE, 0);
+      i := PreparePrintk_PageCount;
       REPmessform.show;
       HasDataNo := PreparePrintk(TRUE, i);
       REPmessform.Close;
@@ -6076,7 +6175,7 @@ Begin
   Begin
     ReportFile := reportfile; //从新装入修改后的模版文件,必须要，以便调用PreparePrintk
     i := PreparePrintk(FALSE, 0);
-
+    i := PreparePrintk_PageCount;
     REPmessform.show;                   //李泽伦加2001.4.27
     PreparePrintk(TRUE, i);
     REPmessform.Close;
