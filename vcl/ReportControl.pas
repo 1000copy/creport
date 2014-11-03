@@ -1003,6 +1003,60 @@ Var
   BottomCell, ThisCell: TReportCell;
   TotalHeight, Height, Top: Integer;
   TempSize: TSize;
+  procedure GetTextRect(var TempRect:TRect);
+  begin
+		// LCJ : 最小高度需要能够放下文字，并且留下直线的宽度和2个点的空间出来。
+	  //       因此，需要实际绘制文字在DC 0 上，获得它的TempRect-文字所占的空间
+	  //       - FLeftMargin : Cell 内文字和边线之间留下的空的宽度
+	  hTempFont := CreateFontIndirect(FLogFont);
+	  If (Length(FCellText) <= 0) Then
+		TempString := '汉'
+	  Else
+		TempString := FCellText;
+
+	  hTempDC := GetDC(0);
+	  hPrevFont := SelectObject(hTempDC, hTempFont);
+
+	  SetRect(TempRect, 0, 0, 0, 0);
+
+	  TempRect.left := FCellLeft + FLeftMargin;
+	  TempRect.top := GetCellTop + 2;
+	  ;
+	  TempRect.right := FCellLeft + FCellWidth - FLeftMargin;
+	  TempRect.bottom := 65535;
+
+	  Format := DT_EDITCONTROL Or DT_WORDBREAK;
+	  Case FHorzAlign Of
+		0:
+		  Format := Format Or DT_LEFT;
+		1:
+		  Format := Format Or DT_CENTER;
+		2:
+		  Format := Format Or DT_RIGHT;
+	  Else
+		Format := Format Or DT_LEFT;
+	  End;
+
+	  Format := Format Or DT_CALCRECT;
+	  // lpRect [in, out] !  TempRect.Bottom ,TempRect.Right  会被修改 。但是手册上没有提到。
+	  DrawText(hTempDC, PChar(TempString), Length(TempString), TempRect, Format);
+	  //  DrawText(hTempDC, PChar(TempString), -1, TempRect, Format);
+
+		// 补偿文字最后的回车带来的误差
+	  If Length(TempString) >= 2 Then
+	  Begin
+		If (TempString[Length(TempString)] = Chr(10)) And
+		(TempString[Length(TempString) - 1] = Chr(13)) Then
+		Begin
+		  GetTextExtentPoint(hTempDC, 'A', 1, TempSize);
+		  TempRect.Bottom := TempRect.Bottom + TempSize.cy;
+		End;
+	  End;
+
+	  SelectObject(hTempDc, hPrevFont);
+	  DeleteObject(hTempFont);
+	  ReleaseDC(0, hTempDC);
+  end;
 Begin
   // 计算CELL的最小高度
   If FCellWidth <= FLeftMargin * 2 Then
@@ -1050,60 +1104,7 @@ Begin
       Exit;
     End;
   End;
-  // LCJ : 最小高度需要能够放下文字，并且留下直线的宽度和2个点的空间出来。
-  //       因此，需要实际绘制文字在DC 0 上，获得它的TempRect-文字所占的空间
-  //       - FLeftMargin : Cell 内文字和边线之间留下的空的宽度
-  hTempFont := CreateFontIndirect(FLogFont);
-
-  // 此处取得窗口的指针用于计算大小
-
-  If (Length(FCellText) <= 0) Then
-    TempString := '汉'
-  Else
-    TempString := FCellText;
-
-  hTempDC := GetDC(0);
-  hPrevFont := SelectObject(hTempDC, hTempFont);
-
-  SetRect(TempRect, 0, 0, 0, 0);
-
-  TempRect.left := FCellLeft + FLeftMargin;
-  TempRect.top := GetCellTop + 2;
-  ;
-  TempRect.right := FCellLeft + FCellWidth - FLeftMargin;
-  TempRect.bottom := 65535;
-
-  Format := DT_EDITCONTROL Or DT_WORDBREAK;
-  Case FHorzAlign Of
-    0:
-      Format := Format Or DT_LEFT;
-    1:
-      Format := Format Or DT_CENTER;
-    2:
-      Format := Format Or DT_RIGHT;
-  Else
-    Format := Format Or DT_LEFT;
-  End;
-
-  Format := Format Or DT_CALCRECT;
-  // lpRect [in, out] !  TempRect.Bottom 会被修改 。但是手册上没有提到。
-  DrawText(hTempDC, PChar(TempString), Length(TempString), TempRect, Format);
-  //  DrawText(hTempDC, PChar(TempString), -1, TempRect, Format);
-
-    // 补偿文字最后的回车带来的误差
-  If Length(TempString) >= 2 Then
-  Begin
-    If (TempString[Length(TempString)] = Chr(10)) And
-    (TempString[Length(TempString) - 1] = Chr(13)) Then
-    Begin
-      GetTextExtentPoint(hTempDC, 'A', 1, TempSize);
-      TempRect.Bottom := TempRect.Bottom + TempSize.cy;
-    End;
-  End;
-
-  SelectObject(hTempDc, hPrevFont);
-  DeleteObject(hTempFont);
-  ReleaseDC(0, hTempDC);
+  GetTextRect(TempRect);
 
   If (FCellsList.Count > 0) Then
   Begin
