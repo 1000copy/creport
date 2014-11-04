@@ -1238,15 +1238,15 @@ Var
   SaveDCIndex: Integer;
   hTempBrush: HBRUSH;
   TempLogBrush: TLOGBRUSH;
-  hGrayPen, hPrevPen, hTempPen: HPEN;
+  hPrevPen, hTempPen: HPEN;
   bDelete: Boolean;
   Format: UINT;
   hTextFont, hPrevFont: HFONT;
   TempRect: TRect;
-  color ,cGrey,cBlack: COLORREF ;
-  procedure DrawLine(x1,y1,x2,y2:integer;color:COLORREF);
+  color  : COLORREF ;
+  procedure DrawLine(x1,y1,x2,y2:integer;color:COLORREF;PenWidth:Integer);
   begin
-    hTempPen := CreatePen(BS_SOLID, 1, color);
+    hTempPen := CreatePen(BS_SOLID, PenWidth, color);
     hPrevPen := SelectObject(hPaintDc, hTempPen);
     MoveToEx(hPaintDc, x1, y1, Nil);
     LineTo(hPaintDC, x2, y2);
@@ -1255,258 +1255,149 @@ Var
   end;
   procedure DrawLeft(color:COLORREF);
   begin
-    DrawLine(FCellRect.left, FCellRect.top,FCellRect.left, FCellRect.bottom,color);
+    DrawLine(FCellRect.left, FCellRect.top,FCellRect.left, FCellRect.bottom,color,FLeftLineWidth);
   end;
+  procedure DrawTop(color:COLORREF);
+  begin
+    DrawLine( FCellRect.left, FCellRect.top,FCellRect.right, FCellRect.top,color,FTopLineWidth);
+  end;
+  procedure DrawRight(color:COLORREF);
+  begin
+    DrawLine( FCellRect.right, FCellRect.top,FCellRect.right, FCellRect.bottom,color,FRightLineWidth);
+  end;
+  procedure DrawBottom(color:COLORREF);
+  begin
+    DrawLine( FCellRect.left, FCellRect.bottom,FCellRect.right, FCellRect.bottom,color,FBottomLineWidth);
+  end;
+  procedure DrawFrameLine();
+  var cGrey,cBlack: COLORREF ;
+  begin
+	  cGrey :=  RGB(192, 192, 192);cBlack := RGB(0, 0, 0);
+	  // 绘制边框
+	  If FLeftLine Then
+		  DrawLeft(cBlack)
+	  else if (not bPrint) and (CellIndex = 0) then
+		  DrawLeft(cGrey);
+
+	  If FTopLine Then
+		  DrawTop(cBlack)
+	  else if (not bPrint) and (OwnerLine.Index = 0) then
+		  DrawTop(cGrey);
+
+	  If FRightLine Then
+		  DrawRight(cBlack)
+	  else if (not bPrint)  then
+		  DrawRight(cGrey);
+
+	  If FBottomLine Then
+		  DrawBottom(cBlack)
+	  else if (not bPrint)  then
+		  DrawBottom(cGrey); 
+  end;
+  procedure FillBg(FCellRect:TRect;FBackGroundColor:COLORREF);
+  var TempRect:TRect;
+  begin
+		  TempRect := FCellRect;
+		  TempRect.Top := TempRect.Top + 1;
+		  TempRect.Right := TempRect.Right + 1;
+		  If FBackGroundColor <> RGB(255, 255, 255) Then
+		  Begin
+			TempLogBrush.lbStyle := BS_SOLID;
+			TempLogBrush.lbColor := FBackGroundColor;
+			hTempBrush := CreateBrushIndirect(TempLogBrush);
+			FillRect(hPaintDC, TempRect, hTempBrush);
+			DeleteObject(hTempBrush);
+		  End;
+	  end;
+  procedure DrawDragon;begin
+	  hTempPen := CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+	  hPrevPen := SelectObject(hPaintDc, hTempPen);
+
+	  // 绘制斜线
+	  If FDiagonal > 0 Then
+	  Begin
+		If ((FDiagonal And LINE_LEFT1) > 0) Then
+		Begin
+		  MoveToEx(hPaintDC, FCellRect.left + 1, FCellRect.top + 1, Nil);
+		  LineTo(hPaintDC, FCellRect.right - 1, FCellRect.bottom - 1);
+		End;
+
+		If ((FDiagonal And LINE_LEFT2) > 0) Then
+		Begin
+		  MoveToEx(hPaintDC, FCellRect.left + 1, FCellRect.top + 1, Nil);
+		  LineTo(hPaintDC, FCellRect.right - 1, trunc((FCellRect.bottom +
+			FCellRect.top) / 2 + 0.5));
+		End;
+
+		If ((FDiagonal And LINE_LEFT3) > 0) Then
+		Begin
+		  MoveToEx(hPaintDC, FCellRect.left + 1, FCellRect.top + 1, Nil);
+		  LineTo(hPaintDC, trunc((FCellRect.right + FCellRect.left) / 2 + 0.5),
+			FCellRect.bottom - 1);
+		End;
+
+		If ((FDiagonal And LINE_RIGHT1) > 0) Then
+		Begin
+		  MoveToEx(hPaintDC, FCellRect.right - 1, FCellRect.top + 1, Nil);
+		  LineTo(hPaintDC, FCellRect.left + 1, FCellRect.bottom - 1);
+		End;
+
+		If ((FDiagonal And LINE_RIGHT2) > 0) Then
+		Begin
+		  MoveToEx(hPaintDC, FCellRect.right - 1, FCellRect.top + 1, Nil);
+		  LineTo(hPaintDC, FCellRect.left + 1, trunc((FCellRect.bottom +
+			FCellRect.top) / 2 + 0.5));
+		End;
+
+		If ((FDiagonal And LINE_RIGHT3) > 0) Then
+		Begin
+		  MoveToEx(hPaintDC, FCellRect.right - 1, FCellRect.top + 1, Nil);
+		  LineTo(hPaintDC, trunc((FCellRect.right + FCellRect.left) / 2 + 0.5),
+			FCellRect.bottom - 1);
+		End;
+
+	  End;
+
+	  SelectObject(hPaintDC, hPrevPen);
+	  DeleteObject(hTempPen);
+  end;
+  procedure DrawContentText;
+  begin
+	 If Length(FCellText) > 0 Then
+	 Begin
+		Windows.SetTextColor(hPaintDC, FTextColor);
+		Format := DT_EDITCONTROL Or DT_WORDBREAK;
+		Case FHorzAlign Of
+		  TEXT_ALIGN_LEFT:
+			Format := Format Or DT_LEFT;
+		  TEXT_ALIGN_CENTER:
+			Format := Format Or DT_CENTER;
+		  TEXT_ALIGN_RIGHT:
+			Format := Format Or DT_RIGHT;
+		Else
+		  Format := Format Or DT_LEFT;
+		End;
+		hTextFont := CreateFontIndirect(FLogFont);
+		hPrevFont := SelectObject(hPaintDC, hTextFont);
+		TempRect := FTextRect;
+		DrawText(hPaintDC, PChar(FCellText), Length(FCellText), TempRect, Format);
+		SelectObject(hPaintDC, hPrevFont);
+		DeleteObject(hTextFont);
+	 End;
+	end;
 Begin
-  cGrey :=  RGB(192, 192, 192);cBlack := RGB(0, 0, 0);
   If FOwnerCell <> Nil Then
-    Exit;
-
+    Exit;                          
   SaveDCIndex := SaveDC(hPaintDC);
-
-  SetBkMode(hPaintDC, TRANSPARENT);
-
-  // 绘制底色
-  TempRect := FCellRect;
-  TempRect.Top := TempRect.Top + 1;
-  TempRect.Right := TempRect.Right + 1;
-  If FBackGroundColor <> RGB(255, 255, 255) Then
-  Begin
-    TempLogBrush.lbStyle := BS_SOLID;
-    TempLogBrush.lbColor := FBackGroundColor;
-    hTempBrush := CreateBrushIndirect(TempLogBrush);
-    FillRect(hPaintDC, TempRect, hTempBrush);
-    DeleteObject(hTempBrush);
-  End;
-
-
-
-
-  // 绘制边框
-  hGrayPen := CreatePen(BS_SOLID, 1, RGB(192, 192, 192));
-
-	// bPrint  | bLeftLine  |  CellIndex = 0 |   DrawLine | Black or Grey
-	// -------------------------------------------------------------------
-	// true    |  true      |  true          |   yes      | black
-	// true    |  true      |  false         |   yes      | black
-	// true    |  false     |  true          |   no       | n/a
-	// true    |  false     |  false         |   no       | n/a
-
-	// false   |  true      |  true          |   yes      | black
-	// false   |  true      |  false         |   yes      | black
-	// false   |  false     |  true          |   yes      | grey
-	// false   |  false     |  false         |   no       | n/a
-
-  // 左边线
-  {
-  If Not bPrint And (FLeftLine Or (FCellIndex = 0)) Then
-  Begin
-    If FLeftLine Then
-      color := RGB(0, 0, 0)
-    else
-      color :=  RGB(192, 192, 192);
-    DrawLine(FCellRect.left, FCellRect.top, FCellRect.left, FCellRect.bottom,color);
-  End
-  Else
-    If FLeftLine Then
-      DrawLine(FCellRect.left, FCellRect.top,FCellRect.left, FCellRect.bottom,RGB(0, 0, 0));
-  }
-  If FLeftLine Then
-      DrawLeft(cBlack)
-  else if (not bPrint) and (CellIndex = 0) then
-      DrawLeft(cGrey);
-
-
-  // 上边线
-  If Not bPrint And (FTopLine Or (OwnerLine.Index = 0)) Then
-  Begin
-    bDelete := False;
-    hTempPen := hGrayPen;
-
-    If FTopLine Then
-    Begin
-      hTempPen := CreatePen(PS_SOLID, FTopLineWidth, RGB(0, 0, 0));
-      bDelete := True;
-    End;
-
-    hPrevPen := SelectObject(hPaintDC, hTempPen);
-
-    MoveToEx(hPaintDc, FCellRect.left, FCellRect.top, Nil);
-    LineTo(hPaintDc, FCellRect.right, FCellRect.top);
-
-    SelectObject(hPaintDc, hPrevPen);
-
-    If bDelete Then
-      DeleteObject(hTempPen);
-  End
-  Else
-  Begin
-    If FTopLine Then
-    Begin
-      hTempPen := CreatePen(PS_SOLID, FTopLineWidth, RGB(0, 0, 0));
-      hPrevPen := SelectObject(hPaintDc, hTempPen);
-
-      MoveToEx(hPaintDc, FCellRect.left, FCellRect.top, Nil);
-      LineTo(hPaintDc, FCellRect.right, FCellRect.top);
-
-      SelectObject(hPaintDc, hPrevPen);
-      DeleteObject(hTempPen);
-    End;
-  End;
-
-  // 右边线
-  If Not bPrint Then
-  Begin
-    bDelete := False;
-    hTempPen := hGrayPen;
-
-    If FRightLine Then
-    Begin
-      hTempPen := CreatePen(PS_SOLID, FRightLineWidth, RGB(0, 0, 0));
-      bDelete := True;
-    End;
-
-    hPrevPen := SelectObject(hPaintDc, hTempPen);
-
-    MoveToEx(hPaintDc, FCellRect.right, FCellRect.top, Nil);
-    LineTo(hPaintDC, FCellRect.right, FCellRect.bottom);
-
-    SelectObject(hPaintDc, hPrevPen);
-
-    If bDelete Then
-      DeleteObject(hTempPen);
-  End
-  Else
-  Begin
-    If FRightLine Then
-    Begin
-      hTempPen := CreatePen(PS_SOLID, FRightLineWidth, RGB(0, 0, 0));
-      hPrevPen := SelectObject(hPaintDc, hTempPen);
-
-      MoveToEx(hPaintDc, FCellRect.right, FCellRect.top, Nil);
-      LineTo(hPaintDC, FCellRect.right, FCellRect.bottom);
-
-      SelectObject(hPaintDc, hPrevPen);
-      DeleteObject(hTempPen);
-    End;
-  End;
-
-  // 下边线
-  If Not bPrint Then
-  Begin
-    bDelete := False;
-    hTempPen := hGrayPen;
-
-    If FBottomLine Then
-    Begin
-      hTempPen := CreatePen(PS_SOLID, FBottomLineWidth, RGB(0, 0, 0));
-      bDelete := True;
-    End;
-
-    hPrevPen := SelectObject(hPaintDc, hTempPen);
-
-    MoveToEx(hPaintDc, FCellRect.left, FCellRect.bottom, Nil);
-    LineTo(hPaintDc, FCellRect.right, FCellRect.bottom);
-
-    SelectObject(hPaintDc, hPrevPen);
-
-    If bDelete Then
-      DeleteObject(hTempPen);
-  End
-  Else
-  Begin
-    If FBottomLine Then
-    Begin
-      hTempPen := CreatePen(PS_SOLID, FBottomLineWidth, RGB(0, 0, 0));
-      hPrevPen := SelectObject(hPaintDc, hTempPen);
-
-      MoveToEx(hPaintDc, FCellRect.left, FCellRect.bottom, Nil);
-      LineTo(hPaintDc, FCellRect.right, FCellRect.bottom);
-
-      SelectObject(hPaintDc, hPrevPen);
-      DeleteObject(hTempPen);
-    End;
-  End;
-
-  DeleteObject(hGrayPen);
-
-  hTempPen := CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
-  hPrevPen := SelectObject(hPaintDc, hTempPen);
-
-  // 绘制斜线
-  If FDiagonal > 0 Then
-  Begin
-    If ((FDiagonal And LINE_LEFT1) > 0) Then
-    Begin
-      MoveToEx(hPaintDC, FCellRect.left + 1, FCellRect.top + 1, Nil);
-      LineTo(hPaintDC, FCellRect.right - 1, FCellRect.bottom - 1);
-    End;
-
-    If ((FDiagonal And LINE_LEFT2) > 0) Then
-    Begin
-      MoveToEx(hPaintDC, FCellRect.left + 1, FCellRect.top + 1, Nil);
-      LineTo(hPaintDC, FCellRect.right - 1, trunc((FCellRect.bottom +
-        FCellRect.top) / 2 + 0.5));
-    End;
-
-    If ((FDiagonal And LINE_LEFT3) > 0) Then
-    Begin
-      MoveToEx(hPaintDC, FCellRect.left + 1, FCellRect.top + 1, Nil);
-      LineTo(hPaintDC, trunc((FCellRect.right + FCellRect.left) / 2 + 0.5),
-        FCellRect.bottom - 1);
-    End;
-
-    If ((FDiagonal And LINE_RIGHT1) > 0) Then
-    Begin
-      MoveToEx(hPaintDC, FCellRect.right - 1, FCellRect.top + 1, Nil);
-      LineTo(hPaintDC, FCellRect.left + 1, FCellRect.bottom - 1);
-    End;
-
-    If ((FDiagonal And LINE_RIGHT2) > 0) Then
-    Begin
-      MoveToEx(hPaintDC, FCellRect.right - 1, FCellRect.top + 1, Nil);
-      LineTo(hPaintDC, FCellRect.left + 1, trunc((FCellRect.bottom +
-        FCellRect.top) / 2 + 0.5));
-    End;
-
-    If ((FDiagonal And LINE_RIGHT3) > 0) Then
-    Begin
-      MoveToEx(hPaintDC, FCellRect.right - 1, FCellRect.top + 1, Nil);
-      LineTo(hPaintDC, trunc((FCellRect.right + FCellRect.left) / 2 + 0.5),
-        FCellRect.bottom - 1);
-    End;
-
-  End;
-
-  SelectObject(hPaintDC, hPrevPen);
-  DeleteObject(hTempPen);
-
-  // 绘制文字
-  If Length(FCellText) > 0 Then
-  Begin
-    Windows.SetTextColor(hPaintDC, FTextColor);
-    Format := DT_EDITCONTROL Or DT_WORDBREAK;
-    Case FHorzAlign Of
-      TEXT_ALIGN_LEFT:
-        Format := Format Or DT_LEFT;
-      TEXT_ALIGN_CENTER:
-        Format := Format Or DT_CENTER;
-      TEXT_ALIGN_RIGHT:
-        Format := Format Or DT_RIGHT;
-    Else
-      Format := Format Or DT_LEFT;
-    End;
-
-    hTextFont := CreateFontIndirect(FLogFont);
-    hPrevFont := SelectObject(hPaintDC, hTextFont);
-    TempRect := FTextRect;
-    DrawText(hPaintDC, PChar(FCellText), Length(FCellText), TempRect, Format);
-    SelectObject(hPaintDC, hPrevFont);
-    DeleteObject(hTextFont);
-
-  End;
-
-  RestoreDC(hPaintDC, SaveDCIndex);
+  try
+	  SetBkMode(hPaintDC, TRANSPARENT);
+	  FillBg ( FCellRect,FBackGroundColor);
+	  DrawFrameLine();
+	  DrawDragon;
+	  DrawContentText ;
+  finally
+    RestoreDC(hPaintDC, SaveDCIndex);
+  end;
 End;
 
 Constructor TReportCell.Create;
