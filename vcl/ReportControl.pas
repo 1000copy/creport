@@ -1243,7 +1243,7 @@ Var
   Format: UINT;
   hTextFont, hPrevFont: HFONT;
   TempRect: TRect;
-  color : COLORREF ;
+  color ,cGrey,cBlack: COLORREF ;
   procedure DrawLine(x1,y1,x2,y2:integer;color:COLORREF);
   begin
     hTempPen := CreatePen(BS_SOLID, 1, color);
@@ -1253,8 +1253,12 @@ Var
     SelectObject(hPaintDc, hPrevPen);
     DeleteObject(hTempPen);
   end;
+  procedure DrawLeft(color:COLORREF);
+  begin
+    DrawLine(FCellRect.left, FCellRect.top,FCellRect.left, FCellRect.bottom,color);
+  end;
 Begin
-
+  cGrey :=  RGB(192, 192, 192);cBlack := RGB(0, 0, 0);
   If FOwnerCell <> Nil Then
     Exit;
 
@@ -1292,8 +1296,9 @@ Begin
 	// false   |  true      |  false         |   yes      | black
 	// false   |  false     |  true          |   yes      | grey
 	// false   |  false     |  false         |   no       | n/a
-  
+
   // ×ó±ßÏß
+  {
   If Not bPrint And (FLeftLine Or (FCellIndex = 0)) Then
   Begin
     If FLeftLine Then
@@ -1305,6 +1310,12 @@ Begin
   Else
     If FLeftLine Then
       DrawLine(FCellRect.left, FCellRect.top,FCellRect.left, FCellRect.bottom,RGB(0, 0, 0));
+  }
+  If FLeftLine Then
+      DrawLeft(cBlack)
+  else if (not bPrint) and (CellIndex = 0) then
+      DrawLeft(cGrey);
+
 
   // ÉÏ±ßÏß
   If Not bPrint And (FTopLine Or (OwnerLine.Index = 0)) Then
