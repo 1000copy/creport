@@ -994,16 +994,18 @@ End;
 
 Procedure TReportCell.CalcMinCellHeight;
 Var
-  hTempFont, hPrevFont: HFONT;
-  hTempDC: HDC;
-  TempString: String;
-  TempRect: TRect;
   Format: UINT;
   I: Integer;
   BottomCell, ThisCell: TReportCell;
   TotalHeight,Top: Integer;
   TempSize: TSize;
+  TempRect: TRect;
+
   procedure GetTextRect(var TempRect:TRect);
+  var   hTempFont, hPrevFont: HFONT;
+  hTempDC: HDC;
+  TempString: String;
+
   begin
 		// LCJ : 最小高度需要能够放下文字，并且留下直线的宽度和2个点的空间出来。
 	  //       因此，需要实际绘制文字在DC 0 上，获得它的TempRect-文字所占的空间
@@ -1125,7 +1127,7 @@ Begin
     FMinCellHeight := DefaultHeight(self);
     OwnerLine.CalcLineHeight;
     For I := 0 To FCellsList.Count - 1 Do
-      TReportCell(FCellsList[I]).CalcMinCellHeight;  
+      TReportCell(FCellsList[I]).CalcMinCellHeight;
   End
   Else
   Begin
@@ -1154,14 +1156,7 @@ Begin
     FCellRect.top := CellTop;
     FCellRect.right := FCellRect.left + FCellWidth;
     FCellRect.bottom := FCellRect.top + OwnerLineHeight;
-    {        if scale <> 100 then  //1999.1.23
-            begin
-             FCellrect.Left :=FCellrect.Left * 100 div Scale;
-             FCellrect.top :=FCellrect.top * 100 div Scale;
-             FCellrect.right :=FCellrect.right * 100 div Scale;
-             FCellrect.bottom :=FCellrect.bottom * 100 div Scale;
-            end;
-    }
+
         // 计算文本框的矩形
     TempRect := FCellRect;
 
@@ -1185,14 +1180,6 @@ Begin
           TempRect.Bottom := TempRect.Bottom + OwnerLineHeight - FMinCellHeight;
         End;
     End;
-    {        if Scale <> 100 then
-            begin
-             temprect.top := temprect.top * 100 div Scale;
-             temprect.bottom :=temprect.Bottom  * 100 div Scale;
-             temprect.Left  := temprect.left * 100 div Scale;
-             temprect.Right  := temprect.Right  * 100 div Scale;
-            end;
-    }
     FTextRect := TempRect;
   End
   Else
@@ -1232,15 +1219,7 @@ Begin
             - FRequiredCellHeight;
         End;
     End;
-    {
-            if Scale <> 100 then
-            begin
-             temprect.top := temprect.top * 100 div Scale;
-             temprect.bottom :=temprect.Bottom  * 100 div Scale;
-             temprect.Left  := temprect.left * 100 div Scale;
-             temprect.Right  := temprect.Right  * 100 div Scale;
-            end;
-    }
+
     FTextRect := TempRect;
   End;
 
