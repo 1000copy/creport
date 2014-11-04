@@ -97,6 +97,10 @@ Type
     Function GetCellHeight: Integer;
     Function GetCellTop: Integer;
     Function GetOwnerLineHeight: Integer;
+    function DefaultHeight(cell: TReportCell): integer;
+    function GetBottomest(FOwnerCell: TReportCell): TReportCell;
+    procedure GetTextRect(var TempRect: TRect);
+    function GetTotalHeight(FOwnerCell: TReportCell): Integer;
   Protected
     { Protected declarations }
     Procedure SetLeftMargin(LeftMargin: Integer);
@@ -990,22 +994,16 @@ Begin
   // InvalidateRect
 End;
 
-// 开始噩梦，噩梦中我把屏幕上的象素点一个一个干掉
-
-Procedure TReportCell.CalcMinCellHeight;
-Var
+ procedure TReportCell.GetTextRect(var TempRect:TRect);
+  var   hTempFont, hPrevFont: HFONT;
+  hTempDC: HDC;
+  TempString: String;
+  Var
   Format: UINT;
   I: Integer;
   BottomCell, ThisCell: TReportCell;
   TotalHeight,Top: Integer;
   TempSize: TSize;
-  TempRect: TRect;
-
-  procedure GetTextRect(var TempRect:TRect);
-  var   hTempFont, hPrevFont: HFONT;
-  hTempDC: HDC;
-  TempString: String;
-
   begin
 		// LCJ : 最小高度需要能够放下文字，并且留下直线的宽度和2个点的空间出来。
 	  //       因此，需要实际绘制文字在DC 0 上，获得它的TempRect-文字所占的空间
@@ -1059,12 +1057,12 @@ Var
 	  DeleteObject(hTempFont);
 	  ReleaseDC(0, hTempDC);
   end;
-  function DefaultHeight(cell : TReportCell) : integer; begin
+  function TReportCell.DefaultHeight(cell : TReportCell) : integer; begin
     result := 16 + 2 + cell.FTopLineWidth + cell.FBottomLineWidth ;
   end;
   // 取得最下的单元格
-  function GetBottomest(FOwnerCell:TReportCell):TReportCell;
-  var BottomCell:TReportCell;I,Top:Integer ;
+  function TReportCell.GetBottomest(FOwnerCell:TReportCell):TReportCell;
+  var BottomCell,ThisCell:TReportCell;I,Top:Integer ;
   begin
     BottomCell := Nil;
     Top := 0;
@@ -1079,8 +1077,8 @@ Var
     End;
     result := BottomCell;
   end;
-  function GetTotalHeight(FOwnerCell:TReportCell):Integer;
-  var BottomCell:TReportCell;I,Top,Height:Integer ;
+  function TReportCell.GetTotalHeight(FOwnerCell:TReportCell):Integer;
+  var BottomCell,ThisCell:TReportCell;I,Top,Height:Integer ;
   begin
     Height := 0 ;
     For I := 0 To FOwnerCell.FCellsList.Count - 1 Do
@@ -1092,6 +1090,16 @@ Var
     End;
     result := Height + FOwnerCell.OwnerLineHeight;
   end;
+// 开始噩梦，噩梦中我把屏幕上的象素点一个一个干掉
+
+Procedure TReportCell.CalcMinCellHeight;
+Var
+
+  I: Integer;
+  BottomCell, ThisCell: TReportCell;
+  TotalHeight,Top: Integer;
+  TempSize: TSize;
+  TempRect: TRect;
 Begin
   // 要是Cell 太窄，窄到无法放入任何文字，就不要到后面去计算高度了。
   // 直接默认 字高 16 即可。
