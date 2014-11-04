@@ -1001,7 +1001,7 @@ Var
   Format: UINT;
   I: Integer;
   BottomCell, ThisCell: TReportCell;
-  TotalHeight, Height, Top: Integer;
+  TotalHeight,Top: Integer;
   TempSize: TSize;
   procedure GetTextRect(var TempRect:TRect);
   begin
@@ -1057,52 +1057,58 @@ Var
 	  DeleteObject(hTempFont);
 	  ReleaseDC(0, hTempDC);
   end;
-Begin
-  // 计算CELL的最小高度
-  If FCellWidth <= FLeftMargin * 2 Then
-  Begin
-    FMinCellHeight := 16 + 2 + FTopLineWidth + FBottomLineWidth;
-    Exit;
-  End;
-
-  // 隶属与某CELL时
-  If FOwnerCell <> Nil Then
-  Begin
-    // 取得最下的单元格
-    FMinCellHeight := 16 + 2 + FTopLineWidth + FBottomLineWidth;
+  function DefaultHeight(cell : TReportCell) : integer; begin
+    result := 16 + 2 + cell.FTopLineWidth + cell.FBottomLineWidth ;
+  end;
+  // 取得最下的单元格
+  function GetBottomest(FOwnerCell:TReportCell):TReportCell;
+  var BottomCell:TReportCell;I,Top:Integer ;
+  begin
     BottomCell := Nil;
-    Height := 0;
     Top := 0;
     For I := 0 To FOwnerCell.FCellsList.Count - 1 Do
     Begin
       ThisCell := FOwnerCell.FCellsList[i];
-      ThisCell.FMinCellHeight := 16 + 2 + ThisCell.TopLineWidth +
-        ThisCell.BottomLineWidth;
-      ThisCell.OwnerLine.CalcLineHeight;
-      Height := Height + ThisCell.OwnerLineHeight;
-
       If ThisCell.CellTop > Top Then
       Begin
         BottomCell := ThisCell;
         Top := ThisCell.CellTop;
       End;
     End;
-
-    If BottomCell <> Self Then
+    result := BottomCell;
+  end;
+  function GetTotalHeight(FOwnerCell:TReportCell):Integer;
+  var BottomCell:TReportCell;I,Top,Height:Integer ;
+  begin
+    Height := 0 ;
+    For I := 0 To FOwnerCell.FCellsList.Count - 1 Do
     Begin
-      FMinCellHeight := 16 + 2 + FTopLineWidth + FBottomLineWidth;
-      Exit;
-    End
-    Else
-    Begin
-      TotalHeight := Height + FOwnerCell.OwnerLineHeight;
-      If FOwnerCell.RequiredCellHeight > TotalHeight Then
-        FMinCellHeight := FOwnerCell.RequiredCellHeight - TotalHeight +
-          OwnerLineHeight
-      Else
-        FMinCellHeight := 16 + 2 + FTopLineWidth + FBottomLineWidth;
-      Exit;
+      ThisCell := FOwnerCell.FCellsList[i];
+      ThisCell.FMinCellHeight := DefaultHeight(thiscell);
+      ThisCell.OwnerLine.CalcLineHeight;
+      Height := Height + ThisCell.OwnerLineHeight;
     End;
+    result := Height + FOwnerCell.OwnerLineHeight;
+  end;
+Begin
+  // 要是Cell 太窄，窄到无法放入任何文字，就不要到后面去计算高度了。
+  // 直接默认 字高 16 即可。
+  // 没有 RightMargin ,原作者把RightMargin 和LeftMargin等同，所以又下面的 FLeftMargin * 2
+  If FCellWidth <= FLeftMargin * 2 Then
+  Begin
+    FMinCellHeight := DefaultHeight(self);
+    Exit;
+  End;
+  // 隶属与某CELL时
+  If FOwnerCell <> Nil Then
+  Begin
+    BottomCell := GetBottomest(FOwnerCell);
+    TotalHeight := GetTotalHeight(FOwnerCell) ;
+    If (BottomCell = Self ) and (FOwnerCell.RequiredCellHeight > TotalHeight) Then
+      FMinCellHeight := FOwnerCell.RequiredCellHeight - TotalHeight + OwnerLineHeight
+    else
+      FMinCellHeight := DefaultHeight(self) ;
+    exit;
   End;
   GetTextRect(TempRect);
 
@@ -1113,17 +1119,13 @@ Begin
     Else
       FRequiredCellHeight := TempRect.Bottom - TempRect.Top;
 
-    FRequiredCellHeight := FRequiredCellHeight + 2;
-    FRequiredCellHeight := FRequiredCellHeight + FTopLineWidth +
+    FRequiredCellHeight := FRequiredCellHeight + 2  + FTopLineWidth +
       FBottomLineWidth;
 
-    FMinCellHeight := 16 + 2 + FTopLineWidth + FBottomLineWidth;
-
+    FMinCellHeight := DefaultHeight(self);
     OwnerLine.CalcLineHeight;
-
     For I := 0 To FCellsList.Count - 1 Do
-      TReportCell(FCellsList[I]).CalcMinCellHeight;
-
+      TReportCell(FCellsList[I]).CalcMinCellHeight;  
   End
   Else
   Begin
@@ -1131,9 +1133,7 @@ Begin
       FMinCellHeight := 16
     Else
       FMinCellHeight := TempRect.Bottom - TempRect.Top;
-
-    FMinCellHeight := FMinCellHeight + 2;
-    FMinCellHeight := FMinCellHeight + FTopLineWidth + FBottomLineWidth;
+    FMinCellHeight := FMinCellHeight + 2 + FTopLineWidth + FBottomLineWidth;
   End;
 End;
 
