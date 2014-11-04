@@ -1243,6 +1243,16 @@ Var
   Format: UINT;
   hTextFont, hPrevFont: HFONT;
   TempRect: TRect;
+  color : COLORREF ;
+  procedure DrawLine(x1,y1,x2,y2:integer;color:COLORREF);
+  begin
+    hTempPen := CreatePen(BS_SOLID, 1, color);
+    hPrevPen := SelectObject(hPaintDc, hTempPen);
+    MoveToEx(hPaintDc, x1, y1, Nil);
+    LineTo(hPaintDC, x2, y2);
+    SelectObject(hPaintDc, hPrevPen);
+    DeleteObject(hTempPen);
+  end;
 Begin
 
   If FOwnerCell <> Nil Then
@@ -1265,44 +1275,36 @@ Begin
     DeleteObject(hTempBrush);
   End;
 
+
+
+
   // 绘制边框
   hGrayPen := CreatePen(BS_SOLID, 1, RGB(192, 192, 192));
 
+	// bPrint  | bLeftLine  |  CellIndex = 0 |   DrawLine | Black or Grey
+	// -------------------------------------------------------------------
+	// true    |  true      |  true          |   yes      | black
+	// true    |  true      |  false         |   yes      | black
+	// true    |  false     |  true          |   no       | n/a
+	// true    |  false     |  false         |   no       | n/a
+
+	// false   |  true      |  true          |   yes      | black
+	// false   |  true      |  false         |   yes      | black
+	// false   |  false     |  true          |   yes      | grey
+	// false   |  false     |  false         |   no       | n/a
+  
   // 左边线
   If Not bPrint And (FLeftLine Or (FCellIndex = 0)) Then
   Begin
-    bDelete := False;
-    hTempPen := hGrayPen;
     If FLeftLine Then
-    Begin
-      hTempPen := CreatePen(PS_SOLID, FLeftLineWidth, RGB(0, 0, 0));
-      bDelete := True;
-    End;
-
-    hPrevPen := SelectObject(hPaintDc, hTempPen);
-
-    MoveToEx(hPaintDc, FCellRect.left, FCellRect.top, Nil);
-    LineTo(hPaintDC, FCellRect.left, FCellRect.bottom);
-
-    SelectObject(hPaintDc, hPrevPen);
-
-    If bDelete Then
-      DeleteObject(hTempPen);
+      color := RGB(0, 0, 0)
+    else
+      color :=  RGB(192, 192, 192);
+    DrawLine(FCellRect.left, FCellRect.top, FCellRect.left, FCellRect.bottom,color);
   End
   Else
-  Begin
     If FLeftLine Then
-    Begin
-      hTempPen := CreatePen(PS_SOLID, FLeftLineWidth, RGB(0, 0, 0));
-      hPrevPen := SelectObject(hPaintDc, hTempPen);
-
-      MoveToEx(hPaintDc, FCellRect.left, FCellRect.top, Nil);
-      LineTo(hPaintDC, FCellRect.left, FCellRect.bottom);
-
-      SelectObject(hPaintDc, hPrevPen);
-      DeleteObject(hTempPen);
-    End;
-  End;
+      DrawLine(FCellRect.left, FCellRect.top,FCellRect.left, FCellRect.bottom,RGB(0, 0, 0));
 
   // 上边线
   If Not bPrint And (FTopLine Or (OwnerLine.Index = 0)) Then
