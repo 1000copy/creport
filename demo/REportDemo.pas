@@ -124,6 +124,8 @@ var j:integer;
     CellFont: TLogFont;
     cf: TFont;
 begin
+    ReportRunTime1.SetDataSet('t1',dataform.table1);
+    ReportRunTime1.SetDataSet('t2',dataform.table2);
  		strFileDir := ExtractFileDir(Application.ExeName);
 		with  ReportControl1 do
 		begin
@@ -138,7 +140,7 @@ begin
 			SetCellAlign(1, 1);
 
 			cf := Tfont.Create;
-			cf.Name := '????_GB2312';
+			cf.Name := '·ÂËÎ_GB2312';
 			cf.Size := 22;
 			cf.style :=cf.style+ [fsBold];
 
@@ -167,7 +169,7 @@ begin
 			SetCellSFocus(1,0,1,dbgrid1.Columns.Count-1);
 			SetCellAlign(1, 1);
 
-			cf.Name := '????_GB2312';
+			cf.Name := '·ÂËÎ_GB2312';
 			cf.Size := 16;
 			cf.Style:=[];
 			GetObject(cf.Handle, SizeOf(CellFont), @CellFont);

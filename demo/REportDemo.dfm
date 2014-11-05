@@ -142,6 +142,12 @@ object CReportDemoForm: TCReportDemoForm
       Width = 89
       Height = 22
       Caption = #25171#21360'DbGrid2'
+      Font.Charset = GB2312_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -11
+      Font.Name = #26999#20307
+      Font.Style = []
+      ParentFont = False
       OnClick = SpeedButton2Click
     end
     object SpeedButton3: TSpeedButton

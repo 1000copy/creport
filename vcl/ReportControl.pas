@@ -4331,7 +4331,7 @@ Var
 
 Begin
 
-  REPmessform.Label1.Caption := inttostr(PageNumber); //¿Ó‘Û¬◊ 2001.4.27
+  REPmessform.Label1.Caption := inttostr(PageNumber); //lzl  2001.4.27
 
   strFileDir := ExtractFileDir(Application.ExeName); // + '\';
 
