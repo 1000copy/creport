@@ -6070,7 +6070,7 @@ Begin
   Cp_DFdList.clear;
 End;
 
-Function TReportRunTime.shpreview: boolean; //在预览中设置纸张及边距，李泽伦增加
+Function TReportRunTime.shpreview: boolean; //在预览中设置纸张及边距，lzl 增加
 Var
   i: integer;
 Begin
@@ -6103,7 +6103,7 @@ Begin
   TempItem.strName := UpperCase(strDataSetName);
   Cp_DFdList.Add(TempItem); //注:如果TReportRunTime不灭，而又不断调用SetDataset
   //列表便会重复增加,无穷尽,错误将会出现..目前是在预览和打印完后清空　　　　
-End;                                    //有无更好办法?待处理. 李泽伦.
+End;                                    //有无更好办法?待处理. lzl .
 
 Procedure TReportRunTime.SetRptFileName(Const Value: TFilename);
 Begin
@@ -6365,7 +6365,7 @@ Begin
     FEnableEdit := value;
 End;
 
-//以下均为李泽伦增加
+//以下均为lzl 增加
 
 Procedure TReportRunTime.CreateNewLine; // lzl
 Var
@@ -6876,7 +6876,7 @@ End.
 *  原创：郭家骏、王寒松
 *  修改1：廖伯志,
 
-*　修改2: 李泽伦，内容：
+*　修改2: lzl ，内容：
 
   ver 4.01
 
