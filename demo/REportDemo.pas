@@ -28,8 +28,6 @@ type
     CheckBox1: TCheckBox;
     SpeedButton3: TSpeedButton;
     ReportControl1: TReportControl;
-    DatasetToExcel1: TDatasetToExcel;
-    Button6: TButton;
     SaveDialog1: TSaveDialog;
     procedure Button4Click(Sender: TObject);
     //procedure Button3Click(Sender: TObject);
@@ -43,7 +41,6 @@ type
     procedure CheckBox1Click(Sender: TObject);
     procedure FormPaint(Sender: TObject);
     procedure SpeedButton3Click(Sender: TObject);
-    procedure Button6Click(Sender: TObject);
   private
     { Private declarations }
   public
@@ -293,11 +290,4 @@ end;
    dataform.Table1.EnableControls;
 
 end;
-procedure TCReportDemoForm.Button6Click(Sender: TObject);
-begin
-if SaveDialog1.Execute then
-//??Table1??ΪEXcl?ļ?
-  DatasetToExcel1.SaveExclFile(SaveDialog1.FileName,true);//?ڶ????????????Ƿ????ֶ?????Ϊ??ͷ.
-end;
-
 end.

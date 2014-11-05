@@ -202,18 +202,6 @@ object CReportDemoForm: TCReportDemoForm
       TabOrder = 2
       OnClick = Button5Click
     end
-    object Button6: TButton
-      Left = 1
-      Top = 96
-      Width = 91
-      Height = 30
-      Hint = #23558'Table1'#23384#20026'EXcl'#25991#20214
-      Caption = #23384#20026'Excl'#25991#20214
-      ParentShowHint = False
-      ShowHint = True
-      TabOrder = 3
-      OnClick = Button6Click
-    end
   end
   object Panel5: TPanel
     Left = 0
@@ -300,11 +288,6 @@ object CReportDemoForm: TCReportDemoForm
       'ge File (*.jpg)|*.jpg|JPEG Image File (*.jpeg)|*.jpeg|Bitmaps (*' +
       '.bmp)|*.bmp|Icons (*.ico)|*.ico'
     Left = 448
-    Top = 8
-  end
-  object DatasetToExcel1: TDatasetToExcel
-    Dataset = Dataform.Table1
-    Left = 552
     Top = 8
   end
   object SaveDialog1: TSaveDialog

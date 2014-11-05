@@ -446,38 +446,7 @@ Type
     Bottom: Integer;
   End;
 
-  TDatasetToExcel = Class(TComponent)
-  Private
-    FCol: word;
-    FRow: word;
-    FDataSet: TDataSet;
-    Stream: TStream;
-    FWillWriteHead: boolean;
-    FBookMark: TBookmark;
-    // FfileName:TfileName;
-    Procedure IncColRow;
-    Procedure WriteBlankCell;
-    Procedure WriteFloatCell(Const AValue: Double);
-    Procedure WriteIntegerCell(Const AValue: Integer);
-    Procedure WriteStringCell(Const AValue: String);
-    Procedure WritePrefix;
-    Procedure WriteSuffix;
-    Procedure WriteTitle;
-    Procedure WriteDataCell;
-    Procedure Setdataset(Const value: Tdataset);
-    // procedure SetFileName(const value: TFileName);
 
-    Procedure SaveStream(aStream: TStream);
-  Public
-    Procedure SaveExclFile(FileName: String; WillWriteHead: Boolean);
-    //Constructor Create(AOwner: TComponent;aDataSet: TDataSet);
-    Constructor Create(AOwner: TComponent); Override;
-    Destructor Destroy; Override;
-  Published
-    Property Dataset: TDataset Read FDataset Write SetDataset;
-    //  property FileName: TFilename read FFileName write SetFileName;
-
-  End;
  type
   EachCellProc =  procedure (ThisCell:TReportCell) of object;
   EachLineProc =  procedure (ThisLine:TReportLine)of object;
@@ -640,9 +609,6 @@ Type
 
     Property EditEpt: boolean Read FEditEpt Write setEditEpt;
 
-    //property OnSetEpt:Tnotifyevent Read FOnSetEpt Write LFOnSetEpt;  //
-
-    //Property SetData: TstringList Read FSetData Write LSetData; //
     Property AddSpace: boolean Read FAddSpace Write SetAddSpace; //
 
   End;
@@ -754,7 +720,7 @@ Procedure Register;
 Begin
   RegisterComponents('CReport', [TReportControl]);
   RegisterComponents('CReport', [TReportRunTime]);
-  RegisterComponents('CReport', [TDatasetToExcel]); //add lzl
+
 End;
 
 ///////////////////////////////////////////////////////////////////////////
@@ -6661,155 +6627,7 @@ Begin
   fdbgrid := Value;
 End;
 
-Constructor TDatasetToExcel.Create(AOwner: TComponent);
-Begin
-  Inherited Create(AOwner);
-End;
 
-Procedure TDatasetToExcel.IncColRow;
-Begin
-  If FCol = FDataSet.FieldCount - 1 Then
-  Begin
-    Inc(FRow);
-    FCol := 0;
-  End
-  Else
-    Inc(FCol);
-End;
-
-Procedure TDatasetToExcel.WriteBlankCell;
-Begin
-  CXlsBlank[2] := FRow;
-  CXlsBlank[3] := FCol;
-  Stream.WriteBuffer(CXlsBlank, SizeOf(CXlsBlank));
-  IncColRow;
-End;
-
-Procedure TDatasetToExcel.WriteFloatCell(Const AValue: Double);
-Begin
-  CXlsNumber[2] := FRow;
-  CXlsNumber[3] := FCol;
-  Stream.WriteBuffer(CXlsNumber, SizeOf(CXlsNumber));
-  Stream.WriteBuffer(AValue, 8);
-  IncColRow;
-End;
-
-Procedure TDatasetToExcel.WriteIntegerCell(Const AValue: Integer);
-Var
-  V: Integer;
-Begin
-  CXlsRk[2] := FRow;
-  CXlsRk[3] := FCol;
-  Stream.WriteBuffer(CXlsRk, SizeOf(CXlsRk));
-  V := (AValue Shl 2) Or 2;
-  Stream.WriteBuffer(V, 4);
-  IncColRow;
-End;
-
-Procedure TDatasetToExcel.WriteStringCell(Const AValue: String);
-Var
-  L: Word;
-Begin
-  L := Length(AValue);
-  CXlsLabel[1] := 8 + L;
-  CXlsLabel[2] := FRow;
-  CXlsLabel[3] := FCol;
-  CXlsLabel[5] := L;
-  Stream.WriteBuffer(CXlsLabel, SizeOf(CXlsLabel));
-  Stream.WriteBuffer(Pointer(AValue)^, L);
-  IncColRow;
-End;
-
-Procedure TDatasetToExcel.WritePrefix;
-Begin
-  Stream.WriteBuffer(CXlsBof, SizeOf(CXlsBof));
-End;
-
-Procedure TDatasetToExcel.WriteSuffix;
-Begin
-  Stream.WriteBuffer(CXlsEof, SizeOf(CXlsEof));
-End;
-
-Procedure TDatasetToExcel.WriteTitle;
-Var
-  n: word;
-Begin
-  For n := 0 To FDataSet.FieldCount - 1 Do
-    WriteStringCell(FDataSet.Fields[n].FieldName);
-End;
-
-Procedure TDatasetToExcel.WriteDataCell;
-Var
-  n: word;
-Begin
-  WritePrefix;
-  If FWillWriteHead Then
-    WriteTitle;
-  FDataSet.DisableControls;
-  FBookMark := FDataSet.GetBookmark;
-  FDataSet.First;
-  While Not FDataSet.Eof Do
-  Begin
-    For n := 0 To FDataSet.FieldCount - 1 Do
-    Begin
-      If FDataSet.Fields[n].IsNull Then
-        WriteBlankCell
-      Else
-      Begin
-        Case FDataSet.Fields[n].DataType Of
-          ftSmallint, ftInteger, ftWord, ftAutoInc, ftBytes:
-            WriteIntegerCell(FDataSet.Fields[n].AsInteger);
-          ftFloat, ftCurrency, ftBCD:
-            WriteFloatCell(FDataSet.Fields[n].AsFloat);
-        Else
-          If FDataSet.Fields[n] Is Tblobfield Then  // 此类型的字段(图像等)暂无法读取显示
-            WriteStringCell('')
-          Else
-            WriteStringCell(FDataSet.Fields[n].AsString);
-        End;
-      End;
-    End;
-    FDataSet.Next;
-  End;
-  WriteSuffix;
-  If FDataSet.BookmarkValid(FBookMark) Then
-    FDataSet.GotoBookmark(FBookMark);
-  FDataSet.EnableControls;
-End;
-
-Procedure TDatasetToExcel.SaveStream(aStream: TStream);
-Begin
-  FCol := 0;
-  FRow := 0;
-  Stream := aStream;
-  WriteDataCell;
-End;
-
-Procedure TDatasetToExcel.SaveExclFile(FileName: String; WillWriteHead:
-  Boolean);
-Var
-  aFileStream: TFileStream;
-Begin
-  FWillWriteHead := WillWriteHead;
-  If FileExists(FileName) Then
-    DeleteFile(FileName);
-  aFileStream := TFileStream.Create(FileName, fmCreate);
-  Try
-    SaveStream(aFileStream);
-  Finally
-    aFileStream.Free;
-  End;
-End;
-
-Destructor TDatasetToExcel.Destroy;
-Begin
-  Inherited Destroy;
-End;
-
-Procedure TDatasetToExcel.Setdataset(Const value: Tdataset);
-Begin
-  Fdataset := value;
-End;
 
 
 End.
