@@ -3483,10 +3483,7 @@ End;
 //lzla,用于修改模版文件cell内容
 
 Procedure TReportControl.SetCallText(cRow, ccoln: integer; RcallText: String);
-//var ii:integer;
 Begin
-  //ii:=(TReportLine(FLineList[crow]).FCells.Count);
-  //MessageDlg(inttostr(ii), mtInformation,[mbOk], 0);
   TReportCell(TReportLine(FLineList[crow]).FCells[ccoln]).CellText := RcallText;
 End;
 
