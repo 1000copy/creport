@@ -552,9 +552,9 @@ Type
 
     //   procedure LFOnSetEpt(const value:Tnotifyevent);
 
-    Procedure LSetData(Const value: TstringList);
+    //Procedure LSetData(Const value: TstringList);
 
-    Procedure Setpar(FIDE, Tableopen: boolean; name: String);
+    //Procedure Setpar(FIDE, Tableopen: boolean; name: String);
     Function LFindComponent(Owner: TComponent; Name: String): TComponent;
 
     Procedure SaveTempFile(PageNumber, Fpageall: Integer);
@@ -642,7 +642,7 @@ Type
 
     //property OnSetEpt:Tnotifyevent Read FOnSetEpt Write LFOnSetEpt;  //
 
-    Property SetData: TstringList Read FSetData Write LSetData; //
+    //Property SetData: TstringList Read FSetData Write LSetData; //
     Property AddSpace: boolean Read FAddSpace Write SetAddSpace; //
 
   End;
@@ -5835,11 +5835,7 @@ Var
   frompage, topage: integer;
 Begin
   Try
-    If Cp_DFdList.Count = 0 Then
-    Begin
-      For i := 0 To setdata.Count - 1 Do // add lzl
-        setpar(false, true, setdata[i]); //参数设置
-    End;
+
     If printer.Printers.Count <= 0 Then
     Begin
       isprint := 1;                     //未安装打印机
@@ -6007,11 +6003,6 @@ Begin
 
   Try
 
-    If Cp_DFdList.Count = 0 Then
-    Begin
-      For i := 0 To setdata.Count - 1 Do // add lzl
-        setpar(false, true, setdata[i]); //参数设置
-    End;
 
     If printer.Printers.Count <= 0 Then
     Begin
@@ -6489,55 +6480,8 @@ Begin
 
 End;
 
-Procedure TReportRunTime.LSetData(Const value: TstringList); // lzl
-Var
-  i, k: integer;
-Begin
-  FSetData.Text := value.Text;
 
-  Begin
-    For i := 0 To Fsetdata.Count - 1 Do // add lzl
-      setpar(false, true, Fsetdata[i]); //参数设置
-  End;
 
-End;
-
-Procedure TReportRunTime.Setpar(FIde, Tableopen: boolean; name: String);
-Var
-  n1, n2, n3: Integer;
-  s1, s2, s3: String;
-Begin
-  Try
-    n1 := Pos('(', Name);
-    s1 := copy(name, 1, n1 - 1);
-
-    n2 := pos(',', name);
-    s2 := copy(name, n1 + 1, n2 - n1 - 1);
-
-    n3 := pos(')', name);
-    s3 := copy(name, n2 + 1, n3 - n2 - 1);
-
-    If uppercase(s1) = 'SETDATASET' Then
-    Begin
-      If Tableopen Then
-      Begin
-        If FIde Then
-          Tdataset(LFindComponent(owner, s3)).DisableControls;
-        Tdataset(LFindComponent(owner, s3)).Open;
-        SetDataSet(s2, Tdataset(LFindComponent(owner, s3)));
-      End
-      Else
-      Begin
-        Tdataset(LFindComponent(owner, s3)).close;
-
-        //Tdataset(LFindComponent(owner,s3)).EnableControls;
-      End
-    End
-    Else If (UPPERCASE(S1) = 'SETVARVALUE') And (Tableopen) Then
-      Setvarvalue(s2, s3);
-  Except
-  End;
-End;
 
 Function TReportRunTime.LFindComponent(Owner: TComponent; Name: String):
   TComponent;                           // add lzl
