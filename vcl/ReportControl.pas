@@ -9,7 +9,8 @@ Uses
    Classes, Graphics, Controls,
   Forms, Dialogs, Math, Printers, Menus, dbgrids, Db, jpeg, dbtables,
   DesignEditors, DesignIntf, ShellAPI, ExtCtrls;
-//dsgnintf d5
+
+  //dsgnintf d5
 Const
   // Horz Align
   TEXT_ALIGN_LEFT = 0;
@@ -477,7 +478,10 @@ Type
     //  property FileName: TFilename read FFileName write SetFileName;
 
   End;
-
+ type
+  EachCellProc =  procedure (ThisCell:TReportCell) of object;
+  EachLineProc =  procedure (ThisLine:TReportLine)of object;
+  EachLineIndexProc = procedure (ThisLine:TReportLine;Index:Integer)of object;
   TReportRunTime = Class(TComponent)
   Private
 
@@ -589,6 +593,18 @@ Type
     function ExpandLine_Height(var HasDataNo,
       ndataHeight: integer): TReportLine;
     function GetDataSetFromCell(HasDataNo,CellIndex:Integer):TDataset;
+    procedure EachCell(EachProc: EachCellProc);
+    procedure EachLine(EachProc: EachLineProc);
+    procedure EachCell_CalcMinCellHeight(ThisCell: TReportCell);
+    procedure EachProc_CalcLineHeight(thisLine: TReportLine);
+    procedure EachLineIndex(EachProc: EachLineIndexProc);
+    procedure EachLineIndexProc_UpdateIndex(thisLine: TReportLine;
+      Index: integer);
+    procedure EachProc_UpdateIndex(thisLine: TReportLine; I: integer);
+    procedure EachProc_UpdateLineRect(thisLine: TReportLine;
+      Index: integer);
+    procedure EachProc_UpdateLineTop(thisLine: TReportLine;
+      I: integer);
 
   Protected
 
@@ -1571,12 +1587,6 @@ Begin
       Cell.OwnerCell.AddOwnedCell(Self);
   End;
 End;
-
-// 一觉醒来，又是一个阳光灿烂的日子
-
-///////////////////////////////////////////////////////////////////////////
-// CReportLine
-
 Procedure TReportCell.SetCellDispformat(CellDispformat: String);
 Begin
   If CellDispformat = FCellDispformat Then
@@ -1586,14 +1596,20 @@ Begin
 
 End;
 
-{ TReportLine }
 
 Procedure TReportCell.RemoveOwnedCell(Cell: TReportCell);
 Begin
   FCellsList.Remove(Cell);
   Cell.OwnerCell := Nil;
 End;
+// 一觉醒来，又是一个阳光灿烂的日子
 
+///////////////////////////////////////////////////////////////////////////
+// CReportLine
+
+
+
+{ TReportLine }
 Procedure TReportLine.CalcLineHeight;
 Var
   I: Integer;
@@ -1702,11 +1718,6 @@ Var
   I: Integer;
 Begin
   // 重新由各个CELL计算出该行的矩形来
-
-  // 由各个CELL计算出行的高度
-//  CalcLineHeight;                  // 移到UpdateLines中乐，呵呵。
-
-  // 通知每个CELL重新计算坐标
   For I := 0 To FCells.Count - 1 Do
   Begin
     TReportCell(FCells[I]).CellIndex := I;
@@ -6101,14 +6112,89 @@ Begin
     LoadRptFile;
 End;
 
+ procedure TReportRunTime.EachCell(EachProc:EachCellProc);
+  var
+    ThisLine: TReportLine;
+    ThisCell: TReportCell;
+    i ,j :integer;
+  begin
+     For I := 0 To FLineList.Count - 1 Do
+ 		 Begin
+			ThisLine := TReportLine(FLineList[I]);
+			For J := 0 To ThisLine.FCells.Count - 1 Do
+			Begin
+			  ThisCell := TReportCell(ThisLine.FCells[J]);
+        EachProc(ThisCell);
+			End;
+     End;
+  end;
+  procedure TReportRunTime.EachLine(EachProc:EachLineProc);
+  var
+    ThisLine: TReportLine;
+    ThisCell: TReportCell;
+    i ,j :integer;
+  begin
+     For I := 0 To FLineList.Count - 1 Do
+ 		 Begin
+			ThisLine := TReportLine(FLineList[I]);
+			EachProc(ThisLine);
+     End;
+  end;
+  procedure TReportRunTime.EachLineIndex(EachProc:EachLineIndexProc);
+  var
+    ThisLine: TReportLine;
+    ThisCell: TReportCell;
+    i ,j :integer;
+  begin
+     For I := 0 To FLineList.Count - 1 Do
+ 		 Begin
+			ThisLine := TReportLine(FLineList[I]);
+			EachProc(ThisLine,I);
+     End;
+  end;
+  procedure TReportRunTime.EachCell_CalcMinCellHeight(ThisCell:TReportCell);
+  begin
+    If ThisCell.FCellsList.Count > 0 Then
+      thisCell.CalcMinCellHeight ;
+  end;
+  procedure TReportRunTime.EachProc_CalcLineHeight(thisLine:TReportLine);
+  begin
+      thisLine.CalcLineHeight ;
+  end;
+  procedure TReportRunTime.EachLineIndexProc_UpdateIndex(thisLine:TReportLine;Index:integer);
+  begin
+      thisLine.CalcLineHeight ;
+  end;
+
+  //
+  procedure TReportRunTime.EachProc_UpdateIndex(thisLine:TReportLine;I:integer);
+  begin
+      ThisLine.Index := I;
+  end;
+  procedure TReportRunTime.EachProc_UpdateLineTop(thisLine:TReportLine;I:integer);
+  begin
+     If I = 0 Then
+      ThisLine.LineTop := FTopMargin
+     else
+      ThisLine.LineTop := TReportLine(FLineList[I - 1]).LineTop +
+                                TReportLine(FLineList[I - 1]).LineHeight;
+  end;
+  procedure TReportRunTime.EachProc_UpdateLineRect(thisLine:TReportLine;Index:integer);
+  begin
+       ThisLine.LineRect;
+  end;
 Procedure TReportRunTime.UpdateLines;
 Var
-  PrevRect, TempRect: TRect;
+  //PrevRect, TempRect: TRect;
   I, J: Integer;
   ThisLine: TReportLine;
   ThisCell: TReportCell;
+
+
 Begin
   // 首先计算合并后的单元格
+  EachCell(EachCell_CalcMinCellHeight);
+  {
   For I := 0 To FLineList.Count - 1 Do
   Begin
     ThisLine := TReportLine(FLineList[I]);
@@ -6121,14 +6207,20 @@ Begin
         ThisCell.CalcMinCellHeight;
     End;
   End;
-
+  }
   // 计算每行的高度
+  EachLine(EachProc_CalcLineHeight);
+  {
   For I := 0 To FLineList.Count - 1 Do
   Begin
     ThisLine := TReportLine(FLineList[I]);
     ThisLine.CalcLineHeight;
   End;
-
+  }
+  EachLineIndex(EachProc_UpdateIndex);
+  EachLineIndex(EachProc_UpdateLineTop);
+  EachLineIndex(EachProc_UpdateLineRect);
+  {
   For I := 0 To FLineList.Count - 1 Do
   Begin
     ThisLine := TReportLine(FLineList[I]);
@@ -6141,9 +6233,10 @@ Begin
       ThisLine.LineTop := TReportLine(FLineList[I - 1]).LineTop +
         TReportLine(FLineList[I - 1]).LineHeight;
 
-    PrevRect := ThisLine.PrevLineRect;
-    TempRect := ThisLine.LineRect;
+    //ThisLine.PrevLineRect;
+    ThisLine.LineRect;
   End;
+  }
 End;
 
 Procedure TReportRunTime.UpdatePrintLines;
