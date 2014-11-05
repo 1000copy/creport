@@ -3514,7 +3514,7 @@ Begin
   // FSelectCells.Clear;
 
 End;
-//李泽伦加,用于修改模版文件cell内容
+//lzla,用于修改模版文件cell内容
 
 Procedure TReportControl.SetCallText(cRow, ccoln: integer; RcallText: String);
 //var ii:integer;
@@ -4170,7 +4170,7 @@ Begin
 End;
 
 ///////////////////////////////////////////////////////////////////////////
-// SetFileCellWidth 根据用户拖动表格线修改模板文件中单元格的宽度 李泽伦加
+// SetFileCellWidth 根据用户拖动表格线修改模板文件中单元格的宽度 lzla
 
 Procedure TReportControl.SetFileCellWidth(filename: String; HasDataNo: integer);  //lzl add
 Var
@@ -4238,7 +4238,7 @@ Begin
   ReportFile := reportfile;             //从新装入修改后的模版文件
   //i := PreparePrintk(FALSE, 0);
   i := PreparePrintk_PageCount;
-  REPmessform.show;                     //李泽伦加2001.4.27
+  REPmessform.show;                     //lzla2001.4.27
   PreparePrintk(TRUE, i);
   REPmessform.Close;
   PreviewForm.PageCount := FPageCount;
@@ -5859,7 +5859,7 @@ Begin
 
     If cp_prewYn <> true Then
     Begin
-      REPmessform.show;                 //李泽伦加2001.4.27
+      REPmessform.show;                 //lzla2001.4.27
       //i := PreparePrintk(FALSE, 0);
       i := PreparePrintk_PageCount;
       PreparePrintk(TRUE, i);
@@ -6079,7 +6079,7 @@ Begin
     ReportFile := reportfile; //从新装入修改后的模版文件,必须要，以便调用PreparePrintk
     i := PreparePrintk(FALSE, 0);
     i := PreparePrintk_PageCount;
-    REPmessform.show;                   //李泽伦加2001.4.27
+    REPmessform.show;                   //lzla2001.4.27
     PreparePrintk(TRUE, i);
     REPmessform.Close;
     PreviewForm.PageCount := FPageCount;
@@ -6184,59 +6184,12 @@ End;
        ThisLine.LineRect;
   end;
 Procedure TReportRunTime.UpdateLines;
-Var
-  //PrevRect, TempRect: TRect;
-  I, J: Integer;
-  ThisLine: TReportLine;
-  ThisCell: TReportCell;
-
-
 Begin
-  // 首先计算合并后的单元格
   EachCell(EachCell_CalcMinCellHeight);
-  {
-  For I := 0 To FLineList.Count - 1 Do
-  Begin
-    ThisLine := TReportLine(FLineList[I]);
-
-    For J := 0 To ThisLine.FCells.Count - 1 Do
-    Begin
-      ThisCell := TReportCell(ThisLine.FCells[J]);
-
-      If ThisCell.FCellsList.Count > 0 Then
-        ThisCell.CalcMinCellHeight;
-    End;
-  End;
-  }
-  // 计算每行的高度
   EachLine(EachProc_CalcLineHeight);
-  {
-  For I := 0 To FLineList.Count - 1 Do
-  Begin
-    ThisLine := TReportLine(FLineList[I]);
-    ThisLine.CalcLineHeight;
-  End;
-  }
   EachLineIndex(EachProc_UpdateIndex);
   EachLineIndex(EachProc_UpdateLineTop);
   EachLineIndex(EachProc_UpdateLineRect);
-  {
-  For I := 0 To FLineList.Count - 1 Do
-  Begin
-    ThisLine := TReportLine(FLineList[I]);
-
-    ThisLine.Index := I;
-
-    If I = 0 Then
-      ThisLine.LineTop := FTopMargin;
-    If I > 0 Then
-      ThisLine.LineTop := TReportLine(FLineList[I - 1]).LineTop +
-        TReportLine(FLineList[I - 1]).LineHeight;
-
-    //ThisLine.PrevLineRect;
-    ThisLine.LineRect;
-  End;
-  }
 End;
 
 Procedure TReportRunTime.UpdatePrintLines;
