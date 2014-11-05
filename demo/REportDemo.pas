@@ -114,8 +114,7 @@ end;
 
 procedure TCReportDemoForm.FormPaint(Sender: TObject);
 begin
-CheckBox1.Checked:= ReportRunTime1.AddSpace;
-
+  CheckBox1.Checked:= ReportRunTime1.AddSpace;   
 end;
 
 procedure TCReportDemoForm.SpeedButton3Click(Sender: TObject);
