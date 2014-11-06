@@ -122,11 +122,11 @@ begin
 			SetWndSize(1058,748); 
 			NewTable(dbgrid1.Columns.Count ,6);
 
-			SetCellSFocus(0,0,0,dbgrid1.Columns.Count-1);
+			SelectLine(0);
 			CombineCell;
 			setLineHegit(0,80);
 			SetCellLines(false,false,false,false,1,1,1,1);
-			SetCallText(0,0,'支票');
+      Cells[0,0].CellText := '支票';
 			SetCellAlign(1, 1);
 
 			cf := Tfont.Create;
@@ -139,9 +139,8 @@ begin
 
 			for j:=0 to dbgrid1.Columns.Count -1 do
 			begin
-			 SetCallText(1,j,dbgrid1.Columns[j].FieldName);
-			 SetCallText(2,j,'#T1.'+dbgrid1.Columns[j].FieldName);
-
+       Cells[1,j].CellText := dbgrid1.Columns[j].FieldName;
+       Cells[2,j].CellText := '#T1.'+dbgrid1.Columns[j].FieldName;
 			 RemoveAllSelectedCell;
 			 SetCellFocus(2,j);//
 
@@ -156,7 +155,7 @@ begin
 			setLineHegit(1,40);  
 
 			RemoveAllSelectedCell;
-			SetCellSFocus(1,0,1,dbgrid1.Columns.Count-1);
+			SelectLine(1);
 			SetCellAlign(1, 1);
 
 			cf.Name := '仿宋_GB2312';
@@ -167,9 +166,8 @@ begin
 			SetCellFont(CellFont);
 			SetCellColor(clRed, clWhite);
 
-			SetCallText(3,0,'支票');
-			SetCallText(3,3,'`SumAll(4)');
-
+      Cells[3,0].CellText := '支票' ;
+      Cells[3,3].CellText := '`SumAll(4)' ;
 			RemoveAllSelectedCell;
 			SetCellFocus(3,3);
 			SetCellAlign(2, 1);
@@ -177,14 +175,14 @@ begin
 
 
 			RemoveAllSelectedCell;
-			SetCellSFocus(4,0,4,dbgrid1.Columns.Count-1);
+			SelectLine(4);
 			SetCellLines(false,false,false,false,1,1,1,1);
 			CombineCell;
-			SetCallText(4,0,'`PageNum/');
+      Cells[4,0].CellText := '`PageNum/' ;
 			SetCellAlign(1, 1);
 
 			RemoveAllSelectedCell;
-			SetCellSFocus(1,0,3,dbgrid1.Columns.Count-1);
+			SelectLines(1,3);
 			SetCellFocus(4,0);
 			cf.Name := 'MS Serif';
 			cf.Size :=10;
@@ -193,10 +191,10 @@ begin
 			SetCellFont(CellFont);
 
 			RemoveAllSelectedCell;
-			SetCellSFocus(5,0,5,dbgrid1.Columns.Count-1);
+			SelectLine(5);
 			SetCellLines(false,false,false,false,1,1,1,1);
 			CombineCell;
-			SetCallText(5,0,'@T2.Loel');
+      Cells[4,0].CellText := '@T2.Loel' ;
 			setLineHegit(5,250);
 
 			SaveToFile(strFileDir+'\'+'xxx.ept');

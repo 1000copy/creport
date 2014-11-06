@@ -38,7 +38,7 @@ var
 
 implementation
 
-uses creport,PreviewDbGrid;
+uses creport;
 
 {$R *.DFM}
 

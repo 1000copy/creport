@@ -271,7 +271,7 @@ Type
     FTopMargin1: Integer;
     FBottomMargin1: Integer;
 
-    FHootNo: integer;                   //表尾的第一行在整个页的第几行 李泽伦
+    FHootNo: integer;                   //表尾的第一行在整个页的第几行 lzl 
 
     // 换页加表头（不加表头）
     FNewTable: Boolean;
@@ -293,11 +293,16 @@ Type
     //FReportMenu : TPopupMenu;
 
     Procedure setCreportEdit(Const value: boolean);
+    Procedure SetCellSFocus(row1, col1, row2, col2: integer);
+    function Get(Index: Integer): TReportLine;
+    function GetCells(Row, Col: Integer): TReportCell;
+
   Protected
     { Protected declarations }
     Procedure CreateWnd; Override;
   Public
     { Public declarations }
+    procedure SelectLines(row1, row2: integer);  //add lzl 选择单元格
     Constructor Create(AOwner: TComponent); Override;
     Destructor Destroy; Override;
     //procedure setSaveToFile(callRow,lenk:integer;RcallText:array of string);
@@ -305,7 +310,7 @@ Type
     Procedure LoadFromFile(FileName: String);
 
     Procedure SetCellFocus(row, col: integer); //add lzl 选择单元格
-    Procedure SetCellSFocus(row1, col1, row2, col2: integer);  //add lzl 选择单元格
+
 
     Procedure SaveBmp(thiscell: Treportcell; filename: String); //lzl add
     Function LoadBmp(thiscell: Treportcell): TBitmap; //lzl add
@@ -345,9 +350,8 @@ Type
     Procedure DeleteCell;
     Procedure AddCell;
 
-    Procedure SetCallText(cRow, ccoln: integer; RcallText: String); //李泽伦
-    Procedure GetCellsWadth(HasDataNo: integer); //李泽伦
-    Procedure SetFileCellWidth(filename: String; HasDataNo: integer); //李泽伦
+    Procedure GetCellsWadth(HasDataNo: integer); //lzl
+    Procedure SetFileCellWidth(filename: String; HasDataNo: integer); //lzl 
 
     Procedure CombineCell;
 
@@ -355,7 +359,7 @@ Type
     Procedure VSplitCell(Number: Integer);
     Function CanSplit: Boolean;
 
-    Function CountFcells(crow: integer): integer; //李泽伦
+    Function CountFcells(crow: integer): integer; //lzl 
 
     Procedure SetCellLines(bLeftLine, bTopLine, bRightLine, bBottomLine:
       Boolean;
@@ -384,13 +388,13 @@ Type
 
     Procedure UpdateLines;
 
-    Procedure FreeEdit;                 //取销编辑状态  李泽伦
+    Procedure FreeEdit;                 //取销编辑状态  lzl 
 
     Procedure StartMouseDrag(point: TPoint);
     Procedure StartMouseSelect(point: TPoint; bSelectFlag: Boolean; shift_down:
       byte);
     Procedure MouseMoveHandler(message: TMSG);
-
+    procedure SelectLine(row: integer);
     // 选中区的操作
     Function AddSelectedCell(Cell: TReportCell): Boolean;
     Function RemoveSelectedCell(Cell: TReportCell): Boolean;
@@ -407,7 +411,8 @@ Type
       2147483647;
     Property TablePerPage: Integer Read FTablePerPage Write FTablePerPage Default
       2147483647;
-
+    property Lines[Index: Integer]: TReportLine read Get  ;
+    property Cells[Row: Integer;Col: Integer]: TReportCell read GetCells ;
   Published
     { Published declarations }
     Property Left;
@@ -423,7 +428,6 @@ Type
     Property OnDragOver;
     Property OnDragDrop;
     Property CreportEdit: boolean Read FCreportEdit Write setCreportEdit;  //代表是否处在模板编辑程序调用中
-    //property OnUpdateLine;
   End;
 
   //  TDragOverEvent = procedure(Sender, Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean) of object;
@@ -459,7 +463,6 @@ Type
     FFileName: Tfilename;
     FAddSpace: boolean;
     FdbGrid: Tdbgrid;                   //add lzl
-    // FOnSetEpt:Tnotifyevent; //add lzl
     FSetData: TstringList;              //add lzl
 
     FEnableEdit: Boolean;
@@ -502,7 +505,7 @@ Type
     FPageCount: Integer;                // page count in print preview //总页数
 
     FHootNo: integer;
-    FEditEpt: boolean;                  //表尾的第一行在整个页的第几行 李泽伦
+    FEditEpt: boolean;                  //表尾的第一行在整个页的第几行 lzl 
     nDataHeight, nHandHeight, nHootHeight, nSumAllHeight: Integer;
     TempDataSet: TDataset;
     hasdatano: integer;
@@ -586,9 +589,9 @@ Type
     Procedure ResetContent;
     Procedure PrintPreview(bPreviewMode: Boolean);
     Function shpreview: boolean;        //重新生成预览有关文件
-    Function PrintSET(prfile: String): boolean; //纸张及边距设置，李泽伦
+    Function PrintSET(prfile: String): boolean; //纸张及边距设置，lzl 
     Procedure updatepage;               //
-    Function PreparePrintk(SaveYn: boolean; FpageAll: integer): integer;  //李泽伦增加
+    Function PreparePrintk(SaveYn: boolean; FpageAll: integer): integer;  //lzl 增加
 
     Procedure CreateNewLine;
 
@@ -630,12 +633,12 @@ Var
   CXlsRk: Array[0..4] Of Word = ($27E, 10, 0, 0, 0);
   CXlsBlank: Array[0..4] Of Word = ($201, 6, 0, 0, $17);
 
-  Adevice, Adriver, Aport: Array[0..255] Of char; //prdevixemode调用 李泽伦2002.3
+  Adevice, Adriver, Aport: Array[0..255] Of char; //prdevixemode调用 lzl 2002.3
   DeviceHandle: THandle;
-  DevMode: PdeviceMode; //当前打印机结构成员，调用prdevixemode初始化 李泽伦
+  DevMode: PdeviceMode; //当前打印机结构成员，调用prdevixemode初始化 lzl 
 
-  FprPageNo: integer;                   //打印文件的纸张序号  李泽伦
-  FprPageXy: integer;                   //打印文件的纸张纵横方向  李泽伦
+  FprPageNo: integer;                   //打印文件的纸张序号  lzl 
+  FprPageXy: integer;                   //打印文件的纸张纵横方向  lzl 
   fpaperLength: integer;
   fpaperWidth: integer;
 
@@ -643,10 +646,10 @@ Var
 
   Cpreviewedit: boolean;
 
-  CellsWidth: Array Of Array Of integer;  //李泽伦 存用户在预览时拖动表格后新的单元格宽度,
+  CellsWidth: Array Of Array Of integer;  //lzl  存用户在预览时拖动表格后新的单元格宽度,
   NhasSumALl: integer;                  //有合计的行在模板中是第几行.
 
-  cp_prewYn: Boolean;                   //代表是否处于预览状态, 李泽伦　2001.4.27
+  cp_prewYn: Boolean;                   //代表是否处于预览状态, lzl 　2001.4.27
   //EditEpt:boolean; //是否充许用户在预览时调用编辑程序修改模板
 
   CreportIde: boolean;
@@ -657,10 +660,10 @@ Var
 Implementation
 
 {$R ReportControl.dcr}
-Uses Preview, previewdbgrid, REPmess, margin,
+Uses Preview, REPmess, margin,
   Creport, About, Border, vsplit, Color, diagonal, margink, NewDialog; //add lzl
 
-Procedure prDeviceMode; //取得当前打印机的DeviceMode的结构成员   李泽伦
+Procedure prDeviceMode; //取得当前打印机的DeviceMode的结构成员   lzl 
 Begin
   Printer.GetPrinter(Adevice, Adriver, Aport, DeviceHandle);
   If DeviceHandle = 0 Then
@@ -2134,7 +2137,7 @@ Begin
       StartMouseSelect(MousePoint, True, sh_down);
   End;
 
-  //按用户修费过的格式重新预览 李泽伦
+  //按用户修费过的格式重新预览 lzl 
   If (CellsWidth <> Nil) And (Not FCreportEdit) And (Not creportide) Then
     If cellswidth[0, 0] <> 0 Then
     Begin
@@ -2142,7 +2145,7 @@ Begin
       PreviewForm.updatepage;
     End;
   //mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
-  mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0); //add 李泽伦
+  mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0); //add lzl 
 
   Inherited;                            //将mouse的消息返回   1999.1.23
 
@@ -2586,7 +2589,7 @@ Begin
   SetROP2(hClientDc, PrevDrawMode);
   ReleaseDC(Handle, hClientDC);
 
-  //李泽伦 增加 根据最终用户拖动单元格后的宽度修改模板
+  //lzl  增加 根据最终用户拖动单元格后的宽度修改模板
   If (cp_prewYn) And (PreviewForm.tag <> 0) And (Not FCreportedit) And (Not
     CreportIde) Then                    //在预览并有数据集时才执行此功能
   Begin                                 //在预览中调用编辑过程,ide中调用也不行
@@ -3481,10 +3484,6 @@ Begin
 End;
 //lzla,用于修改模版文件cell内容
 
-Procedure TReportControl.SetCallText(cRow, ccoln: integer; RcallText: String);
-Begin
-  TReportCell(TReportLine(FLineList[crow]).FCells[ccoln]).CellText := RcallText;
-End;
 
 Function TReportControl.CountFcells(crow: integer): integer;
 Begin
@@ -3699,7 +3698,7 @@ Begin
           End;
         End;
       End;
-      prDeviceMode;                     //李泽伦
+      prDeviceMode;                     //lzl 
       With Devmode^ Do
       Begin
         dmFields := dmFields Or DM_PAPERSIZE;
@@ -3892,12 +3891,12 @@ Begin
         End;
       End;
 
-      Read(FprPageNo, SizeOf(FprPageNo)); //取出纸张序号  李泽伦2002。3
-      Read(FprPageXy, SizeOf(FprPageXy)); //取出纵横方向  李泽伦
-      Read(fpaperLength, SizeOf(fpaperLength)); //取出长度  李泽伦
-      Read(fpaperWidth, SizeOf(fpaperWidth)); //取出宽度   李泽伦
+      Read(FprPageNo, SizeOf(FprPageNo)); //取出纸张序号  lzl 2002。3
+      Read(FprPageXy, SizeOf(FprPageXy)); //取出纵横方向  lzl 
+      Read(fpaperLength, SizeOf(fpaperLength)); //取出长度  lzl 
+      Read(fpaperWidth, SizeOf(fpaperWidth)); //取出宽度   lzl 
       prDeviceMode;
-      With Devmode^ Do                  //设置打印纸  李泽伦
+      With Devmode^ Do                  //设置打印纸  lzl 
       Begin
         dmFields := dmFields Or DM_PAPERSIZE;
         dmPapersize := FprPageNo;
@@ -4158,7 +4157,7 @@ Begin
   // ResetContent;
 End;
 
-// GetCellsWadth 将变化后的单元格宽度存入全局变量数组 李泽伦
+// GetCellsWadth 将变化后的单元格宽度存入全局变量数组 lzl 
 
 Procedure TReportControl.GetCellsWadth(HasDataNo: integer);
 Var
@@ -4210,7 +4209,7 @@ Begin
 
 End;
 
-Procedure TReportControl.FreeEdit;      //取销编辑状态  李泽伦
+Procedure TReportControl.FreeEdit;      //取销编辑状态  lzl 
 Begin
   If IsWindowVisible(FEditWnd) Then
   Begin
@@ -4254,7 +4253,14 @@ Begin
   ThisCell := TreportCell(ThisLine.FCells[col]);
   AddSelectedCell(ThisCell);
 End;
-
+Procedure TReportControl.SelectLine(row : integer);  // add lzl
+Begin
+  SetCellsFocus(row,0,row,TReportLine(FlineList[row]).FCells.Count -1);
+End;
+Procedure TReportControl.SelectLines(row1,row2 : integer);  // add lzl
+Begin
+  SetCellsFocus(row1,0,row2,TReportLine(FlineList[row1]).FCells.Count -1);
+End;
 Procedure TReportControl.SetCellsFocus(row1, col1, row2, col2: integer);  // add lzl
 Var
   thiscell: TreportCell;
@@ -4291,6 +4297,17 @@ Begin
   Height := trunc(FPageHeight * FReportScale / 100 + 0.5);
 
 End;
+
+function TReportControl.Get(Index: Integer): TReportLine;
+begin
+  result := TReportLine(FLineList[Index ]);
+end;
+
+
+function TReportControl.GetCells(Row, Col: Integer): TReportCell;
+begin
+  result := TReportCell(TReportLine(FLineList[Row ]).FCells[Col]);
+end;
 
 { TReportRunTime }
 
@@ -4434,22 +4451,22 @@ Begin
           Write(ThisCell.FHorzAlign, SizeOf(ThisCell.FHorzAlign));
           Write(ThisCell.FVertAlign, SizeOf(ThisCell.FVertAlign));
 
-          If (UpperCase(ThisCell.FCellText) = '`PAGENUM') Then //李泽伦增
+          If (UpperCase(ThisCell.FCellText) = '`PAGENUM') Then //lzl 增
             celltext := '第 ' + inttostr(PageNumber) + ' 页'
-          Else If (UpperCase(ThisCell.FCellText) = '`PAGENUM/') Then //李泽伦增
+          Else If (UpperCase(ThisCell.FCellText) = '`PAGENUM/') Then //lzl 增
             celltext := '第 ' + inttostr(PageNumber) + '/' + inttostr(FPageAll) +
               ' 页'
-          Else If (UpperCase(ThisCell.FCellText) = '`PAGENUM-') Then //李泽伦增
+          Else If (UpperCase(ThisCell.FCellText) = '`PAGENUM-') Then //lzl 增
             celltext := '第 ' + inttostr(Fpageall) + '-' + inttostr(PageNumber) +
               ' 页'
-          Else If copy(UpperCase(ThisCell.FCellText), 1, 9) = '`SUMPAGE(' Then  //李泽伦增
+          Else If copy(UpperCase(ThisCell.FCellText), 1, 9) = '`SUMPAGE(' Then  //lzl 增
           Begin
             //celltext:=FormatFloat(thiscell.FCellDispformat,setSumpageYg(ThisCell.FCellText));
             celltext := trim(setSumpageYg(thiscell.FCellDispformat,
               ThisCell.FCellText));
           End
           Else
-            If copy(UpperCase(ThisCell.FCellText), 1, 8) = '`SUMALL(' Then  //李泽伦增
+            If copy(UpperCase(ThisCell.FCellText), 1, 8) = '`SUMALL(' Then  //lzl 增
             Begin
               //celltext:=FormatFloat(thiscell.FCellDispformat,setSumAllYg(ThisCell.FCellText));
               celltext := setSumAllYg(thiscell.FCellDispformat,
@@ -4507,8 +4524,8 @@ Begin
           End;
         End;
       End;
-      prDeviceMode;                     //李泽伦
-      With Devmode^ Do                  //李泽伦
+      prDeviceMode;                     //lzl 
+      With Devmode^ Do                  //lzl 
       Begin
         dmFields := dmFields Or DM_PAPERSIZE;
         FprPageNo := dmPapersize;
@@ -4701,10 +4718,10 @@ Begin
         End;
       End;
 
-      Read(FprPageNo, SizeOf(FprPageNo)); //取出纸张序号  李泽伦2002。3
-      Read(FprPageXy, SizeOf(FprPageXy)); //取出纵横方向  李泽伦
-      Read(fpaperLength, SizeOf(fpaperLength)); //取出长度  李泽伦
-      Read(fpaperWidth, SizeOf(fpaperWidth)); //取出宽度   李泽伦
+      Read(FprPageNo, SizeOf(FprPageNo)); //取出纸张序号  lzl 2002。3
+      Read(FprPageXy, SizeOf(FprPageXy)); //取出纵横方向  lzl 
+      Read(fpaperLength, SizeOf(fpaperLength)); //取出长度  lzl 
+      Read(fpaperWidth, SizeOf(fpaperWidth)); //取出宽度   lzl 
       prDeviceMode;
       With Devmode^ Do                  //设置打印纸
       Begin
@@ -4717,7 +4734,7 @@ Begin
         dmPaperWidth := fpaperWidth;
 
       End;
-      read(FHootNo, SizeOf(FHootNo));   //李泽伦
+      read(FHootNo, SizeOf(FHootNo));   //lzl 
 
     End;
   Finally
@@ -4732,7 +4749,7 @@ Begin
   Inherited create(AOwner);
 
   CreportIde := false;
-  cp_prewYn := false; //默认为不在预览状态,调用print等时使用  李泽伦
+  cp_prewYn := false; //默认为不在预览状态,调用print等时使用  lzl 
   editept := false;
   enableedit := false;
   FAddspace := false;
@@ -4750,7 +4767,7 @@ Begin
   FPrintLineList := TList.Create;
   FOwnerCellList := TList.Create;
 
-  repmessForm := TrepmessForm.Create(Self); //  李泽伦
+  repmessForm := TrepmessForm.Create(Self); //  lzl 
 
   FHeaderHeight := 0;
 
@@ -5043,7 +5060,7 @@ Begin
         End;
       End;
 
-      Read(FprPageNo, SizeOf(FprPageNo)); //取出纸张序号  李泽伦2002。3
+      Read(FprPageNo, SizeOf(FprPageNo)); //取出纸张序号  lzl 2002。3
       Read(FprPageXy, SizeOf(FprPageXy)); //取出纵横方向
       Read(fpaperLength, SizeOf(fpaperLength)); //取出纵横方向
       Read(fpaperWidth, SizeOf(fpaperWidth)); //取出纵横方向
@@ -5060,7 +5077,7 @@ Begin
         dmPaperWidth := fpaperWidth;
 
       End;
-      read(FHootNo, SizeOf(FHootNo));   //李泽伦
+      read(FHootNo, SizeOf(FHootNo));   //lzl 
 
     End;
   Finally
@@ -5269,7 +5286,7 @@ Begin
     CalcMinCellHeight;
   End;
 End;
-//李泽伦增加 ,完全重写的 PreparePrint,并增加了用空行补满一页 统计等功能
+//lzl 增加 ,完全重写的 PreparePrint,并增加了用空行补满一页 统计等功能
 //返回数用于在预览中确定代＃字头数据库是在模板的第几行
   function TReportRunTime.IsLastPageFull:Boolean ;
   begin
@@ -5835,7 +5852,7 @@ Begin
         If Not PrintDlg.Execute Then
         Begin
           PrintDlg.Free;
-          If cp_prewYn <> true Then //若处于预览状态的打印，则不能删除已生成的打印页文件 李泽伦
+          If cp_prewYn <> true Then //若处于预览状态的打印，则不能删除已生成的打印页文件 lzl 
           Begin
             DeleteAllTempFiles;         //99.3.9
             For I := Cp_DFdList.Count - 1 Downto 0 Do
@@ -5862,7 +5879,7 @@ Begin
       Printer.EndDoc;
       PrintDlg.Free;
     End;
-    If cp_prewYn <> true Then // 如是处于预览状态的打印，则不能删除已生成的打印页 李泽伦
+    If cp_prewYn <> true Then // 如是处于预览状态的打印，则不能删除已生成的打印页 lzl 
     Begin
       DeleteAllTempFiles;               //  99.3.9
       For I := Cp_DFdList.Count - 1 Downto 0 Do  //删除数据库表名与模板CELL的对照列表,否则每次调用都要增加列表项
@@ -5940,7 +5957,7 @@ Begin
   FOwnerCellList.Clear;
 End;
 
-Function TReportRunTime.PrintSET(prfile: String): boolean;  //李泽伦增加 可直接或在预览中调用设置打印参数
+Function TReportRunTime.PrintSET(prfile: String): boolean;  //lzl 增加 可直接或在预览中调用设置打印参数
 Begin
   Application.CreateForm(TMarginForm, MarginForm);
   MarginForm.filename.Caption := prfile;
@@ -6614,9 +6631,6 @@ Procedure TReportRunTime.Setdbgrid(Const Value: Tdbgrid);
 Begin
   fdbgrid := Value;
 End;
-
-
-
 
 End.
 
