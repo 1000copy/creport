@@ -24,14 +24,12 @@ type
     CheckBox1: TCheckBox;
     ReportControl1: TReportControl;
     SaveDialog1: TSaveDialog;
-    SpeedButton2: TSpeedButton;
     SpeedButton3: TSpeedButton;
     procedure Button4Click(Sender: TObject);
     //procedure Button3Click(Sender: TObject);
     procedure Button5Click(Sender: TObject);
     procedure Button3Click(Sender: TObject);
     procedure FormCreate(Sender: TObject);
-    procedure SpeedButton2Click(Sender: TObject);
     procedure CheckBox1Click(Sender: TObject);
     procedure FormPaint(Sender: TObject);
     procedure SpeedButton3Click(Sender: TObject);
@@ -95,13 +93,6 @@ end;
 
 
 
-
-procedure TCReportDemoForm.SpeedButton2Click(Sender: TObject);
-begin
-  ReportRunTime1.prdbgrid:=dbgrid1;  //ֻ֧?ִ?TDbGrid?????? dbgrid
-  ReportRunTime1.previewDbGrid(self.Name);
-
-end;
 
 procedure TCReportDemoForm.CheckBox1Click(Sender: TObject);
 begin

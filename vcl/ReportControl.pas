@@ -598,7 +598,6 @@ Type
     Procedure Resetself;
     Function Cancelprint: boolean;
 
-    Procedure previewDbGrid(eptname: String);
 
   Published
     Property ReportFile: TFilename Read FFileName Write SetRptFileName;
@@ -6605,14 +6604,6 @@ Begin
   thiscell.FbmpYn := false;
 End;
 
-Procedure TReportRunTime.previewDbGrid(eptname: String); // add lzl
-Begin
-  PreviewdbgridForm := TPreviewdbgridForm.Create(Self);
-  PreviewdbgridForm.Pdbgrid := Fdbgrid;
-  PreviewdbgridForm.Feptname := eptname + fdbgrid.Name + '.ept';
-  PreviewdbgridForm.Showmodal;
-  PreviewdbgridForm.free;
-End;
 
 Procedure TReportRunTime.SetAddSpace(Const Value: boolean);
 Begin

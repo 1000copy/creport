@@ -136,20 +136,6 @@ object CReportDemoForm: TCReportDemoForm
     Align = alRight
     BevelOuter = bvNone
     TabOrder = 3
-    object SpeedButton2: TSpeedButton
-      Left = 5
-      Top = 88
-      Width = 89
-      Height = 22
-      Caption = #25171#21360'DbGrid2'
-      Font.Charset = GB2312_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -11
-      Font.Name = #26999#20307
-      Font.Style = []
-      ParentFont = False
-      OnClick = SpeedButton2Click
-    end
     object SpeedButton3: TSpeedButton
       Left = -3
       Top = 216
