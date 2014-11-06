@@ -1,4 +1,4 @@
-//??Ó­Ê¹?Ã£??É¶?????????
+ 
 unit REportDemo;
 
 interface
@@ -121,28 +121,24 @@ begin
 		begin
 			SetWndSize(1058,748); 
 			NewTable(dbgrid1.Columns.Count ,6);
-
-			SelectLine(0);
+      Lines[0].Select;
 			CombineCell;
-			setLineHegit(0,80);
+      Lines[0].LineHeight := 80;
 			SetCellLines(false,false,false,false,1,1,1,1);
-      Cells[0,0].CellText := 'Ö§Æ±';
-			SetCellAlign(1, 1);
+      Cells[0,0].CellText := 'Ö§Æ±11';
+			SetCellAlign(TEXT_ALIGN_CENTER, TEXT_ALIGN_VCENTER);
 
 			cf := Tfont.Create;
-			cf.Name := '·ÂËÎ_GB2312';
+			cf.Name := '¿¬Ìå_GB2312';
 			cf.Size := 22;
 			cf.style :=cf.style+ [fsBold];
-
-			GetObject(cf.Handle, SizeOf(CellFont), @CellFont);
-			SetCellFont(CellFont);
-
+      SetSelectedCellFont(cf);
 			for j:=0 to dbgrid1.Columns.Count -1 do
 			begin
        Cells[1,j].CellText := dbgrid1.Columns[j].FieldName;
        Cells[2,j].CellText := '#T1.'+dbgrid1.Columns[j].FieldName;
-			 RemoveAllSelectedCell;
-			 SetCellFocus(2,j);//
+			 ClearSelect;
+			 SetCellFocus(2,j);
 
 			 if dbgrid1.DataSource.DataSet.FieldByName(dbgrid1.Columns[j].FieldName) is tnumericField then
 			 begin
@@ -154,34 +150,32 @@ begin
 			end;
 			setLineHegit(1,40);  
 
-			RemoveAllSelectedCell;
+			ClearSelect;
 			SelectLine(1);
 			SetCellAlign(1, 1);
 
 			cf.Name := '·ÂËÎ_GB2312';
 			cf.Size := 16;
 			cf.Style:=[];
-			GetObject(cf.Handle, SizeOf(CellFont), @CellFont);
-
-			SetCellFont(CellFont);
+			SetSelectedCellFont(cf);
 			SetCellColor(clRed, clWhite);
 
       Cells[3,0].CellText := 'Ö§Æ±' ;
       Cells[3,3].CellText := '`SumAll(4)' ;
-			RemoveAllSelectedCell;
+			ClearSelect;
 			SetCellFocus(3,3);
 			SetCellAlign(2, 1);
 			SetCellDispFormt('0,.00');
 
 
-			RemoveAllSelectedCell;
+			ClearSelect;
 			SelectLine(4);
 			SetCellLines(false,false,false,false,1,1,1,1);
 			CombineCell;
       Cells[4,0].CellText := '`PageNum/' ;
 			SetCellAlign(1, 1);
 
-			RemoveAllSelectedCell;
+			ClearSelect;
 			SelectLines(1,3);
 			SetCellFocus(4,0);
 			cf.Name := 'MS Serif';
@@ -190,11 +184,11 @@ begin
 			GetObject(cf.Handle, SizeOf(CellFont), @CellFont);
 			SetCellFont(CellFont);
 
-			RemoveAllSelectedCell;
+			ClearSelect;
 			SelectLine(5);
 			SetCellLines(false,false,false,false,1,1,1,1);
 			CombineCell;
-      Cells[4,0].CellText := '@T2.Loel' ;
+      Cells[5,0].CellText := '@T2.Loel' ;
 			setLineHegit(5,250);
 
 			SaveToFile(strFileDir+'\'+'xxx.ept');

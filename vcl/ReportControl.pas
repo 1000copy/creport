@@ -138,7 +138,7 @@ Type
     Procedure RemoveAllOwnedCell;
     Procedure RemoveOwnedCell(Cell: TReportCell);
     Function IsCellOwned(Cell: TReportCell): Boolean;
-    Procedure CalcCellRect;
+    Procedure CalcCellTextRect;
     Procedure CalcMinCellHeight;
     Procedure PaintCell(hPaintDC: HDC; bPrint: Boolean);
     Procedure CopyCell(Cell: TReportCell; bInsert: Boolean);
@@ -235,11 +235,10 @@ Type
     Property LineTop: Integer Read FLineTop Write SetLineTop;
     Property LineRect: TRect Read GetLineRect;
     Property PrevLineRect: TRect Read FLineRect;
-
     Procedure CalcLineHeight;
     Procedure CreateLine(LineLeft, CellNumber, PageWidth: Integer);
     Procedure CopyLine(Line: TReportLine; bInsert: Boolean);
-
+    procedure Select ;
     Constructor Create;
     Destructor Destroy; Override;
   End;
@@ -302,6 +301,7 @@ Type
     Procedure CreateWnd; Override;
   Public
     { Public declarations }
+    Procedure SetSelectedCellFont(cf: TFont);
     procedure SelectLines(row1, row2: integer);  //add lzl 选择单元格
     Constructor Create(AOwner: TComponent); Override;
     Destructor Destroy; Override;
@@ -398,7 +398,7 @@ Type
     // 选中区的操作
     Function AddSelectedCell(Cell: TReportCell): Boolean;
     Function RemoveSelectedCell(Cell: TReportCell): Boolean;
-    Procedure RemoveAllSelectedCell;
+    Procedure ClearSelect;
 
     Function IsCellSelected(Cell: TReportCell): Boolean;
     Function CellFromPoint(point: TPoint): TReportCell;
@@ -593,7 +593,6 @@ Type
     Procedure updatepage;               //
     Function PreparePrintk(SaveYn: boolean; FpageAll: integer): integer;  //lzl 增加
 
-    Procedure CreateNewLine;
 
 //    Procedure PreparePrint;
     Procedure loadfile(value: tfilename);
@@ -820,7 +819,7 @@ Begin
     Exit;
 
   FCellLeft := CellLeft;
-  CalcCellRect;
+  CalcCellTextRect;
 End;
 
 Procedure TReportCell.SetCellWidth(CellWidth: Integer);
@@ -832,13 +831,13 @@ Begin
   Begin
     FCellWidth := CellWidth;
     CalcMinCellHeight;
-    CalcCellRect;
+    CalcCellTextRect;
   End
   Else
   Begin
     FCellWidth := 10;
     CalcMinCellHeight;
-    CalcCellRect;
+    CalcCellTextRect;
   End;
 End;
 
@@ -870,7 +869,7 @@ Begin
 
   FLeftLine := LeftLine;
   CalcMinCellHeight;
-  CalcCellRect;
+  CalcCellTextRect;
 End;
 
 Procedure TReportCell.SetLeftLineWidth(LeftLineWidth: Integer);
@@ -880,7 +879,7 @@ Begin
 
   FLeftLineWidth := LeftLineWidth;
   CalcMinCellHeight;
-  CalcCellRect;
+  CalcCellTextRect;
 End;
 
 Procedure TReportCell.SetTopLine(TopLine: Boolean);
@@ -890,7 +889,7 @@ Begin
 
   FTopLine := TopLine;
   CalcMinCellHeight;
-  CalcCellRect;
+  CalcCellTextRect;
 End;
 
 Procedure TReportCell.SetTopLineWidth(TopLineWidth: Integer);
@@ -900,7 +899,7 @@ Begin
 
   FTopLineWidth := TopLineWidth;
   CalcMinCellHeight;
-  CalcCellRect;
+  CalcCellTextRect;
 End;
 
 Procedure TReportCell.SetRightLine(RightLine: Boolean);
@@ -910,7 +909,7 @@ Begin
 
   FRightLine := RightLine;
   CalcMinCellHeight;
-  CalcCellRect;
+  CalcCellTextRect;
 End;
 
 Procedure TReportCell.SetRightLineWidth(RightLineWidth: Integer);
@@ -920,7 +919,7 @@ Begin
 
   FRightLineWidth := RightLineWidth;
   CalcMinCellHeight;
-  CalcCellRect;
+  CalcCellTextRect;
 End;
 
 Procedure TReportCell.SetBottomLine(BottomLine: Boolean);
@@ -930,7 +929,7 @@ Begin
 
   FBottomLine := BottomLine;
   CalcMinCellHeight;
-  CalcCellRect;
+  CalcCellTextRect;
 
 End;
 
@@ -941,7 +940,7 @@ Begin
 
   FBottomLineWidth := BottomLineWidth;
   CalcMinCellHeight;
-  CalcCellRect;
+  CalcCellTextRect;
 End;
 
 Procedure TReportCell.SetCellText(CellText: String);
@@ -1075,7 +1074,10 @@ End;
     result := Height + FOwnerCell.OwnerLineHeight;
   end;
 // 开始噩梦，噩梦中我把屏幕上的象素点一个一个干掉
-
+// LCJ: 在 Calc_MinCellHeight 内，期望仅仅计算 CalcMinCellHeight ；实际上同时在计算
+//  FMinCellHeight ，FRequiredCellHeight ，还调用了 OwnerLine.CalcLineHeight
+//  不能不说，看的有点焦虑 。。。
+//  2014-11-6. 某人又在招人了，说拉了点投资。做猎头得了。
 Procedure TReportCell.CalcMinCellHeight;
 Var
 
@@ -1131,90 +1133,100 @@ Begin
   End;
 End;
 
-Procedure TReportCell.CalcCellRect;
-Var
+// Calc CellRect & TextRect here
+// 如果CELL的大小或者文本框的大小改变，自动的置窗口的失效区
+Procedure TReportCell.CalcCellTextRect;
+  procedure CalcCellRect;
+  Var
   TempRect: TRect;
   TotalHeight: Integer;
   I: Integer;
+  begin
+  	If FCellsList.Count <= 0 Then
+	  Begin
+		// 计算CELL的矩形   
+		FCellRect.left := FCellLeft;
+		FCellRect.top := CellTop;
+		FCellRect.right := FCellRect.left + FCellWidth;
+		FCellRect.bottom := FCellRect.top + OwnerLineHeight;
+	  End
+	  Else
+	  Begin
+		TotalHeight := OwnerLineHeight;
+
+		For I := 0 To FCellsList.Count - 1 Do
+		  TotalHeight := TotalHeight + TReportCell(FCellsList[I]).OwnerLineHeight;
+
+		FCellRect.left := FCellLeft;
+		FCellRect.top := CellTop;
+		FCellRect.right := FCellRect.left + FCellWidth;
+		FCellRect.bottom := FCellRect.top + TotalHeight;
+	  End;
+  end;
+  procedure CalcTextRect;
+  Var
+  TempRect: TRect;
+  TotalHeight: Integer;
+  I: Integer;
+  begin
+  	If FCellsList.Count <= 0 Then
+	  Begin
+			// 计算文本框的矩形
+		TempRect := FCellRect;
+		TempRect.left := TempRect.Left + FLeftMargin + 1;
+		TempRect.top := TempRect.top + FTopLineWidth + 1;
+		TempRect.right := TempRect.right - FLeftMargin - 1;
+		TempRect.bottom := TempRect.top + FMinCellHeight - 2 - FTopLineWidth -
+		  FBottomLineWidth;
+
+		Case FVertAlign Of
+		  TEXT_ALIGN_VCENTER:
+			Begin
+			  TempRect.Top := TempRect.Top + trunc((OwnerLineHeight - FMinCellHeight)
+				/ 2 + 0.5);
+			  TempRect.Bottom := TempRect.Bottom + trunc((OwnerLineHeight -
+				FMinCellHeight) / 2 + 0.5);
+			End;
+		  TEXT_ALIGN_BOTTOM:
+			Begin
+			  TempRect.Top := TempRect.Top + OwnerLineHeight - FMinCellHeight;
+			  TempRect.Bottom := TempRect.Bottom + OwnerLineHeight - FMinCellHeight;
+			End;
+		End;
+		FTextRect := TempRect;
+	  End
+	  Else
+	  Begin
+		// 计算文本框的矩形
+		TempRect := FCellRect;
+		TempRect.left := TempRect.Left + FLeftMargin + 1;
+		TempRect.top := TempRect.top + FTopLineWidth + 1;
+		TempRect.right := TempRect.right - FLeftMargin;
+		TempRect.bottom := TempRect.top + FRequiredCellHeight - 2 - FTopLineWidth -
+		  FBottomLineWidth;
+
+		Case FVertAlign Of
+		  TEXT_ALIGN_VCENTER:
+			Begin
+			  TempRect.Top := TempRect.Top + trunc((FCellRect.Bottom - FCellRect.Top
+				- FRequiredCellHeight) / 2 + 0.5);
+			  TempRect.Bottom := TempRect.Bottom + trunc((FCellRect.Bottom -
+				FCellRect.Top - FRequiredCellHeight) / 2 + 0.5);
+			End;
+		  TEXT_ALIGN_BOTTOM:
+			Begin
+			  TempRect.Top := TempRect.Top + FCellRect.Bottom - FCellRect.Top -
+				FRequiredCellHeight;
+			  TempRect.Bottom := TempRect.Bottom + FCellRect.Bottom - FCellRect.Top
+				- FRequiredCellHeight;
+			End;
+		End;                   
+		FTextRect := TempRect;
+	  End;
+  end;
 Begin
-  // Calc CellRect & TextRect here
-  // 如果CELL的大小或者文本框的大小改变，自动的置窗口的失效区
-
-  If FCellsList.Count <= 0 Then
-  Begin
-    // 计算CELL的矩形
-
-    FCellRect.left := FCellLeft;
-    FCellRect.top := CellTop;
-    FCellRect.right := FCellRect.left + FCellWidth;
-    FCellRect.bottom := FCellRect.top + OwnerLineHeight;
-
-        // 计算文本框的矩形
-    TempRect := FCellRect;
-
-    TempRect.left := TempRect.Left + FLeftMargin + 1;
-    TempRect.top := TempRect.top + FTopLineWidth + 1;
-    TempRect.right := TempRect.right - FLeftMargin - 1;
-    TempRect.bottom := TempRect.top + FMinCellHeight - 2 - FTopLineWidth -
-      FBottomLineWidth;
-
-    Case FVertAlign Of
-      TEXT_ALIGN_VCENTER:
-        Begin
-          TempRect.Top := TempRect.Top + trunc((OwnerLineHeight - FMinCellHeight)
-            / 2 + 0.5);
-          TempRect.Bottom := TempRect.Bottom + trunc((OwnerLineHeight -
-            FMinCellHeight) / 2 + 0.5);
-        End;
-      TEXT_ALIGN_BOTTOM:
-        Begin
-          TempRect.Top := TempRect.Top + OwnerLineHeight - FMinCellHeight;
-          TempRect.Bottom := TempRect.Bottom + OwnerLineHeight - FMinCellHeight;
-        End;
-    End;
-    FTextRect := TempRect;
-  End
-  Else
-  Begin
-    TotalHeight := OwnerLineHeight;
-
-    For I := 0 To FCellsList.Count - 1 Do
-      TotalHeight := TotalHeight + TReportCell(FCellsList[I]).OwnerLineHeight;
-
-    FCellRect.left := FCellLeft;
-    FCellRect.top := CellTop;
-    FCellRect.right := FCellRect.left + FCellWidth;
-    FCellRect.bottom := FCellRect.top + TotalHeight;
-
-    // 计算文本框的矩形
-    TempRect := FCellRect;
-
-    TempRect.left := TempRect.Left + FLeftMargin + 1;
-    TempRect.top := TempRect.top + FTopLineWidth + 1;
-    TempRect.right := TempRect.right - FLeftMargin;
-    TempRect.bottom := TempRect.top + FRequiredCellHeight - 2 - FTopLineWidth -
-      FBottomLineWidth;
-
-    Case FVertAlign Of
-      TEXT_ALIGN_VCENTER:
-        Begin
-          TempRect.Top := TempRect.Top + trunc((FCellRect.Bottom - FCellRect.Top
-            - FRequiredCellHeight) / 2 + 0.5);
-          TempRect.Bottom := TempRect.Bottom + trunc((FCellRect.Bottom -
-            FCellRect.Top - FRequiredCellHeight) / 2 + 0.5);
-        End;
-      TEXT_ALIGN_BOTTOM:
-        Begin
-          TempRect.Top := TempRect.Top + FCellRect.Bottom - FCellRect.Top -
-            FRequiredCellHeight;
-          TempRect.Bottom := TempRect.Bottom + FCellRect.Bottom - FCellRect.Top
-            - FRequiredCellHeight;
-        End;
-    End;
-
-    FTextRect := TempRect;
-  End;
-
+  CalcCellRect;
+  CalcTextRect;
 End;
 
 Procedure TReportCell.PaintCell(hPaintDC: HDC; bPrint: Boolean);
@@ -1689,7 +1701,7 @@ Begin
   For I := 0 To FCells.Count - 1 Do
   Begin
     TReportCell(FCells[I]).CellIndex := I;
-    TReportCell(FCells[I]).CalcCellRect;
+    TReportCell(FCells[I]).CalcCellTextRect;
   End;
 
   If FCells.Count > 0 Then
@@ -1720,12 +1732,17 @@ Begin
 
   For I := 0 To FCells.Count - 1 Do
   Begin
-    TReportCell(FCells[I]).CalcCellRect;
+    TReportCell(FCells[I]).CalcCellTextRect;
   End;
 End;
 
 ///////////////////////////////////////////////////////////////////////////
 // TReportControl
+
+procedure TReportLine.Select;
+begin
+  self.FReportControl.SetCellsFocus(FIndex,0,FIndex,FCells.count -1);  
+end;
 
 {TReportControl}
 
@@ -2023,7 +2040,7 @@ Begin
     Inherited;
     exit;
   End;
-  RemoveAllSelectedCell;
+  ClearSelect;
   GetCursorPos(TempPoint);
   Windows.ScreenToClient(Handle, TempPoint);
 
@@ -2188,7 +2205,7 @@ Begin
 
   If Not IsCellSelected(ThisCell) Then
   Begin
-    RemoveAllSelectedCell;
+    ClearSelect;
     If ThisCell <> Nil Then
     Begin
       AddSelectedCell(ThisCell);
@@ -2609,7 +2626,7 @@ Var
 Begin
   // 清除掉所有选中的CELL
   If shift_down <> 5 Then
-    RemoveAllSelectedCell;              //当拖动时，按下SHIFT键时不取消已选单元格
+    ClearSelect;              //当拖动时，按下SHIFT键时不取消已选单元格
   ThisCell := CellFromPoint(point);
 
   If bSelectFlag Then
@@ -2965,7 +2982,7 @@ Begin
   LineArray.Free;
 
   OwnerCell := TReportCell(CellsToCombine[0]);
-  RemoveAllSelectedCell;
+  ClearSelect;
   AddSelectedCell(OwnerCell);
   UpdateLines;
 End;
@@ -2991,7 +3008,7 @@ Begin
     LineArray[TReportCell(FSelectCells[I]).OwnerLine.Index] :=
       TReportCell(FSelectCells[I]).OwnerLine;
 
-  RemoveAllSelectedCell;
+  ClearSelect;
 
   For I := FLineList.Count - 1 Downto 0 Do
   Begin
@@ -3088,7 +3105,7 @@ Begin
   If CanSplit Then
   Begin
     TempCell := TReportCell(FSelectCells[0]);
-    RemoveAllSelectedCell;
+    ClearSelect;
 
     AddSelectedCell(TempCell);
 
@@ -3183,7 +3200,14 @@ Begin
     InvalidateRect(Handle, @TReportCell(FSelectCells[I]).CellRect, False);
   End;
 End;
-
+Procedure TReportControl.SetSelectedCellFont(cf: TFont);
+var CellFont: TLOGFONT;
+begin
+      {$WARN UNSAFE_CODE OFF}
+			GetObject(cf.Handle, SizeOf(CellFont), @CellFont);
+      {$WARN UNSAFE_CODE  ON}
+			SetCellFont(CellFont);
+end;
 Procedure TReportControl.SetCellFont(CellFont: TLOGFONT);
 Var
   I: Integer;
@@ -3372,7 +3396,7 @@ Begin
     Result := False;
 End;
 
-Procedure TReportControl.RemoveAllSelectedCell;
+Procedure TReportControl.ClearSelect;
 Var
   ThisCell: TReportCell;
   hClientDC: HDC;
@@ -3746,7 +3770,7 @@ Begin
         Exit;
       End;
 
-      RemoveAllSelectedCell;
+      ClearSelect;
 
       For I := 0 To FLineList.Count - 1 Do
       Begin
@@ -6335,38 +6359,6 @@ Begin
     FEnableEdit := value;
 End;
 
-//以下均为lzl 增加
-
-Procedure TReportRunTime.CreateNewLine; // lzl
-Var
-  I, J: Integer;
-  TempLine: TReportLine;
-  NewCell: TReportCell;
-Begin
-  For i := 0 To 3 Do
-  Begin
-    TempLine := TReportLine.Create;
-    TempLine.FMinHeight := 40;
-    TempLine.FDragHeight := 15;
-    FprintLineList.Add(TempLine);
-    For j := 0 To 2 Do
-    Begin
-      NewCell := TReportCell.Create;
-      TempLine.FCells.Add(NewCell);
-      With NewCell Do
-      Begin
-        FLeftMargin := 30;
-        // Index
-        FCellIndex := j;
-        // size & position
-        FCellLeft := 20;
-        FCellWidth := 80;
-        CalcMinCellHeight;
-        //     SaveTempFile(111);
-      End;
-    End;
-  End;
-End;
 
 Function TReportRunTime.SetSumAllYg(fm, ss: String): String; //add lzl
 Var
