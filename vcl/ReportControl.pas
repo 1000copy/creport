@@ -590,7 +590,7 @@ Type
     Procedure ResetContent;
     Procedure PrintPreview(bPreviewMode: Boolean);
     Function shpreview: boolean;        //重新生成预览有关文件
-    Function PrintSET(prfile: String): boolean; //纸张及边距设置，lzl 
+    Function PrintSET(prfile: String): boolean; //纸张及边距设置，lzl
     Procedure updatepage;               //
     Function PreparePrintk(SaveYn: boolean; FpageAll: integer): integer;  //lzl 增加
 
@@ -663,7 +663,7 @@ Implementation
 Uses Preview, REPmess, margin,
   Creport, About, Border, vsplit, Color, diagonal, margink, NewDialog; //add lzl
 
-Procedure prDeviceMode; //取得当前打印机的DeviceMode的结构成员   lzl 
+Procedure prDeviceMode; //取得当前打印机的DeviceMode的结构成员   lzl
 Begin
   Printer.GetPrinter(Adevice, Adriver, Aport, DeviceHandle);
   If DeviceHandle = 0 Then
@@ -989,57 +989,57 @@ End;
   TotalHeight,Top: Integer;
   TempSize: TSize;
   begin
-		// LCJ : 最小高度需要能够放下文字，并且留下直线的宽度和2个点的空间出来。
-	  //       因此，需要实际绘制文字在DC 0 上，获得它的TempRect-文字所占的空间
-	  //       - FLeftMargin : Cell 内文字和边线之间留下的空的宽度
-	  hTempFont := CreateFontIndirect(FLogFont);
-	  If (Length(FCellText) <= 0) Then
-		TempString := '汉'
-	  Else
-		TempString := FCellText;
+    // LCJ : 最小高度需要能够放下文字，并且留下直线的宽度和2个点的空间出来。
+    //       因此，需要实际绘制文字在DC 0 上，获得它的TempRect-文字所占的空间
+    //       - FLeftMargin : Cell 内文字和边线之间留下的空的宽度
+    hTempFont := CreateFontIndirect(FLogFont);
+    If (Length(FCellText) <= 0) Then
+    TempString := '汉'
+    Else
+    TempString := FCellText;
 
-	  hTempDC := GetDC(0);
-	  hPrevFont := SelectObject(hTempDC, hTempFont);
+    hTempDC := GetDC(0);
+    hPrevFont := SelectObject(hTempDC, hTempFont);
 
-	  SetRect(TempRect, 0, 0, 0, 0);
+    SetRect(TempRect, 0, 0, 0, 0);
 
-	  TempRect.left := FCellLeft + FLeftMargin;
-	  TempRect.top := GetCellTop + 2;
-	  ;
-	  TempRect.right := FCellLeft + FCellWidth - FLeftMargin;
-	  TempRect.bottom := 65535;
+    TempRect.left := FCellLeft + FLeftMargin;
+    TempRect.top := GetCellTop + 2;
+    ;
+    TempRect.right := FCellLeft + FCellWidth - FLeftMargin;
+    TempRect.bottom := 65535;
 
-	  Format := DT_EDITCONTROL Or DT_WORDBREAK;
-	  Case FHorzAlign Of
-		0:
-		  Format := Format Or DT_LEFT;
-		1:
-		  Format := Format Or DT_CENTER;
-		2:
-		  Format := Format Or DT_RIGHT;
-	  Else
-		Format := Format Or DT_LEFT;
-	  End;
+    Format := DT_EDITCONTROL Or DT_WORDBREAK;
+    Case FHorzAlign Of
+    0:
+      Format := Format Or DT_LEFT;
+    1:
+      Format := Format Or DT_CENTER;
+    2:
+      Format := Format Or DT_RIGHT;
+    Else
+    Format := Format Or DT_LEFT;
+    End;
 
-	  Format := Format Or DT_CALCRECT;
-	  // lpRect [in, out] !  TempRect.Bottom ,TempRect.Right  会被修改 。但是手册上没有提到。
-	  DrawText(hTempDC, PChar(TempString), Length(TempString), TempRect, Format);
-	  //  DrawText(hTempDC, PChar(TempString), -1, TempRect, Format);
+    Format := Format Or DT_CALCRECT;
+    // lpRect [in, out] !  TempRect.Bottom ,TempRect.Right  会被修改 。但是手册上没有提到。
+    DrawText(hTempDC, PChar(TempString), Length(TempString), TempRect, Format);
+    //  DrawText(hTempDC, PChar(TempString), -1, TempRect, Format);
 
-		// 补偿文字最后的回车带来的误差
-	  If Length(TempString) >= 2 Then
-	  Begin
-		If (TempString[Length(TempString)] = Chr(10)) And
-		(TempString[Length(TempString) - 1] = Chr(13)) Then
-		Begin
-		  GetTextExtentPoint(hTempDC, 'A', 1, TempSize);
-		  TempRect.Bottom := TempRect.Bottom + TempSize.cy;
-		End;
-	  End;
+    // 补偿文字最后的回车带来的误差
+    If Length(TempString) >= 2 Then
+    Begin
+    If (TempString[Length(TempString)] = Chr(10)) And
+    (TempString[Length(TempString) - 1] = Chr(13)) Then
+    Begin
+      GetTextExtentPoint(hTempDC, 'A', 1, TempSize);
+      TempRect.Bottom := TempRect.Bottom + TempSize.cy;
+    End;
+    End;
 
-	  SelectObject(hTempDc, hPrevFont);
-	  DeleteObject(hTempFont);
-	  ReleaseDC(0, hTempDC);
+    SelectObject(hTempDc, hPrevFont);
+    DeleteObject(hTempFont);
+    ReleaseDC(0, hTempDC);
   end;
   function TReportCell.DefaultHeight(cell : TReportCell) : integer; begin
     result := 16 + 2 + cell.FTopLineWidth + cell.FBottomLineWidth ;
@@ -1144,13 +1144,13 @@ Procedure TReportCell.CalcCellTextRect;
     TotalHeight: Integer;
     I: Integer;
   begin
-		FCellRect.left := FCellLeft;
-		FCellRect.top := CellTop;
-		FCellRect.right := FCellRect.left + FCellWidth;
- 		FCellRect.bottom := FCellRect.top + OwnerLineHeight;
+    FCellRect.left := FCellLeft;
+    FCellRect.top := CellTop;
+    FCellRect.right := FCellRect.left + FCellWidth;
+     FCellRect.bottom := FCellRect.top + OwnerLineHeight;
     if FCellsList.Count >0 then
-    	For I := 0 To FCellsList.Count - 1 Do
-		    FCellRect.bottom := FCellRect.bottom + TReportCell(FCellsList[I]).OwnerLineHeight;
+      For I := 0 To FCellsList.Count - 1 Do
+        FCellRect.bottom := FCellRect.bottom + TReportCell(FCellsList[I]).OwnerLineHeight;
   end;
   procedure CalcTextRect;
   Var
@@ -1158,49 +1158,49 @@ Procedure TReportCell.CalcCellTextRect;
   TotalHeight: Integer;
   I: Integer;
   begin
-    	TempRect := FCellRect;
-	TempRect.left := TempRect.Left + FLeftMargin + 1;
-	TempRect.top := TempRect.top + FTopLineWidth + 1;
-	TempRect.right := TempRect.right - FLeftMargin - 1;
- 	If FCellsList.Count <= 0 Then
-	Begin
-		TempRect.bottom := TempRect.top + FMinCellHeight - 2 - FTopLineWidth -
-		  FBottomLineWidth;
-		Case FVertAlign Of
-		  TEXT_ALIGN_VCENTER:
-			Begin
-			  TempRect.Top := TempRect.Top + trunc((OwnerLineHeight - FMinCellHeight)
-				/ 2 + 0.5);
-			  TempRect.Bottom := TempRect.Bottom + trunc((OwnerLineHeight -
-				FMinCellHeight) / 2 + 0.5);
-			End;
-		  TEXT_ALIGN_BOTTOM:
-			Begin
-			  TempRect.Top := TempRect.Top + OwnerLineHeight - FMinCellHeight;
-			  TempRect.Bottom := TempRect.Bottom + OwnerLineHeight - FMinCellHeight;
-			End;
-		End;
-	 End Else
+    TempRect := FCellRect;
+    TempRect.left := TempRect.Left + FLeftMargin + 1;
+    TempRect.top := TempRect.top + FTopLineWidth + 1;
+    TempRect.right := TempRect.right - FLeftMargin - 1;
+   If FCellsList.Count <= 0 Then
+  Begin
+    TempRect.bottom := TempRect.top + FMinCellHeight - 2 - FTopLineWidth -
+      FBottomLineWidth;
+    Case FVertAlign Of
+      TEXT_ALIGN_VCENTER:
+      Begin
+        TempRect.Top := TempRect.Top + trunc((OwnerLineHeight - FMinCellHeight)
+        / 2 + 0.5);
+        TempRect.Bottom := TempRect.Bottom + trunc((OwnerLineHeight -
+        FMinCellHeight) / 2 + 0.5);
+      End;
+      TEXT_ALIGN_BOTTOM:
+      Begin
+        TempRect.Top := TempRect.Top + OwnerLineHeight - FMinCellHeight;
+        TempRect.Bottom := TempRect.Bottom + OwnerLineHeight - FMinCellHeight;
+      End;
+    End;
+   End Else
    Begin
-		  TempRect.bottom := TempRect.top + FRequiredCellHeight - 2 - FTopLineWidth -
-		    FBottomLineWidth;
-		  Case FVertAlign Of
-		  TEXT_ALIGN_VCENTER:
-			Begin
-			  TempRect.Top := TempRect.Top + trunc((FCellRect.Bottom - FCellRect.Top
-				- FRequiredCellHeight) / 2 + 0.5);
-			  TempRect.Bottom := TempRect.Bottom + trunc((FCellRect.Bottom -
-				FCellRect.Top - FRequiredCellHeight) / 2 + 0.5);
-			End;
-		  TEXT_ALIGN_BOTTOM:
-			Begin
-			  TempRect.Top := TempRect.Top + FCellRect.Bottom - FCellRect.Top -
-				FRequiredCellHeight;
-			  TempRect.Bottom := TempRect.Bottom + FCellRect.Bottom - FCellRect.Top
-				- FRequiredCellHeight;
-			End;
-		  End;
-	  End;
+      TempRect.bottom := TempRect.top + FRequiredCellHeight - 2 - FTopLineWidth -
+        FBottomLineWidth;
+      Case FVertAlign Of
+      TEXT_ALIGN_VCENTER:
+      Begin
+        TempRect.Top := TempRect.Top + trunc((FCellRect.Bottom - FCellRect.Top
+        - FRequiredCellHeight) / 2 + 0.5);
+        TempRect.Bottom := TempRect.Bottom + trunc((FCellRect.Bottom -
+        FCellRect.Top - FRequiredCellHeight) / 2 + 0.5);
+      End;
+      TEXT_ALIGN_BOTTOM:
+      Begin
+        TempRect.Top := TempRect.Top + FCellRect.Bottom - FCellRect.Top -
+        FRequiredCellHeight;
+        TempRect.Bottom := TempRect.Bottom + FCellRect.Bottom - FCellRect.Top
+        - FRequiredCellHeight;
+      End;
+      End;
+    End;
     FTextRect := TempRect;
   end;
 Begin
@@ -1247,129 +1247,129 @@ Var
   procedure DrawFrameLine();
   var cGrey,cBlack: COLORREF ;
   begin
-	  cGrey :=  RGB(192, 192, 192);cBlack := RGB(0, 0, 0);
-	  // 绘制边框
-	  If FLeftLine Then
-		  DrawLeft(cBlack)
-	  else if (not bPrint) and (CellIndex = 0) then
-		  DrawLeft(cGrey);
+    cGrey :=  RGB(192, 192, 192);cBlack := RGB(0, 0, 0);
+    // 绘制边框
+    If FLeftLine Then
+      DrawLeft(cBlack)
+    else if (not bPrint) and (CellIndex = 0) then
+      DrawLeft(cGrey);
 
-	  If FTopLine Then
-		  DrawTop(cBlack)
-	  else if (not bPrint) and (OwnerLine.Index = 0) then
-		  DrawTop(cGrey);
+    If FTopLine Then
+      DrawTop(cBlack)
+    else if (not bPrint) and (OwnerLine.Index = 0) then
+      DrawTop(cGrey);
 
-	  If FRightLine Then
-		  DrawRight(cBlack)
-	  else if (not bPrint)  then
-		  DrawRight(cGrey);
+    If FRightLine Then
+      DrawRight(cBlack)
+    else if (not bPrint)  then
+      DrawRight(cGrey);
 
-	  If FBottomLine Then
-		  DrawBottom(cBlack)
-	  else if (not bPrint)  then
-		  DrawBottom(cGrey); 
+    If FBottomLine Then
+      DrawBottom(cBlack)
+    else if (not bPrint)  then
+      DrawBottom(cGrey); 
   end;
   procedure FillBg(FCellRect:TRect;FBackGroundColor:COLORREF);
   var TempRect:TRect;
   begin
-		  TempRect := FCellRect;
-		  TempRect.Top := TempRect.Top + 1;
-		  TempRect.Right := TempRect.Right + 1;
-		  If FBackGroundColor <> RGB(255, 255, 255) Then
-		  Begin
-			TempLogBrush.lbStyle := BS_SOLID;
-			TempLogBrush.lbColor := FBackGroundColor;
-			hTempBrush := CreateBrushIndirect(TempLogBrush);
-			FillRect(hPaintDC, TempRect, hTempBrush);
-			DeleteObject(hTempBrush);
-		  End;
-	  end;
+      TempRect := FCellRect;
+      TempRect.Top := TempRect.Top + 1;
+      TempRect.Right := TempRect.Right + 1;
+      If FBackGroundColor <> RGB(255, 255, 255) Then
+      Begin
+      TempLogBrush.lbStyle := BS_SOLID;
+      TempLogBrush.lbColor := FBackGroundColor;
+      hTempBrush := CreateBrushIndirect(TempLogBrush);
+      FillRect(hPaintDC, TempRect, hTempBrush);
+      DeleteObject(hTempBrush);
+      End;
+    end;
   procedure DrawDragon;begin
-	  hTempPen := CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
-	  hPrevPen := SelectObject(hPaintDc, hTempPen);
+    hTempPen := CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+    hPrevPen := SelectObject(hPaintDc, hTempPen);
 
-	  // 绘制斜线
-	  If FDiagonal > 0 Then
-	  Begin
-		If ((FDiagonal And LINE_LEFT1) > 0) Then
-		Begin
-		  MoveToEx(hPaintDC, FCellRect.left + 1, FCellRect.top + 1, Nil);
-		  LineTo(hPaintDC, FCellRect.right - 1, FCellRect.bottom - 1);
-		End;
+    // 绘制斜线
+    If FDiagonal > 0 Then
+    Begin
+    If ((FDiagonal And LINE_LEFT1) > 0) Then
+    Begin
+      MoveToEx(hPaintDC, FCellRect.left + 1, FCellRect.top + 1, Nil);
+      LineTo(hPaintDC, FCellRect.right - 1, FCellRect.bottom - 1);
+    End;
 
-		If ((FDiagonal And LINE_LEFT2) > 0) Then
-		Begin
-		  MoveToEx(hPaintDC, FCellRect.left + 1, FCellRect.top + 1, Nil);
-		  LineTo(hPaintDC, FCellRect.right - 1, trunc((FCellRect.bottom +
-			FCellRect.top) / 2 + 0.5));
-		End;
+    If ((FDiagonal And LINE_LEFT2) > 0) Then
+    Begin
+      MoveToEx(hPaintDC, FCellRect.left + 1, FCellRect.top + 1, Nil);
+      LineTo(hPaintDC, FCellRect.right - 1, trunc((FCellRect.bottom +
+      FCellRect.top) / 2 + 0.5));
+    End;
 
-		If ((FDiagonal And LINE_LEFT3) > 0) Then
-		Begin
-		  MoveToEx(hPaintDC, FCellRect.left + 1, FCellRect.top + 1, Nil);
-		  LineTo(hPaintDC, trunc((FCellRect.right + FCellRect.left) / 2 + 0.5),
-			FCellRect.bottom - 1);
-		End;
+    If ((FDiagonal And LINE_LEFT3) > 0) Then
+    Begin
+      MoveToEx(hPaintDC, FCellRect.left + 1, FCellRect.top + 1, Nil);
+      LineTo(hPaintDC, trunc((FCellRect.right + FCellRect.left) / 2 + 0.5),
+      FCellRect.bottom - 1);
+    End;
 
-		If ((FDiagonal And LINE_RIGHT1) > 0) Then
-		Begin
-		  MoveToEx(hPaintDC, FCellRect.right - 1, FCellRect.top + 1, Nil);
-		  LineTo(hPaintDC, FCellRect.left + 1, FCellRect.bottom - 1);
-		End;
+    If ((FDiagonal And LINE_RIGHT1) > 0) Then
+    Begin
+      MoveToEx(hPaintDC, FCellRect.right - 1, FCellRect.top + 1, Nil);
+      LineTo(hPaintDC, FCellRect.left + 1, FCellRect.bottom - 1);
+    End;
 
-		If ((FDiagonal And LINE_RIGHT2) > 0) Then
-		Begin
-		  MoveToEx(hPaintDC, FCellRect.right - 1, FCellRect.top + 1, Nil);
-		  LineTo(hPaintDC, FCellRect.left + 1, trunc((FCellRect.bottom +
-			FCellRect.top) / 2 + 0.5));
-		End;
+    If ((FDiagonal And LINE_RIGHT2) > 0) Then
+    Begin
+      MoveToEx(hPaintDC, FCellRect.right - 1, FCellRect.top + 1, Nil);
+      LineTo(hPaintDC, FCellRect.left + 1, trunc((FCellRect.bottom +
+      FCellRect.top) / 2 + 0.5));
+    End;
 
-		If ((FDiagonal And LINE_RIGHT3) > 0) Then
-		Begin
-		  MoveToEx(hPaintDC, FCellRect.right - 1, FCellRect.top + 1, Nil);
-		  LineTo(hPaintDC, trunc((FCellRect.right + FCellRect.left) / 2 + 0.5),
-			FCellRect.bottom - 1);
-		End;
+    If ((FDiagonal And LINE_RIGHT3) > 0) Then
+    Begin
+      MoveToEx(hPaintDC, FCellRect.right - 1, FCellRect.top + 1, Nil);
+      LineTo(hPaintDC, trunc((FCellRect.right + FCellRect.left) / 2 + 0.5),
+      FCellRect.bottom - 1);
+    End;
 
-	  End;
+    End;
 
-	  SelectObject(hPaintDC, hPrevPen);
-	  DeleteObject(hTempPen);
+    SelectObject(hPaintDC, hPrevPen);
+    DeleteObject(hTempPen);
   end;
   procedure DrawContentText;
   begin
-	 If Length(FCellText) > 0 Then
-	 Begin
-		Windows.SetTextColor(hPaintDC, FTextColor);
-		Format := DT_EDITCONTROL Or DT_WORDBREAK;
-		Case FHorzAlign Of
-		  TEXT_ALIGN_LEFT:
-			Format := Format Or DT_LEFT;
-		  TEXT_ALIGN_CENTER:
-			Format := Format Or DT_CENTER;
-		  TEXT_ALIGN_RIGHT:
-			Format := Format Or DT_RIGHT;
-		Else
-		  Format := Format Or DT_LEFT;
-		End;
-		hTextFont := CreateFontIndirect(FLogFont);
-		hPrevFont := SelectObject(hPaintDC, hTextFont);
-		TempRect := FTextRect;
-		DrawText(hPaintDC, PChar(FCellText), Length(FCellText), TempRect, Format);
-		SelectObject(hPaintDC, hPrevFont);
-		DeleteObject(hTextFont);
-	 End;
-	end;
+   If Length(FCellText) > 0 Then
+   Begin
+    Windows.SetTextColor(hPaintDC, FTextColor);
+    Format := DT_EDITCONTROL Or DT_WORDBREAK;
+    Case FHorzAlign Of
+      TEXT_ALIGN_LEFT:
+      Format := Format Or DT_LEFT;
+      TEXT_ALIGN_CENTER:
+      Format := Format Or DT_CENTER;
+      TEXT_ALIGN_RIGHT:
+      Format := Format Or DT_RIGHT;
+    Else
+      Format := Format Or DT_LEFT;
+    End;
+    hTextFont := CreateFontIndirect(FLogFont);
+    hPrevFont := SelectObject(hPaintDC, hTextFont);
+    TempRect := FTextRect;
+    DrawText(hPaintDC, PChar(FCellText), Length(FCellText), TempRect, Format);
+    SelectObject(hPaintDC, hPrevFont);
+    DeleteObject(hTextFont);
+   End;
+  end;
 Begin
   If FOwnerCell <> Nil Then
     Exit;                          
   SaveDCIndex := SaveDC(hPaintDC);
   try
-	  SetBkMode(hPaintDC, TRANSPARENT);
-	  FillBg ( FCellRect,FBackGroundColor);
-	  DrawFrameLine();
-	  DrawDragon;
-	  DrawContentText ;
+    SetBkMode(hPaintDC, TRANSPARENT);
+    FillBg ( FCellRect,FBackGroundColor);
+    DrawFrameLine();
+    DrawDragon;
+    DrawContentText ;
   finally
     RestoreDC(hPaintDC, SaveDCIndex);
   end;
@@ -3183,9 +3183,9 @@ Procedure TReportControl.SetSelectedCellFont(cf: TFont);
 var CellFont: TLOGFONT;
 begin
       {$WARN UNSAFE_CODE OFF}
-			GetObject(cf.Handle, SizeOf(CellFont), @CellFont);
+      GetObject(cf.Handle, SizeOf(CellFont), @CellFont);
       {$WARN UNSAFE_CODE  ON}
-			SetCellFont(CellFont);
+      SetCellFont(CellFont);
 end;
 Procedure TReportControl.SetCellFont(CellFont: TLOGFONT);
 Var
@@ -6092,13 +6092,13 @@ End;
     i ,j :integer;
   begin
      For I := 0 To FLineList.Count - 1 Do
- 		 Begin
-			ThisLine := TReportLine(FLineList[I]);
-			For J := 0 To ThisLine.FCells.Count - 1 Do
-			Begin
-			  ThisCell := TReportCell(ThisLine.FCells[J]);
+      Begin
+      ThisLine := TReportLine(FLineList[I]);
+      For J := 0 To ThisLine.FCells.Count - 1 Do
+      Begin
+        ThisCell := TReportCell(ThisLine.FCells[J]);
         EachProc(ThisCell);
-			End;
+      End;
      End;
   end;
   procedure TReportRunTime.EachLine(EachProc:EachLineProc);
@@ -6108,9 +6108,9 @@ End;
     i ,j :integer;
   begin
      For I := 0 To FLineList.Count - 1 Do
- 		 Begin
-			ThisLine := TReportLine(FLineList[I]);
-			EachProc(ThisLine);
+      Begin
+      ThisLine := TReportLine(FLineList[I]);
+      EachProc(ThisLine);
      End;
   end;
   procedure TReportRunTime.EachLineIndex(EachProc:EachLineIndexProc);
@@ -6120,9 +6120,9 @@ End;
     i ,j :integer;
   begin
      For I := 0 To FLineList.Count - 1 Do
- 		 Begin
-			ThisLine := TReportLine(FLineList[I]);
-			EachProc(ThisLine,I);
+      Begin
+      ThisLine := TReportLine(FLineList[I]);
+      EachProc(ThisLine,I);
      End;
   end;
   procedure TReportRunTime.EachCell_CalcEveryHeight(ThisCell:TReportCell);
