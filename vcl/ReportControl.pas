@@ -139,7 +139,7 @@ Type
     Procedure RemoveOwnedCell(Cell: TReportCell);
     Function IsCellOwned(Cell: TReportCell): Boolean;
     Procedure CalcCellTextRect;
-    Procedure CalcMinCellHeight;
+    Procedure CalcEveryHeight;
     Procedure PaintCell(hPaintDC: HDC; bPrint: Boolean);
     Procedure CopyCell(Cell: TReportCell; bInsert: Boolean);
 
@@ -567,7 +567,7 @@ Type
     function GetDataSetFromCell(HasDataNo,CellIndex:Integer):TDataset;
     procedure EachCell(EachProc: EachCellProc);
     procedure EachLine(EachProc: EachLineProc);
-    procedure EachCell_CalcMinCellHeight(ThisCell: TReportCell);
+    procedure EachCell_CalcEveryHeight(ThisCell: TReportCell);
     procedure EachProc_CalcLineHeight(thisLine: TReportLine);
     procedure EachLineIndex(EachProc: EachLineIndexProc);
     procedure EachLineIndexProc_UpdateIndex(thisLine: TReportLine;
@@ -741,7 +741,7 @@ Begin
     Exit;
 
   FLeftMargin := LeftMargin;
-  CalcMinCellHeight;
+  CalcEveryHeight;
 End;
 
 Procedure TReportCell.SetOwnerLine(OwnerLine: TReportLine);
@@ -798,7 +798,7 @@ Begin
   Begin
     Cell := FCellsList[I];
     Cell.SetOwnerCell(Nil);
-    Cell.CalcMinCellHeight;
+    Cell.CalcEveryHeight;
 
   End;
 
@@ -830,13 +830,13 @@ Begin
   If CellWidth > 10 Then
   Begin
     FCellWidth := CellWidth;
-    CalcMinCellHeight;
+    CalcEveryHeight;
     CalcCellTextRect;
   End
   Else
   Begin
     FCellWidth := 10;
-    CalcMinCellHeight;
+    CalcEveryHeight;
     CalcCellTextRect;
   End;
 End;
@@ -868,7 +868,7 @@ Begin
     Exit;
 
   FLeftLine := LeftLine;
-  CalcMinCellHeight;
+  CalcEveryHeight;
   CalcCellTextRect;
 End;
 
@@ -878,7 +878,7 @@ Begin
     Exit;
 
   FLeftLineWidth := LeftLineWidth;
-  CalcMinCellHeight;
+  CalcEveryHeight;
   CalcCellTextRect;
 End;
 
@@ -888,7 +888,7 @@ Begin
     Exit;
 
   FTopLine := TopLine;
-  CalcMinCellHeight;
+  CalcEveryHeight;
   CalcCellTextRect;
 End;
 
@@ -898,7 +898,7 @@ Begin
     Exit;
 
   FTopLineWidth := TopLineWidth;
-  CalcMinCellHeight;
+  CalcEveryHeight;
   CalcCellTextRect;
 End;
 
@@ -908,7 +908,7 @@ Begin
     Exit;
 
   FRightLine := RightLine;
-  CalcMinCellHeight;
+  CalcEveryHeight;
   CalcCellTextRect;
 End;
 
@@ -918,7 +918,7 @@ Begin
     Exit;
 
   FRightLineWidth := RightLineWidth;
-  CalcMinCellHeight;
+  CalcEveryHeight;
   CalcCellTextRect;
 End;
 
@@ -928,7 +928,7 @@ Begin
     Exit;
 
   FBottomLine := BottomLine;
-  CalcMinCellHeight;
+  CalcEveryHeight;
   CalcCellTextRect;
 
 End;
@@ -939,7 +939,7 @@ Begin
     Exit;
 
   FBottomLineWidth := BottomLineWidth;
-  CalcMinCellHeight;
+  CalcEveryHeight;
   CalcCellTextRect;
 End;
 
@@ -949,14 +949,14 @@ Begin
     Exit;
 
   FCellText := CellText;
-  CalcMinCellHeight;
+  CalcEveryHeight;
 
 End;
 
 Procedure TReportCell.SetLogFont(NewFont: TLOGFONT);
 Begin
   FLogFont := NewFont;
-  CalcMinCellHeight;
+  CalcEveryHeight;
 End;
 
 Procedure TReportCell.SetBackGroundColor(BkColor: COLORREF);
@@ -1074,7 +1074,7 @@ End;
     result := Height + FOwnerCell.OwnerLineHeight;
   end;
 // 开始噩梦，噩梦中我把屏幕上的象素点一个一个干掉
-// LCJ: 在 Calc_MinCellHeight 内，期望仅仅计算 CalcMinCellHeight ；实际上同时在计算
+// LCJ: 在 Calc_MinCellHeight 内，期望仅仅计算 CalcEveryHeight ；实际上同时在计算
 //  FMinCellHeight ，FRequiredCellHeight ，还调用了 OwnerLine.CalcLineHeight
 //  不能不说，看的有点焦虑 。。。
 //  2014-11-6. 某人又在招人了，说拉了点投资。做猎头得了。
@@ -1085,7 +1085,7 @@ End;
 //  而MinCellHeight,后者是最小Cell的高度，不管它有没有合并和拆分，
 //  都固定表示一个cell的高度。普通cell用  MinCellHeight，合并的cell可能需要用RequiredCellHeight
 //  概念辨析:)
-Procedure TReportCell.CalcMinCellHeight;
+Procedure TReportCell.CalcEveryHeight;
 Var      
   I: Integer;
   BottomCell, ThisCell: TReportCell;
@@ -1130,7 +1130,7 @@ Begin
     FRequiredCellHeight := Calc_RequiredCellHeight();
     OwnerLine.CalcLineHeight;
     For I := 0 To FCellsList.Count - 1 Do
-      TReportCell(FCellsList[I]).CalcMinCellHeight;
+      TReportCell(FCellsList[I]).CalcEveryHeight;
   End
 End;
 
@@ -2453,7 +2453,7 @@ Begin
       End;
     End;
 
-    BottomCell.CalcMinCellHeight;
+    BottomCell.CalcEveryHeight;
     BottomCell.OwnerLine.LineHeight := FMousePoint.Y -
       BottomCell.OwnerLine.LineTop;
     UpdateLines;
@@ -3252,7 +3252,7 @@ Begin
       ThisCell := TReportCell(ThisLine.FCells[J]);
 
       If ThisCell.FCellsList.Count > 0 Then
-        ThisCell.CalcMinCellHeight;
+        ThisCell.CalcEveryHeight;
     End;
   End;
 
@@ -5284,7 +5284,7 @@ Begin
       FOwnerCellList.Add(TempCellTable);
     End;
 
-    CalcMinCellHeight;
+    CalcEveryHeight;
   End;
 End;
 //lzl 增加 ,完全重写的 PreparePrint,并增加了用空行补满一页 统计等功能
@@ -6123,10 +6123,10 @@ End;
 			EachProc(ThisLine,I);
      End;
   end;
-  procedure TReportRunTime.EachCell_CalcMinCellHeight(ThisCell:TReportCell);
+  procedure TReportRunTime.EachCell_CalcEveryHeight(ThisCell:TReportCell);
   begin
     If ThisCell.FCellsList.Count > 0 Then
-      thisCell.CalcMinCellHeight ;
+      thisCell.CalcEveryHeight ;
   end;
   procedure TReportRunTime.EachProc_CalcLineHeight(thisLine:TReportLine);
   begin
@@ -6156,7 +6156,7 @@ End;
   end;
 Procedure TReportRunTime.UpdateLines;
 Begin
-  EachCell(EachCell_CalcMinCellHeight);
+  EachCell(EachCell_CalcEveryHeight);
   EachLine(EachProc_CalcLineHeight);
   EachLineIndex(EachProc_UpdateIndex);
   EachLineIndex(EachProc_UpdateLineTop);
@@ -6180,7 +6180,7 @@ Begin
       ThisCell := TReportCell(ThisLine.FCells[J]);
 
       If ThisCell.FCellsList.Count > 0 Then
-        ThisCell.CalcMinCellHeight;
+        ThisCell.CalcEveryHeight;
     End;
   End;
 
