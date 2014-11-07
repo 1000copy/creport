@@ -1078,12 +1078,13 @@ End;
 //  FMinCellHeight ，FRequiredCellHeight ，还调用了 OwnerLine.CalcLineHeight
 //  不能不说，看的有点焦虑 。。。
 //  2014-11-6. 某人又在招人了，说拉了点投资。做猎头得了。
+//  要覆盖测试的话，只要combine一个贯穿三行的Cell，每个cell会各走一个分支。Yeah。
 Procedure TReportCell.CalcMinCellHeight;
 Var
 
   I: Integer;
   BottomCell, ThisCell: TReportCell;
-  TotalHeight,Top: Integer;
+  TotalHeight,Top,RectHeight: Integer;
   TempSize: TSize;
   TempRect: TRect;
   function Calc_RequiredCellHeight( ): Integer;
@@ -1096,46 +1097,32 @@ Var
     result := Height + 2  + FTopLineWidth + FBottomLineWidth;
   end;
 Begin
+  FMinCellHeight := DefaultHeight(self);
   // 要是Cell 太窄，窄到无法放入任何文字，就不要到后面去计算高度了。
   // 直接默认 字高 16 即可。
   // 没有 RightMargin ,原作者把RightMargin 和LeftMargin等同，所以又下面的 FLeftMargin * 2
   If FCellWidth <= FLeftMargin * 2 Then
+    Exit ;
+  if (FOwnerCell <> Nil) Then
   Begin
-    FMinCellHeight := DefaultHeight(self);
-    Exit;
-  End;
-  // 隶属与某CELL时
-  If FOwnerCell <> Nil Then
-  Begin
-    BottomCell := GetBottomest(FOwnerCell);
-    TotalHeight := GetTotalHeight(FOwnerCell) ;
-    // LCJ : 进入到此分支的方法：
-    // 1. 建立一个横跨3行的Combined Cell
-    // 2. 不断输入文字，直到整个大cell无法装入全部文字即可
-    If (BottomCell = Self ) and (FOwnerCell.RequiredCellHeight > TotalHeight) Then
-      FMinCellHeight := FOwnerCell.RequiredCellHeight - TotalHeight + OwnerLineHeight
-    else
-      FMinCellHeight := DefaultHeight(self) ;
-    exit;
-  End;
-  GetTextRect(TempRect);
-
-  If (FCellsList.Count > 0) Then
+      BottomCell := GetBottomest(FOwnerCell);
+      TotalHeight := GetTotalHeight(FOwnerCell) ;
+      If (BottomCell = Self ) and (FOwnerCell.RequiredCellHeight > TotalHeight) Then
+        FMinCellHeight := FOwnerCell.RequiredCellHeight - TotalHeight + OwnerLineHeight;
+  End else begin
+      GetTextRect(TempRect);
+      RectHeight := TempRect.Bottom - TempRect.Top ;
+      If (FCellsList.Count = 0) and ( RectHeight > 0) Then
+          FMinCellHeight := RectHeight + 2 + FTopLineWidth + FBottomLineWidth;
+  end;
+  // block resonsibility depart
+  If (FOwnerCell = Nil) and (FCellsList.Count > 0) Then
   Begin
     FRequiredCellHeight := Calc_RequiredCellHeight();
-    FMinCellHeight := DefaultHeight(self);
     OwnerLine.CalcLineHeight;
     For I := 0 To FCellsList.Count - 1 Do
       TReportCell(FCellsList[I]).CalcMinCellHeight;
   End
-  Else
-  Begin
-    If TempRect.Bottom - TempRect.Top <= 0 Then
-      FMinCellHeight := 16
-    Else
-      FMinCellHeight := TempRect.Bottom - TempRect.Top;
-    FMinCellHeight := FMinCellHeight + 2 + FTopLineWidth + FBottomLineWidth;
-  End;
 End;
 
 // Calc CellRect & TextRect here
