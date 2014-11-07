@@ -65,8 +65,8 @@ type
     N30: TMenuItem;
     N33: TMenuItem;
     ScrollBox1: TScrollBox;
-    ReportControl1: TReportControl;
     Panel3: TPanel;
+    ReportControl1: TReportControl;
     SpeedButton1: TSpeedButton;
     SpeedButton2: TSpeedButton;
     SpeedButton3: TSpeedButton;
@@ -188,7 +188,6 @@ type
   private
     dbarleft:integer;
     dbartop:integer;
-    zoomxxx:INTEGER;
     savebz:boolean;
     procedure ListBoxDragOver(Sender, Source: TObject; X,Y: Integer; State: TDragState; var Accept: Boolean);
 
@@ -197,6 +196,10 @@ type
     { Private declarations }
   public
     thefile, savefilename: string;
+    zoomxxx:INTEGER;
+    property ReportControl: TReportControl read ReportControl1;
+    procedure DoCenter ;
+    class procedure EditReport(FileName:String);
   end;
 
 const
@@ -1210,6 +1213,44 @@ begin
    end;
 end;
 
+
+procedure TCreportForm.DoCenter;
+begin
+    zoomxxx:=100;
+    ShowWindow(ReportControl1.Handle, SW_HIDE);
+    ReportControl1.ReportScale := zoomxxx;
+    ScrollBox1Resize(Self);
+    ShowWindow(ReportControl1.Handle, SW_SHOW);
+end;
+
+class procedure TCreportForm.EditReport(FileName: String);
+begin
+  Application.CreateForm(TCreportform,Creportform);
+  Application.CreateForm(Tfrm_About, frm_About);
+  Application.CreateForm(TBorderform,Borderform );
+  Application.CreateForm(TColorform,Colorform );
+  Application.CreateForm(Tdiagonalform,diagonalform);
+  Application.CreateForm(Tmarginkform,marginkform );
+  Application.CreateForm(TfrmNewTable,frmNewTable);
+  Application.CreateForm(Tvsplitform,vsplitform);
+
+  Creportform.ReportControl1.LoadFromFile(filename);
+  Creportform.Caption:= filename;
+
+  Creportform.Thefile :=filename;
+  Creportform.savefilename := filename;
+  creportform.DoCenter;
+  Creportform.showmodal;
+  Creportform.Free;
+  frm_About.Free;
+  Borderform.Free;
+  Colorform.Free;
+  diagonalform.Free;
+  marginkform.Free;
+  frmNewTable.Free;
+  vsplitform.Free;
+
+end;
 
 end.
 

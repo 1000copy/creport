@@ -201,6 +201,24 @@ object CReportDemoForm: TCReportDemoForm
       TabOrder = 2
       OnClick = Button5Click
     end
+    object Button1: TButton
+      Left = 10
+      Top = 93
+      Width = 83
+      Height = 32
+      Hint = 
+        'E:\lzl_delphi\vcl\CReport\CReport_D5_D7\demo_d6_7\CReport_demo.e' +
+        'pt'
+      Caption = #32534#36753
+      Font.Charset = GB2312_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -16
+      Font.Name = #26999#20307'_GB2312'
+      Font.Style = []
+      ParentFont = False
+      TabOrder = 3
+      OnClick = Button1Click
+    end
   end
   object Panel5: TPanel
     Left = 0

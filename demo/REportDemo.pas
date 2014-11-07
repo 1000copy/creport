@@ -1,4 +1,4 @@
- 
+
 unit REportDemo;
 
 interface
@@ -25,6 +25,7 @@ type
     ReportControl1: TReportControl;
     SaveDialog1: TSaveDialog;
     SpeedButton3: TSpeedButton;
+    Button1: TButton;
     procedure Button4Click(Sender: TObject);
     //procedure Button3Click(Sender: TObject);
     procedure Button5Click(Sender: TObject);
@@ -33,6 +34,7 @@ type
     procedure CheckBox1Click(Sender: TObject);
     procedure FormPaint(Sender: TObject);
     procedure SpeedButton3Click(Sender: TObject);
+    procedure Button1Click(Sender: TObject);
   private
     { Private declarations }
   public
@@ -201,4 +203,12 @@ begin
 		ReportRunTime1.PrintPreview(true); 
 		dataform.Table1.EnableControls;
 end;
+procedure TCReportDemoForm.Button1Click(Sender: TObject);
+var strFileDir : string;
+begin
+  strFileDir := ExtractFileDir(Application.ExeName);
+  self.ReportRunTime1.EditReport(strFileDir+'\'+'xxx.ept');
+
+end;
+
 end.

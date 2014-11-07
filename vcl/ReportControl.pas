@@ -589,6 +589,7 @@ Type
     Property allprint: boolean Read Fallprint Write Fallprint Default true;
     Procedure ResetContent;
     Procedure PrintPreview(bPreviewMode: Boolean);
+    Procedure EditReport (FileName:String);
     Function shpreview: boolean;        //重新生成预览有关文件
     Function PrintSET(prfile: String): boolean; //纸张及边距设置，lzl
     Procedure updatepage;               //
@@ -626,19 +627,13 @@ Function DeleteFiles(FilePath, FileMask: String): Boolean;
 Procedure Register;
 
 Var
-  CXlsBof: Array[0..5] Of Word = ($809, 8, 0, $10, 0, 0);
-  CXlsEof: Array[0..1] Of Word = ($0A, 00);
-  CXlsLabel: Array[0..5] Of Word = ($204, 0, 0, 0, 0, 0);
-  CXlsNumber: Array[0..4] Of Word = ($203, 14, 0, 0, 0);
-  CXlsRk: Array[0..4] Of Word = ($27E, 10, 0, 0, 0);
-  CXlsBlank: Array[0..4] Of Word = ($201, 6, 0, 0, $17);
 
   Adevice, Adriver, Aport: Array[0..255] Of char; //prdevixemode调用 lzl 2002.3
   DeviceHandle: THandle;
-  DevMode: PdeviceMode; //当前打印机结构成员，调用prdevixemode初始化 lzl 
+  DevMode: PdeviceMode; //当前打印机结构成员，调用prdevixemode初始化 lzl
 
-  FprPageNo: integer;                   //打印文件的纸张序号  lzl 
-  FprPageXy: integer;                   //打印文件的纸张纵横方向  lzl 
+  FprPageNo: integer;                   //打印文件的纸张序号  lzl
+  FprPageXy: integer;                   //打印文件的纸张纵横方向  lzl
   fpaperLength: integer;
   fpaperWidth: integer;
 
@@ -6602,6 +6597,35 @@ Procedure TReportRunTime.Setdbgrid(Const Value: Tdbgrid);
 Begin
   fdbgrid := Value;
 End;
+
+procedure TReportRunTime.EditReport(FileName:String);
+begin
+
+  Application.CreateForm(TCreportform,Creportform);
+  Application.CreateForm(Tfrm_About, frm_About);
+  Application.CreateForm(TBorderform,Borderform );
+  Application.CreateForm(TColorform,Colorform );
+  Application.CreateForm(Tdiagonalform,diagonalform);
+  Application.CreateForm(Tmarginkform,marginkform );
+  Application.CreateForm(TfrmNewTable,frmNewTable);
+  Application.CreateForm(Tvsplitform,vsplitform);
+
+  Creportform.ReportControl1.LoadFromFile(filename);
+  Creportform.Caption:= filename;
+
+  Creportform.Thefile :=filename;
+  Creportform.savefilename := filename;
+  creportform.DoCenter;
+  Creportform.showmodal;
+  Creportform.Free;
+  frm_About.Free;
+  Borderform.Free;
+  Colorform.Free;
+  diagonalform.Free;
+  marginkform.Free;
+  frmNewTable.Free;
+  vsplitform.Free;
+end;
 
 End.
 
