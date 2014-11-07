@@ -102,6 +102,7 @@ Type
     function GetBottomest(FOwnerCell: TReportCell): TReportCell;
     procedure GetTextRect(var TempRect: TRect);
     function GetTotalHeight(FOwnerCell: TReportCell): Integer;
+    function Payload: Integer;
   Protected
     { Protected declarations }
     Procedure SetLeftMargin(LeftMargin: Integer);
@@ -1085,17 +1086,18 @@ End;
 //  而MinCellHeight,后者是最小Cell的高度，不管它有没有合并和拆分，
 //  都固定表示一个cell的高度。普通cell用  MinCellHeight，合并的cell可能需要用RequiredCellHeight
 //  概念辨析:)
+  function TReportCell.Payload : Integer;
+  begin
+    result := 2  + FTopLineWidth + FBottomLineWidth ;
+  end;
+
 Procedure TReportCell.CalcEveryHeight;
-Var      
+Var
   I: Integer;
   BottomCell, ThisCell: TReportCell;
   TotalHeight,Top,RectHeight: Integer;
   TempSize: TSize;
   TempRect: TRect;
-  function Payload : Integer;
-  begin
-    result := 2  + FTopLineWidth + FBottomLineWidth ;
-  end;
   function Calc_RequiredCellHeight( ): Integer;
   var Height : integer;  TempRect: TRect;
   begin
