@@ -1079,14 +1079,23 @@ End;
 //  不能不说，看的有点焦虑 。。。
 //  2014-11-6. 某人又在招人了，说拉了点投资。做猎头得了。
 //  要覆盖测试的话，只要combine一个贯穿三行的Cell，每个cell会各走一个分支。Yeah。
+//  这个cover，脑袋里面演示下，还是没有问题的
+//  2014-11-7 现在，你体会下，这就是职责分离的快感。
+//   RequiredCellHeight 就是在跨行合并的Cell中表达 CellText需要的高度。区别于
+//  而MinCellHeight,后者是最小Cell的高度，不管它有没有合并和拆分，
+//  都固定表示一个cell的高度。普通cell用  MinCellHeight，合并的cell可能需要用RequiredCellHeight
+//  概念辨析:)
 Procedure TReportCell.CalcMinCellHeight;
-Var
-
+Var      
   I: Integer;
   BottomCell, ThisCell: TReportCell;
   TotalHeight,Top,RectHeight: Integer;
   TempSize: TSize;
   TempRect: TRect;
+  function Payload : Integer;
+  begin
+    result := 2  + FTopLineWidth + FBottomLineWidth ;
+  end;
   function Calc_RequiredCellHeight( ): Integer;
   var Height : integer;  TempRect: TRect;
   begin
@@ -1094,7 +1103,7 @@ Var
     Height := 16 ;
     If TempRect.Bottom - TempRect.Top > 0 Then
       Height := TempRect.Bottom - TempRect.Top;
-    result := Height + 2  + FTopLineWidth + FBottomLineWidth;
+    result := Height + Payload ;
   end;
 Begin
   FMinCellHeight := DefaultHeight(self);
@@ -1113,7 +1122,7 @@ Begin
       GetTextRect(TempRect);
       RectHeight := TempRect.Bottom - TempRect.Top ;
       If (FCellsList.Count = 0) and ( RectHeight > 0) Then
-          FMinCellHeight := RectHeight + 2 + FTopLineWidth + FBottomLineWidth;
+          FMinCellHeight := RectHeight + Payload;
   end;
   // block resonsibility depart
   If (FOwnerCell = Nil) and (FCellsList.Count > 0) Then
