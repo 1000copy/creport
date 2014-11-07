@@ -284,13 +284,11 @@ Type
     // 鼠标操作支持
     FMousePoint: TPoint;
 
-    // 编辑、颜色及字体
+    // 编辑框、以及它的颜色和字体
     FEditWnd: HWND;
     FEditBrush: HBRUSH;
     FEditFont: HFONT;
-    //procedure SetScale(const Value: Integer);
-
-    //FReportMenu : TPopupMenu;
+ 
 
     Procedure setCreportEdit(Const value: boolean);
     Procedure SetCellSFocus(row1, col1, row2, col2: integer);
@@ -303,20 +301,15 @@ Type
   Public
     { Public declarations }
     Procedure SetSelectedCellFont(cf: TFont);
-    procedure SelectLines(row1, row2: integer);  //add lzl 选择单元格
+    procedure SelectLines(row1, row2: integer);
+    Procedure SetCellFocus(row, col: integer);
     Constructor Create(AOwner: TComponent); Override;
     Destructor Destroy; Override;
-    //procedure setSaveToFile(callRow,lenk:integer;RcallText:array of string);
     Procedure SaveToFile(FileName: String);
     Procedure LoadFromFile(FileName: String);
-
-    Procedure SetCellFocus(row, col: integer); //add lzl 选择单元格
-
-
     Procedure SaveBmp(thiscell: Treportcell; filename: String); //lzl add
     Function LoadBmp(thiscell: Treportcell): TBitmap; //lzl add
     Procedure FreeBmp(thiscell: Treportcell); //lzl add
-    Procedure SetLineHegit(row, h: integer); // lzl add
 
     Procedure PrintIt;
     Procedure ResetContent;
@@ -4277,13 +4270,6 @@ Begin
 
 End;
 
-Procedure TReportControl.SetLineHegit(row, h: integer); // add lzl
-Var
-  ThisLine: Treportline;
-Begin
-  ThisLine := TReportLine(FlineList[row]);
-  ThisLine.SetDragHeight(h);
-End;
 
 Procedure TReportControl.SetWndSize(w, h: integer); //add lzl
 Begin

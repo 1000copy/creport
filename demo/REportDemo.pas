@@ -127,7 +127,7 @@ begin
 			CombineCell;
       Lines[0].LineHeight := 80;
 			SetCellLines(false,false,false,false,1,1,1,1);
-      Cells[0,0].CellText := '֧Ʊ11';
+      Cells[0,0].CellText := '֧Ʊ112';
 			SetCellAlign(TEXT_ALIGN_CENTER, TEXT_ALIGN_VCENTER);
 
 			cf := Tfont.Create;
@@ -150,8 +150,8 @@ begin
 			 else
 			   SetCellAlign(3, 1);
 			end;
-			setLineHegit(1,40);  
 
+      Lines[1].LineHeight := 40;
 			ClearSelect;
 			SelectLine(1);
 			SetCellAlign(1, 1);
@@ -191,8 +191,8 @@ begin
 			SetCellLines(false,false,false,false,1,1,1,1);
 			CombineCell;
       Cells[5,0].CellText := '@T2.Loel' ;
-			setLineHegit(5,250);
 
+      Lines[5].LineHeight := 250;
 			SaveToFile(strFileDir+'\'+'xxx.ept');
 			ResetContent;
 			cf.Free;
