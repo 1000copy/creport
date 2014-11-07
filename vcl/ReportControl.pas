@@ -1086,6 +1086,15 @@ Var
   TotalHeight,Top: Integer;
   TempSize: TSize;
   TempRect: TRect;
+  function Calc_RequiredCellHeight( ): Integer;
+  var Height : integer;  TempRect: TRect;
+  begin
+    GetTextRect(TempRect);
+    Height := 16 ;
+    If TempRect.Bottom - TempRect.Top > 0 Then
+      Height := TempRect.Bottom - TempRect.Top;
+    result := Height + 2  + FTopLineWidth + FBottomLineWidth;
+  end;
 Begin
   // 要是Cell 太窄，窄到无法放入任何文字，就不要到后面去计算高度了。
   // 直接默认 字高 16 即可。
@@ -1100,6 +1109,9 @@ Begin
   Begin
     BottomCell := GetBottomest(FOwnerCell);
     TotalHeight := GetTotalHeight(FOwnerCell) ;
+    // LCJ : 进入到此分支的方法：
+    // 1. 建立一个横跨3行的Combined Cell
+    // 2. 不断输入文字，直到整个大cell无法装入全部文字即可
     If (BottomCell = Self ) and (FOwnerCell.RequiredCellHeight > TotalHeight) Then
       FMinCellHeight := FOwnerCell.RequiredCellHeight - TotalHeight + OwnerLineHeight
     else
@@ -1110,14 +1122,7 @@ Begin
 
   If (FCellsList.Count > 0) Then
   Begin
-    If TempRect.Bottom - TempRect.Top <= 0 Then
-      FRequiredCellHeight := 16
-    Else
-      FRequiredCellHeight := TempRect.Bottom - TempRect.Top;
-
-    FRequiredCellHeight := FRequiredCellHeight + 2  + FTopLineWidth +
-      FBottomLineWidth;
-
+    FRequiredCellHeight := Calc_RequiredCellHeight();
     FMinCellHeight := DefaultHeight(self);
     OwnerLine.CalcLineHeight;
     For I := 0 To FCellsList.Count - 1 Do
@@ -1138,30 +1143,16 @@ End;
 Procedure TReportCell.CalcCellTextRect;
   procedure CalcCellRect;
   Var
-  TempRect: TRect;
-  TotalHeight: Integer;
-  I: Integer;
+    TotalHeight: Integer;
+    I: Integer;
   begin
-  	If FCellsList.Count <= 0 Then
-	  Begin
-		// 计算CELL的矩形   
 		FCellRect.left := FCellLeft;
 		FCellRect.top := CellTop;
 		FCellRect.right := FCellRect.left + FCellWidth;
-		FCellRect.bottom := FCellRect.top + OwnerLineHeight;
-	  End
-	  Else
-	  Begin
-		TotalHeight := OwnerLineHeight;
-
-		For I := 0 To FCellsList.Count - 1 Do
-		  TotalHeight := TotalHeight + TReportCell(FCellsList[I]).OwnerLineHeight;
-
-		FCellRect.left := FCellLeft;
-		FCellRect.top := CellTop;
-		FCellRect.right := FCellRect.left + FCellWidth;
-		FCellRect.bottom := FCellRect.top + TotalHeight;
-	  End;
+ 		FCellRect.bottom := FCellRect.top + OwnerLineHeight;
+    if FCellsList.Count >0 then
+    	For I := 0 To FCellsList.Count - 1 Do
+		    FCellRect.bottom := FCellRect.bottom + TReportCell(FCellsList[I]).OwnerLineHeight;
   end;
   procedure CalcTextRect;
   Var
@@ -1169,16 +1160,14 @@ Procedure TReportCell.CalcCellTextRect;
   TotalHeight: Integer;
   I: Integer;
   begin
-  	If FCellsList.Count <= 0 Then
-	  Begin
-			// 计算文本框的矩形
-		TempRect := FCellRect;
-		TempRect.left := TempRect.Left + FLeftMargin + 1;
-		TempRect.top := TempRect.top + FTopLineWidth + 1;
-		TempRect.right := TempRect.right - FLeftMargin - 1;
+    	TempRect := FCellRect;
+	TempRect.left := TempRect.Left + FLeftMargin + 1;
+	TempRect.top := TempRect.top + FTopLineWidth + 1;
+	TempRect.right := TempRect.right - FLeftMargin - 1;
+ 	If FCellsList.Count <= 0 Then
+	Begin
 		TempRect.bottom := TempRect.top + FMinCellHeight - 2 - FTopLineWidth -
 		  FBottomLineWidth;
-
 		Case FVertAlign Of
 		  TEXT_ALIGN_VCENTER:
 			Begin
@@ -1193,19 +1182,11 @@ Procedure TReportCell.CalcCellTextRect;
 			  TempRect.Bottom := TempRect.Bottom + OwnerLineHeight - FMinCellHeight;
 			End;
 		End;
-		FTextRect := TempRect;
-	  End
-	  Else
-	  Begin
-		// 计算文本框的矩形
-		TempRect := FCellRect;
-		TempRect.left := TempRect.Left + FLeftMargin + 1;
-		TempRect.top := TempRect.top + FTopLineWidth + 1;
-		TempRect.right := TempRect.right - FLeftMargin;
-		TempRect.bottom := TempRect.top + FRequiredCellHeight - 2 - FTopLineWidth -
-		  FBottomLineWidth;
-
-		Case FVertAlign Of
+	 End Else
+   Begin
+		  TempRect.bottom := TempRect.top + FRequiredCellHeight - 2 - FTopLineWidth -
+		    FBottomLineWidth;
+		  Case FVertAlign Of
 		  TEXT_ALIGN_VCENTER:
 			Begin
 			  TempRect.Top := TempRect.Top + trunc((FCellRect.Bottom - FCellRect.Top
@@ -1220,9 +1201,9 @@ Procedure TReportCell.CalcCellTextRect;
 			  TempRect.Bottom := TempRect.Bottom + FCellRect.Bottom - FCellRect.Top
 				- FRequiredCellHeight;
 			End;
-		End;                   
-		FTextRect := TempRect;
+		  End;
 	  End;
+    FTextRect := TempRect;
   end;
 Begin
   CalcCellRect;
