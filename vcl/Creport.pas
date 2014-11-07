@@ -1248,8 +1248,7 @@ begin
   diagonalform.Free;
   marginkform.Free;
   frmNewTable.Free;
-  vsplitform.Free;
-
+  vsplitform.Free;         
 end;
 
 end.

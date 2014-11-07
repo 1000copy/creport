@@ -6600,31 +6600,7 @@ End;
 
 procedure TReportRunTime.EditReport(FileName:String);
 begin
-
-  Application.CreateForm(TCreportform,Creportform);
-  Application.CreateForm(Tfrm_About, frm_About);
-  Application.CreateForm(TBorderform,Borderform );
-  Application.CreateForm(TColorform,Colorform );
-  Application.CreateForm(Tdiagonalform,diagonalform);
-  Application.CreateForm(Tmarginkform,marginkform );
-  Application.CreateForm(TfrmNewTable,frmNewTable);
-  Application.CreateForm(Tvsplitform,vsplitform);
-
-  Creportform.ReportControl1.LoadFromFile(filename);
-  Creportform.Caption:= filename;
-
-  Creportform.Thefile :=filename;
-  Creportform.savefilename := filename;
-  creportform.DoCenter;
-  Creportform.showmodal;
-  Creportform.Free;
-  frm_About.Free;
-  Borderform.Free;
-  Colorform.Free;
-  diagonalform.Free;
-  marginkform.Free;
-  frmNewTable.Free;
-  vsplitform.Free;
+  TCreportform.EditReport(FileName);
 end;
 
 End.
