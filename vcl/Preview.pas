@@ -446,7 +446,7 @@ else
 
   ReportControl1.Enabled:=EnableBz;
 
- Cpreviewedit:=EditEptk.Visible; //add lzl 如果充许编辑模板则可编辑单元格否则不行。
+  ReportControl1.AllowPreviewEdit:=EditEptk.Visible; //add lzl 如果充许编辑模板则可编辑单元格否则不行。
 
 end;
 

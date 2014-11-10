@@ -246,6 +246,7 @@ Type
 
   TReportControl = Class(TWinControl)
   Private
+    Cpreviewedit: boolean;
     FCreportEdit: boolean;
     { Private declarations }
     FPreviewStatus: Boolean;
@@ -407,6 +408,7 @@ Type
       2147483647;
     property Lines[Index: Integer]: TReportLine read Get  ;
     property Cells[Row: Integer;Col: Integer]: TReportCell read GetCells ;
+    property  AllowPreviewEdit: boolean read CPreviewEdit write CPreviewEdit;
   Published
     { Published declarations }
     Property Left;
@@ -632,7 +634,7 @@ Var
 
   cp_pgw, cp_pgh, scale: integer;
 
-  Cpreviewedit: boolean;
+
 
   CellsWidth: Array Of Array Of integer;  //lzl  存用户在预览时拖动表格后新的单元格宽度,
   NhasSumALl: integer;                  //有合计的行在模板中是第几行.
@@ -642,7 +644,6 @@ Var
 
   CreportIde: boolean;
   cellline_d: TReportCell;              //用于保存选中单元格的属性 1999.1.25
-  isprint: byte;                        //用于是否已安装打印机
   celldisp: TReportCell;                //用于显示Mouse位置的单元格属性
 
 Implementation
@@ -1811,10 +1812,8 @@ Procedure TReportControl.CalcWndSize;
 Var
   hClientDC: HDC;
 Begin
-  isprint := 0;
   If printer.Printers.Count <= 0 Then
   Begin
-    isprint := 1;                       //未安装打印机
     If cp_pgw <> 0 Then
     Begin
       FPageWidth := cp_pgw;
@@ -1826,7 +1825,7 @@ Begin
   hClientDC := GetDC(0);
   If cp_pgw = 0 Then
   Begin
-    If isprint = 1 Then
+    If printer.Printers.Count <= 0 Then
     Begin
       FPageWidth := 768;                //未安装打印机时，设置默认纸宽
       FPageHeight := 1058;              //未安装打印机时，设置默认纸高
@@ -3978,7 +3977,8 @@ Begin
 
   UpdateLines;
 End;
-
+// 打印模板。就是不填入数据的情况下，把设计态表格打印出来 。
+// 肯定只有一页，因此不需要考虑分页问题
 Procedure TReportControl.PrintIt;
 Var
   hPrinterDC: HDC;
@@ -3988,32 +3988,20 @@ Var
   PageSize: TSize;
   Ltemprect: Trect;
 Begin
-  //  if Printer.Handle = INVALID_HANDLE_VALUE then
-  //  begin
-  //    Application.Messagebox('未安装打印机', '警告', MB_OK + MB_iconwarning);
-  //    Exit;
-  //  end;
-
   Printer.Title := 'C_Report';
   Printer.BeginDoc;
-
   hPrinterDC := Printer.Handle;
-
   SetMapMode(hPrinterDC, MM_ISOTROPIC);
   PageSize.cx := Printer.PageWidth;
   PageSize.cy := Printer.PageHeight;
   SetWindowExtEx(hPrinterDC, Width, Height, @PageSize);
-  SetViewPortExtEx(hPrinterDC, Printer.PageWidth, Printer.PageHeight,
-    @PageSize);
-
+  SetViewPortExtEx(hPrinterDC, Printer.PageWidth, Printer.PageHeight,@PageSize);
   For I := 0 To FLineList.Count - 1 Do
   Begin
-    ThisLine := TReportLine(FLineList[I]);
-
+    ThisLine := TReportLine(FLineList[I]);         
     For J := 0 To TReportLine(FLineList[i]).FCells.Count - 1 Do
     Begin
-      ThisCell := TReportCell(ThisLine.FCells[J]);
-
+      ThisCell := TReportCell(ThisLine.FCells[J]); 
       If ThisCell.OwnerCell = Nil Then
       Begin
         LTempRect := ThisCell.FCellRect;
@@ -4022,16 +4010,10 @@ Begin
         LTempRect.Right := ThisCell.FCellRect.Right - 3;
         LTempRect.Bottom := ThisCell.FCellRect.Bottom - 3;
         printer.Canvas.stretchdraw(LTempRect, ThisCell.fbmp);
-        //y:=CellTop+ ((OwnerLineHeight-fbmp.Height) div 2);
-        //x:=CellLeft+((CellWidth- fbmp.Width) div 2);
-        //printer.Canvas.Draw(x,y,fbmp);
-        ThisCell.PaintCell(hPrinterDC, True);
-
-      End;
-
+        ThisCell.PaintCell(hPrinterDC, True);                
+      End;   
     End;
-  End;
-
+  End;        
   Printer.EndDoc;
 End;
 
@@ -5801,7 +5783,6 @@ Begin
 
     If printer.Printers.Count <= 0 Then
     Begin
-      isprint := 1;                     //未安装打印机
       Application.Messagebox('未安装打印机', '警告', MB_OK + MB_iconwarning);
       If cp_prewYn <> true Then
       Begin
@@ -5969,7 +5950,6 @@ Begin
 
     If printer.Printers.Count <= 0 Then
     Begin
-      isprint := 1;                     //未安装打印机
       DeleteAllTempFiles;
       Application.Messagebox('未安装打印机', '警告', MB_OK + MB_iconwarning);
       For I := Cp_DFdList.Count - 1 Downto 0 Do // add lzl

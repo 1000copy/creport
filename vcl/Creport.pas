@@ -528,7 +528,7 @@ end;
 
 procedure TCreportForm.PrintItClick(Sender: TObject);  // update 李泽伦
 begin
-  if isprint <> 1 then ReportControl1.PrintIt
+  if printer.Printers.Count > 0 then ReportControl1.PrintIt
   else Application.Messagebox('未安装打印机', '警告', MB_OK + MB_iconwarning);
 end;
 
