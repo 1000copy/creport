@@ -632,7 +632,7 @@ Var
   fpaperLength: integer;
   fpaperWidth: integer;
 
-  cp_pgw, cp_pgh, scale: integer;
+  cp_pgw, cp_pgh: integer;
 
 
 
@@ -1752,7 +1752,6 @@ Begin
   cp_pgh := 0;
 
   FReportScale := 100;
-  scale := FReportScale;
   FPageWidth := 0;
   FPageHeight := 0;
 
@@ -1827,20 +1826,18 @@ Begin
   Begin
     If printer.Printers.Count <= 0 Then
     Begin
-      FPageWidth := 768;                //未安装打印机时，设置默认纸宽
-      FPageHeight := 1058;              //未安装打印机时，设置默认纸高
+      FPageWidth := 768;
+      FPageHeight := 1058;              
     End
     Else
     Begin
-      FPageWidth := trunc(Printer.PageWidth / GetDeviceCaps(Printer.Handle,
-        LOGPIXELSX)
+      FPageWidth := trunc(Printer.PageWidth / GetDeviceCaps(Printer.Handle,LOGPIXELSX)
         * GetDeviceCaps(hClientDC, LOGPIXELSX) + 0.5);
-      FPageHeight := trunc(Printer.PageHeight / GetDeviceCaps(Printer.Handle,
-        LOGPIXELSY)
+      FPageHeight := trunc(Printer.PageHeight / GetDeviceCaps(Printer.Handle,LOGPIXELSY)
         * GetDeviceCaps(hClientDC, LOGPIXELSY) + 0.5);
     End;
   End;
-  cp_pgw := FPageWidth;                 //cp_pgw,cp_pgh用于打印
+  cp_pgw := FPageWidth;                 
   cp_pgh := FPageHeight;
   Width := trunc(FPageWidth * FReportScale / 100 + 0.5); //width,heght用于显示
   Height := trunc(FPageHeight * FReportScale / 100 + 0.5);
@@ -3561,7 +3558,6 @@ Begin
       Write(FileFlag, SizeOf(FileFlag));
 
       FReportScale := 100;
-      scale := FReportScale;            //1999.1.23
 
       Write(FReportScale, SizeOf(FReportScale));
       Write(FPageWidth, SizeOf(FPageWidth));
@@ -3751,7 +3747,6 @@ Begin
 
       Read(FReportScale, SizeOf(FReportScale));
       FReportScale := 100;
-      scale := 100;
       Read(FPageWidth, SizeOf(FPageWidth));
       Read(FPageHeight, SizeOf(FPageHeight));
       cp_pgw := FPageWidth;             //1999.1.23
@@ -4083,7 +4078,6 @@ End;
 Procedure TReportControl.SetScale(Const Value: Integer);
 Begin
   FReportScale := Value;
-  scale := value;
   CalcWndSize;
   Refresh;
 End;
@@ -4257,7 +4251,7 @@ Procedure TReportControl.SetWndSize(w, h: integer); //add lzl
 Begin
   FPageWidth := w;
   FPageHeight := h;
-  cp_pgw := FPageWidth;                 //cp_pgw,cp_pgh用于打印
+  cp_pgw := FPageWidth;
   cp_pgh := FPageHeight;
   Width := trunc(FPageWidth * FReportScale / 100 + 0.5); //width,heght用于显示
   Height := trunc(FPageHeight * FReportScale / 100 + 0.5);
@@ -4721,7 +4715,6 @@ Begin
   FAddspace := false;
   //cellswidth[0,0]:=0;
   FReportScale := 100;
-  scale := 100;
   Width := 0;
   Height := 0;
 
