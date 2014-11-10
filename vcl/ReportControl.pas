@@ -330,8 +330,9 @@ Type
 
     // Window size
     Procedure CalcWndSize;
-    Procedure SetWndSize(w, h: integer);  //在定义动态报表时,设置纸的大小 不调用windows的打印设置对框时
-    Procedure SetPageSize(w, h: integer); //add lzl 动态报表设置纸张大小
+    //在定义动态报表时,设置纸的大小 不调用windows的打印设置对框时
+    Procedure SetWndSize(w, h: integer);
+    //add lzl 动态报表设置纸张大小
 
     Procedure NewTable(ColNumber, RowNumber: Integer);
 
@@ -1641,7 +1642,6 @@ Var
   CellWidth: Integer;
 Begin
   CellWidth := trunc(PageWidth / CellNumber + 0.5);
-  //CellWidth:=33; //李
   For I := 0 To CellNumber - 1 Do
   Begin
     NewCell := TReportCell.Create;
@@ -1800,12 +1800,6 @@ Begin
   Inherited Destroy;
 End;
 
-Procedure TReportControl.SetPageSize(w, h: integer);  //add lzl 动态报表设置纸张大小
-Var
-  hClientDC: HDC;
-Begin
-
-End;
 
 Procedure TReportControl.CalcWndSize;
 Var
@@ -1838,8 +1832,8 @@ Begin
     Begin
       hClientDC := GetDC(0);
       try
-      FPageWidth :=MapDots(Printer.Handle, hClientDC,Printer.PageWidth);
-      FPageHeight :=MapDots(Printer.Handle, hClientDC,Printer.PageHeight);
+        FPageWidth :=MapDots(Printer.Handle, hClientDC,Printer.PageWidth);
+        FPageHeight :=MapDots(Printer.Handle, hClientDC,Printer.PageHeight);
       finally
         ReleaseDC(0, hClientDC);
       end;
@@ -1849,8 +1843,6 @@ Begin
   cp_pgh := FPageHeight;
   Width := trunc(FPageWidth * FReportScale / 100 + 0.5);   
   Height := trunc(FPageHeight * FReportScale / 100 + 0.5);
-
-
 End;
 
 Procedure TReportControl.WMPaint(Var Message: TMessage);
@@ -3046,24 +3038,23 @@ Begin
     FRightMargin);
   FirstLine.Index := 0;
   FLineList.Add(FirstLine);
-
+  {
   PaintRect := FirstLine.LineRect;
   PaintRect.Right := PaintRect.Right + 1;
   PaintRect.Bottom := PaintRect.Bottom + 1;
-  //  InvalidateRect(Handle, @PaintRect, TRUE);
   InvalidateRect(Handle, @PaintRect, False);
-
-  TReportLine(FLineList.First).Index := 0;
+  }
+  //TReportLine(FLineList.First).Index := 0;
 
   For I := 1 To RowNumber - 1 Do
-    //  for I := 1 to 30 do
   Begin
     AddLine;
+    {
     PaintRect := TReportLine(FLineList[I]).LineRect;
     PaintRect.Right := PaintRect.Right + 1;
     PaintRect.Bottom := PaintRect.Bottom + 1;
-    //InvalidateRect(Handle, @PaintRect, TRUE);
     InvalidateRect(Handle, @PaintRect, False);
+    }
   End;
 
 End;
@@ -4263,7 +4254,6 @@ Begin
   cp_pgh := FPageHeight;
   Width := trunc(FPageWidth * FReportScale / 100 + 0.5); //width,heght用于显示
   Height := trunc(FPageHeight * FReportScale / 100 + 0.5);
-
 End;
 
 function TReportControl.Get(Index: Integer): TReportLine;
