@@ -1810,6 +1810,11 @@ End;
 Procedure TReportControl.CalcWndSize;
 Var
   hClientDC: HDC;
+  function MapDots(FromHandle:THandle;ToHandle:THandle;FromLen:Integer):Integer;
+  begin
+    result := trunc(FromLen / GetDeviceCaps(FromHandle,LOGPIXELSX)
+        * GetDeviceCaps(ToHandle, LOGPIXELSX) + 0.5);
+  end;
 Begin
   If printer.Printers.Count <= 0 Then
   Begin
@@ -1821,27 +1826,30 @@ Begin
   End;
 
   // 根据用户选择的纸来确定报表窗口的大小并对该窗口进行设置。
-  hClientDC := GetDC(0);
+
   If cp_pgw = 0 Then
   Begin
     If printer.Printers.Count <= 0 Then
     Begin
       FPageWidth := 768;
-      FPageHeight := 1058;              
+      FPageHeight := 1058;
     End
     Else
     Begin
-      FPageWidth := trunc(Printer.PageWidth / GetDeviceCaps(Printer.Handle,LOGPIXELSX)
-        * GetDeviceCaps(hClientDC, LOGPIXELSX) + 0.5);
-      FPageHeight := trunc(Printer.PageHeight / GetDeviceCaps(Printer.Handle,LOGPIXELSY)
-        * GetDeviceCaps(hClientDC, LOGPIXELSY) + 0.5);
+      hClientDC := GetDC(0);
+      try
+      FPageWidth :=MapDots(Printer.Handle, hClientDC,Printer.PageWidth);
+      FPageHeight :=MapDots(Printer.Handle, hClientDC,Printer.PageHeight);
+      finally
+        ReleaseDC(0, hClientDC);
+      end;
     End;
   End;
   cp_pgw := FPageWidth;                 
   cp_pgh := FPageHeight;
-  Width := trunc(FPageWidth * FReportScale / 100 + 0.5); //width,heght用于显示
+  Width := trunc(FPageWidth * FReportScale / 100 + 0.5);   
   Height := trunc(FPageHeight * FReportScale / 100 + 0.5);
-  ReleaseDC(0, hClientDC);
+
 
 End;
 

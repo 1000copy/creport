@@ -51,11 +51,6 @@ end;
 
 procedure TMarginkForm.SpeedButton2Click(Sender: TObject);
 begin
-  //If PrinterSetupDialog1.Execute Then
-  //begin
-   // cp_pgw:=0;
-   // Creportform.ReportControl1.CalcWndSize;
-  //end;
   PrinterSetupDialog1.Execute;
 end;
 

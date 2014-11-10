@@ -542,11 +542,11 @@ if celldisp <> nil then
 end;
 end;
 
-procedure TCreportForm.MarginSettingClick(Sender: TObject);  // update 李泽伦
+procedure TCreportForm.MarginSettingClick(Sender: TObject);   
 var
   MarginRect: TRect;
 begin
-//  Application.CreateForm(Tmarginkform,marginkform );
+ 
   with MarginkForm do
   begin
     MarginRect := ReportControl1.GetMargin;
@@ -554,9 +554,7 @@ begin
     TopMargin.Value := MarginRect.Top;
     RightMargin.Value := MarginRect.Right;
     BottomMargin.Value := MarginRect.Bottom;
-    //NewTableBox.Checked := ReportControl1.IsNewTable;
-    //LineCountEdit.Value := ReportControl1.DataLine;
-    //TableCountEdit.Value := ReportControl1.TablePerPage;
+
   end;
 
   if MarginkForm.ShowModal = mrOK then
@@ -568,9 +566,6 @@ begin
         RightMargin.Value,
         BottomMargin.Value);
 
-      //ReportControl1.IsNewTable := NewTableBox.Checked;
-      //ReportControl1.DataLine := LineCountEdit.Value;
-      //ReportControl1.TablePerPage := TableCountEdit.Value;
           savebz:=false;
    cp_pgw:=0;
    ReportControl1.CalcWndSize;
@@ -578,7 +573,7 @@ begin
 
     end;
   end;
-//  marginkform.Free;
+ 
   
 end;
 
@@ -901,15 +896,10 @@ begin
 
   end;
 end;
-
+// LCJ : 最佳缩放比例
 procedure TCreportForm.SpeedButton8Click(Sender: TObject); // add 李泽伦
 var z1,z2:integer;
 begin
-{  if (width-171) > (height-150) then
-     zoomxxx:=trunc(((height-150) / cp_pgh)*100)
-  else
-    zoomxxx:=trunc(((width-171) / cp_pgw)*100);
- }
     if (height-160) < cp_pgh then
     z1:=trunc(((height-160) / cp_pgh)*100)
   else

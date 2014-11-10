@@ -70,7 +70,7 @@ begin
 
 
 end;
-
+// Margin ,Confirm Button,or Save Button
 procedure TMarginForm.BitBtn1Click(Sender: TObject);
 var
   MarginRect: TRect;
@@ -88,10 +88,7 @@ end;
 procedure TMarginForm.SpeedButton2Click(Sender: TObject);
 begin
   If PrinterSetupDialog1.Execute Then begin
-{    cp_pgw:=0;
-    ReportControl1.CalcWndSize;//  根据用户选择的纸来确定报表窗口的大小并对该窗口进行设置。
-    ReportControl1.SaveToFile(filename.Caption);
- }   okset:=true;
+     okset:=true;
   end
   else
     okset:=false;

@@ -370,17 +370,11 @@ begin
   ShowWindow(ReportControl1.Handle, SW_SHOW);
 
 end;
-
+// LCJ : 最佳缩放比例
 procedure TPreviewForm.SpeedButton3Click(Sender: TObject);// add 李泽伦
 var z1,z2:integer;
 begin
   ReportControl1.FreeEdit; // add 李泽伦
-{  if (width-171) > (height-110) then
-     zoomxxx:=trunc(((height-110) / cp_pgh)*100)
-  else
-    zoomxxx:=trunc(((width-171) / cp_pgw)*100);
- }
-
    if (height-110) < cp_pgh then  // add 李泽伦
     z1:=trunc(((height-110) / cp_pgh)*100)
   else
