@@ -2954,8 +2954,9 @@ Procedure TReportControl.DeleteLine;
 Var
   I, J: Integer;
   LineArray: TList;
-  ThisLineRect: TRect;
+  ThisLineRect,BigRect: TRect;
   ThisCell: TReportCell;
+  thisLine : TReportLine ;
 Begin
   If FSelectCells.Count < 1 Then
     Exit;
@@ -2977,14 +2978,14 @@ Begin
   Begin
     If LineArray[I] <> Nil Then
     Begin
-      ThisLineRect := TReportLine(FLineList[I]).LineRect;
+      thisLine := TReportLine(FLineList[I]);
+      ThisLineRect := thisLine.LineRect;
       ThisLineRect.Right := ThisLineRect.Right + 1;
       ThisLineRect.Bottom := ThisLineRect.Bottom + 1;
-      //      InvalidateRect(Handle, @ThisLineRect, True);
-      InvalidateRect(Handle, @ThisLineRect, False);
-      For J := 0 To TReportLine(FLineList[I]).FCells.Count - 1 Do
+      windows.UnionRect(BigRect,BigRect,ThisLineRect);
+      For J := 0 To thisLine.FCells.Count - 1 Do
       Begin
-        ThisCell := TReportCell(TReportLine(FLineList[I]).FCells[J]);
+        ThisCell := TReportCell(ThisLine.FCells[J]);
         If ThisCell.OwnerCell <> Nil Then
           ThisCell.OwnerCell.RemoveOwnedCell(ThisCell);
 
@@ -2993,11 +2994,11 @@ Begin
       End;
       TReportLine(FLineList[I]).Free;
       FLineList.Delete(I);
+      //InvalidateRect(Handle, @ThisLineRect, False);
     End;
   End;
-
+  InvalidateRect(Handle, @BigRect, False);
   LineArray.Free;
-
   UpdateLines;
 End;
 
@@ -6561,4 +6562,7 @@ begin
 end;
 
 End.
+
+
+
 
