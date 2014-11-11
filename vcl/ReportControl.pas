@@ -346,8 +346,7 @@ Type
     Procedure DeleteCell;
     Procedure AddCell;
 
-    Procedure GetCellsWadth(HasDataNo: integer); //lzl
-    Procedure SetFileCellWidth(filename: String; HasDataNo: integer); //lzl 
+    Procedure SetFileCellWidth(filename: String; HasDataNo: integer); //lzl
 
     Procedure CombineCell;
 
@@ -355,7 +354,7 @@ Type
     Procedure VSplitCell(Number: Integer);
     Function CanSplit: Boolean;
 
-    Function CountFcells(crow: integer): integer; //lzl 
+    Function CountFcells(crow: integer): integer; //lzl
 
     Procedure SetCellLines(bLeftLine, bTopLine, bRightLine, bBottomLine:
       Boolean;
@@ -643,7 +642,22 @@ Var
   cp_prewYn: Boolean;                   //代表是否处于预览状态, lzl 　2001.4.27
   //EditEpt:boolean; //是否充许用户在预览时调用编辑程序修改模板
 
-  CreportIde: boolean;
+  {
+   这是传说中的解构主义吗？
+   ========================
+  风雨声中，忽听得吴六奇放开喉咙唱起曲来：「走江边，满腔愤恨向谁言？老泪风
+吹，孤城一片，望数目穿，使尽残兵血战。跳出重围，故国悲恋，谁知歌罢剩空筵。长江
+一线，吴头楚尾路三千，尽归别姓，雨翻云变。寒涛东卷，万事付空烟。精魂显大招，声
+逐海天远。"
+
+ 曲声从江上远送出去，风雨之声虽响，却也压他不倒。马超兴在後梢喝采不迭，叫
+道：「好一个『声逐海天远』！」
+
+韦小宝但听他唱得慷慨激昂，也不知曲文是甚麽意思，
+心中骂道：「你有这副好嗓子，却不去戏台上做大花面？老叫化，放开了喉咙大叫：『老
+爷太太，施舍些残羹冷饭』，倒也饿不死你。」
+
+}
   cellline_d: TReportCell;              //用于保存选中单元格的属性 1999.1.25
   celldisp: TReportCell;                //用于显示Mouse位置的单元格属性
 
@@ -715,13 +729,7 @@ Begin
 
 End;
 
-///////////////////////////////////////////////////////////////////////////
-// TReportCell
-
-{TReportCell}
-
-
-
+{TReportCell}   
 
 Procedure TReportCell.SetLeftMargin(LeftMargin: Integer);
 Begin
@@ -2080,8 +2088,6 @@ Begin
     exit;
   End;
 
-  //  FcellFont_d:=thiscell.flogfont;
-
   If IsWindowVisible(FEditWnd) Then
   Begin
     If FEditCell <> Nil Then
@@ -2117,13 +2123,7 @@ Begin
       StartMouseSelect(MousePoint, True, sh_down);
   End;
 
-  //按用户修费过的格式重新预览 lzl 
-  If (CellsWidth <> Nil) And (Not FCreportEdit) And (Not creportide) Then
-    If cellswidth[0, 0] <> 0 Then
-    Begin
-      cellswidth[0, 0] := 0;
-      PreviewForm.updatepage;
-    End;
+
   //mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
   mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0); //add lzl 
 
@@ -2568,14 +2568,6 @@ Begin
   DeleteObject(hInvertPen);
   SetROP2(hClientDc, PrevDrawMode);
   ReleaseDC(Handle, hClientDC);
-
-  //lzl  增加 根据最终用户拖动单元格后的宽度修改模板
-  If (cp_prewYn) And (PreviewForm.tag <> 0) And (Not FCreportedit) And (Not
-    CreportIde) Then                    //在预览并有数据集时才执行此功能
-  Begin                                 //在预览中调用编辑过程,ide中调用也不行
-    GetCellsWadth(PreviewForm.tag);
-    setfileCellWidth(PreviewForm.filename.Caption, PreviewForm.tag);
-  End;
 End;
 
 Procedure TReportControl.StartMouseSelect(point: TPoint; bSelectFlag: Boolean;
@@ -2587,9 +2579,9 @@ Var
   TempPoint: TPoint;
   dwStyle: DWORD;
 Begin
-  // 清除掉所有选中的CELL
+  // 清除掉所有选中的CELL 。当拖动时，按下SHIFT键时不取消已选单元格
   If shift_down <> 5 Then
-    ClearSelect;              //当拖动时，按下SHIFT键时不取消已选单元格
+    ClearSelect;
   ThisCell := CellFromPoint(point);
 
   If bSelectFlag Then
@@ -3062,8 +3054,7 @@ End;
 Procedure TReportControl.SetCellAlignHorzAlign(NewHorzAlign: Integer);
 Var
   I: Integer;
-Begin
-
+Begin    
   For I := 0 To FSelectCells.Count - 1 Do
   Begin
     TReportCell(FSelectCells[I]).HorzAlign := NewHorzAlign;
@@ -3249,20 +3240,16 @@ Begin
       Begin
         ThisCell := TReportCell(ThisLine.FCells[J]);
         If ThisCell.OwnerCell <> Nil Then
-          //          InvalidateRect(Handle, @ThisCell.OwnerCell.CellRect, True);
           InvalidateRect(Handle, @ThisCell.OwnerCell.CellRect, False);
       End;
       PrevRect.Right := PrevRect.Right + 1;
       PrevRect.Bottom := PrevRect.Bottom + 1;
       TempRect.Right := TempRect.Right + 1;
       TempRect.Bottom := TempRect.Bottom + 1;
-      //      InvalidateRect(Handle, @PrevRect, True);
-      //      InvalidateRect(Handle, @TempRect, True);
       InvalidateRect(Handle, @PrevRect, False);
       InvalidateRect(Handle, @TempRect, False);
     End;
-  End;
-
+  End;       
 End;
 
 Function TReportControl.AddSelectedCell(Cell: TReportCell): Boolean;
@@ -4100,40 +4087,9 @@ Begin
   // ResetContent;
 End;
 
-// GetCellsWadth 将变化后的单元格宽度存入全局变量数组 lzl 
+// 将变化后的单元格宽度存入全局变量数组 lzl
 
-Procedure TReportControl.GetCellsWadth(HasDataNo: integer);
-Var
-  thisline: Treportline;
-  thiscell: treportcell;
-  i, j, k: integer;
-Begin
-  SetLength(CellsWidth, 40, 40);        // row max 40
-  For i := 0 To hasdatano Do
-  Begin
-    thisline := treportline(flinelist[i]);
-    For j := 0 To ThisLine.FCells.Count - 1 Do
-    Begin
-      ThisCell := TreportCell(ThisLine.FCells[j]);
-      cellswidth[i, j] := ThisCell.CellWidth;
-    End;                                //for j
-  End;                                  //for i
 
-  k := hasdatano + 1;
-
-  For i := Fhootno To FLinelist.Count - 1 Do
-  Begin
-    thisline := treportline(flinelist[i]);
-    For j := 0 To ThisLine.FCells.Count - 1 Do
-    Begin
-      ThisCell := TreportCell(ThisLine.FCells[j]);
-      cellswidth[k, j] := ThisCell.CellWidth;
-    End;                                //for j
-    k := k + 1;
-  End;                                  //for i
-  cellswidth[39, 0] := k - 1;
-
-End;
 
 Procedure TReportRunTime.updatepage;
 Var
@@ -4683,8 +4639,7 @@ Constructor TReportRunTime.Create(AOwner: TComponent);
 Begin
   Inherited create(AOwner);
 
-  CreportIde := false;
-  cp_prewYn := false; //默认为不在预览状态,调用print等时使用  lzl 
+  cp_prewYn := false; //默认为不在预览状态,调用print等时使用  lzl
   editept := false;
   enableedit := false;
   FAddspace := false;
@@ -5912,10 +5867,7 @@ Procedure TReportRunTime.PrintPreview(bPreviewMode: Boolean);
 Var
   i, HasDataNo: integer;
 Begin
-
   Try
-
-
     If printer.Printers.Count <= 0 Then
     Begin
       DeleteAllTempFiles;
