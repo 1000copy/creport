@@ -453,7 +453,7 @@ Type
   EachLineIndexProc = procedure (ThisLine:TReportLine;Index:Integer)of object;
   TReportRunTime = Class(TComponent)
   Private
-
+    cp_prewYn: Boolean;                   //代表是否处于预览状态, lzl 　2001.4.27
     SumPage, SumAll: Array[0..40] Of real;  //小计和合计用,最多40列单元格,否则统计汇总时要出错.
 
     FFileName: Tfilename;
@@ -639,7 +639,6 @@ Var
   CellsWidth: Array Of Array Of integer;  //lzl  存用户在预览时拖动表格后新的单元格宽度,
   NhasSumALl: integer;                  //有合计的行在模板中是第几行.
 
-  cp_prewYn: Boolean;                   //代表是否处于预览状态, lzl 　2001.4.27
   //EditEpt:boolean; //是否充许用户在预览时调用编辑程序修改模板
 
   {
