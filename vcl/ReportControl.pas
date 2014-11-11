@@ -3004,18 +3004,17 @@ End;
 
 Procedure TReportControl.InsertLine;
 Var
-  TempLine: TReportLine;
+  NewLine,ThisLine: TReportLine;
 Begin
   If Not CanInsert Then
     Exit;
-
-  TempLine := TReportLine.Create;
-  TempLine.ReportControl := Self;
-  TempLine.LineTop := TReportCell(FSelectCells[0]).OwnerLine.LineTop;
-  TempLine.CopyLine(TReportCell(FSelectCells[0]).OwnerLine, True);
-  TempLine.Index := TReportCell(FSelectCells[0]).OwnerLine.Index;
-  FLineList.Insert(TReportCell(FSelectCells[0]).OwnerLine.Index, TempLine);
-
+  NewLine := TReportLine.Create;
+  NewLine.ReportControl := Self;
+  ThisLine  := TReportCell(FSelectCells[0]).OwnerLine ;
+  NewLine.LineTop := ThisLine.LineTop;
+  NewLine.CopyLine(ThisLine, True);
+  NewLine.Index := ThisLine.Index;
+  FLineList.Insert(ThisLine.Index, NewLine);   
   UpdateLines;
 End;
 
@@ -3030,8 +3029,7 @@ Begin
     Application.Messagebox('关闭正在编辑的文件后，才能建立新表格。', '警告',
       MB_OK + MB_iconwarning);
     Exit;
-  End;
-
+  End;                      
   FirstLine := TReportLine.Create;
   FirstLine.ReportControl := Self;
   FirstLine.LineTop := FTopMargin;
@@ -3039,25 +3037,8 @@ Begin
     FRightMargin);
   FirstLine.Index := 0;
   FLineList.Add(FirstLine);
-  {
-  PaintRect := FirstLine.LineRect;
-  PaintRect.Right := PaintRect.Right + 1;
-  PaintRect.Bottom := PaintRect.Bottom + 1;
-  InvalidateRect(Handle, @PaintRect, False);
-  }
-  //TReportLine(FLineList.First).Index := 0;
-
   For I := 1 To RowNumber - 1 Do
-  Begin
     AddLine;
-    {
-    PaintRect := TReportLine(FLineList[I]).LineRect;
-    PaintRect.Right := PaintRect.Right + 1;
-    PaintRect.Bottom := PaintRect.Bottom + 1;
-    InvalidateRect(Handle, @PaintRect, False);
-    }
-  End;
-
 End;
 
 Procedure TReportControl.SplitCell;
@@ -3068,17 +3049,12 @@ Begin
   If CanSplit Then
   Begin
     TempCell := TReportCell(FSelectCells[0]);
-    ClearSelect;
-
+    ClearSelect;              
     AddSelectedCell(TempCell);
-
     For I := 0 To TempCell.FCellsList.Count - 1 Do
-      //    InvalidateRect(Handle, @TReportCell(TempCell.FCellsList[I]).CellRect, True);
-      InvalidateRect(Handle, @TReportCell(TempCell.FCellsList[I]).CellRect,
-        False);
-
+      InvalidateRect(Handle, @TReportCell(TempCell.FCellsList[I]).CellRect,False);
+    // LCJ : 实际操作就是这一行代码
     TempCell.RemoveAllOwnedCell;
-
     UpdateLines;
   End;
 End;
@@ -6562,6 +6538,7 @@ begin
 end;
 
 End.
+
 
 
 
