@@ -9,7 +9,7 @@ Uses
    Classes, Graphics, Controls,
   Forms, Dialogs, Math, Printers, Menus, dbgrids, Db, jpeg, dbtables,
   DesignEditors, DesignIntf, ShellAPI, ExtCtrls;
-
+procedure CheckError(condition:Boolean ;msg :string);
   //dsgnintf d5
 Const
   // Horz Align
@@ -453,22 +453,19 @@ Type
   EachLineIndexProc = procedure (ThisLine:TReportLine;Index:Integer)of object;
   TReportRunTime = Class(TComponent)
   Private
-    cp_prewYn: Boolean;                   //代表是否处于预览状态, lzl 　2001.4.27
+
     SumPage, SumAll: Array[0..40] Of real;  //小计和合计用,最多40列单元格,否则统计汇总时要出错.
 
     FFileName: Tfilename;
     FAddSpace: boolean;
-    FdbGrid: Tdbgrid;                   //add lzl
     FSetData: TstringList;              //add lzl
 
-    FEnableEdit: Boolean;
 
     FVarList: TList;                    // 保存变量的名字和值的对照表
     FLineList: TList;                   // 保存报表的设计信息（从文件中读入）
     FPrintLineList: TList;              //保存要打印的某一页的行信息
     FOwnerCellList: TList;              // 保存每一页中合并后单元格前后的指针
-
-    Cp_DFdList: TList;                  // 保存数据集的指针和名称的对照
+    FNamedDatasets: TList;                  
 
     Width: Integer;
     Height: Integer;
@@ -498,10 +495,10 @@ Type
     FTopMargin1: Integer;
     FBottomMargin1: Integer;
 
-    FPageCount: Integer;                // page count in print preview //总页数
+    FPageCount: Integer;                // page count in preview //总页数
 
-    FHootNo: integer;
-    FEditEpt: boolean;                  //表尾的第一行在整个页的第几行 lzl 
+    FHootNo: integer;                   //表尾的第一行在整个页的第几行 lzl 
+
     nDataHeight, nHandHeight, nHootHeight, nSumAllHeight: Integer;
     TempDataSet: TDataset;
     hasdatano: integer;
@@ -516,13 +513,6 @@ Type
     Function GetFieldName(strCellText: String): String;
     Procedure SetRptFileName(Const Value: TFilename);
 
-    Procedure Setdbgrid(Const Value: Tdbgrid);
-
-    //   procedure LFOnSetEpt(const value:Tnotifyevent);
-
-    //Procedure LSetData(Const value: TstringList);
-
-    //Procedure Setpar(FIDE, Tableopen: boolean; name: String);
     Function LFindComponent(Owner: TComponent; Name: String): TComponent;
 
     Procedure SaveTempFile(PageNumber, Fpageall: Integer);
@@ -532,8 +522,6 @@ Type
 
     Procedure LoadTempFile(strFileName: String);
     Procedure DeleteAllTempFiles;
-    Procedure SetEnableEdit(Value: Boolean);
-    Procedure SetEditept(Value: Boolean); //add lzl
     Procedure SetNewCell(spyn: boolean; NewCell, ThisCell: TReportCell);
     Procedure SetAddSpace(Const Value: boolean);
     procedure SetEmptyCell(NewCell, ThisCell: TReportCell);
@@ -557,7 +545,7 @@ Type
       var ndataHeight: integer; var khbz: boolean);overload;
     function SumCell(ThisCell: TReportCell; j: Integer): Boolean;
     procedure SumLine(var HasDataNo: integer);
-    function PreparePrintk_PageCount(): integer;
+    function DoPageCount(): integer;
     function ExpandLine_Height(var HasDataNo,
       ndataHeight: integer): TReportLine;
     function GetDataSetFromCell(HasDataNo,CellIndex:Integer):TDataset;
@@ -573,10 +561,14 @@ Type
       Index: integer);
     procedure EachProc_UpdateLineTop(thisLine: TReportLine;
       I: integer);
+    function GetPrintRange(var A, Z: Integer): boolean;
+    procedure LoadPage(I: integer);
+    procedure PrintRange(Title: String; FromPage, ToPage: Integer);
 
   Protected
 
   Public
+    procedure ClearDataset;
     Constructor Create(AOwner: TComponent); Override;
     Destructor Destroy; Override;
     Procedure SetDataset(strDatasetName: String; pDataSet: TDataSet);
@@ -593,7 +585,7 @@ Type
 
 //    Procedure PreparePrint;
     Procedure loadfile(value: tfilename);
-    Procedure Print(pYn: boolean);
+    Procedure Print(IsDirectPrint: Boolean);
     Procedure Resetself;
     Function Cancelprint: boolean;
 
@@ -601,11 +593,8 @@ Type
   Published
     Property ReportFile: TFilename Read FFileName Write SetRptFileName;
 
-    Property PrDbGrid: Tdbgrid Read Fdbgrid Write Setdbgrid; //add lzl
 
-    Property EnableEdit: boolean Read FEnableEdit Write setEnableEdit; //add lzl
 
-    Property EditEpt: boolean Read FEditEpt Write setEditEpt;
 
     Property AddSpace: boolean Read FAddSpace Write SetAddSpace; //
 
@@ -4096,7 +4085,7 @@ Var
 Begin
   ReportFile := reportfile;             //从新装入修改后的模版文件
   //i := PreparePrintk(FALSE, 0);
-  i := PreparePrintk_PageCount;
+  i := DoPageCount;
   REPmessform.show;                     //lzla2001.4.27
   PreparePrintk(TRUE, i);
   REPmessform.Close;
@@ -4200,6 +4189,17 @@ begin
 end;
 
 { TReportRunTime }
+
+Procedure TReportRunTime.LoadPage(I:integer);
+Var
+  strFileDir: String;
+Begin
+     strFileDir := ExtractFileDir(Application.ExeName); //+ '\';
+     If copy(strfiledir, length(strfiledir), 1) <> '\' Then
+          strFileDir := strFileDir + '\';
+     If FileExists(strFileDir + 'Temp\' + IntToStr(I) + '.tmp') Then
+          LoadTempFile(strFileDir + 'Temp\' + IntToStr(I) + '.tmp');
+End;
 
 Procedure TReportRunTime.DeleteAllTempFiles;
 Var
@@ -4638,9 +4638,6 @@ Constructor TReportRunTime.Create(AOwner: TComponent);
 Begin
   Inherited create(AOwner);
 
-  cp_prewYn := false; //默认为不在预览状态,调用print等时使用  lzl
-  editept := false;
-  enableedit := false;
   FAddspace := false;
   //cellswidth[0,0]:=0;
   FReportScale := 100;
@@ -4649,7 +4646,7 @@ Begin
 
   fallprint := true;                    //默认为全部打印
   FSetData := Tstringlist.Create;
-  Cp_DFdList := TList.Create;
+  FNamedDatasets := TList.Create;
   FVarList := TList.Create;
   FLineList := TList.Create;
   FPrintLineList := TList.Create;
@@ -4669,9 +4666,9 @@ Destructor TReportRunTime.Destroy;
 Var
   I: Integer;
 Begin
-  For I := Cp_DFdList.Count - 1 Downto 0 Do
-    TDataSetItem(Cp_DFdList[I]).Free;
-  Cp_DFdList.clear;
+  For I := FNamedDatasets.Count - 1 Downto 0 Do
+    TDataSetItem(FNamedDatasets[I]).Free;
+  FNamedDatasets.clear;
 
   For I := FVarList.Count - 1 Downto 0 Do
     TVarTableItem(FVarList[I]).Free;
@@ -4698,11 +4695,11 @@ Var
 Begin
   Result := Nil;
 
-  For I := 0 To Cp_DFdList.Count - 1 Do
+  For I := 0 To FNamedDatasets.Count - 1 Do
   Begin
-    If TDatasetItem(Cp_DFdList[I]).strName = strDatasetName Then
+    If TDatasetItem(FNamedDatasets[I]).strName = strDatasetName Then
     Begin
-      Result := TDatasetItem(Cp_DFdList[I]).pDataset;
+      Result := TDatasetItem(FNamedDatasets[I]).pDataset;
     End;
   End;
 End;
@@ -5633,7 +5630,7 @@ function TReportRunTime.GetDataSetFromCell(HasDataNo,CellIndex:Integer):TDataset
 begin
   result := GetDataSet(TReportCell(TReportLine(FlineList[HasDataNo]).FCells[CellIndex]).FCellText);
 end;
-Function TReportRunTime.PreparePrintk_PageCount():integer;
+Function TReportRunTime.DoPageCount():integer;
 Var
   CellIndex,I, J, n,  TempDataSetCount:Integer;
   ThisLine, TempLine: TReportLine;
@@ -5692,97 +5689,80 @@ Begin
   end;
 End;
 
-
-
-Procedure TReportRunTime.Print(pYn: boolean);
-Var
-  PrintDlg: TPrintDialog;
-  I: Integer;
-  strFileDir: TFileName;
-  frompage, topage: integer;
-Begin
-  Try
-
-    If printer.Printers.Count <= 0 Then
-    Begin
-      Application.Messagebox('未安装打印机', '警告', MB_OK + MB_iconwarning);
-      If cp_prewYn <> true Then
-      Begin
-        For I := Cp_DFdList.Count - 1 Downto 0 Do
-          TDataSetItem(Cp_DFdList[I]).Free;
-        Cp_DFdList.clear;
-      End;
-      Exit;
-    End;
-
-    strFileDir := ExtractFileDir(Application.ExeName); //+ '\';
-    If copy(strfiledir, length(strfiledir), 1) <> '\' Then
-      strFileDir := strFileDir + '\';
-
-    If cp_prewYn <> true Then
-    Begin
-      REPmessform.show;                 //lzla2001.4.27
-      //i := PreparePrintk(FALSE, 0);
-      i := PreparePrintk_PageCount;
-      PreparePrintk(TRUE, i);
-    End;
-    REPmessform.Close;
-    Begin
+function TReportRunTime.GetPrintRange(var A,Z:Integer):boolean;
+  var PrintDlg: TPrintDialog; I: Integer;
+  begin
       PrintDlg := TPrintDialog.Create(Self);
       PrintDlg.MinPage := 1;
       PrintDlg.MaxPage := FPageCount;
       PrintDlg.FromPage := 1;
       PrintDlg.ToPage := FPageCount;
       PrintDlg.Options := [poPageNums];
-
-      If pyn <> true Then
-        If Not PrintDlg.Execute Then
+      If Not PrintDlg.Execute Then
         Begin
-          PrintDlg.Free;
-          If cp_prewYn <> true Then //若处于预览状态的打印，则不能删除已生成的打印页文件 lzl 
-          Begin
-            DeleteAllTempFiles;         //99.3.9
-            For I := Cp_DFdList.Count - 1 Downto 0 Do
-              TDataSetItem(Cp_DFdList[I]).Free;
-            Cp_DFdList.clear;
-          End;
-          Exit;
-        End;
-      frompage := printdlg.frompage;    //99.3.9
-      topage := printdlg.topage;        //99.3.9
-
-      Printer.Title := 'C_Report';
-      Printer.BeginDoc;
-
-      For I := FromPage To ToPage Do
-      Begin
-        If FileExists(strFileDir + 'Temp\' + IntToStr(I) + '.tmp') Then
-          LoadTempFile(strFileDir + 'Temp\' + IntToStr(I) + '.tmp');
-        PrintOnePage;
-
-        If I < ToPage Then
-          Printer.NewPage;
-      End;
-      Printer.EndDoc;
+          result := false;
+        End
+      else begin
+        a := printdlg.frompage;    //99.3.9
+        z := printdlg.topage;        //99.3.9
+        result := true;
+      end;
       PrintDlg.Free;
-    End;
-    If cp_prewYn <> true Then // 如是处于预览状态的打印，则不能删除已生成的打印页 lzl 
-    Begin
-      DeleteAllTempFiles;               //  99.3.9
-      For I := Cp_DFdList.Count - 1 Downto 0 Do  //删除数据库表名与模板CELL的对照列表,否则每次调用都要增加列表项
-        TDataSetItem(Cp_DFdList[I]).Free;
-      Cp_DFdList.clear;
-    End;
-  Except
-    MessageDlg('形成报表时发生错误，请检查各项参数与模板设置等是否正确',
-      mtInformation, [mbOk], 0);
-    REPmessform.Close;
-    For I := Cp_DFdList.Count - 1 Downto 0 Do
-      TDataSetItem(Cp_DFdList[I]).Free;
-    Cp_DFdList.clear;
-    exit;
-  End;
+  end;
+Procedure TReportRunTime.ClearDataset();
+Var
+  I: Integer;
+begin
+   For I := FNamedDatasets.Count - 1 Downto 0 Do
+    TDataSetItem(FNamedDatasets[I]).Free;
+   FNamedDatasets.clear;
+end;
+procedure TReportRunTime.PrintRange(Title:String;FromPage,ToPage:Integer);
+Var
+  I: Integer;
+begin
+			Printer.Title := Title;
+			Printer.BeginDoc;
+			For I := FromPage To ToPage Do
+			Begin
+			  LoadPage(I);
+			  PrintOnePage;
+			  If I < ToPage Then
+				Printer.NewPage;
+			End;
+			Printer.EndDoc;
 
+end;
+//IsDirectPrint  ：true , 代表是否直接打印 ,false 表示从预览UI中调用打印
+Procedure TReportRunTime.Print(IsDirectPrint: Boolean);
+Var
+  I: Integer;
+  strFileDir: TFileName;
+  frompage, topage: integer;
+Begin
+	try
+		Try
+			CheckError(printer.Printers.Count = 0 ,'未安装打印机');
+			// 爱上会展：金丝楠梳，宁德老寿眉，六安瓜片，太平猴魁，汝瓷 2014-11-7 茶博会
+			If IsDirectPrint Then
+			Begin
+			  REPmessform.show;
+			  i := DoPageCount;
+			  PreparePrintk(TRUE, i);
+        REPmessform.Close;
+			End;
+			FromPage := 1;
+			ToPage  := FPageCount;
+			if not GetPrintRange(frompage,topage) then exit;
+      PrintRange('C_Report',Frompage,ToPage);
+		Except
+		on E:Exception do
+		  MessageDlg(e.Message,mtInformation, [mbOk], 0);
+		End;
+	finally          
+     If IsDirectPrint  Then
+				DeleteAllTempFiles;
+	end;
 End;
 
 Procedure TReportRunTime.PrintOnePage;
@@ -5871,29 +5851,22 @@ Begin
     Begin
       DeleteAllTempFiles;
       Application.Messagebox('未安装打印机', '警告', MB_OK + MB_iconwarning);
-      For I := Cp_DFdList.Count - 1 Downto 0 Do // add lzl
-        TDataSetItem(Cp_DFdList[I]).Free;
-      Cp_DFdList.clear;
+      For I := FNamedDatasets.Count - 1 Downto 0 Do // add lzl
+        TDataSetItem(FNamedDatasets[I]).Free;
+      FNamedDatasets.clear;
       Exit;
     End
     Else
     Begin
       //i := PreparePrintk(FALSE, 0);
-      i := PreparePrintk_PageCount;
+      i := DoPageCount;
       REPmessform.show;
       HasDataNo := PreparePrintk(TRUE, i);
       REPmessform.Close;
       PreviewForm := TPreviewForm.Create(Self);
-      // add wang han song
-      PreviewForm.reportcontrol1.enabled := Fenableedit;
-      preview.EnableBz := fenableedit;
-      preview.EditeptBz := feditept;
-
-      // add end
       PreviewForm.SetPreviewMode(bPreviewMode);
       PreviewForm.PageCount := FPageCount;
 
-      cp_prewYn := true;                //代表处于预览状态,调用打印时以便区分
       PreviewForm.StatusBar1.Panels[0].Text := '第' +
         IntToStr(PreviewForm.CurrentPage) + '／' +
           IntToStr(PreviewForm.PageCount)
@@ -5902,7 +5875,6 @@ Begin
       PreviewForm.filename.Caption := ReportFile;
       PreviewForm.tag := HasDataNo;
       PreviewForm.ShowModal;
-      cp_prewYn := false;
       PreviewForm.Free;
       DeleteAllTempFiles;
     End;
@@ -5913,14 +5885,14 @@ Begin
     MessageDlg('形成报表时发生错误，请检查各项参数与模板设置等是否正确',
       mtInformation, [mbOk], 0);
     REPmessform.Close;
-    For I := Cp_DFdList.Count - 1 Downto 0 Do  //删除数据库表名与模板CELL的对照列表,否则每次调用都要增加列表项
-      TDataSetItem(Cp_DFdList[I]).Free;
-    Cp_DFdList.clear;
+    For I := FNamedDatasets.Count - 1 Downto 0 Do  //删除数据库表名与模板CELL的对照列表,否则每次调用都要增加列表项
+      TDataSetItem(FNamedDatasets[I]).Free;
+    FNamedDatasets.clear;
     exit;
   End;
-  For I := Cp_DFdList.Count - 1 Downto 0 Do  //删除数据库表名与模板CELL的对照列表,否则每次调用都要增加列表项
-    TDataSetItem(Cp_DFdList[I]).Free;
-  Cp_DFdList.clear;
+  For I := FNamedDatasets.Count - 1 Downto 0 Do  //删除数据库表名与模板CELL的对照列表,否则每次调用都要增加列表项
+    TDataSetItem(FNamedDatasets[I]).Free;
+  FNamedDatasets.clear;
 End;
 
 Function TReportRunTime.shpreview: boolean; //在预览中设置纸张及边距，lzl 增加
@@ -5931,7 +5903,7 @@ Begin
   Begin
     ReportFile := reportfile; //从新装入修改后的模版文件,必须要，以便调用PreparePrintk
     i := PreparePrintk(FALSE, 0);
-    i := PreparePrintk_PageCount;
+    i := DoPageCount;
     REPmessform.show;                   //lzla2001.4.27
     PreparePrintk(TRUE, i);
     REPmessform.Close;
@@ -5954,9 +5926,13 @@ Begin
   TempItem := TDatasetItem.Create;
   TempItem.pDataset := pDataSet;
   TempItem.strName := UpperCase(strDataSetName);
-  Cp_DFdList.Add(TempItem); //注:如果TReportRunTime不灭，而又不断调用SetDataset
+  FNamedDatasets.Add(TempItem);
+  //注:如果TReportRunTime不灭，而又不断调用SetDataset
   //列表便会重复增加,无穷尽,错误将会出现..目前是在预览和打印完后清空　　　　
-End;                                    //有无更好办法?待处理. lzl .
+  //有无更好办法?待处理. lzl .
+  // LCJ:调用前先清除不就可以了。傻逼。
+  // 这个人加入的代码，10成倒要删掉9.9成。成事不足败事有余
+End;
 
 Procedure TReportRunTime.SetRptFileName(Const Value: TFilename);
 Begin
@@ -6094,7 +6070,7 @@ End;
 Procedure treportruntime.resetself;
 Begin
   //   add by wang han song 1999.03.05
-  Cp_DFdList.clear;
+  FNamedDatasets.clear;
   fvarlist.clear;
   flinelist.clear;
   fprintlinelist.clear;
@@ -6212,11 +6188,6 @@ Begin
   End;
 End;
 
-Procedure TReportRuntime.SetEnableEdit(value: boolean);
-Begin
-  If value <> FEnableEdit Then
-    FEnableEdit := value;
-End;
 
 
 Function TReportRunTime.SetSumAllYg(fm, ss: String): String; //add lzl
@@ -6336,11 +6307,6 @@ Begin
   End;
 End;
 
-Procedure TReportRunTime.SetEditept(Value: Boolean); // add lzl
-Begin
-  If value <> FEditEpt Then
-    FEditEpt := value;
-End;
 
 Function TReportRunTime.setSumpageYg(fm, ss: String): String; // add lzl
 Var
@@ -6478,16 +6444,16 @@ Begin
   FAddSpace := Value;
 End;
 
-Procedure TReportRunTime.Setdbgrid(Const Value: Tdbgrid);
-Begin
-  fdbgrid := Value;
-End;
 
 procedure TReportRunTime.EditReport(FileName:String);
 begin
   TCreportform.EditReport(FileName);
 end;
-
+procedure CheckError(condition:Boolean ;msg :string);
+begin
+  if condition then
+    raise Exception.Create(msg);
+end;
 End.
 
 

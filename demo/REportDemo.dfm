@@ -230,8 +230,6 @@ object CReportDemoForm: TCReportDemoForm
     TabOrder = 4
   end
   object ReportRunTime1: TReportRunTime
-    EnableEdit = True
-    EditEpt = True
     AddSpace = True
     Left = 519
     Top = 8

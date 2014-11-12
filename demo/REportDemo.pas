@@ -60,36 +60,37 @@ end;
 
 procedure TCReportDemoForm.Button5Click(Sender: TObject);
 begin
+  ReportRunTime1.ClearDataset ;
   ReportRunTime1.SetDataSet('t1',dataform.table1);
   ReportRunTime1.SetDataSet('t2',dataform.table2);
   dataform.Table1.DisableControls;
   ReportRunTime1.ReportFile:=ExtractFilepath(application.ExeName)+'creport_demo.ept';//??̬??дģ??????ѡcreport_demo1.ept
-  ReportRunTime1.Setvarvalue('jgtw','???λ:Ԫ');
-  ReportRunTime1.Setvarvalue('head','********************ͳ?Ʊ?');
-  ReportRunTime1.Setvarvalue('name','??λ??*********');
-  ReportRunTime1.PrintPreview(true); //true??????ʾԤ??????ʾ?Ǵ?ӡ??????
+  ReportRunTime1.Setvarvalue('jgtw','1');
+  ReportRunTime1.Setvarvalue('head','2');
+  ReportRunTime1.Setvarvalue('name','3');
+  ReportRunTime1.PrintPreview(true);
   dataform.Table1.EnableControls;
 end;
 
 procedure TCReportDemoForm.Button3Click(Sender: TObject);
 begin
-
   dataform.Table1.DisableControls;
-  ReportRunTime1.ReportFile:=ExtractFilepath(application.ExeName)+'creport_demo.ept';//??̬??дģ??????ѡcreport_demo1.ept
-  ReportRunTime1.Setvarvalue('jgtw','???λ:Ԫ');
-  ReportRunTime1.Setvarvalue('head','********************ͳ?Ʊ?');
-  ReportRunTime1.Setvarvalue('name','??λ??*********');
-  ReportRunTime1.Print(false); //false ????ѡ????ӡҳ,true??ֱ?Ӵ?ӡ
+  ReportRunTime1.ClearDataset ;
+  ReportRunTime1.SetDataSet('t1',dataform.table1);
+  ReportRunTime1.SetDataSet('t2',dataform.table2);
+
+  ReportRunTime1.ReportFile:=ExtractFilepath(application.ExeName)+'creport_demo.ept';
+  ReportRunTime1.Setvarvalue('jgtw','1');
+  ReportRunTime1.Setvarvalue('head','2');
+  ReportRunTime1.Setvarvalue('name','3');
+  ReportRunTime1.Print(true);
   dataform.Table1.EnableControls;
 end;
 
 procedure TCReportDemoForm.FormCreate(Sender: TObject);
 begin
-dataform.table1.open;
-dataform.table2.open;
-  ReportRunTime1.SetDataSet('t1',dataform.table1);
-  ReportRunTime1.SetDataSet('t2',dataform.table2);
-
+  dataform.table1.open;
+  dataform.table2.open;
 end;
 
 
@@ -116,6 +117,7 @@ var j:integer;
     CellFont: TLogFont;
     cf: TFont;
 begin
+    ReportRunTime1.ClearDataSet;
     ReportRunTime1.SetDataSet('t1',dataform.table1);
     ReportRunTime1.SetDataSet('t2',dataform.table2);
  		strFileDir := ExtractFileDir(Application.ExeName);
