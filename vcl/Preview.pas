@@ -63,8 +63,6 @@ type
 
 var
   PreviewForm: TPreviewForm;
-  EnableBz: Boolean;
-  EditeptBz:Boolean;
 
 implementation
 
@@ -120,7 +118,7 @@ begin
     ReportControl1.LoadFromFile(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp');
 
   ReportControl1.ReportScale := nPrevScale;
-  ReportControl1.Enabled:=EnableBz;
+;
   LockWindowUpdate(0);
 end;
 
@@ -156,7 +154,7 @@ begin
     ReportControl1.LoadFromFile(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp');
 
   ReportControl1.ReportScale := nPrevScale;
-  ReportControl1.Enabled:=EnableBz;
+
   LockWindowUpdate(0);
 end;
 
@@ -202,10 +200,9 @@ begin
     ReportControl1.LoadFromFile(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp');
 
   ReportControl1.ReportScale := nPrevScale;
-  ReportControl1.Enabled:=EnableBz;
   LockWindowUpdate(0);
 end;
-
+// next page
 procedure TPreviewForm.But2Click(Sender: TObject);
 var
   nPrevScale: Integer;
@@ -230,7 +227,6 @@ begin
     ReportControl1.LoadFromFile(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp');
 
   ReportControl1.ReportScale := nPrevScale;
-  ReportControl1.Enabled:=EnableBz;
   LockWindowUpdate(0);
 end;
 
@@ -337,7 +333,6 @@ begin
     ReportControl1.LoadFromFile(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp');
 
   ReportControl1.ReportScale := nPrevScale;
-  ReportControl1.Enabled:=EnableBz;
   LockWindowUpdate(0);
 end;
 
@@ -433,12 +428,7 @@ end;
 
 procedure TPreviewForm.FormActivate(Sender: TObject);
 begin
-if EditeptBz then
-   editeptk.Visible:=true
-else
-  editeptk.Visible:=false;
 
-  ReportControl1.Enabled:=EnableBz;
 
   ReportControl1.AllowPreviewEdit:=EditEptk.Visible; //add lzl 如果充许编辑模板则可编辑单元格否则不行。
 
