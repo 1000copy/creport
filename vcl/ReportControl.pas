@@ -628,7 +628,7 @@ Function DeleteFiles(FilePath, FileMask: String): Boolean;
 Procedure Register;
 
 Var
-
+  // encaplated ! 艰难而看不到未来。唯有埋头，忍耐，坚韧不拔。2014-11-13
   PrintPaper:TPrinterPaper;
   DeviceHandle: THandle;
 
