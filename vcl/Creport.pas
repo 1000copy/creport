@@ -172,14 +172,8 @@ type
     procedure SpeedButton15Click(Sender: TObject);
     procedure ReportControl1MouseDown(Sender: TObject;
       Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-    procedure ReportControl1MouseUp(Sender: TObject; Button: TMouseButton;
-      Shift: TShiftState; X, Y: Integer);
     procedure SpeedButton7Click(Sender: TObject);
     procedure FormResize(Sender: TObject);
-    procedure ReportControl1DragOver(Sender, Source: TObject; X,
-      Y: Integer; State: TDragState; var Accept: Boolean);
-    procedure ReportControl1DragDrop(Sender, Source: TObject; X,
-      Y: Integer);
     procedure CellDispFormtChange(Sender: TObject);
     procedure LsumChange(Sender: TObject);
     procedure SpeedButton10Click(Sender: TObject);
@@ -358,9 +352,9 @@ end;
 
 procedure TCreportForm.AddLineClick(Sender: TObject);
 begin
-if celldisp <> nil then
+if self.ReportControl1.SelectedCells.Count > 0  then
 begin
-  ReportControl1.AddLine;
+      ReportControl1.AddLine;
       savebz:=false;
 end;
 end;
@@ -410,10 +404,13 @@ begin
   savebz:=false;
 end;
 
-procedure TCreportForm.CellBorderLineClick(Sender: TObject); // update 李泽伦
+procedure TCreportForm.CellBorderLineClick(Sender: TObject);
+var
+  celldisp : TReportCell;
 begin
-  if cellline_d <> nil then
+  if ReportControl1.SelectedCells.Count >0  then
   begin
+    celldisp := ReportControl1.SelectedCells[0];
     borderform.LeftLine.Checked:=celldisp.LeftLine;
     borderform.TopLine.Checked:=celldisp.TopLine;
     borderform.RightLine.Checked:=celldisp.RightLine;
@@ -441,7 +438,7 @@ procedure TCreportForm.CellDiagonalLineClick(Sender: TObject);
 var
   nDiagonal: UINT;
 begin
-if celldisp <> nil then
+if ReportControl1.SelectedCells.Count >0  then
   if DiagonalForm.ShowModal = mrOK then
   begin
     with DiagonalForm do
@@ -476,7 +473,7 @@ var
   hTempDC: HDC;
   pt, ptOrg: TPoint;
 begin
-  if cellline_d <> nil then
+  if ReportControl1.SelectedCells.Count >0  then
   begin
     hTempDC := GetDC(0);
     pt.y := abs(reportcontrol1.cellFont_d.lfheight) * 720 div GetDeviceCaps(hTempDC, LOGPIXELSY);
@@ -501,7 +498,7 @@ end;
 
 procedure TCreportForm.CellColorClick(Sender: TObject);
 begin
-  if cellline_d <> nil then
+  if ReportControl1.SelectedCells.Count >0  then
   begin
     if ColorForm.ShowModal = mrOK then
     begin
@@ -534,7 +531,7 @@ end;
 
 procedure TCreportForm.VSplitCellClick(Sender: TObject);
 begin
-if celldisp <> nil then
+if ReportControl1.SelectedCells.Count >0  then
   if VSplitForm.ShowModal = mrOK then
   begin
     ReportControl1.VSplitCell(VSplitForm.VSplitCount.Value);
@@ -581,7 +578,6 @@ procedure TCreportForm.FileCloseClick(Sender: TObject); // update 李泽伦
 begin
   if Application.Messagebox('确实要关闭文件吗？', '警告', MB_OKCANCEL) = MrOK then
   begin
-    celldisp:=nil;
     ReportControl1.FreeEdit;
     ReportControl1.ResetContent;
     cp_pgw := 0;
@@ -837,7 +833,7 @@ var
   cf: TFont;
   i, code: integer;
 begin
-  if celldisp <> nil then
+  if ReportControl1.SelectedCells.Count >0  then
   begin
     cf := Tfont.Create;
     cf.Name := fontbox.items[fontbox.itemindex];
@@ -878,7 +874,7 @@ var
   cf: TFont;
   i, code: integer;
 begin
-  if celldisp <> nil then
+  if ReportControl1.SelectedCells.Count >0  then
   begin
 
     cf := Tfont.Create;
@@ -951,6 +947,7 @@ var
   hTempDC: HDC;
   pt, ptOrg: TPoint;
   i: integer;
+  celldisp : TReportCell;
 begin
 if ssright in shift then
 begin
@@ -962,9 +959,9 @@ if ssleft in shift then
 try
  Panel3.Enabled:=false;
  Panel4.Enabled:=false;
- if celldisp <> nil then
+ if reportcontrol1.SelectedCells.count > 0 then
   begin
-
+    celldisp := reportcontrol1.SelectedCells[0];
     if celldisp.HorzAlign = 0 then left1.Down := true;
     if celldisp.HorzAlign = 1 then center1.Down := true;
     if celldisp.HorzAlign = 2 then right1.Down := true;
@@ -999,12 +996,6 @@ try
   Panel4.Enabled:=true;
 
    
-end;
-
-procedure TCreportForm.ReportControl1MouseUp(Sender: TObject;
-  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
-begin
-  zoomxxx:=100; // add 李泽伦
 end;
 
 procedure TCreportForm.SpeedButton7Click(Sender: TObject);
@@ -1046,35 +1037,9 @@ begin
    Accept:=true;
 end;
 
-procedure TCreportForm.ReportControl1DragOver(Sender, Source: TObject; X,
-  Y: Integer; State: TDragState; var Accept: Boolean); // add 李泽伦
-begin
- Accept:=true;
-
-end;
-
-procedure TCreportForm.ReportControl1DragDrop(Sender, Source: TObject; X, Y: Integer); // add 李泽伦
-begin
-  if Source is Tlistbox then
-  begin
-    ReportControl1.FreeEdit;
-    celldisp:=nil;
-    mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
-    mouse_event( MOUSEEVENTF_LEFTUP, 0, 0, 0, 0 );
-    Application.ProcessMessages;
-    if celldisp <> nil then
-    begin
-       celldisp.CellText:='#T1.'+tlistbox(Source).Items[tlistbox(Source).ItemIndex];
-       ReportControl1.UpdateLines;
-       mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
-       mouse_event( MOUSEEVENTF_LEFTUP, 0, 0, 0, 0 );
-    end;
-  end;
-end;
-
 procedure TCreportForm.CellDispFormtChange(Sender: TObject); // add 李泽伦
 begin
-if celldisp <> nil then
+if ReportControl1.SelectedCells.Count >0  then
 begin
    ReportControl1.SetCellDispFormt(CellDispFormt.items[CellDispFormt.itemindex]);
     savebz:=false;
@@ -1082,17 +1047,16 @@ end;
 end;
 
 procedure TCreportForm.LsumChange(Sender: TObject);
+var celldisp : TReportCell;
 begin
-if celldisp <> nil then
+if ReportControl1.SelectedCells.Count >0  then
 begin
-  if ReportControl1.IsCellSelected(celldisp) then
-  begin
+   celldisp := ReportControl1.SelectedCells[0];
    celldisp.CellText:=Lsum.Items[Lsum.ItemIndex];
    ReportControl1.SetCellSumText('`'+Lsum.items[Lsum.itemindex]);
    fontboxChange(Sender);
        savebz:=false;
 
-  end;
 end;
 end;
 
@@ -1135,9 +1099,11 @@ end;
 
 
 procedure TCreportForm.SpeedButton10Click(Sender: TObject); // add 李泽伦
+var celldisp : TReportCell;
 begin
-if celldisp<>nil then
+if ReportControl1.SelectedCells.Count >0  then
 begin
+   celldisp := ReportControl1.SelectedCells[0];
 try
   if OpenPictureDialog1.Execute then
   begin
@@ -1155,10 +1121,12 @@ end;
 procedure TCreportForm.SpeedButton16Click(Sender: TObject);// add 李泽伦
 var Acanvas:Tcanvas;
     LTempRect:Trect;
+var celldisp : TReportCell;
 begin
-if celldisp<>nil then
+if ReportControl1.SelectedCells.Count >0  then
 begin
-  ReportControl1.FreeBmp(celldisp);
+   celldisp := ReportControl1.SelectedCells[0];
+   ReportControl1.FreeBmp(celldisp);
     savebz:=false;
 
   ShowWindow(ReportControl1.Handle, SW_HIDE);

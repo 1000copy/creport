@@ -1,4 +1,7 @@
-
+// 2014-11-13 这两天正在喝。平和，质朴，散发着有钱的感觉...
+// 金丝带 Alectoria virens Tayl.，
+//寄生地衣类植物，丝状，淡黄绿色或金黄色寄生于高山枯木上。分布陕西、四川、云南、西藏。
+// 除风湿、止血止痛、调经活血、镇惊安神、健脾胃。祛风活络、补肾壮阳
 Unit ReportControl;
 
 Interface
@@ -300,6 +303,7 @@ Type
     { Protected declarations }
     Procedure CreateWnd; Override;
   Public
+    property SelectedCells: TList read FSelectCells ;
     { Public declarations }
     Procedure SetSelectedCellFont(cf: TFont);
     procedure SelectLines(row1, row2: integer);
@@ -631,7 +635,7 @@ Var
   //EditEpt:boolean; //是否充许用户在预览时调用编辑程序修改模板
 
   {
-   这是传说中的解构主义吗？
+  解构主义
    ========================
   风雨声中，忽听得吴六奇放开喉咙唱起曲来：「走江边，满腔愤恨向谁言？老泪风
 吹，孤城一片，望数目穿，使尽残兵血战。跳出重围，故国悲恋，谁知歌罢剩空筵。长江
@@ -646,8 +650,6 @@ Var
 爷太太，施舍些残羹冷饭』，倒也饿不死你。」
 
 }
-  cellline_d: TReportCell;              //用于保存选中单元格的属性 1999.1.25
-  celldisp: TReportCell;                //用于显示Mouse位置的单元格属性
 
 Implementation
 
@@ -1734,8 +1736,6 @@ Begin
   FLineList := TList.Create;
   FSelectCells := TList.Create;
 
-  Celldisp := Nil;
-  cellline_d := Nil;
   FEditCell := Nil;
 
   FNewTable := True;
@@ -3250,9 +3250,7 @@ Begin
   Begin
 
     FSelectCells.Add(Cell);
-    celldisp := cell;
     FcellFont_d := cell.flogfont;       //取选中单元格的字体类型 1999.1.23
-    cellline_d := cell;                 //用于保存选中单元格的属性 1999.1.25
     hClientDC := GetDC(Handle);
     InvertRect(hClientDC, Cell.CellRect);
     ReleaseDC(Handle, hClientDC);
