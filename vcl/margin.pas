@@ -42,7 +42,7 @@ var
 implementation
 
 {$R *.DFM}
-//uses fr_prntr;
+ 
 procedure TMarginForm.FormActivate(Sender: TObject);
 var
   MarginRect: TRect;
@@ -54,20 +54,9 @@ begin
   LeftMargin.Value := MarginRect.Left;
   TopMargin.Value := MarginRect.Top;
   RightMargin.Value := MarginRect.Right;
-  BottomMargin.Value := MarginRect.Bottom;
-
-      prDeviceMode;
-      with Devmode^ do //设置打印纸  李泽伦
-      begin
-        dmFields:=dmFields or DM_PAPERSIZE;
-        dmPapersize:=FprPageNo;
-        dmFields:=dmFields or DM_ORIENTATION;
-        dmOrientation:=FprPageXy; //1为纵向,2为横向
-
-        dmPaperLength:=fpaperLength;
-        dmPaperWidth:=fpaperWidth;
-      end;
-
+  BottomMargin.Value := MarginRect.Bottom;  
+  PrintPaper.prDeviceMode;
+  PrintPaper.SetPaperWithCurrent;
 
 end;
 // Margin ,Confirm Button,or Save Button
@@ -76,12 +65,12 @@ var
   MarginRect: TRect;
 begin
   cp_pgw:=0;
-  ReportControl1.CalcWndSize;//
+  ReportControl1.CalcWndSize; 
 
   ReportControl1.SetMargin(LeftMargin.Value,TopMargin.Value,RightMargin.Value,BottomMargin.Value);
   ReportControl1.SaveToFile(filename.Caption);
 
-  ReportControl1.ResetContent;//清除内层中的表格数据
+  ReportControl1.ResetContent; 
   okset:=true;
 end;
 

@@ -406,20 +406,20 @@ end;
 
 procedure TCreportForm.CellBorderLineClick(Sender: TObject);
 var
-  celldisp : TReportCell;
+  cell : TReportCell;
 begin
   if ReportControl1.SelectedCells.Count >0  then
   begin
-    celldisp := ReportControl1.SelectedCells[0];
-    borderform.LeftLine.Checked:=celldisp.LeftLine;
-    borderform.TopLine.Checked:=celldisp.TopLine;
-    borderform.RightLine.Checked:=celldisp.RightLine;
-    borderform.BottomLine.Checked:=celldisp.BottomLine;
+    cell := ReportControl1.SelectedCells[0];
+    borderform.LeftLine.Checked:=cell.LeftLine;
+    borderform.TopLine.Checked:=cell.TopLine;
+    borderform.RightLine.Checked:=cell.RightLine;
+    borderform.BottomLine.Checked:=cell.BottomLine;
 
-    borderform.SpinEdit1.Value:=celldisp.LeftLineWidth;
-    borderform.SpinEdit2.Value:=celldisp.TopLineWidth;
-    borderform.SpinEdit3.Value:=celldisp.RightLineWidth;
-    borderform.SpinEdit4.Value:=celldisp.BottomLineWidth;
+    borderform.SpinEdit1.Value:=cell.LeftLineWidth;
+    borderform.SpinEdit2.Value:=cell.TopLineWidth;
+    borderform.SpinEdit3.Value:=cell.RightLineWidth;
+    borderform.SpinEdit4.Value:=cell.BottomLineWidth;
 
     if BorderForm.ShowModal = mrOK then
       with BorderForm do
@@ -438,7 +438,8 @@ procedure TCreportForm.CellDiagonalLineClick(Sender: TObject);
 var
   nDiagonal: UINT;
 begin
-if ReportControl1.SelectedCells.Count >0  then
+  if ReportControl1.SelectedCells.Count = 0  then
+    exit;
   if DiagonalForm.ShowModal = mrOK then
   begin
     with DiagonalForm do
@@ -476,13 +477,13 @@ begin
   if ReportControl1.SelectedCells.Count >0  then
   begin
     hTempDC := GetDC(0);
-    pt.y := abs(reportcontrol1.cellFont_d.lfheight) * 720 div GetDeviceCaps(hTempDC, LOGPIXELSY);
+    pt.y := abs(TReportCell(reportcontrol1.SelectedCells[0]).LogFont.lfheight) * 720 div GetDeviceCaps(hTempDC, LOGPIXELSY);
     DPtoLP(hTempDC, pt, 1);
     ptOrg.x := 0;
     ptOrg.y := 0;
     DPtoLP(hTempDC, ptOrg, 1);
 
-    FontDialog1.Font.Name := reportcontrol1.cellFont_d.lfFaceName;
+    FontDialog1.Font.Name := TReportCell(reportcontrol1.SelectedCells[0]).LogFont.lfFaceName;
     FontDialog1.Font.Size := ((pt.y - ptOrg.y) div 10);
 
     if FontDialog1.Execute then

@@ -10,8 +10,8 @@ Uses
   Windows, Messages, SysUtils,
   {$WARNINGS OFF}FileCtrl,{$WARNINGS ON}
    Classes, Graphics, Controls,
-  Forms, Dialogs, Math, Printers, Menus, dbgrids, Db, jpeg, dbtables,
-  DesignEditors, DesignIntf, ShellAPI, ExtCtrls;
+  Forms, Dialogs, Printers, Menus, Db, 
+  DesignEditors, ExtCtrls;
 procedure CheckError(condition:Boolean ;msg :string);
   //dsgnintf d5
 Const
@@ -268,7 +268,6 @@ Type
     FBottomMargin: Integer;
 
     FcellFont: TlogFont;
-    FcellFont_d: TlogFont;
 
     FLeftMargin1: Integer;
     FRightMargin1: Integer;
@@ -298,6 +297,7 @@ Type
     Procedure SetCellSFocus(row1, col1, row2, col2: integer);
     function Get(Index: Integer): TReportLine;
     function GetCells(Row, Col: Integer): TReportCell;
+    procedure InvertCell(Cell: TReportCell);
 
   Protected
     { Protected declarations }
@@ -321,7 +321,6 @@ Type
     Procedure SetScale(Const Value: Integer);
 
     Property cellFont: TlogFont Read Fcellfont Write Fcellfont; //default true;
-    Property cellFont_d: TlogFont Read Fcellfont_d Write Fcellfont_d;  //default true;
 
     // Message Handler
     Procedure WMLButtonDown(Var Message: TMessage); Message WM_LBUTTONDOWN;
@@ -609,21 +608,31 @@ Type
     PrevCell: TReportCell;
     ThisCell: TReportCell;
   End;
-
-Procedure prDeviceMode;                 //取得当前打印机的DeviceMode的结构成员
+  TPrinterPaper = class
+  private
+    // google : msdn DEVMODE structure
+    DevMode: PdeviceMode;
+    FprPageNo: integer;                   //LCJ: 打印文件的纸张编号：比如 A4，A3，自定义纸张等。
+    FprPageXy: integer;                   // 纸张纵横方向  lzl
+    fpaperLength: integer;                // 纸张长度（高度）
+    fpaperWidth: integer;
+  public
+    Procedure prDeviceMode;                 //取得当前打印机的DeviceMode的结构成员
+    procedure SetPaper(FprPageNo, FprPageXy, fpaperLength,
+      fpaperWidth: Integer);
+    procedure GetPaper(var FprPageNo, FprPageXy, fpaperLength,
+      fpaperWidth: Integer);                 // 纸张宽度
+    procedure SetPaperWithCurrent;
+  end;
 Function DeleteFiles(FilePath, FileMask: String): Boolean;
 Procedure Register;
 
 Var
 
-  Adevice, Adriver, Aport: Array[0..255] Of char; //prdevixemode调用 lzl 2002.3
+  PrintPaper:TPrinterPaper;
   DeviceHandle: THandle;
-  DevMode: PdeviceMode; //当前打印机结构成员，调用prdevixemode初始化 lzl
 
-  FprPageNo: integer;                   //打印文件的纸张序号  lzl
-  FprPageXy: integer;                   //打印文件的纸张纵横方向  lzl
-  fpaperLength: integer;
-  fpaperWidth: integer;
+
 
   cp_pgw, cp_pgh: integer;
 
@@ -637,42 +646,69 @@ Var
   {
   解构主义
    ========================
-  风雨声中，忽听得吴六奇放开喉咙唱起曲来：「走江边，满腔愤恨向谁言？老泪风
-吹，孤城一片，望数目穿，使尽残兵血战。跳出重围，故国悲恋，谁知歌罢剩空筵。长江
-一线，吴头楚尾路三千，尽归别姓，雨翻云变。寒涛东卷，万事付空烟。精魂显大招，声
-逐海天远。"
+  风雨声中，忽听得吴六奇放开喉咙唱起曲来：...
 
- 曲声从江上远送出去，风雨之声虽响，却也压他不倒。马超兴在後梢喝采不迭，叫
-道：「好一个『声逐海天远』！」
+ 曲声从江上远送出去，风雨之声虽响，却也压他不倒。
 
-韦小宝但听他唱得慷慨激昂，也不知曲文是甚麽意思，
-心中骂道：「你有这副好嗓子，却不去戏台上做大花面？老叫化，放开了喉咙大叫：『老
-爷太太，施舍些残羹冷饭』，倒也饿不死你。」
+ 马超兴在後梢喝采不迭，叫道：「好一个『声逐海天远』！」
 
+ 韦小宝但听他唱得慷慨激昂，也不知曲文是甚麽意思，
+  心中骂道：「你有这副好嗓子，却不去戏台上做大花面？老叫化，放开了喉咙大叫：『老
+  爷太太，施舍些残羹冷饭』，倒也饿不死你。」
 }
 
 Implementation
 
 {$R ReportControl.dcr}
-Uses Preview, REPmess, margin,
-  Creport, About, Border, vsplit, Color, diagonal, margink, NewDialog; //add lzl
+Uses Preview, REPmess, margin,Creport;
 
-Procedure prDeviceMode; //取得当前打印机的DeviceMode的结构成员   lzl
+
+Procedure TPrinterPaper.prDeviceMode;
+var
+  Adevice, Adriver, Aport: Array[0..255] Of char;
 Begin
   Printer.GetPrinter(Adevice, Adriver, Aport, DeviceHandle);
-  If DeviceHandle = 0 Then
-  Begin
-    printer.PrinterIndex := printer.PrinterIndex;
-    Printer.GetPrinter(Adevice, Adriver, Aport, DeviceHandle);
-  End;
   If DeviceHandle = 0 Then
     Raise Exception.Create('Could Not Initialize TdeviceMode Structure')
   Else
     DevMode := GlobalLock(DeviceHandle);
-  {!!!}
-  If Not DeviceHandle = 0 Then
-    GlobalLock(DeviceHandle);
 End;
+procedure TPrinterPaper.SetPaperWithCurrent;
+begin
+  with Devmode^ do //设置打印纸  李泽伦
+  begin
+    dmFields:=dmFields or DM_PAPERSIZE;
+    dmPapersize:=FprPageNo;
+    dmFields:=dmFields or DM_ORIENTATION;
+    dmOrientation:=FprPageXy;
+
+    dmPaperLength:=fpaperLength;
+    dmPaperWidth:=fpaperWidth;
+  end;
+end;
+procedure TPrinterPaper.SetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth:Integer);
+begin
+    Devmode^.dmFields := Devmode^.dmFields Or DM_PAPERSIZE;
+    Devmode^.dmPapersize := FprPageNo;
+    Devmode^.dmFields := Devmode^.dmFields Or DM_ORIENTATION;
+    Devmode^.dmOrientation := FprPageXy;
+
+    Devmode^.dmPaperLength := fpaperLength;
+    Devmode^.dmPaperWidth := fpaperWidth;
+end;
+
+procedure TPrinterPaper.GetPaper(var FprPageNo,FprPageXy,fpaperLength,fpaperWidth:Integer);
+begin
+  With Devmode^ Do
+  Begin
+    dmFields := dmFields Or DM_PAPERSIZE;
+    FprPageNo := dmPapersize;
+    dmFields := dmFields Or DM_ORIENTATION;
+    FprPageXy := dmOrientation;
+    fPaperLength := dmPaperLength;
+    fPaperWidth := dmPaperWidth;
+  End;
+end;
 
 Function DeleteFiles(FilePath, FileMask: String): Boolean;
 Var
@@ -723,12 +759,10 @@ End;
 
 Procedure TReportCell.SetLeftMargin(LeftMargin: Integer);
 Begin
-  // 修改左右预留的空白区域
-  // 呵呵，目前只能是5。
+  // 修改左右预留的空白区域.呵呵，目前只能是5。
   If (LeftMargin = FLeftMargin) Or
     (LeftMargin < 5) Or (LeftMargin > 5) Then
-    Exit;
-
+    Exit;  
   FLeftMargin := LeftMargin;
   CalcEveryHeight;
 End;
@@ -3240,20 +3274,22 @@ Begin
   End;       
 End;
 
-Function TReportControl.AddSelectedCell(Cell: TReportCell): Boolean;
+procedure TReportControl.InvertCell(Cell:TReportCell);
 Var
   hClientDC: HDC;
-Begin
-  If IsCellSelected(Cell) Or (Cell = Nil) Then
-    Result := False
-  Else
-  Begin
-
-    FSelectCells.Add(Cell);
-    FcellFont_d := cell.flogfont;       //取选中单元格的字体类型 1999.1.23
+begin
     hClientDC := GetDC(Handle);
     InvertRect(hClientDC, Cell.CellRect);
     ReleaseDC(Handle, hClientDC);
+end;
+
+Function TReportControl.AddSelectedCell(Cell: TReportCell): Boolean;
+Begin
+  If IsCellSelected(Cell) Or (Cell = Nil) Then
+    Result := False
+  Else Begin
+    FSelectCells.Add(Cell);
+    InvertCell(Cell);
     Result := True;
   End;
 End;
@@ -3491,7 +3527,7 @@ Var
   TargetFile: TFileStream;
   FileFlag: WORD;
   Count: Integer;
-  I, J, K: Integer;
+  I, J, K,FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
   ThisLine: TReportLine;
   ThisCell, TempCell: TReportCell;
   TempInteger: Integer;
@@ -3633,21 +3669,11 @@ Begin
           End;
         End;
       End;
-      prDeviceMode;                     //lzl 
-      With Devmode^ Do
+      PrintPaper.prDeviceMode;                     //lzl
+      PrintPaper.GetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth); 
       Begin
-        dmFields := dmFields Or DM_PAPERSIZE;
-        FprPageNo := dmPapersize;
-
-        dmFields := dmFields Or DM_ORIENTATION;
-        FprPageXy := dmOrientation;
-
         Write(FprPageNo, SizeOf(FprPageNo));
         Write(FprPageXy, SizeOf(FprPageXy));
-
-        fPaperLength := dmPaperLength;
-        fPaperWidth := dmPaperWidth;
-
         Write(fPaperLength, SizeOf(fPaperLength));
         Write(fPaperWidth, SizeOf(fPaperWidth));
       End;
@@ -3662,7 +3688,7 @@ Procedure TReportControl.LoadFromFile(FileName: String);
 Var
   TargetFile: TFileStream;
   FileFlag: WORD;
-  Count1, Count2, Count3: Integer;
+  Count1, Count2, Count3,FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
   ThisLine: TReportLine;
   ThisCell: TReportCell;
   I, J, K: Integer;
@@ -3826,20 +3852,11 @@ Begin
       End;
 
       Read(FprPageNo, SizeOf(FprPageNo)); //取出纸张序号  lzl 2002。3
-      Read(FprPageXy, SizeOf(FprPageXy)); //取出纵横方向  lzl 
-      Read(fpaperLength, SizeOf(fpaperLength)); //取出长度  lzl 
-      Read(fpaperWidth, SizeOf(fpaperWidth)); //取出宽度   lzl 
-      prDeviceMode;
-      With Devmode^ Do                  //设置打印纸  lzl 
-      Begin
-        dmFields := dmFields Or DM_PAPERSIZE;
-        dmPapersize := FprPageNo;
-        dmFields := dmFields Or DM_ORIENTATION;
-        dmOrientation := FprPageXy;
-
-        dmPaperLength := fpaperLength;
-        dmPaperWidth := fpaperWidth;
-      End;
+      Read(FprPageXy, SizeOf(FprPageXy)); //取出纵横方向  lzl
+      Read(fpaperLength, SizeOf(fpaperLength)); //取出长度  lzl
+      Read(fpaperWidth, SizeOf(fpaperWidth)); //取出宽度   lzl
+      PrintPaper.prDeviceMode;
+      PrintPaper.SetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
       Read(FHootNo, SizeOf(FHootNo));
     End;
   Finally
@@ -4224,7 +4241,7 @@ Var
   I, J, K: Integer;
   ThisLine: TReportLine;
   ThisCell, TempCell: TReportCell;
-  TempInteger: Integer;
+  TempInteger,FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
   TempPChar: Array[0..3000] Of char;
   FileName: String;
   strFileDir: String;
@@ -4412,21 +4429,11 @@ Begin
           End;
         End;
       End;
-      prDeviceMode;                     //lzl 
-      With Devmode^ Do                  //lzl 
+      PrintPaper.prDeviceMode;                     //lzl
+      PrintPaper.GetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
       Begin
-        dmFields := dmFields Or DM_PAPERSIZE;
-        FprPageNo := dmPapersize;
-
-        dmFields := dmFields Or DM_ORIENTATION;
-        FprPageXy := dmOrientation;
-
         Write(FprPageNo, SizeOf(FprPageNo));
         Write(FprPageXy, SizeOf(FprPageXy));
-
-        fPaperLength := dmPaperLength;
-        fPaperWidth := dmPaperWidth;
-
         Write(fPaperLength, SizeOf(fPaperLength));
         Write(fPaperWidth, SizeOf(fPaperWidth));
       End;
@@ -4442,7 +4449,7 @@ Procedure TReportRunTime.LoadTempFile(strFileName: String);
 Var
   TargetFile: TFileStream;
   FileFlag: WORD;
-  Count1, Count2, Count3: Integer;
+  Count1, Count2, Count3,FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
   ThisLine: TReportLine;
   ThisCell: TReportCell;
   I, J, K: Integer;
@@ -4610,19 +4617,9 @@ Begin
       Read(FprPageXy, SizeOf(FprPageXy)); //取出纵横方向  lzl 
       Read(fpaperLength, SizeOf(fpaperLength)); //取出长度  lzl 
       Read(fpaperWidth, SizeOf(fpaperWidth)); //取出宽度   lzl 
-      prDeviceMode;
-      With Devmode^ Do                  //设置打印纸
-      Begin
-        dmFields := dmFields Or DM_PAPERSIZE;
-        dmPapersize := FprPageNo;
-        dmFields := dmFields Or DM_ORIENTATION;
-        dmOrientation := FprPageXy;
-
-        dmPaperLength := fpaperLength;
-        dmPaperWidth := fpaperWidth;
-
-      End;
-      read(FHootNo, SizeOf(FHootNo));   //lzl 
+      PrintPaper.prDeviceMode;
+      PrintPaper.SetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
+      read(FHootNo, SizeOf(FHootNo));   //lzl
 
     End;
   Finally
@@ -4774,7 +4771,7 @@ Var
   Count1, Count2, Count3: Integer;
   ThisLine: TReportLine;
   ThisCell: TReportCell;
-  I, J, K: Integer;
+  I, J, K,FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
   TempPChar: Array[0..3000] Of Char;
   bHasDataSet: Boolean;
 Begin
@@ -4947,19 +4944,8 @@ Begin
       Read(FprPageXy, SizeOf(FprPageXy)); //取出纵横方向
       Read(fpaperLength, SizeOf(fpaperLength)); //取出纵横方向
       Read(fpaperWidth, SizeOf(fpaperWidth)); //取出纵横方向
-      prDeviceMode;
-
-      With Devmode^ Do                  //设置打印纸
-      Begin
-        dmFields := dmFields Or DM_PAPERSIZE;
-        dmPapersize := FprPageNo;
-        dmFields := dmFields Or DM_ORIENTATION;
-        dmOrientation := FprPageXy;
-
-        dmPaperLength := fpaperLength;
-        dmPaperWidth := fpaperWidth;
-
-      End;
+      PrintPaper.prDeviceMode;
+      PrintPaper.SetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
       read(FHootNo, SizeOf(FHootNo));   //lzl 
 
     End;
@@ -5829,12 +5815,7 @@ Begin
 
   Try
     MarginForm.ShowModal;
-    If MarginForm.okset = true Then
-    Begin
-      result := true;
-    End
-    Else
-      result := false;
+    result :=  MarginForm.okset ;
   Finally
     MarginForm.free;
   End;
@@ -5893,16 +5874,15 @@ Begin
   FNamedDatasets.clear;
 End;
 
-Function TReportRunTime.shpreview: boolean; //在预览中设置纸张及边距，lzl 增加
+Function TReportRunTime.shpreview: boolean;
 Var
   i: integer;
 Begin
-  If PrintSET(reportfile) = true Then   //纸及边距设置
+  If PrintSET(reportfile) = true Then   
   Begin
-    ReportFile := reportfile; //从新装入修改后的模版文件,必须要，以便调用PreparePrintk
-    i := PreparePrintk(FALSE, 0);
+    ReportFile := reportfile; 
     i := DoPageCount;
-    REPmessform.show;                   //lzla2001.4.27
+    REPmessform.show;                     
     PreparePrintk(TRUE, i);
     REPmessform.Close;
     PreviewForm.PageCount := FPageCount;
@@ -6452,6 +6432,10 @@ begin
   if condition then
     raise Exception.Create(msg);
 end;
+initialization
+   PrintPaper:= TPrinterPaper.Create;
+finalization
+   PrintPaper.Free;
 End.
 
 

@@ -56,17 +56,8 @@ end;
 
 procedure TMarginkForm.FormActivate(Sender: TObject);
 begin
-      prDeviceMode;
-      with Devmode^ do //…Ë÷√¥Ú”°÷Ω  ¿Ó‘Û¬◊
-      begin
-        dmFields:=dmFields or DM_PAPERSIZE;
-        dmPapersize:=FprPageNo;
-        dmFields:=dmFields or DM_ORIENTATION;
-        dmOrientation:=FprPageXy;
-
-        dmPaperLength:=fpaperLength;
-        dmPaperWidth:=fpaperWidth;
-      end;
+  PrintPaper.prDeviceMode;
+  PrintPaper.SetPaperWithCurrent;
 
 end;
 
