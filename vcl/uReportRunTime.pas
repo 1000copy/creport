@@ -12,17 +12,12 @@ type
   EachCellProc =  procedure (ThisCell:TReportCell) of object;
   EachLineProc =  procedure (ThisLine:TReportLine)of object;
   EachLineIndexProc = procedure (ThisLine:TReportLine;Index:Integer)of object;
-  // this style work ! amazing .
-  a = class
-  public
-     p:string;
-  end;
-  b = class(a)
-  public
-     p:string;
-  end;
+
 
   TReportRunTime = Class(TReportControl)
+  private
+    function GetHeaderHeight: Integer;
+    procedure LoadRptFile1(FFileName: string; FLineList: TList);
   public
 
     SumPage, SumAll: Array[0..40] Of real;  //小计和合计用,最多40列单元格,否则统计汇总时要出错.
@@ -579,19 +574,33 @@ Var
   TempPChar: Array[0..3000] Of Char;
   bHasDataSet: Boolean;
 Begin
-  //TargetFile := TFileStream.Create(FFileName, fmOpenRead);
+  try
+    LoadRptFile1(FFileName,FLineList);
+    UpdateLines;
+    FHeaderHeight := GetHeaderHeight;
+  except
+    on E:Exception do ShowMessage(e.message);
+    end;
+End;
+Procedure TReportRunTime.LoadRptFile1(FFileName:string;FLineList:TList);
+Var
+  TargetFile: TFileStream;
+  FileFlag: WORD;
+  Count1, Count2, Count3: Integer;
+  ThisLine: TReportLine;
+  ThisCell: TReportCell;
+  I, J, K,FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
+  TempPChar: Array[0..3000] Of Char;
+  bHasDataSet: Boolean;
+Begin
+  TargetFile := TFileStream.Create(FFileName, fmOpenRead);
   Try
-    TargetFile := TFileStream.Create(FFileName, fmOpenRead);
     With TargetFile Do
     Begin
       Read(FileFlag, SizeOf(FileFlag));
       If (FileFlag <> $AA55) And (FileFlag <> $AA56) And (FileFlag <> $AA57)
         Then
-      Begin
-        ShowMessage('打开文件错误');
-        Exit;
-      End;
-
+        raise Exception.create('打开文件错误');
       For I := 0 To FLineList.Count - 1 Do
       Begin
         ThisLine := TReportLine(FLineList[I]);
@@ -756,10 +765,11 @@ Begin
   Finally
     TargetFile.Free;
   End;
-
-  UpdateLines;
-
-  FHeaderHeight := 0;
+End;
+function TReportRunTime.GetHeaderHeight:Integer;
+var I,J,FHeaderHeight :Integer; ThisLine:TReportLine;bHasDataSet:boolean;  ThisCell :TReportCell;
+begin
+    FHeaderHeight := 0;
 
   For I := 0 To FLineList.Count - 1 Do
   Begin
@@ -776,10 +786,11 @@ Begin
       End;
     End;
     If Not bHasDataSet Then
-      FHeaderHeight := FHeaderHeight + ThisLine.LineHeight;  //如果没有数据集，则表头高度等于表头高度加当前行高度
+      //如果没有数据集，则表头高度等于表头高度加当前行高度
+      FHeaderHeight := FHeaderHeight + ThisLine.LineHeight;
   End;
-
-End;
+  result := FHeaderHeight;
+end;
 Procedure TReportRunTime.SetEmptyCell(NewCell, ThisCell:TReportCell);
 Begin
   setNewCell(true,NewCell,ThisCell);
