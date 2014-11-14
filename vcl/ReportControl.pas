@@ -247,7 +247,7 @@ Type
   End;
 
   TReportControl = Class(TWinControl)
-  Private
+  protected
     Cpreviewedit: boolean;
     FCreportEdit: boolean;
     { Private declarations }
@@ -261,7 +261,7 @@ Type
     FPageWidth: Integer;
     FPageHeight: Integer;
 
-    FLeftMargin: Integer;               // 1
+    FLeftMargin: Integer;
     FRightMargin: Integer;
     FTopMargin: Integer;
     FBottomMargin: Integer;
@@ -297,11 +297,9 @@ Type
     function Get(Index: Integer): TReportLine;
     function GetCells(Row, Col: Integer): TReportCell;
     procedure InvertCell(Cell: TReportCell);
-    function RenderText(ThisCell: TReportCell; PageNumber,
-      Fpageall: Integer): String;
 
   Protected
-    { Protected declarations }
+    function RenderText(ThisCell: TReportCell; PageNumber,Fpageall: Integer): String;virtual ;
     Procedure CreateWnd; Override;
   Public
     property SelectedCells: TList read FSelectCells ;
@@ -312,7 +310,7 @@ Type
     Constructor Create(AOwner: TComponent); Override;
     Destructor Destroy; Override;
     Procedure SaveToFile(FileName: String);overload;
-    Procedure SaveToFile(FileName: String;PageNumber, Fpageall:integer);overload;
+    Procedure SaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);overload;
     Procedure LoadFromFile(FileName: String);
     Procedure SaveBmp(thiscell: Treportcell; filename: String); //lzl add
     Function LoadBmp(thiscell: Treportcell): TBitmap; //lzl add
@@ -3367,8 +3365,7 @@ function TReportControl.RenderText(ThisCell:TReportCell;PageNumber, Fpageall: In
 begin
     Result := ThisCell.FCellText;
 end;
-
-Procedure TReportControl.SaveToFile(FileName: String;PageNumber, Fpageall:integer);
+Procedure TReportControl.SaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);
 Var
 
   TargetFile: TFileStream;
@@ -4081,7 +4078,7 @@ End;
 
 procedure TReportControl.SaveToFile(FileName: String);
 begin
-  SaveToFile(FileName,0,0);
+  SaveToFile(FLineList,FileName,0,0);
 end;
 
 initialization

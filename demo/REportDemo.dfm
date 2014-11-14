@@ -230,9 +230,13 @@ object CReportDemoForm: TCReportDemoForm
     TabOrder = 4
   end
   object ReportRunTime1: TReportRunTime
-    AddSpace = True
     Left = 519
     Top = 8
+    Width = 20
+    Height = 33
+    Visible = False
+    CreportEdit = False
+    AddSpace = True
   end
   object opbm1: TOpenPictureDialog
     Filter = 

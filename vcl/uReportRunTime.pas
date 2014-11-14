@@ -6,13 +6,24 @@ uses ReportControl,  Windows, Messages, SysUtils,
    Classes, Graphics, Controls,
   Forms, Dialogs, Printers, Menus, Db,
   DesignEditors, ExtCtrls;
+Procedure Register;
 procedure CheckError(condition:Boolean ;msg :string);
 type
   EachCellProc =  procedure (ThisCell:TReportCell) of object;
   EachLineProc =  procedure (ThisLine:TReportLine)of object;
   EachLineIndexProc = procedure (ThisLine:TReportLine;Index:Integer)of object;
-  TReportRunTime = Class(TComponent)
-  Private
+  // this style work ! amazing .
+  a = class
+  public
+     p:string;
+  end;
+  b = class(a)
+  public
+     p:string;
+  end;
+
+  TReportRunTime = Class(TReportControl)
+  public
 
     SumPage, SumAll: Array[0..40] Of real;  //小计和合计用,最多40列单元格,否则统计汇总时要出错.
 
@@ -31,33 +42,30 @@ type
     Height: Integer;
 
     // 定义换页加表头
-    FNewTable: Boolean;
+//    FNewTable: Boolean;
 
     // 定义打印多少行后从新加表头
-    FDataLine: Integer;
-    FTablePerPage: Integer;
-
-    FReportScale: Integer;
-    FPageWidth: Integer;
-    FPageHeight: Integer;
+//    FDataLine: Integer;
+//    FTablePerPage: Integer;
+//    FReportScale: Integer;
+//    FPageWidth: Integer;
+//    FPageHeight: Integer;
 
     FHeaderHeight: Integer;
-
     Fallprint: Boolean;                 //是否打印全部记录，默认为全部
 
-    FLeftMargin: Integer;               //2
-    FRightMargin: Integer;
-    FTopMargin: Integer;
-    FBottomMargin: Integer;
-
-    FLeftMargin1: Integer;
-    FRightMargin1: Integer;
-    FTopMargin1: Integer;
-    FBottomMargin1: Integer;
+//    FLeftMargin: Integer;               //2
+//    FRightMargin: Integer;
+//    FTopMargin: Integer;
+//    FBottomMargin: Integer;
+//
+//    FLeftMargin1: Integer;
+//    FRightMargin1: Integer;
+//    FTopMargin1: Integer;
+//    FBottomMargin1: Integer;
+//    FHootNo: integer;                   //表尾的第一行在整个页的第几行 lzl
 
     FPageCount: Integer;                // page count in preview //总页数
-
-    FHootNo: integer;                   //表尾的第一行在整个页的第几行 lzl 
     nDataHeight, nHandHeight, nHootHeight, nSumAllHeight: Integer;
     TempDataSet: TDataset;
     hasdatano: integer;
@@ -124,10 +132,8 @@ type
     procedure LoadPage(I: integer);
     procedure PrintRange(Title: String; FromPage, ToPage: Integer);
     function ReadyFileName(PageNumber, Fpageall: Integer): String;
-    function RenderText(ThisCell: TReportCell;PageNumber, Fpageall: Integer): String;
-
   Protected
-
+    function RenderText(ThisCell: TReportCell;PageNumber, Fpageall: Integer): String;override;
   Public
     procedure ClearDataset;
     Constructor Create(AOwner: TComponent); Override;
@@ -237,176 +243,181 @@ begin
         celltext := ThisCell.FCellText;
     Result := celltext;
 end;
+
 Procedure TReportRunTime.SaveTempFile(FLineList:TList;FileName: String;PageNumber, Fpageall: Integer);
-Var
-
-  TargetFile: TFileStream;
-  FileFlag: WORD;
-  Count: Integer;
-  I, J, K: Integer;
-  ThisLine: TReportLine;
-  ThisCell, TempCell: TReportCell;
-  TempInteger,FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
-  TempPChar: Array[0..3000] Of char;
-  
-  strFileDir: String;
-  celltext: String;
-
-Begin
-  TargetFile := TFileStream.Create(FileName, fmOpenWrite Or fmCreate);
-
-
-  Try
-    // 窗口大小
-    With TargetFile Do
-    Begin
-      FileFlag := $AA57;
-      Write(FileFlag, SizeOf(FileFlag));
-
-      Write(FReportScale, SizeOf(FReportScale));
-      Write(FPageWidth, SizeOf(FPageWidth));
-      Write(FPageHeight, SizeOf(FPageHeight));
-
-      Write(FLeftMargin, SizeOf(FLeftMargin));
-      Write(FTopMargin, SizeOf(FTopMargin));
-      Write(FRightMargin, SizeOf(FRightMargin));
-      Write(FBottomMargin, SizeOf(FBottomMargin));
-
-      Write(FLeftMargin1, SizeOf(FLeftMargin));
-      Write(FTopMargin1, SizeOf(FTopMargin));
-      Write(FRightMargin1, SizeOf(FRightMargin));
-      Write(FBottomMargin1, SizeOf(FBottomMargin));
-
-      Write(FNewTable, SizeOf(FNewTable));
-      Write(FDataLine, SizeOf(FDataLine));
-      Write(FTablePerPage, SizeOf(FTablePerPage));
-
-      // 多少行
-      Count := FLineList.Count;
-      Write(Count, SizeOf(Count));
-
-      // 每行有多少个CELL
-      For I := 0 To FLineList.Count - 1 Do
-      Begin
-        ThisLine := TReportLine(FLineList[I]);
-        Count := ThisLine.FCells.Count;
-        Write(Count, SizeOf(Count));
-      End;
-
-      // 每行的属性
-      For I := 0 To FLineList.Count - 1 Do
-      Begin
-        ThisLine := TReportLine(FLineList[I]);
-
-        Write(ThisLine.FIndex, SizeOf(ThisLine.FIndex));
-        Write(ThisLine.FMinHeight, SizeOf(ThisLine.FMinHeight));
-        Write(ThisLine.FDragHeight, SizeOf(ThisLine.FDragHeight));
-        Write(ThisLine.FLineTop, SizeOf(ThisLine.FLineTop));
-        Write(ThisLine.FLineRect, SizeOf(ThisLine.FLineRect));
-
-        // 每个CELL的属性
-        For J := 0 To ThisLine.FCells.Count - 1 Do
-        Begin
-          ThisCell := TReportCell(ThisLine.FCells[J]);
-          // Write Cell's Property here;
-          Write(ThisCell.FLeftMargin, SizeOf(ThisCell.FLeftMargin));
-          Write(ThisCell.FCellIndex, SizeOf(ThisCell.FCellIndex));
-
-          Write(ThisCell.FCellLeft, SizeOf(ThisCell.FCellLeft));
-          Write(ThisCell.FCellWidth, SizeOf(ThisCell.FCellWidth));
-
-          Write(ThisCell.FCellRect, SizeOf(ThisCell.FCellRect));
-          Write(ThisCell.FTextrect, SizeOf(ThisCell.FTextRect));
-
-          Write(ThisCell.FDragCellHeight, SizeOf(ThisCell.FDragCellHeight));
-          Write(ThisCell.FMinCellHeight, SizeOf(ThisCell.FMinCellHeight));
-          Write(ThisCell.FRequiredCellHeight,
-            SizeOf(ThisCell.FRequiredCellHeight));
-
-          Write(ThisCell.FLeftLine, SizeOf(ThisCell.FLeftLine));
-          Write(ThisCell.FLeftLineWidth, SizeOf(ThisCell.FLeftLineWidth));
-
-          Write(ThisCell.FTopLine, SizeOf(ThisCell.FTopLine));
-          Write(ThisCell.FTopLineWidth, SizeOf(ThisCell.FTopLineWidth));
-
-          Write(ThisCell.FRightLine, SizeOf(ThisCell.FRightLine));
-          Write(ThisCell.FRightLineWidth, SizeOf(ThisCell.FRightLineWidth));
-
-          Write(ThisCell.FBottomLine, SizeOf(ThisCell.FBottomLine));
-          Write(ThisCell.FBottomLineWidth, SizeOf(ThisCell.FBottomLineWidth));
-
-          Write(ThisCell.FDiagonal, SizeOf(ThisCell.FDiagonal));
-
-          Write(ThisCell.FTextColor, SizeOf(ThisCell.FTextColor));
-          Write(ThisCell.FBackGroundColor, SizeOf(ThisCell.FBackGroundColor));
-
-          Write(ThisCell.FHorzAlign, SizeOf(ThisCell.FHorzAlign));
-          Write(ThisCell.FVertAlign, SizeOf(ThisCell.FVertAlign));
-
-          CellText := RenderText(ThisCell,PageNumber, Fpageall);
-          Count := Length(celltext);
-          Write(Count, SizeOf(Count));
-          StrPCopy(TempPChar, celltext);
-
-          For K := 0 To Count - 1 Do
-            Write(TempPChar[K], 1);
-
-
-          Count := Length(ThisCell.FCellDispformat);
-          Write(Count, SizeOf(Count));
-          StrPCopy(TempPChar, ThisCell.FCellDispformat);
-
-          For K := 0 To Count - 1 Do
-            Write(TempPChar[K], 1);
-
-          Write(thiscell.Fbmpyn, SizeOf(thiscell.FbmpYn)); //add lzl
-
-          If thiscell.FbmpYn Then
-            ThisCell.FBmp.SaveToStream(TargetFile);
-
-          Write(ThisCell.FLogFont, SizeOf(ThisCell.FLogFont));
-
-          // 属主CELL的行，列索引
-          If ThisCell.FOwnerCell <> Nil Then
-          Begin
-            Write(ThisCell.FOwnerCell.OwnerLine.FIndex,
-              SizeOf(ThisCell.FOwnerCell.OwnerLine.FIndex));
-            Write(ThisCell.FOwnerCell.FCellIndex,
-              SizeOf(ThisCell.FOwnerCell.FCellIndex));
-          End
-          Else
-          Begin
-            TempInteger := -1;
-            Write(TempInteger, SizeOf(TempInteger));
-            Write(TempInteger, SizeOf(TempInteger));
-          End;
-
-          Count := ThisCell.FCellsList.Count;
-          Write(Count, SizeOf(Count));
-
-          For K := 0 To ThisCell.FCellsList.Count - 1 Do
-          Begin
-            TempCell := TReportCell(ThisCell.FCellsList[K]);
-            Write(TempCell.OwnerLine.FIndex, SizeOf(TempCell.OwnerLine.FIndex));
-            Write(TempCell.FCellIndex, SizeOf(TempCell.FCellIndex));
-          End;
-        End;
-      End;
-      PrintPaper.prDeviceMode;                     //lzl
-      PrintPaper.GetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
-      Begin
-        Write(FprPageNo, SizeOf(FprPageNo));
-        Write(FprPageXy, SizeOf(FprPageXy));
-        Write(fPaperLength, SizeOf(fPaperLength));
-        Write(fPaperWidth, SizeOf(fPaperWidth));
-      End;
-      Write(FHootNo, SizeOf(FHootNo));
-
-    End;
-  Finally
-    TargetFile.Free;
-  End;
-End;
+begin
+  SaveToFile(FPrintLineList,FileName,PageNumber,Fpageall);
+end;
+//Procedure TReportRunTime.SaveTempFile(FLineList:TList;FileName: String;PageNumber, Fpageall: Integer);
+//Var
+//
+//  TargetFile: TFileStream;
+//  FileFlag: WORD;
+//  Count: Integer;
+//  I, J, K: Integer;
+//  ThisLine: TReportLine;
+//  ThisCell, TempCell: TReportCell;
+//  TempInteger,FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
+//  TempPChar: Array[0..3000] Of char;
+//  
+//  strFileDir: String;
+//  celltext: String;
+//
+//Begin
+//  TargetFile := TFileStream.Create(FileName, fmOpenWrite Or fmCreate);
+//
+//
+//  Try
+//    // 窗口大小
+//    With TargetFile Do
+//    Begin
+//      FileFlag := $AA57;
+//      Write(FileFlag, SizeOf(FileFlag));
+//
+//      Write(FReportScale, SizeOf(FReportScale));
+//      Write(FPageWidth, SizeOf(FPageWidth));
+//      Write(FPageHeight, SizeOf(FPageHeight));
+//
+//      Write(FLeftMargin, SizeOf(FLeftMargin));
+//      Write(FTopMargin, SizeOf(FTopMargin));
+//      Write(FRightMargin, SizeOf(FRightMargin));
+//      Write(FBottomMargin, SizeOf(FBottomMargin));
+//
+//      Write(FLeftMargin1, SizeOf(FLeftMargin));
+//      Write(FTopMargin1, SizeOf(FTopMargin));
+//      Write(FRightMargin1, SizeOf(FRightMargin));
+//      Write(FBottomMargin1, SizeOf(FBottomMargin));
+//
+//      Write(FNewTable, SizeOf(FNewTable));
+//      Write(FDataLine, SizeOf(FDataLine));
+//      Write(FTablePerPage, SizeOf(FTablePerPage));
+//
+//      // 多少行
+//      Count := FLineList.Count;
+//      Write(Count, SizeOf(Count));
+//
+//      // 每行有多少个CELL
+//      For I := 0 To FLineList.Count - 1 Do
+//      Begin
+//        ThisLine := TReportLine(FLineList[I]);
+//        Count := ThisLine.FCells.Count;
+//        Write(Count, SizeOf(Count));
+//      End;
+//
+//      // 每行的属性
+//      For I := 0 To FLineList.Count - 1 Do
+//      Begin
+//        ThisLine := TReportLine(FLineList[I]);
+//
+//        Write(ThisLine.FIndex, SizeOf(ThisLine.FIndex));
+//        Write(ThisLine.FMinHeight, SizeOf(ThisLine.FMinHeight));
+//        Write(ThisLine.FDragHeight, SizeOf(ThisLine.FDragHeight));
+//        Write(ThisLine.FLineTop, SizeOf(ThisLine.FLineTop));
+//        Write(ThisLine.FLineRect, SizeOf(ThisLine.FLineRect));
+//
+//        // 每个CELL的属性
+//        For J := 0 To ThisLine.FCells.Count - 1 Do
+//        Begin
+//          ThisCell := TReportCell(ThisLine.FCells[J]);
+//          // Write Cell's Property here;
+//          Write(ThisCell.FLeftMargin, SizeOf(ThisCell.FLeftMargin));
+//          Write(ThisCell.FCellIndex, SizeOf(ThisCell.FCellIndex));
+//
+//          Write(ThisCell.FCellLeft, SizeOf(ThisCell.FCellLeft));
+//          Write(ThisCell.FCellWidth, SizeOf(ThisCell.FCellWidth));
+//
+//          Write(ThisCell.FCellRect, SizeOf(ThisCell.FCellRect));
+//          Write(ThisCell.FTextrect, SizeOf(ThisCell.FTextRect));
+//
+//          Write(ThisCell.FDragCellHeight, SizeOf(ThisCell.FDragCellHeight));
+//          Write(ThisCell.FMinCellHeight, SizeOf(ThisCell.FMinCellHeight));
+//          Write(ThisCell.FRequiredCellHeight,
+//            SizeOf(ThisCell.FRequiredCellHeight));
+//
+//          Write(ThisCell.FLeftLine, SizeOf(ThisCell.FLeftLine));
+//          Write(ThisCell.FLeftLineWidth, SizeOf(ThisCell.FLeftLineWidth));
+//
+//          Write(ThisCell.FTopLine, SizeOf(ThisCell.FTopLine));
+//          Write(ThisCell.FTopLineWidth, SizeOf(ThisCell.FTopLineWidth));
+//
+//          Write(ThisCell.FRightLine, SizeOf(ThisCell.FRightLine));
+//          Write(ThisCell.FRightLineWidth, SizeOf(ThisCell.FRightLineWidth));
+//
+//          Write(ThisCell.FBottomLine, SizeOf(ThisCell.FBottomLine));
+//          Write(ThisCell.FBottomLineWidth, SizeOf(ThisCell.FBottomLineWidth));
+//
+//          Write(ThisCell.FDiagonal, SizeOf(ThisCell.FDiagonal));
+//
+//          Write(ThisCell.FTextColor, SizeOf(ThisCell.FTextColor));
+//          Write(ThisCell.FBackGroundColor, SizeOf(ThisCell.FBackGroundColor));
+//
+//          Write(ThisCell.FHorzAlign, SizeOf(ThisCell.FHorzAlign));
+//          Write(ThisCell.FVertAlign, SizeOf(ThisCell.FVertAlign));
+//
+//          CellText := RenderText(ThisCell,PageNumber, Fpageall);
+//          Count := Length(celltext);
+//          Write(Count, SizeOf(Count));
+//          StrPCopy(TempPChar, celltext);
+//
+//          For K := 0 To Count - 1 Do
+//            Write(TempPChar[K], 1);
+//
+//
+//          Count := Length(ThisCell.FCellDispformat);
+//          Write(Count, SizeOf(Count));
+//          StrPCopy(TempPChar, ThisCell.FCellDispformat);
+//
+//          For K := 0 To Count - 1 Do
+//            Write(TempPChar[K], 1);
+//
+//          Write(thiscell.Fbmpyn, SizeOf(thiscell.FbmpYn)); //add lzl
+//
+//          If thiscell.FbmpYn Then
+//            ThisCell.FBmp.SaveToStream(TargetFile);
+//
+//          Write(ThisCell.FLogFont, SizeOf(ThisCell.FLogFont));
+//
+//          // 属主CELL的行，列索引
+//          If ThisCell.FOwnerCell <> Nil Then
+//          Begin
+//            Write(ThisCell.FOwnerCell.OwnerLine.FIndex,
+//              SizeOf(ThisCell.FOwnerCell.OwnerLine.FIndex));
+//            Write(ThisCell.FOwnerCell.FCellIndex,
+//              SizeOf(ThisCell.FOwnerCell.FCellIndex));
+//          End
+//          Else
+//          Begin
+//            TempInteger := -1;
+//            Write(TempInteger, SizeOf(TempInteger));
+//            Write(TempInteger, SizeOf(TempInteger));
+//          End;
+//
+//          Count := ThisCell.FCellsList.Count;
+//          Write(Count, SizeOf(Count));
+//
+//          For K := 0 To ThisCell.FCellsList.Count - 1 Do
+//          Begin
+//            TempCell := TReportCell(ThisCell.FCellsList[K]);
+//            Write(TempCell.OwnerLine.FIndex, SizeOf(TempCell.OwnerLine.FIndex));
+//            Write(TempCell.FCellIndex, SizeOf(TempCell.FCellIndex));
+//          End;
+//        End;
+//      End;
+//      PrintPaper.prDeviceMode;                     //lzl
+//      PrintPaper.GetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
+//      Begin
+//        Write(FprPageNo, SizeOf(FprPageNo));
+//        Write(FprPageXy, SizeOf(FprPageXy));
+//        Write(fPaperLength, SizeOf(fPaperLength));
+//        Write(fPaperWidth, SizeOf(fPaperWidth));
+//      End;
+//      Write(FHootNo, SizeOf(FHootNo));
+//
+//    End;
+//  Finally
+//    TargetFile.Free;
+//  End;
+//End;
 
 Procedure TReportRunTime.LoadTempFile(strFileName: String);
 Var
@@ -2377,7 +2388,7 @@ Begin
 End;
 Procedure Register;
 Begin
-  RegisterComponents('CReport', [TReportControl]);
+
   RegisterComponents('CReport', [TReportRunTime]);
 
 End;

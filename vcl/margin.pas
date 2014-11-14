@@ -68,7 +68,7 @@ begin
   ReportControl1.CalcWndSize; 
 
   ReportControl1.SetMargin(LeftMargin.Value,TopMargin.Value,RightMargin.Value,BottomMargin.Value);
-  ReportControl1.SaveToFile(filename.Caption,0,0);
+  ReportControl1.SaveToFile(filename.Caption);
 
   ReportControl1.ResetContent; 
   okset:=true;
