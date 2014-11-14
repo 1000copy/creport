@@ -3,7 +3,8 @@ program creport_demo;
 uses
   Forms,
   REportDemo in 'REportDemo.pas' {CReportDemoForm},
-  Data in 'Data.pas' {Dataform: TDataModule};
+  Data in 'Data.pas' {Dataform: TDataModule},
+  uReportRunTime in '..\vcl\uReportRunTime.pas';
 
 {$R *.RES}
 

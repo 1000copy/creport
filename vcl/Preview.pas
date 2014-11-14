@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  ReportControl, ExtCtrls, Buttons, StdCtrls, Spin, ComCtrls;
+  ReportControl, ExtCtrls, Buttons, StdCtrls, Spin, ComCtrls,uReportRunTime;
 
 type
   TPreviewForm = class(TForm)

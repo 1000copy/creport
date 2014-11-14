@@ -6,7 +6,7 @@ interface
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
   ReportControl, StdCtrls, Db, DBTables, Grids, DBGrids,printers, Buttons,
-  ExtCtrls, ExtDlgs;
+  ExtCtrls, ExtDlgs,uReportRunTime;
 
 type
   TCReportDemoForm = class(TForm)

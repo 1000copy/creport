@@ -32,7 +32,10 @@ requires
   vclsmp,
   designide,
   bdertl,
-  vcljpg;
+  vcljpg,
+  rtl,
+  dbrtl,
+  vclactnband;
 
 contains
   ReportControl in 'ReportControl.pas',
@@ -42,6 +45,7 @@ contains
   TB97Cnst in 'TB97Cnst.pas',
   TB97Ctls in 'TB97Ctls.pas',
   TB97Reg in 'TB97Reg.pas',
-  TB97Tlbr in 'TB97Tlbr.pas';
+  TB97Tlbr in 'TB97Tlbr.pas',
+  uReportRunTime in 'uReportRunTime.pas';
 
 end.

@@ -515,7 +515,7 @@ begin
   savedialog1.filename := savefilename;
   if SaveDialog1.Execute then
   begin
-    ReportControl1.SaveToFile(SaveDialog1.FileName);
+    ReportControl1.SaveToFile(SaveDialog1.FileName,0,0);
     thefile := SaveDialog1.Filename;
     savefilename := thefile;
     Creportform.caption := thefile ;
@@ -758,7 +758,7 @@ begin
   begin
     if SaveDialog1.Execute then
     begin
-      ReportControl1.SaveToFile(SaveDialog1.FileName);
+      ReportControl1.SaveToFile(SaveDialog1.FileName,0,0);
       thefile := SaveDialog1.Filename;
       updateOldies(thefile, sender);
       Creportform.caption := thefile ;
@@ -769,7 +769,7 @@ begin
   end
   else
   begin
-    ReportControl1.SaveToFile(SaveFilename);
+    ReportControl1.SaveToFile(SaveFilename,0,0);
     thefile := SaveFilename;
     updateOldies(thefile, sender);
     thefile := '';
