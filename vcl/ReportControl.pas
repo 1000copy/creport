@@ -3381,15 +3381,10 @@ Var
 Begin
   TargetFile := TFileStream.Create(FileName, fmOpenWrite Or fmCreate);
   Try
-    // ´°¿Ú´óÐ¡
     With TargetFile Do
-    Begin
-
+    Begin  
       FileFlag := $AA57;
-      Write(FileFlag, SizeOf(FileFlag));
-
-
-
+      Write(FileFlag, SizeOf(FileFlag));  
       Write(FReportScale, SizeOf(FReportScale));
       Write(FPageWidth, SizeOf(FPageWidth));
       Write(FPageHeight, SizeOf(FPageHeight));
