@@ -51,7 +51,7 @@ type
   private
      zoomxxx:integer;
      // LCJ : 最佳缩放比例
-    procedure DoFit;  
+    procedure DoFit;
     { Private declarations }
   public
     { Public declarations }
@@ -286,7 +286,7 @@ procedure TPreviewForm.SpeedButton1Click(Sender: TObject);
 begin
   if tReportRunTime(owner).shpreview  then
      But1.OnClick(Sender); //预览第一页
-  DoFit();//显示整页
+  DoFit();
 end;
 
 
