@@ -246,6 +246,8 @@ Type
 
   TReportControl = Class(TWinControl)
   private
+    // 把Load/Save 5个拷贝后小改的代码合并。有一个趁手的对比工具很重要。
+    // winmerge，thank you
     procedure InternalSaveToFile(FLineList: TList; FileName: String;
       PageNumber, Fpageall: integer);
   protected
@@ -274,32 +276,24 @@ Type
     FRightMargin1: Integer;
     FTopMargin1: Integer;
     FBottomMargin1: Integer;
-
-    FHootNo: integer;                   //表尾的第一行在整个页的第几行 lzl
-
+    //表尾的第一行在整个页的第几行 
+    FHootNo: integer;
     // 换页加表头（不加表头）
     FNewTable: Boolean;
-
     // 定义打印多少行后从新加表头
-    FDataLine: Integer;
-
-    FTablePerPage: Integer;
-
+    FDataLine: Integer;            
+    FTablePerPage: Integer;        
     // 鼠标操作支持
-    FMousePoint: TPoint;
-
+    FMousePoint: TPoint;           
     // 编辑框、以及它的颜色和字体
     FEditWnd: HWND;
     FEditBrush: HBRUSH;
-    FEditFont: HFONT;
- 
-
+    FEditFont: HFONT;       
     Procedure setCreportEdit(Const value: boolean);
     Procedure SetCellSFocus(row1, col1, row2, col2: integer);
     function Get(Index: Integer): TReportLine;
     function GetCells(Row, Col: Integer): TReportCell;
-    procedure InvertCell(Cell: TReportCell);
-
+    procedure InvertCell(Cell: TReportCell);   
   Protected
     function RenderText(ThisCell: TReportCell; PageNumber,Fpageall: Integer): String;virtual ;
     Procedure CreateWnd; Override;
@@ -315,16 +309,13 @@ Type
     Procedure SaveToFile(FileName: String);overload;
     Procedure SaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);overload;
     Procedure LoadFromFile(FileName: String);
-    Procedure SaveBmp(thiscell: Treportcell; filename: String); //lzl add
-    Function LoadBmp(thiscell: Treportcell): TBitmap; //lzl add
-    Procedure FreeBmp(thiscell: Treportcell); //lzl add
-
+    Procedure SaveBmp(thiscell: Treportcell; filename: String);  
+    Function LoadBmp(thiscell: Treportcell): TBitmap;  
+    Procedure FreeBmp(thiscell: Treportcell);
     Procedure PrintIt;
     Procedure ResetContent;
     Procedure SetScale(Const Value: Integer);
-
-    Property cellFont: TlogFont Read Fcellfont Write Fcellfont; //default true;
-
+    Property cellFont: TlogFont Read Fcellfont Write Fcellfont; 
     // Message Handler
     Procedure WMLButtonDown(Var Message: TMessage); Message WM_LBUTTONDOWN;
     Procedure WMLButtonDBLClk(Var Message: TMessage); Message WM_LBUTTONDBLCLK;
@@ -333,64 +324,47 @@ Type
     Procedure WMPaint(Var Message: TMessage); Message WM_PAINT;
     Procedure WMCOMMAND(Var Message: TMessage); Message WM_COMMAND;
     Procedure WMCtlColor(Var Message: TMessage); Message WM_CTLCOLOREDIT;
-
     // Window size
     Procedure CalcWndSize;
     //在定义动态报表时,设置纸的大小 不调用windows的打印设置对框时
     Procedure SetWndSize(w, h: integer);
-    //add lzl 动态报表设置纸张大小
-
+    //动态报表设置纸张大小
     Procedure NewTable(ColNumber, RowNumber: Integer);
-
     Procedure InsertLine;
     Function CanInsert: Boolean;
     Procedure AddLine;
     Function CanAdd: Boolean;
     Procedure DeleteLine;
-
     Procedure InsertCell;
     Procedure DeleteCell;
     Procedure AddCell;
-
-    Procedure SetFileCellWidth(filename: String; HasDataNo: integer); //lzl
-
-    Procedure CombineCell;
-
+    Procedure SetFileCellWidth(filename: String; HasDataNo: integer); 
+    Procedure CombineCell;                                            
     Procedure SplitCell;
     Procedure VSplitCell(Number: Integer);
     Function CanSplit: Boolean;
-
-    Function CountFcells(crow: integer): integer; //lzl
-
+    Function CountFcells(crow: integer): integer;
     Procedure SetCellLines(bLeftLine, bTopLine, bRightLine, bBottomLine:
       Boolean;
       nLeftLineWidth, nTopLineWidth, nRightLineWidth, nBottomLineWidth:
       Integer);
-
     Procedure SetCellDiagonal(NewDiagonal: UINT);
     Procedure SetCellColor(NewTextColor, NewBackColor: COLORREF);
-
     Procedure SetCellDispFormt(mek: String);
-    Procedure SetCellSumText(mek: String);
-
+    Procedure SetCellSumText(mek: String);                       
     Procedure SetCellFont(CellFont: TLOGFONT);
-    Procedure SetCellAlign(NewHorzAlign, NewVertAlign: Integer);
-
+    Procedure SetCellAlign(NewHorzAlign, NewVertAlign: Integer); 
     Procedure SetCellTextColor(NewTextColor: COLORREF);
     Procedure SetCellAlignHorzAlign(NewHorzAlign: Integer);
     Procedure SetCellAlignNewVertAlign(NewVertAlign: Integer);
-    Procedure SetCellBackColor(NewBackColor: COLORREF);
-
+    Procedure SetCellBackColor(NewBackColor: COLORREF);          
     Procedure SetMargin(nLeftMargin, nTopMargin, nRightMargin, nBottomMargin:
       Integer);
     Function GetMargin: TRect;
-
-    Function getcellfont: tfont;        // add wang hang song
-
+    Function getcellfont: tfont;
     Procedure UpdateLines;
-
-    Procedure FreeEdit;                 //取销编辑状态  lzl 
-
+    //取销编辑状态  lzl
+    Procedure FreeEdit;
     Procedure StartMouseDrag(point: TPoint);
     Procedure StartMouseSelect(point: TPoint; bSelectFlag: Boolean; shift_down:
       byte);
@@ -400,10 +374,8 @@ Type
     Function AddSelectedCell(Cell: TReportCell): Boolean;
     Function RemoveSelectedCell(Cell: TReportCell): Boolean;
     Procedure ClearSelect;
-
     Function IsCellSelected(Cell: TReportCell): Boolean;
     Function CellFromPoint(point: TPoint): TReportCell;
-
     Property IsPreview: Boolean Read FPreviewStatus Write FPreviewStatus Default
       False;
     Property ReportScale: Integer Read FReportScale Write SetScale Default 100;
@@ -431,19 +403,14 @@ Type
     Property OnDragDrop;
     Property CreportEdit: boolean Read FCreportEdit Write setCreportEdit;  //代表是否处在模板编辑程序调用中
   End;
-
-  //  TDragOverEvent = procedure(Sender, Source: TObject; X, Y: Integer; State: TDragState; var Accept: Boolean) of object;
-
   TDatasetItem = Class(TObject)
     pDataset: TDataset;
     strName: String;
   End;
-
   TVarTableItem = Class(TObject)
     strVarName: String;
     strVarValue: String;
   End;
-
   TMyRect = Class(TObject)
   Public
     Left: Integer;
@@ -451,11 +418,6 @@ Type
     Right: Integer;
     Bottom: Integer;
   End;
-
-
- 
-
-
   TCellTable = Class(TObject)
     PrevCell: TReportCell;
     ThisCell: TReportCell;
@@ -464,37 +426,34 @@ Type
   private
     // google : msdn DEVMODE structure
     DevMode: PdeviceMode;
-    FprPageNo: integer;                   //LCJ: 打印文件的纸张编号：比如 A4，A3，自定义纸张等。
-    FprPageXy: integer;                   // 纸张纵横方向  lzl
-    fpaperLength: integer;                // 纸张长度（高度）
+    //LCJ: 打印文件的纸张编号：比如 A4，A3，自定义纸张等。
+    FprPageNo: integer;
+    // 纸张纵横方向  lzl
+    FprPageXy: integer;
+    // 纸张长度（高度）
+    fpaperLength: integer;
     fpaperWidth: integer;
   public
-    Procedure prDeviceMode;                 //取得当前打印机的DeviceMode的结构成员
+    //取得当前打印机的DeviceMode的结构成员
+    Procedure prDeviceMode;
     procedure SetPaper(FprPageNo, FprPageXy, fpaperLength,
       fpaperWidth: Integer);
     procedure GetPaper(var FprPageNo, FprPageXy, fpaperLength,
-      fpaperWidth: Integer);                 // 纸张宽度
+      fpaperWidth: Integer);
     procedure SetPaperWithCurrent;
   end;
 Function DeleteFiles(FilePath, FileMask: String): Boolean;
+
 Procedure Register;
 
 Var
   // encaplated ! 艰难而看不到未来。唯有埋头，忍耐，坚韧不拔。2014-11-13
   PrintPaper:TPrinterPaper;
   DeviceHandle: THandle;
-
-
-
   cp_pgw, cp_pgh: integer;
-
-
-
   CellsWidth: Array Of Array Of integer;  //lzl  存用户在预览时拖动表格后新的单元格宽度,
   NhasSumALl: integer;                  //有合计的行在模板中是第几行.
-
-  //EditEpt:boolean; //是否充许用户在预览时调用编辑程序修改模板
-
+  //EditEpt:boolean; //是否充许用户在预览时调用编辑程序修改模板      
   {
   解构主义
    ========================
@@ -3922,10 +3881,10 @@ Begin
   Refresh;
 End;
 
-///////////////////////////////////////////////////////////////////////////
-// SetFileCellWidth 根据用户拖动表格线修改模板文件中单元格的宽度 lzla
-
-Procedure TReportControl.SetFileCellWidth(filename: String; HasDataNo: integer);  //lzl add
+// 2014-11-17 张英华 酸菜 3根。好。
+// SetFileCellWidth 根据用户拖动表格线修改模板文件中单元格的宽度
+// 将变化后的单元格宽度存入全局变量数组 lzl
+Procedure TReportControl.SetFileCellWidth(filename: String; HasDataNo: integer);
 Var
   thisline: Treportline;
   thiscell: treportcell;
@@ -3948,11 +3907,6 @@ Begin
   savetoFile(filename);
   // ResetContent;
 End;
-
-// 将变化后的单元格宽度存入全局变量数组 lzl
-
-
-
 
 
 Procedure TReportControl.FreeEdit;      //取销编辑状态  lzl 
