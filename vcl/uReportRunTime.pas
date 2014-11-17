@@ -211,14 +211,16 @@ Procedure TReportRunTime.LoadTempFile(strFileName: String);
 Var
   TargetFile: TFileStream;
   FileFlag: WORD;
-  Count1, Count2, Count3,FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
+  Count1, Count2, Count3: Integer;
   ThisLine: TReportLine;
   ThisCell: TReportCell;
   I, J, K: Integer;
   TempPChar: Array[0..3000] Of Char;
 Begin
   try
-    LoadFromFile1(strFileName,FPrintLineList);
+    InternalLoadFromFile(strFileName,FPrintLineList);
+    PrintPaper.prDeviceMode;
+    PrintPaper.SetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
     UpdatePrintLines;
   except
     on E:Exception do ShowMessage(e.message);
@@ -361,12 +363,14 @@ Var
   Count1, Count2, Count3: Integer;
   ThisLine: TReportLine;
   ThisCell: TReportCell;
-  I, J, K,FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
+  I, J, K: Integer;
   TempPChar: Array[0..3000] Of Char;
   bHasDataSet: Boolean;
 Begin
   try
-    LoadFromFile1(FFileName,FLineList);
+    InternalLoadFromFile(FFileName,FLineList);
+    PrintPaper.prDeviceMode;
+    PrintPaper.SetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
     UpdateLines;
     FHeaderHeight := GetHeaderHeight;
   except

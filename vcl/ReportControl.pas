@@ -246,7 +246,10 @@ Type
 
   TReportControl = Class(TWinControl)
   private
+    procedure InternalSaveToFile(FLineList: TList; FileName: String;
+      PageNumber, Fpageall: integer);
   protected
+    FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
     FCreportEdit: boolean;
     { Private declarations }
@@ -300,7 +303,7 @@ Type
   Protected
     function RenderText(ThisCell: TReportCell; PageNumber,Fpageall: Integer): String;virtual ;
     Procedure CreateWnd; Override;
-    procedure LoadFromFile1(FileName:string;FLineList:TList);
+    procedure InternalLoadFromFile(FileName:string;FLineList:TList);
   Public
     property SelectedCells: TList read FSelectCells ;
     { Public declarations }
@@ -3365,7 +3368,8 @@ function TReportControl.RenderText(ThisCell:TReportCell;PageNumber, Fpageall: In
 begin
     Result := ThisCell.FCellText;
 end;
-Procedure TReportControl.SaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);
+
+Procedure TReportControl.InternalSaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);
 Var
 
   TargetFile: TFileStream;
@@ -3374,7 +3378,7 @@ Var
   I, J, K: Integer;
   ThisLine: TReportLine;
   ThisCell, TempCell: TReportCell;
-  TempInteger,FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
+  TempInteger: Integer;
   TempPChar: Array[0..3000] Of char;    
   strFileDir: String;
   celltext: String;
@@ -3511,8 +3515,7 @@ Begin
           End;
         End;
       End;
-      PrintPaper.prDeviceMode;                     //lzl
-      PrintPaper.GetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
+
       Begin
         Write(FprPageNo, SizeOf(FprPageNo));
         Write(FprPageXy, SizeOf(FprPageXy));
@@ -3525,29 +3528,38 @@ Begin
     TargetFile.Free;
   End;
 End;
+Procedure TReportControl.SaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);
+Begin
+  PrintPaper.prDeviceMode;
+  PrintPaper.GetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
+  InternalSavetoFile(FLineList,FileName,PageNumber, Fpageall);
+End;
 
 Procedure TReportControl.LoadFromFile(FileName: String);
 Var
   TargetFile: TFileStream;
   FileFlag: WORD;
-  Count1, Count2, Count3,FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
+  Count1, Count2, Count3: Integer;
   ThisLine: TReportLine;
   ThisCell: TReportCell;
   I, J, K: Integer;
   TempPChar: Array[0..3000] Of Char;
 Begin
-  LoadFromFile1(FileName,Self.FLineList);
+  InternalLoadFromFile(FileName,Self.FLineList);
+  PrintPaper.prDeviceMode;
+  PrintPaper.SetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
   If IsWindowVisible(FEditWnd) Then
     DestroyWindow(FEditWnd);
   cp_pgw := FPageWidth;             //1999.1.23
   cp_pgh := FPageHeight;
   UpdateLines;
+
 End;
-Procedure TReportControl.LoadFromFile1(FileName:string;FLineList:TList);
+Procedure TReportControl.InternalLoadFromFile(FileName:string;FLineList:TList);
 Var
   TargetFile: TFileStream;
   FileFlag: WORD;
-  Count1, Count2, Count3,FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
+  Count1, Count2, Count3: Integer;
   ThisLine: TReportLine;
   ThisCell: TReportCell;
   I, J, K: Integer;
@@ -3702,14 +3714,12 @@ Begin
             ThisCell.FCellsList.Add(TReportCell(TReportLine(FLineList[Count1]).FCells[Count2]));
           End;
         End;
-      End;
+      End;               
 
-      Read(FprPageNo, SizeOf(FprPageNo)); //取出纸张序号  lzl 2002。3
-      Read(FprPageXy, SizeOf(FprPageXy)); //取出纵横方向
-      Read(fpaperLength, SizeOf(fpaperLength)); //取出纵横方向
-      Read(fpaperWidth, SizeOf(fpaperWidth)); //取出纵横方向
-      PrintPaper.prDeviceMode;
-      PrintPaper.SetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
+      Read(FprPageNo, SizeOf(FprPageNo));
+      Read(FprPageXy, SizeOf(FprPageXy));
+      Read(fpaperLength, SizeOf(fpaperLength));
+      Read(fpaperWidth, SizeOf(fpaperWidth));
       Read(FHootNo, SizeOf(FHootNo));
     End;
   Finally
