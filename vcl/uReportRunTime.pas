@@ -11,56 +11,28 @@ procedure CheckError(condition:Boolean ;msg :string);
 type
   EachCellProc =  procedure (ThisCell:TReportCell) of object;
   EachLineProc =  procedure (ThisLine:TReportLine)of object;
-  EachLineIndexProc = procedure (ThisLine:TReportLine;Index:Integer)of object;
-
-
+  EachLineIndexProc = procedure (ThisLine:TReportLine;Index:Integer)of object;  
   TReportRunTime = Class(TReportControl)
   private
     function GetHeaderHeight: Integer;
-    procedure LoadRptFile1(FFileName: string; FLineList: TList);
   public
-
-    SumPage, SumAll: Array[0..40] Of real;  //小计和合计用,最多40列单元格,否则统计汇总时要出错.
-
+    //小计和合计用,最多40列单元格,否则统计汇总时要出错.
+    SumPage, SumAll: Array[0..40] Of real;             
     FFileName: Tfilename;
     FAddSpace: boolean;
-    FSetData: TstringList;              //add lzl
-
-
-    FVarList: TList;                    // 保存变量的名字和值的对照表
-    FLineList: TList;                   // 保存报表的设计信息（从文件中读入）
-    FPrintLineList: TList;              //保存要打印的某一页的行信息
-    FOwnerCellList: TList;              // 保存每一页中合并后单元格前后的指针
-    FNamedDatasets: TList;                  
-
-    Width: Integer;
-    Height: Integer;
-
-    // 定义换页加表头
-//    FNewTable: Boolean;
-
-    // 定义打印多少行后从新加表头
-//    FDataLine: Integer;
-//    FTablePerPage: Integer;
-//    FReportScale: Integer;
-//    FPageWidth: Integer;
-//    FPageHeight: Integer;
-
+    FSetData: TstringList;
+    // 保存变量的名字和值的对照表
+    FVarList: TList;
+    //保存要打印的某一页的行信息
+    FPrintLineList: TList;
+    // 保存每一页中合并后单元格前后的指针
+    FOwnerCellList: TList;
+    FNamedDatasets: TList;
     FHeaderHeight: Integer;
-    Fallprint: Boolean;                 //是否打印全部记录，默认为全部
-
-//    FLeftMargin: Integer;               //2
-//    FRightMargin: Integer;
-//    FTopMargin: Integer;
-//    FBottomMargin: Integer;
-//
-//    FLeftMargin1: Integer;
-//    FRightMargin1: Integer;
-//    FTopMargin1: Integer;
-//    FBottomMargin1: Integer;
-//    FHootNo: integer;                   //表尾的第一行在整个页的第几行 lzl
-
-    FPageCount: Integer;                // page count in preview //总页数
+    //是否打印全部记录，默认为全部
+    Fallprint: Boolean;
+    // 总页数
+    FPageCount: Integer;
     nDataHeight, nHandHeight, nHootHeight, nSumAllHeight: Integer;
     TempDataSet: TDataset;
     hasdatano: integer;
@@ -142,23 +114,14 @@ type
     Function shpreview: boolean;        //重新生成预览有关文件
     Function PrintSET(prfile: String): boolean; //纸张及边距设置，lzl
     Procedure updatepage;               //
-    Function PreparePrintk(SaveYn: boolean; FpageAll: integer): integer;  //lzl 增加
-
-
-//    Procedure PreparePrint;
+    Function PreparePrintk(SaveYn: boolean; FpageAll: integer): integer;  
     Procedure loadfile(value: tfilename);
     Procedure Print(IsDirectPrint: Boolean);
     Procedure Resetself;
-    Function Cancelprint: boolean;
-
-
+    Function Cancelprint: boolean;                               
   Published
     Property ReportFile: TFilename Read FFileName Write SetRptFileName;
-
-
-
-
-    Property AddSpace: boolean Read FAddSpace Write SetAddSpace; //
+    Property AddSpace: boolean Read FAddSpace Write SetAddSpace;
 
   End;
 implementation
@@ -255,7 +218,7 @@ Var
   TempPChar: Array[0..3000] Of Char;
 Begin
   try
-    LoadRptFile1(strFileName,FPrintLineList);
+    LoadFromFile1(strFileName,FPrintLineList);
     UpdatePrintLines;
   except
     on E:Exception do ShowMessage(e.message);
@@ -266,18 +229,14 @@ End;
 Constructor TReportRunTime.Create(AOwner: TComponent);
 Begin
   Inherited create(AOwner);
-
   FAddspace := false;
-  //cellswidth[0,0]:=0;
   FReportScale := 100;
   Width := 0;
-  Height := 0;
-
+  Height := 0;             
   fallprint := true;                    //默认为全部打印
   FSetData := Tstringlist.Create;
   FNamedDatasets := TList.Create;
   FVarList := TList.Create;
-  FLineList := TList.Create;
   FPrintLineList := TList.Create;
   FOwnerCellList := TList.Create;
 
@@ -303,9 +262,6 @@ Begin
     TVarTableItem(FVarList[I]).Free;
   FVarList.Free;
 
-  For I := FLineList.Count - 1 Downto 0 Do
-    TReportLine(FLineList[I]).Free;
-  FLineList.Free;
 
   For I := FPrintLineList.Count - 1 Downto 0 Do
     TReportLine(FPrintLineList[I]).Free;
@@ -410,197 +366,14 @@ Var
   bHasDataSet: Boolean;
 Begin
   try
-    LoadRptFile1(FFileName,FLineList);
+    LoadFromFile1(FFileName,FLineList);
     UpdateLines;
     FHeaderHeight := GetHeaderHeight;
   except
     on E:Exception do ShowMessage(e.message);
     end;
 End;
-Procedure TReportRunTime.LoadRptFile1(FFileName:string;FLineList:TList);
-Var
-  TargetFile: TFileStream;
-  FileFlag: WORD;
-  Count1, Count2, Count3: Integer;
-  ThisLine: TReportLine;
-  ThisCell: TReportCell;
-  I, J, K,FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
-  TempPChar: Array[0..3000] Of Char;
-  bHasDataSet: Boolean;
-Begin
-  TargetFile := TFileStream.Create(FFileName, fmOpenRead);
-  Try
-    With TargetFile Do
-    Begin
-      Read(FileFlag, SizeOf(FileFlag));
-      If (FileFlag <> $AA55) And (FileFlag <> $AA56) And (FileFlag <> $AA57)
-        Then
-        raise Exception.create('打开文件错误');
-      For I := 0 To FLineList.Count - 1 Do
-      Begin
-        ThisLine := TReportLine(FLineList[I]);
-        ThisLine.Free;
-      End;
 
-      FLineList.Clear;
-
-      // Read(FHootNo, SizeOf(FHootNo));
-
-      Read(FReportScale, SizeOf(FReportScale));
-      Read(FPageWidth, SizeOf(FPageWidth));
-      Read(FPageHeight, SizeOf(FPageHeight));
-      {
-       廖伯志 改  1999.1.17
-            if FPageWidth > 768 then
-              FPageWidth := 768;
-
-            if FPageHeight > 1056 then
-              FPageHeight := 1056;
-      }
-      Width := FPageWidth;
-      Height := FPageHeight;
-      Read(FLeftMargin, SizeOf(FLeftMargin));
-      Read(FTopMargin, SizeOf(FTopMargin));
-      Read(FRightMargin, SizeOf(FRightMargin));
-      Read(FBottomMargin, SizeOf(FBottomMargin));
-
-      Read(FLeftMargin1, SizeOf(FLeftMargin));
-      Read(FTopMargin1, SizeOf(FTopMargin));
-      Read(FRightMargin1, SizeOf(FRightMargin));
-      Read(FBottomMargin1, SizeOf(FBottomMargin));
-
-      Read(FNewTable, SizeOf(FNewTable)); //换页后不加表头
-      Read(FDataLine, SizeOf(FDataLine)); //每个表多少行数据
-      Read(FTablePerPage, SizeOf(FTablePerPage)); //每页打印多少个表
-
-      // 多少行
-      Read(Count1, SizeOf(Count1));
-      For I := 0 To Count1 - 1 Do
-      Begin
-        ThisLine := TReportLine.Create;
-        ThisLine.FReportControl := Nil;
-        FLineList.Add(ThisLine);
-        Read(Count2, SizeOf(Count2));
-        ThisLine.CreateLine(0, Count2, FRightMargin - FLeftMargin);
-      End;
-
-      // 每行的属性
-      For I := 0 To FLineList.Count - 1 Do
-      Begin
-        ThisLine := TReportLine(FLineList[I]);
-
-        Read(ThisLine.FIndex, SizeOf(ThisLine.FIndex));
-        Read(ThisLine.FMinHeight, SizeOf(ThisLine.FMinHeight));
-        Read(ThisLine.FDragHeight, SizeOf(ThisLine.FDragHeight));
-        Read(ThisLine.FLineTop, SizeOf(ThisLine.FLineTop));
-        Read(ThisLine.FLineRect, SizeOf(ThisLine.FLineRect));
-
-        // 每个CELL的属性
-        For J := 0 To ThisLine.FCells.Count - 1 Do
-        Begin
-          ThisCell := TReportCell(ThisLine.FCells[J]);
-          // Write Cell's Property here;
-          Read(ThisCell.FLeftMargin, SizeOf(ThisCell.FLeftMargin));
-          Read(ThisCell.FCellIndex, SizeOf(ThisCell.FCellIndex));
-
-          Read(ThisCell.FCellLeft, SizeOf(ThisCell.FCellLeft));
-          Read(ThisCell.FCellWidth, SizeOf(ThisCell.FCellWidth));
-
-          Read(ThisCell.FCellRect, SizeOf(ThisCell.FCellRect));
-          Read(ThisCell.FTextrect, SizeOf(ThisCell.FTextRect));
-
-          Read(ThisCell.FDragCellHeight, SizeOf(ThisCell.FDragCellHeight));
-          Read(ThisCell.FMinCellHeight, SizeOf(ThisCell.FMinCellHeight));
-          Read(ThisCell.FRequiredCellHeight,
-            SizeOf(ThisCell.FRequiredCellHeight));
-
-          Read(ThisCell.FLeftLine, SizeOf(ThisCell.FLeftLine));
-          Read(ThisCell.FLeftLineWidth, SizeOf(ThisCell.FLeftLineWidth));
-
-          Read(ThisCell.FTopLine, SizeOf(ThisCell.FTopLine));
-          Read(ThisCell.FTopLineWidth, SizeOf(ThisCell.FTopLineWidth));
-
-          Read(ThisCell.FRightLine, SizeOf(ThisCell.FRightLine));
-          Read(ThisCell.FRightLineWidth, SizeOf(ThisCell.FRightLineWidth));
-
-          Read(ThisCell.FBottomLine, SizeOf(ThisCell.FBottomLine));
-          Read(ThisCell.FBottomLineWidth, SizeOf(ThisCell.FBottomLineWidth));
-
-          Read(ThisCell.FDiagonal, SizeOf(ThisCell.FDiagonal));
-
-          Read(ThisCell.FTextColor, SizeOf(ThisCell.FTextColor));
-          Read(ThisCell.FBackGroundColor, SizeOf(ThisCell.FBackGroundColor));
-
-          Read(ThisCell.FHorzAlign, SizeOf(ThisCell.FHorzAlign));
-          Read(ThisCell.FVertAlign, SizeOf(ThisCell.FVertAlign));
-
-          Read(Count1, SizeOf(Count1));
-
-          tempPchar := #0;
-          For K := 0 To Count1 - 1 Do
-            Read(TempPChar[K], 1);
-
-          If (Count1 > 0) And (Count1 <= 3000) Then
-            TempPChar[Count1] := #0;
-          ThisCell.FCellText := StrPas(TempPChar);
-
-          If FileFlag <> $AA55 Then
-          Begin
-            Read(Count1, SizeOf(Count1));
-
-            tempPchar := #0;
-            For K := 0 To Count1 - 1 Do
-              Read(TempPChar[K], 1);
-
-            If (Count1 > 0) And (Count1 <= 3000) Then
-              TempPChar[Count1] := #0;
-            ThisCell.FCellDispformat := StrPas(TempPChar);
-          End;
-
-          If FileFlag = $AA57 Then
-          Begin
-            read(thiscell.Fbmpyn, SizeOf(thiscell.FbmpYn)); // add lzl
-
-            If thiscell.FbmpYn Then
-              thiscell.FBmp.LoadFromStream(TargetFile);
-
-          End;
-
-          Read(ThisCell.FLogFont, SizeOf(ThisCell.FLogFont));
-
-          Read(Count1, SizeOf(Count1));
-          Read(Count2, SizeOf(Count2));
-
-          If (Count1 < 0) Or (Count2 < 0) Then
-            ThisCell.FOwnerCell := Nil
-          Else
-            ThisCell.FOwnerCell :=
-              TReportCell(TReportLine(FLineList[Count1]).FCells[Count2]);
-
-          Read(Count3, SizeOf(Count3));
-
-          For K := 0 To Count3 - 1 Do
-          Begin
-            Read(Count1, SizeOf(Count1));
-            Read(Count2, SizeOf(Count2));
-            ThisCell.FCellsList.Add(TReportCell(TReportLine(FLineList[Count1]).FCells[Count2]));
-          End;
-        End;
-      End;
-
-      Read(FprPageNo, SizeOf(FprPageNo)); //取出纸张序号  lzl 2002。3
-      Read(FprPageXy, SizeOf(FprPageXy)); //取出纵横方向
-      Read(fpaperLength, SizeOf(fpaperLength)); //取出纵横方向
-      Read(fpaperWidth, SizeOf(fpaperWidth)); //取出纵横方向
-      PrintPaper.prDeviceMode;
-      PrintPaper.SetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
-      read(FHootNo, SizeOf(FHootNo));   //lzl 
-
-    End;
-  Finally
-    TargetFile.Free;
-  End;
-End;
 function TReportRunTime.GetHeaderHeight:Integer;
 var I,J,FHeaderHeight :Integer; ThisLine:TReportLine;bHasDataSet:boolean;  ThisCell :TReportCell;
 begin
@@ -1459,8 +1232,8 @@ Begin
 
   FOwnerCellList.Clear;
 End;
-
-Function TReportRunTime.PrintSET(prfile: String): boolean;  //lzl 增加 可直接或在预览中调用设置打印参数
+ //LCJ: 可直接或在预览中调用设置打印参数
+Function TReportRunTime.PrintSET(prfile: String): boolean;
 Begin
   Application.CreateForm(TMarginForm, MarginForm);
   MarginForm.filename.Caption := prfile;
@@ -1530,7 +1303,7 @@ Function TReportRunTime.shpreview: boolean;
 Var
   i: integer;
 Begin
-  If PrintSET(reportfile) = true Then   
+  If PrintSET(reportfile)  Then
   Begin
     ReportFile := reportfile; 
     i := DoPageCount;

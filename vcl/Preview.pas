@@ -49,7 +49,9 @@ type
     procedure FormActivate(Sender: TObject);
     procedure PrintBtnClick(Sender: TObject);
   private
-     zoomxxx:integer;  // add 李泽伦
+     zoomxxx:integer;
+     // LCJ : 最佳缩放比例
+    procedure DoFit;  
     { Private declarations }
   public
     { Public declarations }
@@ -282,9 +284,9 @@ end;
 
 procedure TPreviewForm.SpeedButton1Click(Sender: TObject);
 begin
-if tReportRunTime(owner).shpreview=true then
-   But1.OnClick(Sender); //预览第一页
-   SpeedButton3Click(owner);//显示整页
+  if tReportRunTime(owner).shpreview  then
+     But1.OnClick(Sender); //预览第一页
+  DoFit();//显示整页
 end;
 
 
@@ -365,11 +367,17 @@ begin
   ShowWindow(ReportControl1.Handle, SW_SHOW);
 
 end;
-// LCJ : 最佳缩放比例
+
 procedure TPreviewForm.SpeedButton3Click(Sender: TObject);// add 李泽伦
+
+begin
+  DoFit();
+end;
+
+procedure TPreviewForm.DoFit();
 var z1,z2:integer;
 begin
-  ReportControl1.FreeEdit; // add 李泽伦
+    ReportControl1.FreeEdit; // add 李泽伦
    if (height-110) < cp_pgh then  // add 李泽伦
     z1:=trunc(((height-110) / cp_pgh)*100)
   else
@@ -392,7 +400,6 @@ begin
   ShowWindow(ReportControl1.Handle, SW_SHOW);
 
 end;
-
 procedure TPreviewForm.EditEptkClick(Sender: TObject);  // add 李泽伦
 begin
   Application.CreateForm(TCreportform,Creportform);

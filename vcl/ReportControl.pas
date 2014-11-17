@@ -1,7 +1,5 @@
 // 2014-11-13 这两天正在喝。平和，质朴，散发着有钱的感觉...
-// 金丝带 Alectoria virens Tayl.，
-//寄生地衣类植物，丝状，淡黄绿色或金黄色寄生于高山枯木上。分布陕西、四川、云南、西藏。
-// 除风湿、止血止痛、调经活血、镇惊安神、健脾胃。祛风活络、补肾壮阳
+// 金丝带 Alectoria virens Tayl.，寄生地衣类植物。除风湿、健脾胃。
 Unit ReportControl;
 
 Interface
@@ -247,6 +245,7 @@ Type
   End;
 
   TReportControl = Class(TWinControl)
+  private
   protected
     Cpreviewedit: boolean;
     FCreportEdit: boolean;
@@ -273,7 +272,7 @@ Type
     FTopMargin1: Integer;
     FBottomMargin1: Integer;
 
-    FHootNo: integer;                   //表尾的第一行在整个页的第几行 lzl 
+    FHootNo: integer;                   //表尾的第一行在整个页的第几行 lzl
 
     // 换页加表头（不加表头）
     FNewTable: Boolean;
@@ -301,6 +300,7 @@ Type
   Protected
     function RenderText(ThisCell: TReportCell; PageNumber,Fpageall: Integer): String;virtual ;
     Procedure CreateWnd; Override;
+    procedure LoadFromFile1(FileName:string;FLineList:TList);
   Public
     property SelectedCells: TList read FSelectCells ;
     { Public declarations }
@@ -3536,21 +3536,32 @@ Var
   I, J, K: Integer;
   TempPChar: Array[0..3000] Of Char;
 Begin
+  LoadFromFile1(FileName,Self.FLineList);
+  If IsWindowVisible(FEditWnd) Then
+    DestroyWindow(FEditWnd);
+  cp_pgw := FPageWidth;             //1999.1.23
+  cp_pgh := FPageHeight;
+  UpdateLines;
+End;
+Procedure TReportControl.LoadFromFile1(FileName:string;FLineList:TList);
+Var
+  TargetFile: TFileStream;
+  FileFlag: WORD;
+  Count1, Count2, Count3,FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
+  ThisLine: TReportLine;
+  ThisCell: TReportCell;
+  I, J, K: Integer;
+  TempPChar: Array[0..3000] Of Char;
+  bHasDataSet: Boolean;
+Begin
   TargetFile := TFileStream.Create(FileName, fmOpenRead);
   Try
     With TargetFile Do
     Begin
-
       Read(FileFlag, SizeOf(FileFlag));
-      If (FileFlag <> $AA55) And (FileFlag <> $AA56) And ((FileFlag <> $AA57))
+      If (FileFlag <> $AA55) And (FileFlag <> $AA56) And (FileFlag <> $AA57)
         Then
-      Begin
-        ShowMessage('打开文件错误');
-        Exit;
-      End;
-
-      ClearSelect;
-
+        raise Exception.create('打开文件错误');
       For I := 0 To FLineList.Count - 1 Do
       Begin
         ThisLine := TReportLine(FLineList[I]);
@@ -3559,15 +3570,11 @@ Begin
 
       FLineList.Clear;
 
-      If IsWindowVisible(FEditWnd) Then
-        DestroyWindow(FEditWnd);
+      
 
       Read(FReportScale, SizeOf(FReportScale));
-//      FReportScale := 100;
       Read(FPageWidth, SizeOf(FPageWidth));
       Read(FPageHeight, SizeOf(FPageHeight));
-      cp_pgw := FPageWidth;             //1999.1.23
-      cp_pgh := FPageHeight;            //1999.1.23
       Width := FPageWidth;
       Height := FPageHeight;
       Read(FLeftMargin, SizeOf(FLeftMargin));
@@ -3589,7 +3596,8 @@ Begin
       For I := 0 To Count1 - 1 Do
       Begin
         ThisLine := TReportLine.Create;
-        ThisLine.FReportControl := Self;
+		  if (self is TReportControl) then
+        	ThisLine.FReportControl := Self;
         FLineList.Add(ThisLine);
         Read(Count2, SizeOf(Count2));
         ThisLine.CreateLine(0, Count2, FRightMargin - FLeftMargin);
@@ -3646,6 +3654,8 @@ Begin
           Read(ThisCell.FVertAlign, SizeOf(ThisCell.FVertAlign));
 
           Read(Count1, SizeOf(Count1));
+
+          tempPchar := #0;
           For K := 0 To Count1 - 1 Do
             Read(TempPChar[K], 1);
 
@@ -3655,6 +3665,8 @@ Begin
           If FileFlag <> $AA55 Then
           Begin
             Read(Count1, SizeOf(Count1));
+
+            tempPchar := #0;
             For K := 0 To Count1 - 1 Do
               Read(TempPChar[K], 1);
             TempPChar[Count1] := #0;
@@ -3689,14 +3701,13 @@ Begin
             Read(Count2, SizeOf(Count2));
             ThisCell.FCellsList.Add(TReportCell(TReportLine(FLineList[Count1]).FCells[Count2]));
           End;
-
         End;
       End;
 
       Read(FprPageNo, SizeOf(FprPageNo)); //取出纸张序号  lzl 2002。3
-      Read(FprPageXy, SizeOf(FprPageXy)); //取出纵横方向  lzl
-      Read(fpaperLength, SizeOf(fpaperLength)); //取出长度  lzl
-      Read(fpaperWidth, SizeOf(fpaperWidth)); //取出宽度   lzl
+      Read(FprPageXy, SizeOf(FprPageXy)); //取出纵横方向
+      Read(fpaperLength, SizeOf(fpaperLength)); //取出纵横方向
+      Read(fpaperWidth, SizeOf(fpaperWidth)); //取出纵横方向
       PrintPaper.prDeviceMode;
       PrintPaper.SetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
       Read(FHootNo, SizeOf(FHootNo));
@@ -3704,10 +3715,6 @@ Begin
   Finally
     TargetFile.Free;
   End;
-  UpdateLines;
-
-  //  CalcWndSize;
-  //  Invalidate;
 End;
 
 Procedure TReportControl.VSplitCell(Number: Integer);
@@ -4075,6 +4082,7 @@ procedure TReportControl.SaveToFile(FileName: String);
 begin
   SaveToFile(FLineList,FileName,0,0);
 end;
+
 
 initialization
    PrintPaper:= TPrinterPaper.Create;
