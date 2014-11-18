@@ -187,6 +187,7 @@ type
 
     function  LFindComponent(Owner: TComponent; Name: String): TComponent;
     procedure LEnumComponents(F:TComponent);
+
     { Private declarations }
   public
     thefile, savefilename: string;
@@ -895,29 +896,13 @@ begin
 end;
 // LCJ : 最佳缩放比例
 procedure TCreportForm.SpeedButton8Click(Sender: TObject); // add 李泽伦
-var z1,z2:integer;
 begin
-    if (height-160) < cp_pgh then
-    z1:=trunc(((height-160) / cp_pgh)*100)
-  else
-    z1:=100;
-
-  if (width-171) < cp_pgw then
-    z2:=trunc(((width-171) / cp_pgw)*100)
-  else
-    z2:=100;
-
- if z1 <= z2 then
-   zoomxxx:=z1
- else
-   zoomxxx:=z2;
-
+  zoomxxx:=ReportControl1.ZoomRate (Height,Width,160,171,cp_pgh,cp_pgw);
   ReportControl1.FreeEdit;
   ShowWindow(ReportControl1.Handle, SW_HIDE);
   ReportControl1.ReportScale := zoomxxx;
   ScrollBox1Resize(Self);
   ShowWindow(ReportControl1.Handle, SW_SHOW);
-
 end;
 
 procedure TCreportForm.SpeedButton12Click(Sender: TObject);
@@ -1003,42 +988,24 @@ procedure TCreportForm.SpeedButton7Click(Sender: TObject);
 begin
 close;
 end;
+// 160,171
 
-procedure TCreportForm.FormResize(Sender: TObject); //lzl 修改
-var z1,z2:integer;
-begin
-    if (height-160) < cp_pgh then
-    z1:=trunc(((height-160) / cp_pgh)*100)
-  else
-    z1:=100;
-
-  if (width-171) < cp_pgw then
-    z2:=trunc(((width-171) / cp_pgw)*100)
-  else
-    z2:=100;
-
- if z1 <= z2 then
-   zoomxxx:=z1
- else
-   zoomxxx:=z2;
-
-  ShowWindow(ReportControl1.Handle, SW_HIDE);
+procedure TCreportForm.FormResize(Sender: TObject); 
+begin               
+  zoomxxx:= ReportControl1.ZoomRate(ReportControl1.Height,ReportControl1.Width, 160,171,cp_pgh,cp_pgw);  ShowWindow(ReportControl1.Handle, SW_HIDE);
   ReportControl1.ReportScale := zoomxxx;
   ScrollBox1Resize(Self);
   ShowWindow(ReportControl1.Handle, SW_SHOW);
 
 end;
 
-
-//以下均为李泽伦增加
-
 procedure TCreportForm.ListBoxDragOver(Sender, Source: TObject; X,
-  Y: Integer; State: TDragState; var Accept: Boolean);           // lzl
+  Y: Integer; State: TDragState; var Accept: Boolean);
 begin
    Accept:=true;
 end;
 
-procedure TCreportForm.CellDispFormtChange(Sender: TObject); // add 李泽伦
+procedure TCreportForm.CellDispFormtChange(Sender: TObject);  
 begin
 if ReportControl1.SelectedCells.Count >0  then
 begin

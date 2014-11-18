@@ -317,14 +317,17 @@ Type
     Procedure SetCellSFocus(row1, col1, row2, col2: integer);
     function Get(Index: Integer): TReportLine;
     function GetCells(Row, Col: Integer): TReportCell;
-    procedure InvertCell(Cell: TReportCell);   
+    procedure InvertCell(Cell: TReportCell);
   Protected
     hasdatano: integer;
     function RenderText(ThisCell: TReportCell; PageNumber,Fpageall: Integer): String;virtual ;
     Procedure CreateWnd; Override;
     procedure InternalLoadFromFile(FileName:string;FLineList:TList);
+
+
   Public
     PrintPaper:TPrinterPaper;
+    function ZoomRate(height,width,HConst, WConst, cp_pgh, cp_pgw: integer): Integer;
     property SelectedCells: TList read FSelectCells ;
     { Public declarations }
     Procedure SetSelectedCellFont(cf: TFont);
@@ -4073,7 +4076,22 @@ begin
     SetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
 end;
 
-
+function TReportControl.ZoomRate(height,width,HConst,WConst,cp_pgh,cp_pgw:integer):Integer;
+var z1,z2:integer;
+begin
+  if (height-HConst) < cp_pgh then
+    z1:=trunc(((height-HConst) / cp_pgh)*100)
+  else
+    z1:=100;
+  if (width-WConst) < cp_pgw then
+    z2:=trunc(((width-WConst) / cp_pgw)*100)
+  else
+    z2:=100;
+  if z1 <= z2 then
+    result :=z1
+  else
+    result :=z2;
+end;
 
 End.
 

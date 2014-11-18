@@ -346,21 +346,9 @@ begin
 
 // add ÀîÔóÂ×
 ////////////////////////////////
-  if (height-110) < cp_pgh then
-    z1:=trunc(((height-110) / cp_pgh)*100)
-  else
-    z1:=100;
 
-  if (width-170) < cp_pgw then
-    z2:=trunc(((width-170) / cp_pgw)*100)
-  else
-    z2:=100;
-
- if z1 <= z2 then
-   zoomxxx:=z1
- else
-   zoomxxx:=z2;
-////////////////////////////////////////////////////
+  zoomxxx:=ReportControl1.ZoomRate(Height,Width,110,170,cp_pgh,cp_pgw);
+ ///////////////////////////////////////////////////
   ShowWindow(ReportControl1.Handle, SW_HIDE);
   ReportControl1.ReportScale := zoomxxx;
   ScrollBox1Resize(Self);
@@ -374,24 +362,12 @@ begin
   DoFit();
 end;
 
+
 procedure TPreviewForm.DoFit();
-var z1,z2:integer;
+
 begin
     ReportControl1.FreeEdit; // add ÀîÔóÂ×
-   if (height-110) < cp_pgh then  // add ÀîÔóÂ×
-    z1:=trunc(((height-110) / cp_pgh)*100)
-  else
-    z1:=100;
-
-  if (width-170) < cp_pgw then  // add ÀîÔóÂ×
-    z2:=trunc(((width-170) / cp_pgw)*100)
-  else
-    z2:=100;
-
- if z1 <= z2 then  // add ÀîÔóÂ×
-   zoomxxx:=z1
- else
-   zoomxxx:=z2;
+   zoomxxx := ReportControl1.ZoomRate(Height,Width,110,170,cp_pgh,cp_pgw);
 
 
   ShowWindow(ReportControl1.Handle, SW_HIDE);
