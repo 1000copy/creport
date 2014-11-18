@@ -366,10 +366,8 @@ end;
 procedure TPreviewForm.DoFit();
 
 begin
-    ReportControl1.FreeEdit; // add ¿Ó‘Û¬◊
-   zoomxxx := ReportControl1.ZoomRate(Height,Width,110,170,cp_pgh,cp_pgw);
-
-
+  ReportControl1.FreeEdit; // add ¿Ó‘Û¬◊
+  zoomxxx := ReportControl1.ZoomRate(Height,Width,110,170,cp_pgh,cp_pgw);
   ShowWindow(ReportControl1.Handle, SW_HIDE);
   ReportControl1.ReportScale := zoomxxx;
   ScrollBox1Resize(Self);
