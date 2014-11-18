@@ -374,7 +374,7 @@ begin
   ShowWindow(ReportControl1.Handle, SW_SHOW);
 
 end;
-procedure TPreviewForm.EditEptkClick(Sender: TObject);  // add ¿Ó‘Û¬◊
+procedure TPreviewForm.EditEptkClick(Sender: TObject);   
 begin
   Application.CreateForm(TCreportform,Creportform);
   Application.CreateForm(Tfrm_About, frm_About);
