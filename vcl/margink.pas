@@ -1,4 +1,4 @@
-// create ¿Ó‘Û¬◊
+
 unit margink;
 
 interface
@@ -24,9 +24,7 @@ type
     PrinterSetupDialog1: TPrinterSetupDialog;
     Label6: TLabel;
     SpeedButton2: TSpeedButton;
-    procedure FormCreate(Sender: TObject);
     procedure SpeedButton2Click(Sender: TObject);
-    procedure FormActivate(Sender: TObject);
   private
     { Private declarations }
   public
@@ -42,23 +40,9 @@ uses creport;
 
 {$R *.DFM}
 
-procedure TMarginkForm.FormCreate(Sender: TObject);
-begin
-
- // NewTableBox.Checked := True;
- // LineCountEdit.Value := 32767;
-end;
-
 procedure TMarginkForm.SpeedButton2Click(Sender: TObject);
 begin
   PrinterSetupDialog1.Execute;
-end;
-
-procedure TMarginkForm.FormActivate(Sender: TObject);
-begin
-  PrintPaper.prDeviceMode;
-  PrintPaper.SetPaperWithCurrent;
-
 end;
 
 end.

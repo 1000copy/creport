@@ -55,8 +55,7 @@ begin
   TopMargin.Value := MarginRect.Top;
   RightMargin.Value := MarginRect.Right;
   BottomMargin.Value := MarginRect.Bottom;  
-  PrintPaper.prDeviceMode;
-  PrintPaper.SetPaperWithCurrent;
+  ReportControl1.PrintPaper.SetPaperWithCurrent;
 
 end;
 // Margin ,Confirm Button,or Save Button

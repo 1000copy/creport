@@ -554,7 +554,7 @@ begin
     BottomMargin.Value := MarginRect.Bottom;
 
   end;
-
+  ReportControl1.PrintPaper.Batch;
   if MarginkForm.ShowModal = mrOK then
   begin
     with MarginkForm do

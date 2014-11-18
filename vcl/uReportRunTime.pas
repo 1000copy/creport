@@ -35,11 +35,10 @@ type
     FPageCount: Integer;
     nDataHeight, nHandHeight, nHootHeight, nSumAllHeight: Integer;
     TempDataSet: TDataset;
-    hasdatano: integer;
     Procedure UpdateLines;
     Procedure UpdatePrintLines;
     Procedure PrintOnePage;
-    Procedure LoadRptFile;
+    Procedure LoadReport;
     Function GetDatasetName(strCellText: String): String;
     Function GetDataset(strCellText: String): TDataset;
     Function DatasetByName(strDatasetName: String): TDataset;
@@ -70,7 +69,6 @@ type
     function ExpandLine(var HasDataNo, ndataHeight: integer): TReportLine;
     function FillFootList(var nHootHeight: integer): TList;
     function FillSumList(var nSumAllHeight: integer): TList;
-    function GetNhassumall(): Integer;
     procedure JoinAllList(FPrintLineList, HandLineList, dataLineList,
       SumAllList, HootLineList: TList;IsLastPage:Boolean);
     procedure PaddingEmptyLine(hasdatano: integer; var dataLineList: TList;
@@ -219,8 +217,7 @@ Var
 Begin
   try
     InternalLoadFromFile(strFileName,FPrintLineList);
-    PrintPaper.prDeviceMode;
-    PrintPaper.SetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
+    PrintPaper.Batch(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
     UpdatePrintLines;
   except
     on E:Exception do ShowMessage(e.message);
@@ -247,7 +244,7 @@ Begin
   FHeaderHeight := 0;
 
   If FFileName <> '' Then
-    LoadRptFile;
+    LoadReport;
 End;
 
 {毁灭过程}
@@ -356,7 +353,7 @@ Begin
   End;
 End;
 
-Procedure TReportRunTime.LoadRptFile;
+Procedure TReportRunTime.LoadReport;
 Var
   TargetFile: TFileStream;
   FileFlag: WORD;
@@ -369,8 +366,7 @@ Var
 Begin
   try
     InternalLoadFromFile(FFileName,FLineList);
-    PrintPaper.prDeviceMode;
-    PrintPaper.SetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
+    PrintPaper.Batch(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
     UpdateLines;
     FHeaderHeight := GetHeaderHeight;
   except
@@ -721,35 +717,7 @@ function TReportRunTime.FillFootList(var nHootHeight:integer ):TList;
     End;
     result := HootLineList;
   end;
-  function TReportRunTime.GetNhassumall():Integer;
-  var NhasSumALl : integer;
-  Var
-  I, J, n,  TempDataSetCount:Integer;
-  HandLineList, datalinelist, HootLineList, sumAllList: TList;
-  ThisLine, TempLine: TReportLine;
-  ThisCell, NewCell: TReportCell;
-  TempDataSet: TDataset;
-  khbz: boolean;
-  begin
-  //   Nsumall
-    For i := HasDataNo + 1 To FlineList.Count - 1 Do
-    Begin
-      ThisLine := TReportLine(FlineList[i]);
-      For j := 0 To ThisLine.FCells.Count - 1 Do
-      Begin
-        ThisCell := TreportCell(ThisLine.FCells[j]);
-        If (Length(ThisCell.CellText) > 0) And
-          (UpperCase(copy(ThisCell.FCellText, 1, 7)) = '`SUMALL') Then
-        Begin
-          If NhasSumALl = 0 Then
-            NhasSumALl := i;
-            result :=NhasSumALl;
-          break;
-        End;
-      End;                              //for j
-    End;
-    result  :=  0 ;
-  end;
+
   //将有合计的行(`SumAll)存入一个列表中
   function TReportRunTime.FillSumList(var nSumAllHeight:integer ):TList;
   Var
@@ -951,7 +919,6 @@ Begin
     SumPage[n] := 0;
     SumAll[n] := 0;
   End;
-  NhasSumALl := 0;
   TempDataSet := Nil;
   FhootNo := 0;
   nHandHeight := 0;                     //该页数据库行之前每行累加高度
@@ -976,7 +943,7 @@ Begin
     TempDataSetCount := TempDataSet.RecordCount;
     TempDataSet.First;
     HootLineList := FillFootList(nHootHeight);
-    NhasSumALl := GetNhasSumALl();//
+//    GetNhasSumALl();//
     sumAllList := FillSumList(nSumAllHeight);
     //dataLineList := FillDataList(ndataHeight,khbz);
 
@@ -1345,7 +1312,7 @@ Procedure TReportRunTime.SetRptFileName(Const Value: TFilename);
 Begin
   FFileName := Value;
   If Value <> '' Then
-    LoadRptFile;
+    LoadReport;
 End;
 
  procedure TReportRunTime.EachCell(EachProc:EachCellProc);
@@ -1581,7 +1548,7 @@ Procedure TReportRunTime.loadfile(value: tfilename);
 Begin
   FFileName := Value;
   If Value <> '' Then
-    LoadRptFile;
+    LoadReport;
 End;
 
 Function treportruntime.cancelprint: boolean;
