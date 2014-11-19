@@ -165,7 +165,7 @@ object CReportDemoForm: TCReportDemoForm
     end
     object btnVertSplit2: TSpeedButton
       Left = 10
-      Top = 200
+      Top = 184
       Width = 84
       Height = 24
       Caption = 'VertSplit2'
@@ -176,6 +176,20 @@ object CReportDemoForm: TCReportDemoForm
       Font.Style = []
       ParentFont = False
       OnClick = btnVertSplit2Click
+    end
+    object btnCombine: TSpeedButton
+      Left = 10
+      Top = 216
+      Width = 84
+      Height = 24
+      Caption = 'Combine'
+      Font.Charset = GB2312_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -14
+      Font.Name = #26999#20307'_GB2312'
+      Font.Style = []
+      ParentFont = False
+      OnClick = btnCombineClick
     end
     object Button3: TButton
       Left = 10
