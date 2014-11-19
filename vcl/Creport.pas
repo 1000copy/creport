@@ -992,12 +992,11 @@ end;
 
 procedure TCreportForm.FormResize(Sender: TObject); 
 begin               
-  zoomxxx:= ReportControl1.ZoomRate(ReportControl1.Height,ReportControl1.Width, 160,171);
+  zoomxxx:= ReportControl1.ZoomRate(Height,Width, 160,171);
   ShowWindow(ReportControl1.Handle, SW_HIDE);
   ReportControl1.ReportScale := zoomxxx;
   ScrollBox1Resize(Self);
   ShowWindow(ReportControl1.Handle, SW_SHOW);
-
 end;
 
 procedure TCreportForm.ListBoxDragOver(Sender, Source: TObject; X,

@@ -1,5 +1,4 @@
-// 2014-11-13 这两天正在喝。平和，质朴，散发着有钱的感觉...
-// 金丝带 Alectoria virens Tayl.，寄生地衣类植物。除风湿、健脾胃。
+
 Unit ReportControl;
 
 Interface
@@ -269,15 +268,11 @@ Type
 
   TReportControl = Class(TWinControl)
   private
-    // 把Load/Save 5个拷贝后小改的代码合并。有一个趁手的对比工具很重要。
-    // winmerge，thank you
     procedure InternalSaveToFile(FLineList: TList; FileName: String;
       PageNumber, Fpageall: integer);
   protected
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
-    FCreportEdit: boolean;
-    { Private declarations }
     FPreviewStatus: Boolean;
 
     FLineList: TList;
@@ -313,7 +308,6 @@ Type
     FEditBrush: HBRUSH;
     FEditFont: HFONT;
     function GetNhassumall: Integer;
-    Procedure setCreportEdit(Const value: boolean);
     Procedure SetCellSFocus(row1, col1, row2, col2: integer);
     function Get(Index: Integer): TReportLine;
     function GetCells(Row, Col: Integer): TReportCell;
@@ -409,14 +403,11 @@ Type
       False;
     Property ReportScale: Integer Read FReportScale Write SetScale Default 100;
     Property IsNewTable: Boolean Read FNewTable Write FNewTable Default True;
-    Property DataLine: Integer Read FDataLine Write FDataLine Default
-      2147483647;
-    Property TablePerPage: Integer Read FTablePerPage Write FTablePerPage Default
-      2147483647;
+    Property DataLine: Integer Read FDataLine Write FDataLine ;
+    Property TablePerPage: Integer Read FTablePerPage Write FTablePerPage ;
     property Lines[Index: Integer]: TReportLine read Get  ;
     property Cells[Row: Integer;Col: Integer]: TReportCell read GetCells ;
     property  AllowPreviewEdit: boolean read CPreviewEdit write CPreviewEdit;
-
   Published
     { Published declarations }
     Property Left;
@@ -431,7 +422,6 @@ Type
     Property ShowHint;
     Property OnDragOver;
     Property OnDragDrop;
-    Property CreportEdit: boolean Read FCreportEdit Write setCreportEdit;  //代表是否处在模板编辑程序调用中
   End;
   TDatasetItem = Class(TObject)
     pDataset: TDataset;
@@ -456,12 +446,12 @@ Type
 Function DeleteFiles(FilePath, FileMask: String): Boolean;
 
 Procedure Register;
-
-//Var
-
-
-  // encaplated ! 艰难而看不到未来。唯有埋头，忍耐，坚韧不拔。2014-11-13
-
+// 2014-11-13 这两天正在喝。平和，质朴，散发着有钱的感觉...
+//            金丝带 Alectoria virens Tayl.，寄生地衣类植物。除风湿、健脾胃。
+// 2014-11-13 encaplating...艰难而看不到未来。唯有埋头，忍耐，坚韧不拔。
+// 2014-11-17 把Load/Save 5个拷贝后小改的代码合并。有一个趁手的对比工具很重要。
+//            winmerge，thank you
+// 2014-11-19 全部这里的全局变量，已经消失，转换，降低了可见级别！
 
 
 
@@ -1587,10 +1577,8 @@ Begin
   FEditCell := Nil;
 
   FNewTable := True;
-  //  FDataLine := 2147483647;
-  //  FTablePerPage := 2147483647;
-  FDataLine := 2000;                    //廖伯志 1999.1.16
-  FTablePerPage := 1;                   //
+  FDataLine := 2000;
+  FTablePerPage := 1;                   
 
   FLastPrintPageWidth := 0;
   FLastPrintPageHeight := 0;
@@ -1898,9 +1886,7 @@ Begin
     ShowWindow(FEditWnd, SW_SHOWNORMAL);
     Windows.SetFocus(FEditWnd);
   End;
-
   Inherited;
-
 End;
 
 Procedure TReportControl.WMLButtonDown(Var Message: TMessage);
@@ -3195,23 +3181,23 @@ End;
 
 Procedure TReportControl.WMCOMMAND(Var Message: TMessage);
 Var
-  PrevCellRect: TRect;
+  r: TRect;
   TempChar: Array[0..3000] Of Char;
 Begin
   Case HIWORD(Message.wParam) Of
     EN_UPDATE:
       If FEditCell <> Nil Then
       Begin
-        PrevCellRect := FEditCell.TextRect;
+        r := FEditCell.TextRect;
         GetWindowText(FEditWnd, TempChar, 3000);
         FEditCell.CellText := TempChar;
 
         UpdateLines;
 
-        If (PrevCellRect.Left <> FEditCell.TextRect.Left) Or
-          (PrevCellRect.Top <> FEditCell.TextRect.Top) Or
-          (PrevCellRect.Right <> FEditCell.TextRect.Right) Or
-          (PrevCellRect.Bottom <> FEditCell.TextRect.Bottom) Then
+        If (r.Left <> FEditCell.TextRect.Left) Or
+          (r.Top <> FEditCell.TextRect.Top) Or
+          (r.Right <> FEditCell.TextRect.Right) Or
+          (r.Bottom <> FEditCell.TextRect.Bottom) Then
         Begin
           MoveWindow(FEditWnd, FEditCell.TextRect.left, FEditCell.TextRect.Top,
             FEditCell.TextRect.Right - FEditCell.TextRect.Left,
@@ -3249,12 +3235,8 @@ Var
   ThisLine: TReportLine;
   ThisCell, NewCell: TReportCell;
 Begin
-  // xx:=TReportCell(TReportLine(FLineList[1]).FCells[1]);
-  // FSelectCells.Add(xx);
-
   If FSelectCells.Count <> 1 Then
     Exit;
-
   ThisCell := TReportCell(FSelectCells[0]);
   ThisLine := ThisCell.OwnerLine;
   NewCell := TReportCell.Create;
@@ -3957,11 +3939,6 @@ Begin
     TReportCell(FSelectCells[I]).celltext := mek;
 End;
 
-Procedure TReportControl.setCreportEdit(Const value: boolean); // lzl add
-Begin
-  If value <> fcreportedit Then
-    fcreportedit := value;
-End;
 
 Procedure TReportControl.SetCellFocus(row, col: integer); // add lzl
 Var
