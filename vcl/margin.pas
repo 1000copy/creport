@@ -63,7 +63,7 @@ procedure TMarginForm.BitBtn1Click(Sender: TObject);
 var
   MarginRect: TRect;
 begin
-  cp_pgw:=0;
+  ReportControl1.cp_pgw:=0;
   ReportControl1.CalcWndSize; 
 
   ReportControl1.SetMargin(LeftMargin.Value,TopMargin.Value,RightMargin.Value,BottomMargin.Value);

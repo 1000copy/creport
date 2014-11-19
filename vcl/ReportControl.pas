@@ -326,8 +326,9 @@ Type
 
 
   Public
+    cp_pgw, cp_pgh: integer;
     PrintPaper:TPrinterPaper;
-    function ZoomRate(height,width,HConst, WConst, cp_pgh, cp_pgw: integer): Integer;
+    function ZoomRate(height,width,HConst, WConst: integer): Integer;
     property SelectedCells: TList read FSelectCells ;
     { Public declarations }
     Procedure SetSelectedCellFont(cf: TFont);
@@ -456,7 +457,8 @@ Function DeleteFiles(FilePath, FileMask: String): Boolean;
 
 Procedure Register;
 
-Var cp_pgw, cp_pgh: integer;
+//Var
+
 
   // encaplated ! 艰难而看不到未来。唯有埋头，忍耐，坚韧不拔。2014-11-13
 
@@ -4076,7 +4078,7 @@ begin
     SetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
 end;
 
-function TReportControl.ZoomRate(height,width,HConst,WConst,cp_pgh,cp_pgw:integer):Integer;
+function TReportControl.ZoomRate(height,width,HConst,WConst:integer):Integer;
 var z1,z2:integer;
 begin
   if (height-HConst) < cp_pgh then

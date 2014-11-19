@@ -566,7 +566,7 @@ begin
         BottomMargin.Value);
 
           savebz:=false;
-   cp_pgw:=0;
+   ReportControl1.cp_pgw:=0;
    ReportControl1.CalcWndSize;
 
 
@@ -582,7 +582,7 @@ begin
   begin
     ReportControl1.FreeEdit;
     ReportControl1.ResetContent;
-    cp_pgw := 0;
+    ReportControl1.cp_pgw := 0;
     ReportControl1.CalcWndSize;
     Creportform.caption := '[无文件名] ' ;
     thefile := '';
@@ -897,7 +897,7 @@ end;
 // LCJ : 最佳缩放比例
 procedure TCreportForm.SpeedButton8Click(Sender: TObject); // add 李泽伦
 begin
-  zoomxxx:=ReportControl1.ZoomRate (Height,Width,160,171,cp_pgh,cp_pgw);
+  zoomxxx:=ReportControl1.ZoomRate (Height,Width,160,171);
   ReportControl1.FreeEdit;
   ShowWindow(ReportControl1.Handle, SW_HIDE);
   ReportControl1.ReportScale := zoomxxx;
@@ -992,7 +992,8 @@ end;
 
 procedure TCreportForm.FormResize(Sender: TObject); 
 begin               
-  zoomxxx:= ReportControl1.ZoomRate(ReportControl1.Height,ReportControl1.Width, 160,171,cp_pgh,cp_pgw);  ShowWindow(ReportControl1.Handle, SW_HIDE);
+  zoomxxx:= ReportControl1.ZoomRate(ReportControl1.Height,ReportControl1.Width, 160,171);
+  ShowWindow(ReportControl1.Handle, SW_HIDE);
   ReportControl1.ReportScale := zoomxxx;
   ScrollBox1Resize(Self);
   ShowWindow(ReportControl1.Handle, SW_SHOW);
