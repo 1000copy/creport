@@ -1831,7 +1831,7 @@ Var
   TempPoint: TPoint;
   dwStyle: DWORD;
 Begin
-  If Not Cpreviewedit Then              //add lzl
+  If Not Cpreviewedit Then              
   Begin
     Inherited;
     exit;
@@ -1945,10 +1945,7 @@ Begin
     Else
       StartMouseSelect(MousePoint, True, sh_down);
   End;
-
-
-  //mouse_event( MOUSEEVENTF_LEFTDOWN, 0, 0, 0, 0 );
-  mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0); //add lzl 
+  mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0); 
 
   Inherited;                            //将mouse的消息返回   1999.1.23
 
@@ -3201,8 +3198,7 @@ Begin
         Begin
           MoveWindow(FEditWnd, FEditCell.TextRect.left, FEditCell.TextRect.Top,
             FEditCell.TextRect.Right - FEditCell.TextRect.Left,
-            FEditCell.TextRect.Bottom - FEditCell.TextRect.Top, True);
-
+            FEditCell.TextRect.Bottom - FEditCell.TextRect.Top, True);  
         End;
       End;
   End;

@@ -182,6 +182,7 @@ type
   private
     dbarleft:integer;
     dbartop:integer;
+    //未存盘标志    
     savebz:boolean;
     procedure ListBoxDragOver(Sender, Source: TObject; X,Y: Integer; State: TDragState; var Accept: Boolean);
 
@@ -247,7 +248,7 @@ end;
 procedure TCreportForm.FormCreate(Sender: TObject);
 var i,j:integer;
 begin
-  savebz:=true; //未存盘标志     add　lzl
+  savebz:=true;
 
   dbarleft:=0;
   dbartop:=0;
@@ -782,19 +783,7 @@ end;
 
 procedure TCreportForm.ScrollBox1Resize(Sender: TObject);
 begin
-{
-if IsWindow(ReportControl1.Handle) then
-  begin
-    if ScrollBox1.ClientRect.Right > ReportControl1.Width + 20 then
-      ReportControl1.Left := (ScrollBox1.ClientRect.Right - ReportControl1.Width) div 2
-    else ReportControl1.Left := 15;
-    if ScrollBox1.ClientRect.Bottom > ReportControl1.Height + 20 then
-      ReportControl1.top := (ScrollBox1.ClientRect.Bottom - ReportControl1.height) div 2
-    else ReportControl1.top := 15;
-  end;
-  }
-
-    if ClientRect.Right > ReportControl1.Width + 20 then
+  if ClientRect.Right > ReportControl1.Width + 20 then
     ReportControl1.Left := (ClientRect.Right - ReportControl1.Width-20) div 2
   else
     ReportControl1.Left := 30;
@@ -803,12 +792,10 @@ if IsWindow(ReportControl1.Handle) then
       ReportControl1.top:= ((height-150-ReportControl1.Height) div 2)+5
    else
      ReportControl1.top:=5;
-
 end;
 
 procedure TCreportForm.N33Click(Sender: TObject);
 begin
-//  aboutbox.showmodal;
   frm_About.ShowModal;
 end;
 

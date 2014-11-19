@@ -116,7 +116,6 @@ object CReportDemoForm: TCReportDemoForm
       Width = 25
       Height = 33
       Visible = False
-      CreportEdit = True
     end
   end
   object Panel2: TPanel
@@ -235,7 +234,6 @@ object CReportDemoForm: TCReportDemoForm
     Width = 20
     Height = 33
     Visible = False
-    CreportEdit = False
     AddSpace = True
   end
   object opbm1: TOpenPictureDialog
