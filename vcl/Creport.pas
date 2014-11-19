@@ -566,7 +566,7 @@ begin
         BottomMargin.Value);
 
           savebz:=false;
-   ReportControl1.cp_pgw:=0;
+   ReportControl1.FLastPrintPageWidth:=0;
    ReportControl1.CalcWndSize;
 
 
@@ -582,7 +582,7 @@ begin
   begin
     ReportControl1.FreeEdit;
     ReportControl1.ResetContent;
-    ReportControl1.cp_pgw := 0;
+    ReportControl1.FLastPrintPageWidth := 0;
     ReportControl1.CalcWndSize;
     Creportform.caption := '[无文件名] ' ;
     thefile := '';

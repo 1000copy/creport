@@ -326,7 +326,7 @@ Type
 
 
   Public
-    cp_pgw, cp_pgh: integer;
+    FLastPrintPageWidth, FLastPrintPageHeight: integer;
     PrintPaper:TPrinterPaper;
     function ZoomRate(height,width,HConst, WConst: integer): Integer;
     property SelectedCells: TList read FSelectCells ;
@@ -1592,8 +1592,8 @@ Begin
   FDataLine := 2000;                    //廖伯志 1999.1.16
   FTablePerPage := 1;                   //
 
-  cp_pgw := 0;
-  cp_pgh := 0;
+  FLastPrintPageWidth := 0;
+  FLastPrintPageHeight := 0;
 
   FReportScale := 100;
   FPageWidth := 0;
@@ -1657,16 +1657,16 @@ Var
 Begin
   If printer.Printers.Count <= 0 Then
   Begin
-    If cp_pgw <> 0 Then
+    If FLastPrintPageWidth <> 0 Then
     Begin
-      FPageWidth := cp_pgw;
-      FPageHeight := cp_pgh;
+      FPageWidth := FLastPrintPageWidth;
+      FPageHeight := FLastPrintPageHeight;
     End;
   End;
 
   // 根据用户选择的纸来确定报表窗口的大小并对该窗口进行设置。
 
-  If cp_pgw = 0 Then
+  If FLastPrintPageWidth = 0 Then
   Begin
     If printer.Printers.Count <= 0 Then
     Begin
@@ -1684,8 +1684,8 @@ Begin
       end;
     End;
   End;
-  cp_pgw := FPageWidth;
-  cp_pgh := FPageHeight;
+  FLastPrintPageWidth := FPageWidth;
+  FLastPrintPageHeight := FPageHeight;
   Width := trunc(FPageWidth * FReportScale / 100 + 0.5);   
   Height := trunc(FPageHeight * FReportScale / 100 + 0.5);
 End;
@@ -3522,8 +3522,8 @@ Begin
   PrintPaper.SetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
   If IsWindowVisible(FEditWnd) Then
     DestroyWindow(FEditWnd);
-  cp_pgw := FPageWidth;             //1999.1.23
-  cp_pgh := FPageHeight;
+  FLastPrintPageWidth := FPageWidth;             //1999.1.23
+  FLastPrintPageHeight := FPageHeight;
   UpdateLines;
 
 End;
@@ -4003,8 +4003,8 @@ Procedure TReportControl.SetWndSize(w, h: integer); //add lzl
 Begin
   FPageWidth := w;
   FPageHeight := h;
-  cp_pgw := FPageWidth;
-  cp_pgh := FPageHeight;
+  FLastPrintPageWidth := FPageWidth;
+  FLastPrintPageHeight := FPageHeight;
   Width := trunc(FPageWidth * FReportScale / 100 + 0.5); //width,heght用于显示
   Height := trunc(FPageHeight * FReportScale / 100 + 0.5);
 End;
@@ -4081,12 +4081,12 @@ end;
 function TReportControl.ZoomRate(height,width,HConst,WConst:integer):Integer;
 var z1,z2:integer;
 begin
-  if (height-HConst) < cp_pgh then
-    z1:=trunc(((height-HConst) / cp_pgh)*100)
+  if (height-HConst) < FLastPrintPageHeight then
+    z1:=trunc(((height-HConst) / FLastPrintPageHeight)*100)
   else
     z1:=100;
-  if (width-WConst) < cp_pgw then
-    z2:=trunc(((width-WConst) / cp_pgw)*100)
+  if (width-WConst) < FLastPrintPageWidth then
+    z2:=trunc(((width-WConst) / FLastPrintPageWidth)*100)
   else
     z2:=100;
   if z1 <= z2 then
