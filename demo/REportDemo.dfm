@@ -137,7 +137,7 @@ object CReportDemoForm: TCReportDemoForm
     TabOrder = 3
     object SpeedButton3: TSpeedButton
       Left = -3
-      Top = 216
+      Top = 256
       Width = 105
       Height = 24
       Caption = #21160#24577#25253#34920#31034#20363
@@ -148,6 +148,34 @@ object CReportDemoForm: TCReportDemoForm
       Font.Style = []
       ParentFont = False
       OnClick = SpeedButton3Click
+    end
+    object btnVertSplite: TSpeedButton
+      Left = 13
+      Top = 152
+      Width = 84
+      Height = 24
+      Caption = 'VertSplit1'
+      Font.Charset = GB2312_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -14
+      Font.Name = #26999#20307'_GB2312'
+      Font.Style = []
+      ParentFont = False
+      OnClick = btnVertSpliteClick
+    end
+    object btnVertSplit2: TSpeedButton
+      Left = 10
+      Top = 200
+      Width = 84
+      Height = 24
+      Caption = 'VertSplit2'
+      Font.Charset = GB2312_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -14
+      Font.Name = #26999#20307'_GB2312'
+      Font.Style = []
+      ParentFont = False
+      OnClick = btnVertSplit2Click
     end
     object Button3: TButton
       Left = 10

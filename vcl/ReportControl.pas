@@ -155,7 +155,7 @@ Type
     Procedure SetTextColor(TextColor: COLORREF);
 
   Public
-    { Public declarations }
+    function IsLastCell():boolean;
     Procedure AddOwnedCell(Cell: TReportCell);
     Procedure RemoveAllOwnedCell;
     Procedure RemoveOwnedCell(Cell: TReportCell);
@@ -322,6 +322,7 @@ Type
   Public
     FLastPrintPageWidth, FLastPrintPageHeight: integer;
     PrintPaper:TPrinterPaper;
+    procedure DoVertSplitCell(ThisCell : TReportCell;SplitCount: Integer);
     function ZoomRate(height,width,HConst, WConst: integer): Integer;
     property SelectedCells: TList read FSelectCells ;
     { Public declarations }
@@ -1394,6 +1395,12 @@ End;
 
 
 
+function TReportCell.IsLastCell: boolean;
+begin
+  //result := OwnerLine.FCells.IndexOf(Self) = OwnerLine.FCells.Count - 1;
+  result := CellIndex = OwnerLine.FCells.Count - 1;
+end;
+
 { TReportLine }
 Procedure TReportLine.CalcLineHeight;
 Var
@@ -1780,9 +1787,6 @@ Begin
       If ThisCell.CellRect.Bottom < rectPaint.Top Then
         Continue;
 
-      // add lzl 画图
-      //  y:=ThisCell.CellTop+ ((ThisCell.OwnerLineHeight-thiscell.FBmp.Height) div 2);
-      //  x:=ThisCell.CellLeft+((ThisCell.CellWidth- thiscell.FBmp.Width) div 2);
       Acanvas := Tcanvas.Create;
       Acanvas.Handle := getdc(Handle);
       //Acanvas.Draw(x,y,loadbmp(thiscell));
@@ -3247,7 +3251,7 @@ Begin
   // FSelectCells.Clear;
 
 End;
-//lzla,用于修改模版文件cell内容
+
 
 
 Function TReportControl.CountFcells(crow: integer): integer;
@@ -3676,17 +3680,16 @@ Begin
     TargetFile.Free;
   End;
 End;
-
+// 垂直切分单元格。一个单元格拆分成多个横向单元格（和OwnerCell无关
 Procedure TReportControl.VSplitCell(Number: Integer);
 Var
-  ThisCell, TempCell, TempCell2: TReportCell;
+  ThisCell, TempCell, Cell2,ChildCell: TReportCell;
   xx, I, J, CellWidth, MaxCellCount: Integer;
 Begin
   If FSelectCells.Count <> 1 Then
     Exit;
 
   ThisCell := TReportCell(FSelectCells[0]);
-  //  InvalidateRect(Handle, @ThisCell.CellRect, True);
   InvalidateRect(Handle, @ThisCell.CellRect, False);
 
   MaxCellCount := trunc((ThisCell.CellRect.Right - ThisCell.CellRect.Left) / 12
@@ -3694,58 +3697,48 @@ Begin
 
   If MaxCellCount > Number Then
     MaxCellCount := Number;
-
-  xx := (ThisCell.CellRect.Right - ThisCell.CellRect.Left) Mod MaxCellCount;  //add lzl  平分后多余的宽度
-
+  DoVertSplitCell(ThisCell,MaxCellCount);
+  UpdateLines;
+End;
+Procedure TReportControl.DoVertSplitCell(ThisCell : TReportCell;SplitCount: Integer);
+Var
+  CurrentCell, Cell,ChildCell: TReportCell;
+  xx, I, J, CellWidth: Integer;
+Begin
+  //平分后多余的宽度 , 修正折分后不能对齐的问题
+  xx := (ThisCell.CellRect.Right - ThisCell.CellRect.Left) Mod SplitCount;
+  // 每个Cell的Width
   CellWidth := trunc((ThisCell.CellRect.Right - ThisCell.CellRect.Left) /
-    MaxCellCount);
+    SplitCount);
 
   ThisCell.CellWidth := CellWidth;
-
-  For I := 0 To MaxCellCount - 1 Do
+  For J := 0 To ThisCell.FCellsList.Count - 1 Do
+      TReportCell(ThisCell.FCellsList[J]).CellWidth := CellWidth;
+  For I := 1 To SplitCount - 1 Do
   Begin
-
-    If I = 0 Then
-    Begin
-      ThisCell.CellWidth := CellWidth;
-      For J := 0 To ThisCell.FCellsList.Count - 1 Do
-        TReportCell(ThisCell.FCellsList[J]).CellWidth := CellWidth;
-
-      continue;
-    End;
-
-    TempCell := TReportCell.Create;
-    TempCell.CopyCell(ThisCell, False);
-    TempCell.OwnerLine := ThisCell.OwnerLine;
-
-    If i = MaxCellCount - 1 Then        //add lzl  修正折分后不能对齐的问题
-      TempCell.CellWidth := CellWidth + xx;
-
-    If ThisCell.OwnerLine.FCells.IndexOf(ThisCell) =
-      ThisCell.OwnerLine.FCells.Count - 1 Then
-      TempCell.OwnerLine.FCells.Add(TempCell)
+    CurrentCell := TReportCell.Create;
+    CurrentCell.CopyCell(ThisCell, False);
+    CurrentCell.OwnerLine := ThisCell.OwnerLine;
+    If i = SplitCount - 1 Then
+      CurrentCell.CellWidth := CellWidth + xx;
+    if ThisCell.IsLastCell() then
+      CurrentCell.OwnerLine.FCells.Add(CurrentCell)
     Else
-      TempCell.OwnerLine.FCells.Insert(ThisCell.OwnerLine.FCells.IndexOf(ThisCell) + 1, TempCell);
+      CurrentCell.OwnerLine.FCells.Insert(ThisCell.CellIndex  + 1, CurrentCell);
 
     For J := 0 To ThisCell.FCellsList.Count - 1 Do
     Begin
-      TempCell2 := TReportCell.Create;
-      TempCell2.CopyCell(TempCell, False);
-      TempCell.AddOwnedCell(TempCell2);
-      TempCell2.OwnerLine := TReportCell(ThisCell.FCellsList[J]).OwnerLine;
-
-      If ThisCell.OwnerLine.FCells.IndexOf(ThisCell) =
-        ThisCell.OwnerLine.FCells.Count - 1 Then
-        TReportCell(ThisCell.FCellsList[J]).OwnerLine.FCells.Add(TempCell2)
+      Cell := TReportCell.Create;
+      Cell.CopyCell(CurrentCell, False);
+      CurrentCell.AddOwnedCell(Cell);
+      ChildCell :=  TReportCell(ThisCell.FCellsList[J]);
+      Cell.OwnerLine := ChildCell.OwnerLine;
+      If ThisCell.IsLastCell  Then
+        ChildCell.OwnerLine.FCells.Add(Cell)
       Else
-        TReportCell(ThisCell.FCellsList[J]).OwnerLine.FCells.Insert(
-          TReportCell(ThisCell.FCellsList[J]).OwnerLine.FCells.IndexOf(
-          TReportCell(ThisCell.FCellsList[J])) + 1, TempCell2);
+        ChildCell.OwnerLine.FCells.Insert(ChildCell.CellIndex + 1,Cell);
     End;
-
   End;
-
-  UpdateLines;
 End;
 // 打印模板。就是不填入数据的情况下，把设计态表格打印出来 。
 // 肯定只有一页，因此不需要考虑分页问题

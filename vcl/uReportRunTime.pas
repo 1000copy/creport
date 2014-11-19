@@ -655,30 +655,31 @@ function TReportRunTime.FillHeadList(var nHandHeight:integer):TList;
    result :=   HandLineList ;
   end;
 function TReportRunTime.GetHasDataPosition(var HasDataNo,cellIndex:integer):Boolean;
-  Var
+Var
   I, J, n,  TempDataSetCount:Integer;
   HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisLine, TempLine: TReportLine;
   ThisCell, NewCell: TReportCell;
   TempDataSet: TDataset;
   khbz: boolean;
-   begin
-      For i := 0 To FlineList.Count - 1 Do
+ begin
+ 
+    HasDataNo := -1 ;
+    For i := 0 To FlineList.Count - 1 Do
+    Begin
+      ThisLine := TReportLine(FlineList[i]);
+      For j := 0 To ThisLine.FCells.Count - 1 Do
       Begin
-        ThisLine := TReportLine(FlineList[i]);
-        For j := 0 To ThisLine.FCells.Count - 1 Do
-        Begin
-            ThisCell := TreportCell(ThisLine.FCells[j]);
-            If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] = '#') Then
-            Begin
-              //HasTable := true;
-              HasDataNo := i;
-              cellIndex := j ;
-              exit;
-            End;
-        End;                                //for j
-      End;
-  end;
+          ThisCell := TreportCell(ThisLine.FCells[j]);
+          If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] = '#') Then
+          Begin
+            HasDataNo := i;
+            cellIndex := j ;
+            exit;
+          End;
+      End;                                //for j
+    End;
+end;
 function TReportRunTime.FillFootList(var nHootHeight:integer ):TList;
   Var
   I, J, n,  TempDataSetCount:Integer;

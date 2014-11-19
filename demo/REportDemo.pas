@@ -26,6 +26,8 @@ type
     SaveDialog1: TSaveDialog;
     SpeedButton3: TSpeedButton;
     Button1: TButton;
+    btnVertSplite: TSpeedButton;
+    btnVertSplit2: TSpeedButton;
     procedure Button4Click(Sender: TObject);
     //procedure Button3Click(Sender: TObject);
     procedure Button5Click(Sender: TObject);
@@ -35,6 +37,8 @@ type
     procedure FormPaint(Sender: TObject);
     procedure SpeedButton3Click(Sender: TObject);
     procedure Button1Click(Sender: TObject);
+    procedure btnVertSpliteClick(Sender: TObject);
+    procedure btnVertSplit2Click(Sender: TObject);
   private
     { Private declarations }
   public
@@ -213,4 +217,45 @@ begin
 
 end;
 
+procedure TCReportDemoForm.btnVertSpliteClick(Sender: TObject);
+var j:integer;
+    CellFont: TLogFont;
+    cf: TFont;
+    Filename : string;
+    ThisCell:TReportCell;
+    R: TReportControl;
+begin
+    R := ReportControl1;
+    FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
+    r.SetWndSize(1058,748);
+    r.NewTable(3 ,2);
+    r.Lines[0].Select;
+    r.CombineCell;
+    ThisCell := ReportControl1.Cells[0,0] ;
+    ReportControl1.DoVertSplitCell(ThisCell,4);
+    r.UpdateLines;
+    r.SaveToFile(Filename);
+    r.ResetContent;
+    ReportRunTime1.EditReport(FileName);
+end;
+
+procedure TCReportDemoForm.btnVertSplit2Click(Sender: TObject);
+var Filename : string;
+    ThisCell:TReportCell;
+    R: TReportControl;
+begin
+    R := ReportControl1;
+    FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
+    r.SetWndSize(1058,748);
+    r.NewTable(3 ,2);
+    r.AddSelectedCell(r.Cells[0,0]);
+    r.AddSelectedCell(r.Cells[1,0]);
+    r.CombineCell;
+    ThisCell := ReportControl1.Cells[0,0] ;
+    ReportControl1.DoVertSplitCell(ThisCell,4);
+    r.UpdateLines;
+    r.SaveToFile(Filename);
+    r.ResetContent;
+    ReportRunTime1.EditReport(FileName);
+end;
 end.
