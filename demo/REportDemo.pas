@@ -6,7 +6,7 @@ interface
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
   ReportControl, StdCtrls, Db, DBTables, Grids, DBGrids,printers, Buttons,
-  ExtCtrls, ExtDlgs,uReportRunTime;
+  ExtCtrls, ExtDlgs,uReportRunTime,osservice;
 
 type
   TCReportDemoForm = class(TForm)
@@ -29,6 +29,7 @@ type
     btnVertSplite: TSpeedButton;
     btnVertSplit2: TSpeedButton;
     btnCombine: TSpeedButton;
+    btnRect: TSpeedButton;
     procedure Button4Click(Sender: TObject);
     //procedure Button3Click(Sender: TObject);
     procedure Button5Click(Sender: TObject);
@@ -41,6 +42,7 @@ type
     procedure btnVertSpliteClick(Sender: TObject);
     procedure btnVertSplit2Click(Sender: TObject);
     procedure btnCombineClick(Sender: TObject);
+    procedure btnRectClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -275,6 +277,72 @@ begin
     r.SaveToFile(Filename);
     r.ResetContent;
     ReportRunTime1.EditReport(FileName);
+end;
+
+procedure TCReportDemoForm.btnRectClick(Sender: TObject);
+var
+   w : WindowsOS;
+   r1,r2,r3 :TRect;
+begin
+    w := WindowsOS.Create ;
+    r1.Left := 0 ;
+    r1.Right := 1;
+    r1.top:= 0 ;
+    r1.Bottom := 1;
+
+    r2.Left := 3 ;
+    r2.Right := 4;
+    r2.top:= 0 ;
+    r2.Bottom := 1;
+
+    r3 := w.UnionRect(r1,r2);
+
+    r1.Left := 0 ;
+    r1.Right := 4;
+    r1.top:= 0 ;
+    r1.Bottom := 1;
+
+    r2.Left := 3 ;
+    r2.Right := 4;
+    r2.top:= 0 ;
+    r2.Bottom := 1;
+
+    r3 := w.IntersectRect(r1,r2);
+
+    r1.Left := 0 ;
+    r1.Right := 1;
+    r1.top:= 0 ;
+    r1.Bottom := 1;
+
+    r2.Left := 3 ;
+    r2.Right := 4;
+    r2.top:= 0 ;
+    r2.Bottom := 1;
+
+    r3 := w.IntersectRect(r1,r2);
+    r1.Left := 0 ;
+    r1.Right := 1;
+    r1.top:= 0 ;
+    r1.Bottom := 1;
+
+    r2.Left := 3 ;
+    r2.Right := 4;
+    r2.top:= 0 ;
+    r2.Bottom := 1;
+
+    w.contains(r1,r2);
+
+    r1.Left := 0 ;
+    r1.Right := 4;
+    r1.top:= 0 ;
+    r1.Bottom := 1;
+
+    r2.Left := 3 ;
+    r2.Right := 4;
+    r2.top:= 0 ;
+    r2.Bottom := 1;
+    w.contains(r1,r2);
+
 end;
 
 end.

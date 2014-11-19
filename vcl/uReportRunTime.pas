@@ -5,9 +5,9 @@ uses ReportControl,  Windows, Messages, SysUtils,
   {$WARNINGS OFF}FileCtrl,{$WARNINGS ON}
    Classes, Graphics, Controls,
   Forms, Dialogs, Printers, Menus, Db,
-  DesignEditors, ExtCtrls;
+  DesignEditors, ExtCtrls,osservice;
 Procedure Register;
-procedure CheckError(condition:Boolean ;msg :string);
+
 type
   EachCellProc =  procedure (ThisCell:TReportCell) of object;
   EachLineProc =  procedure (ThisLine:TReportLine)of object;
@@ -1785,11 +1785,6 @@ End;
 procedure TReportRunTime.EditReport(FileName:String);
 begin
   TCreportform.EditReport(FileName);
-end;
-procedure CheckError(condition:Boolean ;msg :string);
-begin
-  if condition then
-    raise Exception.Create(msg);
 end;
 Procedure TReportRunTime.updatepage;
 Var

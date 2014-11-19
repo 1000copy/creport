@@ -137,7 +137,7 @@ object CReportDemoForm: TCReportDemoForm
     TabOrder = 3
     object SpeedButton3: TSpeedButton
       Left = -3
-      Top = 256
+      Top = 272
       Width = 105
       Height = 24
       Caption = #21160#24577#25253#34920#31034#20363
@@ -191,6 +191,20 @@ object CReportDemoForm: TCReportDemoForm
       ParentFont = False
       OnClick = btnCombineClick
     end
+    object btnRect: TSpeedButton
+      Left = 10
+      Top = 240
+      Width = 84
+      Height = 24
+      Caption = 'Rect'
+      Font.Charset = GB2312_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -14
+      Font.Name = #26999#20307'_GB2312'
+      Font.Style = []
+      ParentFont = False
+      OnClick = btnRectClick
+    end
     object Button3: TButton
       Left = 10
       Top = 45
@@ -211,9 +225,9 @@ object CReportDemoForm: TCReportDemoForm
     end
     object Button4: TButton
       Left = 10
-      Top = 290
+      Top = 296
       Width = 83
-      Height = 32
+      Height = 18
       Caption = #20851#38381
       Font.Charset = GB2312_CHARSET
       Font.Color = clWindowText

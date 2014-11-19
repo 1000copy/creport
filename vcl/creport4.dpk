@@ -46,6 +46,7 @@ contains
   TB97Ctls in 'TB97Ctls.pas',
   TB97Reg in 'TB97Reg.pas',
   TB97Tlbr in 'TB97Tlbr.pas',
-  uReportRunTime in 'uReportRunTime.pas';
+  uReportRunTime in 'uReportRunTime.pas',
+  osservice in 'osservice.pas';
 
 end.

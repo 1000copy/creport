@@ -8,7 +8,7 @@ Uses
   {$WARNINGS OFF}FileCtrl,{$WARNINGS ON}
    Classes, Graphics, Controls,
   Forms, Dialogs, Printers, Menus, Db,
-  DesignEditors, ExtCtrls;
+  DesignEditors, ExtCtrls,osservice;
 type
   TPrinterPaper = class
   private
@@ -2642,128 +2642,187 @@ Var
   ThisCell, FirstCell: TReportCell;
   ThisLine: TReportLine;
   TempLeft, TempRight: Integer;
-  CellsToDelete: TList;
-  CellsToCombine: TList;
   TempRect: TMyRect;
-Begin
-  // 判断是否可以合并：如果选中的CELL数量小于2
-  If FSelectCells.Count < 2 Then
-    Exit;
-  Count := FSelectCells.Count - 1;
-  For I := 0 To Count Do
-  Begin
-    ThisCell := TReportCell(FSelectCells[I]);
-
-    For J := 0 To ThisCell.FCellsList.Count - 1 Do
-      FSelectCells.Add(ThisCell.FCellsList[J]);
-  End;
-
   // LCJ : 描绘被选中的单元格的轮廓
-  LineArray := TList.Create;
-  For I := 0 To FLineList.Count - 1 Do
-  Begin
-    TempRect := TMyRect.Create;
-    TempRect.Left := 65535;
-    TempRect.Top := 0;
-    TempRect.Right := 0;
-    TempRect.Bottom := 0;
-    LineArray.Add(TempRect);
-  End;
-  For I := 0 To FSelectCells.Count - 1 Do
-  Begin
-    ThisCell := TReportCell(FSelectCells[I]);
-    If ThisCell.CellLeft < TMyRect(LineArray[ThisCell.OwnerLine.Index]).Left
-      Then
-      TMyRect(LineArray[ThisCell.OwnerLine.Index]).Left := ThisCell.CellLeft;
-
-    If ThisCell.CellRect.Right >
-      TMyRect(LineArray[ThisCell.OwnerLine.Index]).Right Then
-      TMyRect(LineArray[ThisCell.OwnerLine.Index]).Right :=
-        ThisCell.CellRect.Right;
-  End;
-  // LCJ: 跨多行的，如果左边，右边不对齐，是无法合并的
-  TempLeft := 0;
-  TempRight := 0;
-  For I := 0 To LineArray.Count - 1 Do
-  Begin
-    If TMyRect(LineArray[I]).Left = 65535 Then
-      Continue;
-
-    If (TempLeft = 0) And (TempRight = 0) Then
-    Begin
-      TempLeft := TMyRect(LineArray[I]).Left;
-      TempRight := TMyRect(LineArray[I]).Right;
-    End
-    Else
-    Begin
-      If (TempLeft <> TMyRect(LineArray[I]).Left) or (TempRight <> TMyRect(LineArray[I]).Right) Then
-        Exit;
-    End;
-  End;
-
-  // 将同一行上的单元格合并
-  CellsToDelete := TList.Create;
-  CellsToCombine := TList.Create;
-
-  For I := 0 To LineArray.Count - 1 Do
-  Begin
-    If TMyRect(LineArray[I]).Left = 65535 Then
-      Continue;
-
-    CellsToDelete.Clear;
-
-    FirstCell := Nil;
-    ThisLine := TReportLine(FLineList[I]);
-    For J := 0 To ThisLine.FCells.Count - 1 Do
-    Begin
-      ThisCell := TReportCell(ThisLine.FCells[J]);
-      If IsCellSelected(ThisCell) Then
+  function OutlineSelection(FSelectCells:TList):TList;
+  var LineArray:TList;
+  Var
+    I, J, Count: Integer;
+  begin
+      LineArray := TList.Create;
+      For I := 0 To FLineList.Count - 1 Do
       Begin
-        If FirstCell = Nil Then
+        TempRect := TMyRect.Create;
+        TempRect.Left := 65535;
+        TempRect.Top := 0;
+        TempRect.Right := 0;
+        TempRect.Bottom := 0;
+        LineArray.Add(TempRect);
+      End;
+      For I := 0 To FSelectCells.Count - 1 Do
+      Begin
+        ThisCell := TReportCell(FSelectCells[I]);
+        If ThisCell.CellLeft < TMyRect(LineArray[ThisCell.OwnerLine.Index]).Left
+          Then
+          TMyRect(LineArray[ThisCell.OwnerLine.Index]).Left := ThisCell.CellLeft;
+
+        If ThisCell.CellRect.Right >
+          TMyRect(LineArray[ThisCell.OwnerLine.Index]).Right Then
+          TMyRect(LineArray[ThisCell.OwnerLine.Index]).Right :=
+            ThisCell.CellRect.Right;
+      End;
+      result := LineArray;
+  end;
+  procedure CheckValid;
+  Var
+  I, J, Count: Integer;
+  begin
+      checkError(FSelectCells.Count < 2,'请至少选择两个单元格');
+      Count := FSelectCells.Count - 1;
+      For I := 0 To Count Do
+      Begin
+        ThisCell := TReportCell(FSelectCells[I]);
+
+        For J := 0 To ThisCell.FCellsList.Count - 1 Do
+          FSelectCells.Add(ThisCell.FCellsList[J]);
+      End;
+      LineArray := OutlineSelection(FSelectCells);    
+      // LCJ: 跨多行的，如果左边，右边不对齐，是无法合并的
+      TempLeft := 0;
+      TempRight := 0;
+      For I := 0 To LineArray.Count - 1 Do
+      Begin
+        If TMyRect(LineArray[I]).Left = 65535 Then
+          Continue;
+        If (TempLeft = 0) And (TempRight = 0) Then
         Begin
-          FirstCell := ThisCell;
-          CellsToCombine.Add(ThisCell);
+          TempLeft := TMyRect(LineArray[I]).Left;
+          TempRight := TMyRect(LineArray[I]).Right;
         End
         Else
         Begin
-          FirstCell.CellWidth := FirstCell.CellWidth + ThisCell.CellWidth;
-          CellsToDelete.Add(ThisCell);
+          If (TempLeft <> TMyRect(LineArray[I]).Left) or (TempRight <> TMyRect(LineArray[I]).Right) Then
+            checkError(true,'选择矩形不够规整，请重选');
         End;
+      End;
+      LineArray.Free;
+  end;
+  // 将同一行上的单元格合并
+  procedure CombineSameLineCell;
+  Var
+    I, J, Count: Integer;
+    LineArray : TList;
+    CellsToDelete: TList;
+  begin
+    LineArray := OutlineSelection(FSelectCells);
+    CellsToDelete := TList.Create;
+
+    For I := 0 To LineArray.Count - 1 Do
+    Begin
+      If TMyRect(LineArray[I]).Left = 65535 Then
+        Continue;
+
+      CellsToDelete.Clear;
+
+      FirstCell := Nil;
+      ThisLine := TReportLine(FLineList[I]);
+      For J := 0 To ThisLine.FCells.Count - 1 Do
+      Begin
+        ThisCell := TReportCell(ThisLine.FCells[J]);
+        If IsCellSelected(ThisCell) Then
+        Begin
+          If FirstCell = Nil Then
+          Begin
+            FirstCell := ThisCell;
+          End
+          Else
+          Begin
+            FirstCell.CellWidth := FirstCell.CellWidth + ThisCell.CellWidth;
+            CellsToDelete.Add(ThisCell);
+          End;
+        End;
+      End;
+
+      For J := CellsToDelete.Count - 1 Downto 0 Do
+      Begin
+        ThisLine.FCells.Remove(CellsToDelete[J]);
+        RemoveSelectedCell(CellsToDelete[J]);
+        TReportCell(CellsToDelete[J]).Free;
       End;
     End;
 
-    For J := CellsToDelete.Count - 1 Downto 0 Do
+    CellsToDelete.Free;
+    LineArray.free;
+  end;
+  procedure CombineSameColumnCell;
+  Var
+    I, J, Count: Integer;
+    LineArray :TList;
+    CellsToCombine: TList;
+  begin
+    LineArray := OutlineSelection(FSelectCells);
+    CellsToCombine := TList.Create;
+    For I := 0 To LineArray.Count - 1 Do
     Begin
-      ThisLine.FCells.Remove(CellsToDelete[J]);
-      RemoveSelectedCell(CellsToDelete[J]);
-      TReportCell(CellsToDelete[J]).Free;
+      If TMyRect(LineArray[I]).Left = 65535 Then
+        Continue;        
+      FirstCell := Nil;
+      ThisLine := TReportLine(FLineList[I]);
+      For J := 0 To ThisLine.FCells.Count - 1 Do
+      Begin
+        ThisCell := TReportCell(ThisLine.FCells[J]);
+        If IsCellSelected(ThisCell) Then
+        Begin
+          If FirstCell = Nil Then
+          Begin
+            FirstCell := ThisCell;
+            CellsToCombine.Add(ThisCell);
+          End
+        End;
+      End;
+
     End;
-  End;
-
-  CellsToDelete.Free;
-
-  // 合并同一列的单元格 -- 只要将下面行的Cell加入到第一行内cell的OwneredCell即可
-  For I := 0 To CellsToCombine.Count - 1 Do
-  Begin
-    If I > 0 Then
+    // 合并同一列的单元格 -- 只要将下面行的Cell加入到第一行内cell的OwneredCell即可
+    For I := 0 To CellsToCombine.Count - 1 Do
     Begin
-      TReportCell(CellsToCombine[0]).AddOwnedCell(TReportCell(CellsToCombine[I]));
+      If I > 0 Then
+      Begin
+        TReportCell(CellsToCombine[0]).AddOwnedCell(TReportCell(CellsToCombine[I]));
+      End;
+      InvalidateRect(Handle, @TReportCell(FSelectCells[I]).CellRect, False);
     End;
-    InvalidateRect(Handle, @TReportCell(FSelectCells[I]).CellRect, False);
-  End;
 
-  While LineArray.Count > 0 Do
-  Begin
-    TMyRect(LineArray[0]).Free;
-    LineArray.Delete(0);
-  End;
 
-  LineArray.Free;
+    OwnerCell := TReportCell(CellsToCombine[0]);
+    ClearSelect;
+    AddSelectedCell(OwnerCell);
+    UpdateLines;
+    CellsToCombine.Free;
+  end;
+  procedure DoCombineCell;
+  Var
+    I, J, Count: Integer;
+  begin
+    Count := FSelectCells.Count - 1;
+    For I := 0 To Count Do
+    Begin
+      ThisCell := TReportCell(FSelectCells[I]);
+      For J := 0 To ThisCell.FCellsList.Count - 1 Do
+        FSelectCells.Add(ThisCell.FCellsList[J]);
+    End;
+    CombineSameLineCell;
+    CombineSameColumnCell;
+    While LineArray.Count > 0 Do
+    Begin
+      TMyRect(LineArray[0]).Free;
+      LineArray.Delete(0);
+    End;
+    LineArray.Free;
 
-  OwnerCell := TReportCell(CellsToCombine[0]);
-  ClearSelect;
-  AddSelectedCell(OwnerCell);
-  UpdateLines;
+  end;
+Begin
+  CheckValid;
+  DoCombineCell;
 End;
 
 Procedure TReportControl.DeleteLine;
