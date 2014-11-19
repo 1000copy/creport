@@ -2636,7 +2636,7 @@ End;
 
 Procedure TReportControl.CombineCell;
 Var
-  I, J, Count: Integer;
+  I, J: Integer;
   OwnerCell: TReportCell;
   LineArray: TList;
   ThisCell, FirstCell: TReportCell;
@@ -2644,6 +2644,16 @@ Var
   TempLeft, TempRight: Integer;
   TempRect: TMyRect;
   // LCJ : 描绘被选中的单元格的轮廓
+  procedure freeLineArray;
+  begin
+    While LineArray.Count > 0 Do
+    Begin
+      TMyRect(LineArray[0]).Free;
+      LineArray.Delete(0);
+    End;
+    LineArray.Free;
+
+  end;
   function OutlineSelection(FSelectCells:TList):TList;
   var LineArray:TList;
   Var
@@ -2705,7 +2715,7 @@ Var
             checkError(true,'选择矩形不够规整，请重选');
         End;
       End;
-      LineArray.Free;
+      freeLineArray;
   end;
   // 将同一行上的单元格合并
   procedure CombineSameLineCell;
@@ -2752,7 +2762,7 @@ Var
     End;
 
     CellsToDelete.Free;
-    LineArray.free;
+    freeLineArray;
   end;
   procedure CombineSameColumnCell;
   Var
@@ -2798,31 +2808,18 @@ Var
     AddSelectedCell(OwnerCell);
     UpdateLines;
     CellsToCombine.Free;
-  end;
-  procedure DoCombineCell;
-  Var
-    I, J, Count: Integer;
-  begin
-    Count := FSelectCells.Count - 1;
-    For I := 0 To Count Do
-    Begin
-      ThisCell := TReportCell(FSelectCells[I]);
-      For J := 0 To ThisCell.FCellsList.Count - 1 Do
-        FSelectCells.Add(ThisCell.FCellsList[J]);
-    End;
-    CombineSameLineCell;
-    CombineSameColumnCell;
-    While LineArray.Count > 0 Do
-    Begin
-      TMyRect(LineArray[0]).Free;
-      LineArray.Delete(0);
-    End;
-    LineArray.Free;
-
-  end;
+    FreeLineArray;
+  end; 
 Begin
   CheckValid;
-  DoCombineCell;
+  For I := 0 To FSelectCells.Count - 1 Do
+  Begin
+    ThisCell := TReportCell(FSelectCells[I]);
+    For J := 0 To ThisCell.FCellsList.Count - 1 Do
+      FSelectCells.Add(ThisCell.FCellsList[J]);
+  End;
+  CombineSameLineCell;
+  CombineSameColumnCell;
 End;
 
 Procedure TReportControl.DeleteLine;
