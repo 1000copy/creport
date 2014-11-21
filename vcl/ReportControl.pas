@@ -230,8 +230,6 @@ Type
     // font
     Property LogFont: TLOGFONT Read FLogFont Write SetLogFont;
   End;
-  TCellList = class(TList)
-  end;
   TReportLine = Class(TObject)
   public
     { Private declarations }
@@ -266,8 +264,7 @@ Type
     Destructor Destroy; Override;
 
   End;
-
-  TSelectedCells = class(TCellList)
+  TCellList = class(TList)
   private
     ReportControl:TReportControl;
   public
@@ -285,7 +282,7 @@ Type
     FPreviewStatus: Boolean;
 
     FLineList: TList;
-    FSelectCells: TSelectedCells;
+    FSelectCells: TCellList;
     FEditCell: TReportCell;
 
     FReportScale: Integer;
@@ -333,7 +330,7 @@ Type
     PrintPaper:TPrinterPaper;
     procedure DoVertSplitCell(ThisCell : TReportCell;SplitCount: Integer);
     function ZoomRate(height,width,HConst, WConst: integer): Integer;
-    property SelectedCells: TSelectedCells read FSelectCells ;
+    property SelectedCells: TCellList read FSelectCells ;
     { Public declarations }
     Procedure SetSelectedCellFont(cf: TFont);
     procedure SelectLines(row1, row2: integer);
@@ -1597,7 +1594,7 @@ Begin
 
   Color := clWhite;
   FLineList := TList.Create;
-  FSelectCells := TSelectedCells.Create(Self);
+  FSelectCells := TCellList.Create(Self);
 
   FEditCell := Nil;
 
@@ -4096,12 +4093,12 @@ end;
 
 { TSelectedCells }
 
-constructor TSelectedCells.Create(ReportControl:TReportControl);
+constructor TCellList.Create(ReportControl:TReportControl);
 begin
   self.ReportControl := ReportControl;
 end;
 
-function TSelectedCells.IsRegularForCombine(): Boolean;
+function TCellList.IsRegularForCombine(): Boolean;
 var i,j:integer;
   bigrect : TRect;
   os : WindowsOS ;
