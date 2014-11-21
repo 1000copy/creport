@@ -230,7 +230,8 @@ Type
     // font
     Property LogFont: TLOGFONT Read FLogFont Write SetLogFont;
   End;
-
+  TCellList = class(TList)
+  end;
   TReportLine = Class(TObject)
   public
     { Private declarations }
@@ -263,8 +264,16 @@ Type
     procedure Select ;
     Constructor Create;
     Destructor Destroy; Override;
-      
+
   End;
+
+  TSelectedCells = class(TCellList)
+  private
+    ReportControl:TReportControl;
+  public
+    constructor Create(ReportControl:TReportControl);
+    function IsRegularForCombine():Boolean;
+  end;
 
   TReportControl = Class(TWinControl)
   private
@@ -276,7 +285,7 @@ Type
     FPreviewStatus: Boolean;
 
     FLineList: TList;
-    FSelectCells: TList;
+    FSelectCells: TSelectedCells;
     FEditCell: TReportCell;
 
     FReportScale: Integer;
@@ -324,7 +333,7 @@ Type
     PrintPaper:TPrinterPaper;
     procedure DoVertSplitCell(ThisCell : TReportCell;SplitCount: Integer);
     function ZoomRate(height,width,HConst, WConst: integer): Integer;
-    property SelectedCells: TList read FSelectCells ;
+    property SelectedCells: TSelectedCells read FSelectCells ;
     { Public declarations }
     Procedure SetSelectedCellFont(cf: TFont);
     procedure SelectLines(row1, row2: integer);
@@ -622,6 +631,13 @@ Begin
     TReportCell(TempCellList[I]).OwnerCell := Self;
   End;
 
+//  TempCellList := Cell.FCellsList ;
+//  For I := 0 To TempCellList.Count - 1 Do
+//  Begin
+//    FCellsList.Add(TempCellList[I]);
+//    TReportCell(TempCellList[I]).OwnerCell := Self;
+//  End;
+//  Cell.RemoveAllOwnedCell();
 End;
 
 Procedure TReportCell.RemoveAllOwnedCell;
@@ -1555,6 +1571,8 @@ begin
   self.FReportControl.SetCellsFocus(FIndex,0,FIndex,FCells.count -1);  
 end;
 
+
+
 {TReportControl}
 
 Procedure TReportControl.CreateWnd;
@@ -1579,7 +1597,7 @@ Begin
 
   Color := clWhite;
   FLineList := TList.Create;
-  FSelectCells := TList.Create;
+  FSelectCells := TSelectedCells.Create(Self);
 
   FEditCell := Nil;
 
@@ -2638,12 +2656,11 @@ Procedure TReportControl.CombineCell;
 Var
   I, J: Integer;
   OwnerCell: TReportCell;
-  LineArray: TList;
   ThisCell, FirstCell: TReportCell;
   ThisLine: TReportLine;
   TempLeft, TempRight: Integer;
   TempRect: TMyRect;
-  // LCJ : 描绘被选中的单元格的轮廓
+  LineArray :TList;
   procedure freeLineArray;
   begin
     While LineArray.Count > 0 Do
@@ -2651,8 +2668,7 @@ Var
       TMyRect(LineArray[0]).Free;
       LineArray.Delete(0);
     End;
-    LineArray.Free;
-
+    LineArray.Free;  
   end;
   function OutlineSelection(FSelectCells:TList):TList;
   var LineArray:TList;
@@ -2683,45 +2699,10 @@ Var
       End;
       result := LineArray;
   end;
-  procedure CheckValid;
-  Var
-  I, J, Count: Integer;
-  begin
-      checkError(FSelectCells.Count < 2,'请至少选择两个单元格');
-      Count := FSelectCells.Count - 1;
-      For I := 0 To Count Do
-      Begin
-        ThisCell := TReportCell(FSelectCells[I]);
-
-        For J := 0 To ThisCell.FCellsList.Count - 1 Do
-          FSelectCells.Add(ThisCell.FCellsList[J]);
-      End;
-      LineArray := OutlineSelection(FSelectCells);    
-      // LCJ: 跨多行的，如果左边，右边不对齐，是无法合并的
-      TempLeft := 0;
-      TempRight := 0;
-      For I := 0 To LineArray.Count - 1 Do
-      Begin
-        If TMyRect(LineArray[I]).Left = 65535 Then
-          Continue;
-        If (TempLeft = 0) And (TempRight = 0) Then
-        Begin
-          TempLeft := TMyRect(LineArray[I]).Left;
-          TempRight := TMyRect(LineArray[I]).Right;
-        End
-        Else
-        Begin
-          If (TempLeft <> TMyRect(LineArray[I]).Left) or (TempRight <> TMyRect(LineArray[I]).Right) Then
-            checkError(true,'选择矩形不够规整，请重选');
-        End;
-      End;
-      freeLineArray;
-  end;
-  // 将同一行上的单元格合并
+   // 将同一行上的单元格合并
   procedure CombineSameLineCell;
   Var
     I, J, Count: Integer;
-    LineArray : TList;
     CellsToDelete: TList;
   begin
     LineArray := OutlineSelection(FSelectCells);
@@ -2751,8 +2732,7 @@ Var
             CellsToDelete.Add(ThisCell);
           End;
         End;
-      End;
-
+      End;             
       For J := CellsToDelete.Count - 1 Downto 0 Do
       Begin
         ThisLine.FCells.Remove(CellsToDelete[J]);
@@ -2760,17 +2740,16 @@ Var
         TReportCell(CellsToDelete[J]).Free;
       End;
     End;
-
-    CellsToDelete.Free;
     freeLineArray;
+    CellsToDelete.Free;
   end;
   procedure CombineSameColumnCell;
   Var
     I, J, Count: Integer;
-    LineArray :TList;
     CellsToCombine: TList;
   begin
     LineArray := OutlineSelection(FSelectCells);
+    //GET CellsToCombine 
     CellsToCombine := TList.Create;
     For I := 0 To LineArray.Count - 1 Do
     Begin
@@ -2790,28 +2769,24 @@ Var
           End
         End;
       End;
-
     End;
-    // 合并同一列的单元格 -- 只要将下面行的Cell加入到第一行内cell的OwneredCell即可
-    For I := 0 To CellsToCombine.Count - 1 Do
-    Begin
-      If I > 0 Then
-      Begin
-        TReportCell(CellsToCombine[0]).AddOwnedCell(TReportCell(CellsToCombine[I]));
-      End;
-      InvalidateRect(Handle, @TReportCell(FSelectCells[I]).CellRect, False);
-    End;
-
-
     OwnerCell := TReportCell(CellsToCombine[0]);
+    // 合并同一列的单元格 -- 只要将下面行的Cell加入到第一行内cell的OwneredCell即可
+    For I := 1 To CellsToCombine.Count - 1 Do
+    Begin
+        OwnerCell.AddOwnedCell(TReportCell(CellsToCombine[I]));
+        InvalidateRect(Handle, @TReportCell(FSelectCells[I]).CellRect, False);
+    End;
+    FreeLineArray;
+    CellsToCombine.Free;
     ClearSelect;
     AddSelectedCell(OwnerCell);
-    UpdateLines;
-    CellsToCombine.Free;
-    FreeLineArray;
-  end; 
+  end;
+
+  // LCJ : 描绘被选中的单元格的轮廓
 Begin
-  CheckValid;
+  checkError(FSelectCells.Count >= 2,'请至少选择两个单元格');
+  checkError(FSelectCells.IsRegularForCombine  ,'选择矩形不够规整，请重选');
   For I := 0 To FSelectCells.Count - 1 Do
   Begin
     ThisCell := TReportCell(FSelectCells[I]);
@@ -2819,7 +2794,9 @@ Begin
       FSelectCells.Add(ThisCell.FCellsList[J]);
   End;
   CombineSameLineCell;
-  CombineSameColumnCell;
+  CombineSameColumnCell; 
+  UpdateLines;
+  Self.Invalidate;
 End;
 
 Procedure TReportControl.DeleteLine;
@@ -4115,6 +4092,46 @@ begin
     result :=z1
   else
     result :=z2;
+end;
+
+{ TSelectedCells }
+
+constructor TSelectedCells.Create(ReportControl:TReportControl);
+begin
+  self.ReportControl := ReportControl;
+end;
+
+function TSelectedCells.IsRegularForCombine(): Boolean;
+var i,j:integer;
+  bigrect : TRect;
+  os : WindowsOS ;
+  l : TReportLine;
+  c : TReportCell;
+begin
+  result := true;
+  os.SetRectEmpty (bigrect);
+  try
+    os := WindowsOS.Create;
+    for i := 0 to Count -1 do
+      bigrect := os.UnionRect(bigrect,TReportCell(Items[i]).CellRect);
+    for i := 0 to ReportControl.FLineList.count -1 do  begin
+      l := ReportControl.Lines[i];
+      for j := 0 to l.FCells.Count -1 do begin
+        c := l.FCells[j] ;
+        if
+        os.Contains(bigrect,c.CellRect) and
+        (c.OwnerCell = nil) and
+        (not ReportControl.IsCellSelected(c)) then
+        begin
+          result := false;
+          break;
+        end;
+      end;
+    end;
+
+  finally
+    os.free;
+  end;
 end;
 
 End.

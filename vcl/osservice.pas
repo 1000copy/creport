@@ -6,12 +6,14 @@ uses
    windows ,classes,SysUtils;
 
 type
+  TBlueException = class(Exception);
   WindowsOS = class
   private
   public
     function UnionRect(lprcSrc1, lprcSrc2: TRect): TRect;
     function IntersectRect(lprcSrc1, lprcSrc2: TRect): TRect;
     function Contains(Bigger, smaller: TRect):boolean;
+    procedure SetRectEmpty(var r :TRect);
   end;
   procedure CheckError(condition:Boolean ;msg :string);
 implementation
@@ -45,8 +47,13 @@ begin
 end;
 procedure CheckError(condition:Boolean ;msg :string);
 begin
-  if condition then
-    raise Exception.Create(msg);
+  if not condition then
+    raise TBlueException.Create(msg);
+end;
+
+procedure WindowsOS.SetRectEmpty(var r: TRect);
+begin
+  windows.SetRectEmpty(r);
 end;
 
 end.
