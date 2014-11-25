@@ -2732,48 +2732,7 @@ Procedure TReportControl.CombineCell;
         End;
       end;
   end;
-  procedure CombineHorz1;
-  Var
-    I, J: Integer;
-    CellsToDelete: TList;
-    ThisCell, FirstCell: TReportCell;
-    ThisLine: TReportLine;
-  begin
-    CellsToDelete := TList.Create;
-    try
-      For I := 0 To FLineList.Count - 1 Do
-        If TReportLine(FLineList[I]).IsSelected Then
-        Begin
-          CellsToDelete.Clear;  
-          FirstCell := Nil;
-          ThisLine := TReportLine(FLineList[I]);
-          For J := 0 To ThisLine.FCells.Count - 1 Do
-          Begin
-            ThisCell := TReportCell(ThisLine.FCells[J]);
-            If IsCellSelected(ThisCell) Then
-            Begin
-              If FirstCell = Nil Then
-              Begin
-                FirstCell := ThisCell;
-              End
-              Else
-              Begin
-                FirstCell.CellWidth := FirstCell.CellWidth + ThisCell.CellWidth;
-                CellsToDelete.Add(ThisCell);
-              End;
-            End;
-          End;
-          For J := CellsToDelete.Count - 1 Downto 0 Do
-          Begin
-            ThisLine.FCells.Remove(CellsToDelete[J]);
-            RemoveSelectedCell(CellsToDelete[J]);
-            TReportCell(CellsToDelete[J]).Free;
-          End;
-        End;
-    finally
-      CellsToDelete.Free;
-    end;
-  end;
+
   // 垂直合并：同一列的Cell合并。Return：合并后的Cell。
   function CombineVert:TReportCell;
   Var
