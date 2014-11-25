@@ -2771,42 +2771,7 @@ Procedure TReportControl.CombineCell;
     end;
     Result := OwnerCell ;
   end;
-  function CombineVert1:TReportCell;
-  Var
-    I, J, Count: Integer;
-    CellsToCombine: TList;
-    OwnerCell: TReportCell;
-    ThisCell, FirstCell: TReportCell;
-    ThisLine: TReportLine;
-  begin
-    //GET CellsToCombine
-    CellsToCombine := TList.Create;
-    try
-      For I := 0 To FLineList.Count - 1 Do
-      Begin
-        ThisLine := FLineList[I];
-        if ThisLine.IsSelected then
-        begin
-          For J := 0 To ThisLine.FCells.Count - 1 Do
-          Begin
-            ThisCell := TReportCell(ThisLine.FCells[J]);
-            If ThisCell.IsSelected Then
-            Begin
-                CellsToCombine.Add(ThisCell);
-                Continue ;
-            End;
-          End;
-        end;
-      End;
-      OwnerCell := TReportCell(CellsToCombine[0]);
-      // 合并同一列的单元格 -- 只要将下面行的Cell加入到第一行内cell的OwneredCell即可
-      For I := 1 To CellsToCombine.Count - 1 Do
-          OwnerCell.Own(TReportCell(CellsToCombine[I]));
-    finally
-      CellsToCombine.Free;
-    end;
-    Result := OwnerCell ;
-  end;
+ 
 
 // LCJ : 描绘被选中的单元格的轮廓
 // LCJ : 把comment 字体的italic去掉。很舒服。感谢 steve jobs .
