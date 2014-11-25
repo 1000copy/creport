@@ -5,7 +5,7 @@ uses ReportControl,  Windows, Messages, SysUtils,
   {$WARNINGS OFF}FileCtrl,{$WARNINGS ON}
    Classes, Graphics, Controls,
   Forms, Dialogs, Printers, Menus, Db,
-  DesignEditors, ExtCtrls,osservice;
+  DesignEditors, ExtCtrls,osservice,margin;
 Procedure Register;
 
 type
@@ -124,7 +124,7 @@ type
   End;
 implementation
 { TReportRunTime }
-Uses Preview, REPmess, margin,Creport;
+Uses Preview, REPmess, Creport;
 Procedure TReportRunTime.LoadPage(I:integer);
 Var
   strFileDir: String;
@@ -1209,7 +1209,6 @@ Function TReportRunTime.PrintSET(prfile: String): boolean;
 Begin
   Application.CreateForm(TMarginForm, MarginForm);
   MarginForm.filename.Caption := prfile;
-
   Try
     MarginForm.ShowModal;
     result :=  MarginForm.okset ;

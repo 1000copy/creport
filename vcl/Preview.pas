@@ -69,7 +69,7 @@ var
 implementation
 
 uses margin, REPmess
-     , Creport,About,Border,vsplit,Color,diagonal,margink,NewDialog; // add ¿Ó‘Û¬◊
+     , Creport,About,Border,vsplit,Color,diagonal,NewDialog; // add ¿Ó‘Û¬◊
 
 {$R *.DFM}
 
@@ -344,7 +344,7 @@ procedure TPreviewForm.FormResize(Sender: TObject);
 var z1,z2:integer;
 begin
 
-// add ¿Ó‘Û¬◊
+ 
 ////////////////////////////////
 
   zoomxxx:=ReportControl1.ZoomRate(Height,Width,110,170);
@@ -356,7 +356,7 @@ begin
 
 end;
 
-procedure TPreviewForm.SpeedButton3Click(Sender: TObject);// add ¿Ó‘Û¬◊
+procedure TPreviewForm.SpeedButton3Click(Sender: TObject); 
 
 begin
   DoFit();
@@ -366,7 +366,7 @@ end;
 procedure TPreviewForm.DoFit();
 
 begin
-  ReportControl1.FreeEdit; // add ¿Ó‘Û¬◊
+  ReportControl1.FreeEdit;  
   zoomxxx := ReportControl1.ZoomRate(Height,Width,110,170);
   ShowWindow(ReportControl1.Handle, SW_HIDE);
   ReportControl1.ReportScale := zoomxxx;
@@ -381,7 +381,6 @@ begin
   Application.CreateForm(TBorderform,Borderform );
   Application.CreateForm(TColorform,Colorform );
   Application.CreateForm(Tdiagonalform,diagonalform);
-  Application.CreateForm(Tmarginkform,marginkform );
   Application.CreateForm(TfrmNewTable,frmNewTable);
   Application.CreateForm(Tvsplitform,vsplitform);
 
@@ -401,10 +400,8 @@ begin
   Borderform.Free;
   Colorform.Free;
   diagonalform.Free;
-  marginkform.Free;
   frmNewTable.Free;
-  vsplitform.Free;
-
+  vsplitform.Free;    
 end;
 
 procedure TPreviewForm.FormActivate(Sender: TObject);

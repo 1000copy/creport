@@ -49,28 +49,33 @@ var
   prPageXy:integer;
 begin
   okset:=false;
-  ReportControl1.LoadFromFile(filename.Caption); //装入模版以做修改页面或纸张
-  MarginRect := ReportControl1.GetMargin;
-  LeftMargin.Value := MarginRect.Left;
-  TopMargin.Value := MarginRect.Top;
-  RightMargin.Value := MarginRect.Right;
-  BottomMargin.Value := MarginRect.Bottom;  
-  ReportControl1.PrintPaper.SetPaperWithCurrent;
-
+  if (FileExists( filename.Caption)) then
+  begin
+    ReportControl1.LoadFromFile(filename.Caption); //装入模版以做修改页面或纸张
+    MarginRect := ReportControl1.GetMargin;
+    LeftMargin.Value := MarginRect.Left;
+    TopMargin.Value := MarginRect.Top;
+    RightMargin.Value := MarginRect.Right;
+    BottomMargin.Value := MarginRect.Bottom;
+    ReportControl1.PrintPaper.SetPaperWithCurrent;
+  end;
 end;
 // Margin ,Confirm Button,or Save Button
 procedure TMarginForm.BitBtn1Click(Sender: TObject);
 var
   MarginRect: TRect;
 begin
-  ReportControl1.FLastPrintPageWidth:=0;
-  ReportControl1.CalcWndSize; 
+  if (FileExists( filename.Caption)) then
+  begin
+    ReportControl1.FLastPrintPageWidth:=0;
+    ReportControl1.CalcWndSize;
 
-  ReportControl1.SetMargin(LeftMargin.Value,TopMargin.Value,RightMargin.Value,BottomMargin.Value);
-  ReportControl1.SaveToFile(filename.Caption);
+    ReportControl1.SetMargin(LeftMargin.Value,TopMargin.Value,RightMargin.Value,BottomMargin.Value);
+    ReportControl1.SaveToFile(filename.Caption);
 
-  ReportControl1.ResetContent; 
-  okset:=true;
+    ReportControl1.ResetContent;
+    okset:=true;
+  end;
 end;
 
 procedure TMarginForm.SpeedButton2Click(Sender: TObject);

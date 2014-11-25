@@ -212,7 +212,7 @@ var
 
 implementation
 
-uses NewDialog, Border, diagonal, Color, vsplit,about,margink;
+uses NewDialog, Border, diagonal, Color, vsplit,about,margin;
 
 {$R *.DFM}
 
@@ -547,34 +547,23 @@ var
   MarginRect: TRect;
 begin
  
-  with MarginkForm do
-  begin
-    MarginRect := ReportControl1.GetMargin;
-    LeftMargin.Value := MarginRect.Left;
-    TopMargin.Value := MarginRect.Top;
-    RightMargin.Value := MarginRect.Right;
-    BottomMargin.Value := MarginRect.Bottom;
-
-  end;
+  MarginRect := ReportControl1.GetMargin;
+  MarginForm.LeftMargin.Value := MarginRect.Left;
+  MarginForm.TopMargin.Value := MarginRect.Top;
+  MarginForm.RightMargin.Value := MarginRect.Right;
+  MarginForm.BottomMargin.Value := MarginRect.Bottom;
   ReportControl1.PrintPaper.Batch;
-  if MarginkForm.ShowModal = mrOK then
+  if MarginForm.ShowModal = mrOK then
   begin
-    with MarginkForm do
-    begin
-      ReportControl1.SetMargin(LeftMargin.Value,
-        TopMargin.Value,
-        RightMargin.Value,
-        BottomMargin.Value);
-
-          savebz:=false;
-   ReportControl1.FLastPrintPageWidth:=0;
-   ReportControl1.CalcWndSize;
-
-
-    end;
+      ReportControl1.SetMargin(MarginForm.LeftMargin.Value,
+        MarginForm.TopMargin.Value,
+        MarginForm.RightMargin.Value,
+        MarginForm.BottomMargin.Value);
+      savebz:=false;
+      ReportControl1.FLastPrintPageWidth:=0;
+      ReportControl1.CalcWndSize;
+      ReportControl1.CalcWndSize;
   end;
- 
-  
 end;
 
 procedure TCreportForm.FileCloseClick(Sender: TObject); // update ¿Ó‘Û¬◊
@@ -1143,7 +1132,7 @@ begin
   Application.CreateForm(TBorderform,Borderform );
   Application.CreateForm(TColorform,Colorform );
   Application.CreateForm(Tdiagonalform,diagonalform);
-  Application.CreateForm(Tmarginkform,marginkform );
+  Application.CreateForm(Tmarginform,marginform );
   Application.CreateForm(TfrmNewTable,frmNewTable);
   Application.CreateForm(Tvsplitform,vsplitform);
 
@@ -1159,7 +1148,7 @@ begin
   Borderform.Free;
   Colorform.Free;
   diagonalform.Free;
-  marginkform.Free;
+  marginform.Free;
   frmNewTable.Free;
   vsplitform.Free;         
 end;
