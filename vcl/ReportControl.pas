@@ -185,7 +185,7 @@ Type
   Public
     procedure Select;
     function IsLastCell():boolean;
-    Procedure AddOwnedCell(Cell: TReportCell);
+    Procedure Own(Cell: TReportCell);
     Procedure RemoveAllOwnedCell;
     Procedure RemoveOwnedCell(Cell: TReportCell);
     Function IsCellOwned(Cell: TReportCell): Boolean;
@@ -1404,7 +1404,7 @@ Begin
       FOwnerCell := Cell.OwnerCell;
     End
     Else
-      Cell.OwnerCell.AddOwnedCell(Self);
+      Cell.OwnerCell.Own(Self);
   End;
 End;
 Procedure TReportCell.SetCellDispformat(CellDispformat: String);
@@ -2765,7 +2765,7 @@ Procedure TReportControl.CombineCell;
       OwnerCell := TReportCell(Cells[0]);
       // 合并同一列的单元格 -- 只要将下面行的Cell加入到第一行内cell的OwneredCell即可
       For I := 1 To Cells.Count - 1 Do
-          OwnerCell.AddOwnedCell(TReportCell(Cells[I]));
+          OwnerCell.Own(TReportCell(Cells[I]));
     finally
       Cells.Free;
     end;
@@ -2801,7 +2801,7 @@ Procedure TReportControl.CombineCell;
       OwnerCell := TReportCell(CellsToCombine[0]);
       // 合并同一列的单元格 -- 只要将下面行的Cell加入到第一行内cell的OwneredCell即可
       For I := 1 To CellsToCombine.Count - 1 Do
-          OwnerCell.AddOwnedCell(TReportCell(CellsToCombine[I]));
+          OwnerCell.Own(TReportCell(CellsToCombine[I]));
     finally
       CellsToCombine.Free;
     end;
@@ -3810,7 +3810,7 @@ Begin
     Begin
       Cell := TReportCell.Create;
       Cell.CopyCell(CurrentCell, False);
-      CurrentCell.AddOwnedCell(Cell);
+      CurrentCell.Own(Cell);
       ChildCell :=  TReportCell(ThisCell.FCellsList[J]);
       Cell.OwnerLine := ChildCell.OwnerLine;
       If ThisCell.IsLastCell  Then

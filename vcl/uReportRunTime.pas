@@ -563,7 +563,7 @@ Begin
         FOwnerCellList.Add(TempCellTable);
       End
       Else
-        TempOwnerCell.AddOwnedCell(NewCell);
+        TempOwnerCell.Own(NewCell);
     End;
 
     If ThisCell.FCellsList.Count > 0 Then
