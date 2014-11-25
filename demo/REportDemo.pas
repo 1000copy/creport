@@ -270,7 +270,7 @@ begin
 //    R := ReportControl1;
 //    FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
 //    r.SetWndSize(1058,748);
-//    r.NewTable(3 ,2);
+//    r.NewTable(2 ,2);
 //    r.AddSelectedCell(r.Cells[0,0]);
 //    r.AddSelectedCell(r.Cells[1,0]);
 //    r.CombineCell;
@@ -281,6 +281,9 @@ begin
     FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
     r.SetWndSize(1058,748);
     r.NewTable(2 ,2);
+    r.AddSelectedCell(r.Cells[0,0]);
+    r.AddSelectedCell(r.Cells[0,1]);
+    r.CombineCell;
     r.SaveToFile(Filename);
     r.ResetContent;
     ReportRunTime1.EditReport(FileName);
