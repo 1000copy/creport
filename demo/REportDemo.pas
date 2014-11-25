@@ -395,12 +395,12 @@ begin
 end;
 
 procedure TCReportDemoForm.btnOwnerCellClick(Sender: TObject);
-//AddOwnedCell Test .细微之处，必须这样测试：
+// TReportCell.Own Testcase .细微之处，必须这样测试：
 var Filename : string;
     ThisCell:TReportCell;
-    R: TReportControl;
+    R: TReportRuntime;
 begin
- R := ReportControl1;
+    R := ReportRunTime1;
     FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
     r.SetWndSize(1058,748);
     r.NewTable(2 ,3);
@@ -425,7 +425,7 @@ begin
     Assert(r.Cells[0,0].FCellsList[1] = r.Cells[2,0]);
     r.SaveToFile(Filename);
     r.ResetContent;
-    ReportRunTime1.EditReport(FileName);
+    r.EditReport(FileName);     
 end;
 
 

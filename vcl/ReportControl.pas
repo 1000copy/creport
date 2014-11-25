@@ -78,11 +78,14 @@ Type
   end;
   TLineList = class(TList)
   private
+    R:TReportControl;
     function Get(Index: Integer): TReportLine;
   public
+    constructor Create(R:TReportControl);
     procedure CombineHorz;
     property Items[Index: Integer]: TReportLine read Get ;default;
     procedure MakeSelectedLines(FLineList:TLineList);
+    function CombineVert:TReportCell;
   end;
   TReportCell = Class(TObject)
   private
@@ -1683,7 +1686,7 @@ Begin
   FPreviewStatus := False;
 
   Color := clWhite;
-  FLineList := TLineList.Create;
+  FLineList := TLineList.Create(self);
   FSelectCells := TCellList.Create(Self);
 
   FEditCell := Nil;
@@ -2740,39 +2743,6 @@ Begin
 End;
 
 Procedure TReportControl.CombineCell;
-   // 水平合并：将同一行上的单元格合并
-  procedure CombineHorz;
-  Var
-    I: Integer;
-  begin
-      For I := 0 To FLineList.Count - 1 Do
-        TReportLine(FLineList[I]).CombineSelected;
-  end;
-
-  // 垂直合并：同一列的Cell合并。Return：合并后的Cell。
-  function CombineVert:TReportCell;
-  Var
-    I, J, Count: Integer;
-    Cells: TCellList;
-    OwnerCell: TReportCell;
-    ThisCell, FirstCell: TReportCell;
-    ThisLine: TReportLine;
-  begin
-    //GET CellsToCombine
-    Cells := TCellList.Create(Self);
-    try
-      Cells.ColumnSelectedCells(FLineList);
-      OwnerCell := TReportCell(Cells[0]);
-      // 合并同一列的单元格 -- 只要将下面行的Cell加入到第一行内cell的OwneredCell即可
-      For I := 1 To Cells.Count - 1 Do
-          OwnerCell.Own(TReportCell(Cells[I]));
-    finally
-      Cells.Free;
-    end;
-    Result := OwnerCell ;
-  end;
- 
-
 // LCJ : 描绘被选中的单元格的轮廓
 // LCJ : 把comment 字体的italic去掉。很舒服。感谢 steve jobs .
 // LCJ : 来帮忙的弟妹说{一个月来有阳光的日子不过4,5回，我都数过了:}。今天，阳光明媚+1。
@@ -2787,13 +2757,14 @@ Procedure TReportControl.CombineCell;
 // LCJ : 当发现有人真正了解自己，比自己还更理解，人就释然了。
 // LCJ : 有如神助般的调整过来了。
 // LCJ : 状态神勇的一天.
+// LCJ : 然后，一个声音响起：你他妈试试每个函数五行啊。
+// LCJ : 然后，另一个声音响起：你他妈听不清楚，是另外一个人说的，不是我说的吗？
+// LCJ : 然后，说明，我累了。累了才会响起曾经的不愉快的事情。
 
 var
     OwnerCell: TReportCell;
     I, J: Integer;
-    ThisCell: TReportCell; 
-
-
+    ThisCell: TReportCell;
 Begin
   checkError(FSelectCells.Count >= 2,'请至少选择两个单元格');
   checkError(FSelectCells.IsRegularForCombine  ,'选择矩形不够规整，请重选');
@@ -2804,11 +2775,12 @@ Begin
       FSelectCells.Add(ThisCell.FCellsList[J]);
   End;
   FLineList.CombineHorz;
-  OwnerCell := CombineVert;
-  ClearSelect;
-  OwnerCell.Select;
+  OwnerCell := FLineList.CombineVert;
+
   UpdateLines;
   Self.Invalidate;
+  ClearSelect;
+  OwnerCell.Select;
 End;
 
 Procedure TReportControl.DeleteLine;
@@ -4119,7 +4091,7 @@ procedure TCellList.ColumnSelectedCells(FLineList: TLineList);
     SelectedCells :TCellList;
 begin
     CellsToCombine := self;
-    SelectedLines := TLineList.Create;
+    SelectedLines := TLineList.Create(Self.ReportControl);
     SelectedLines.makeSelectedLines(FLineList);
     For I := 0 To SelectedLines.Count - 1 Do
     Begin
@@ -4218,6 +4190,31 @@ Var
 begin
    For I := 0 To Count - 1 Do
      Items[I].CombineSelected;
+end;
+function TLineList.CombineVert:TReportCell;
+Var
+  I, J, Count: Integer;
+  Cells: TCellList;
+  OwnerCell: TReportCell;
+  ThisCell, FirstCell: TReportCell;
+  ThisLine: TReportLine;
+begin
+  Cells := TCellList.Create(Self.R);
+  try
+    Cells.ColumnSelectedCells(Self);
+    OwnerCell := TReportCell(Cells[0]);
+    // 合并同一列的单元格 -- 只要将下面行的Cell加入到第一行内cell的OwneredCell即可
+    For I := 1 To Cells.Count - 1 Do
+        OwnerCell.Own(TReportCell(Cells[I]));
+  finally
+    Cells.Free;
+  end;
+  Result := OwnerCell ;
+
+end;
+constructor TLineList.Create(R:TReportControl);
+begin
+  self.R := R; 
 end;
 
 function TLineList.Get(Index: Integer): TReportLine;
