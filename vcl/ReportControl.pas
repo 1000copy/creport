@@ -10,6 +10,7 @@ Uses
   Forms, Dialogs, Printers, Menus, Db,
   DesignEditors, ExtCtrls,osservice;
 type
+
   TPrinterPaper = class
   private
     // google : msdn DEVMODE structure
@@ -58,7 +59,31 @@ Type
   TReportCell = Class;
   TReportLine = Class;
   TReportControl = Class;
-
+  TLineList = class;
+  TCellList = class(TList)
+  private
+    ReportControl:TReportControl;
+    function Get(Index: Integer): TReportCell;
+  public
+    constructor Create(ReportControl:TReportControl);
+    function IsRegularForCombine():Boolean;
+    procedure MakeSelectedCellsFromLine(ThisLine:TReportLine);
+    function TotalWidth:Integer;
+    // How to implement indexed [] default property
+    // http://stackoverflow.com/questions/10796417/how-to-implement-indexed-default-property
+    property Items[Index: Integer]: TReportCell read Get ;default;
+    procedure DeleteCells;
+    procedure ColumnSelectedCells(FLineList:TLineList);
+    procedure Fill(Cells :TCellList);
+  end;
+  TLineList = class(TList)
+  private
+    function Get(Index: Integer): TReportLine;
+  public
+    procedure CombineHorz;
+    property Items[Index: Integer]: TReportLine read Get ;default;
+    procedure MakeSelectedLines(FLineList:TLineList);
+  end;
   TReportCell = Class(TObject)
   private
     function GetReportControl: TReportControl;
@@ -272,22 +297,10 @@ Type
     Constructor Create;
     Destructor Destroy; Override;
     procedure DeleteCell(Cell:TReportCell);
+    procedure CombineSelected;
+    procedure CombineCells(Cells:TCellList);
 
   End;
-  TCellList = class(TList)
-  private
-    ReportControl:TReportControl;
-    function Get(Index: Integer): TReportCell;
-  public
-    constructor Create(ReportControl:TReportControl);
-    function IsRegularForCombine():Boolean;
-    procedure MakeSelectedCellsFromLine(ThisLine:TReportLine);
-    function TotalWidth:Integer;
-    // How to implement indexed [] default property
-    // http://stackoverflow.com/questions/10796417/how-to-implement-indexed-default-property
-    property Items[Index: Integer]: TReportCell read Get ;default;
-    procedure DeleteCells;
-  end;
 
   TReportControl = Class(TWinControl)
   private
@@ -298,7 +311,7 @@ Type
     Cpreviewedit: boolean;
     FPreviewStatus: Boolean;
 
-    FLineList: TList;
+    FLineList: TLineList;
     FSelectCells: TCellList;
     FEditCell: TReportCell;
 
@@ -644,14 +657,6 @@ Begin
     FCellsList.Add(TempCellList[I]);
     TReportCell(TempCellList[I]).OwnerCell := Self;
   End;
-
-//  TempCellList := Cell.FCellsList ;
-//  For I := 0 To TempCellList.Count - 1 Do
-//  Begin
-//    FCellsList.Add(TempCellList[I]);
-//    TReportCell(TempCellList[I]).OwnerCell := Self;
-//  End;
-//  Cell.RemoveAllOwnedCell();
 End;
 
 Procedure TReportCell.RemoveAllOwnedCell;
@@ -1627,6 +1632,35 @@ begin
   Cell.Free;
 end;
 
+procedure TReportLine.CombineSelected;
+Var
+  I,J: Integer;
+  Cells : TCellList;
+begin
+    If IsSelected Then
+    Begin
+      Cells := TCellList.Create(ReportControl);
+      try
+        Cells.MakeSelectedCellsFromLine(Self);
+        CombineCells(Cells);
+      finally
+        Cells.Free;
+      end;
+    End;
+end;
+
+procedure TReportLine.CombineCells(Cells: TCellList);
+Var
+  I,J: Integer;
+begin
+  assert(cells <> nil);
+  assert(cells.count > 0);
+  Cells[0].CellWidth := Cells.TotalWidth;
+  // 除了第一个Cell都删掉
+  Cells.Delete(0);
+  Cells.DeleteCells ;
+end;
+
 {TReportControl}
 
 Procedure TReportControl.CreateWnd;
@@ -1650,7 +1684,7 @@ Begin
   FPreviewStatus := False;
 
   Color := clWhite;
-  FLineList := TList.Create;
+  FLineList := TLineList.Create;
   FSelectCells := TCellList.Create(Self);
 
   FEditCell := Nil;
@@ -2710,31 +2744,35 @@ Procedure TReportControl.CombineCell;
    // 水平合并：将同一行上的单元格合并
   procedure CombineHorz;
   Var
-    I,J: Integer;
-    ThisLine: TReportLine;
-    Cells : TCellList;
+    I: Integer;
   begin
       For I := 0 To FLineList.Count - 1 Do
-      begin
-        ThisLine := TReportLine(FLineList[I]) ;
-        If ThisLine.IsSelected Then
-        Begin
-          Cells := TCellList.Create(Self);
-          try
-            Cells.MakeSelectedCellsFromLine(FLineList[I]);
-            Cells[0].CellWidth := Cells.TotalWidth;
-            // 除了第一个Cell都删掉
-            Cells.Delete(0);
-            Cells.DeleteCells ;
-          finally
-            Cells.Free;
-          end;
-        End;
-      end;
+        TReportLine(FLineList[I]).CombineSelected;
   end;
 
   // 垂直合并：同一列的Cell合并。Return：合并后的Cell。
   function CombineVert:TReportCell;
+  Var
+    I, J, Count: Integer;
+    Cells: TCellList;
+    OwnerCell: TReportCell;
+    ThisCell, FirstCell: TReportCell;
+    ThisLine: TReportLine;
+  begin
+    //GET CellsToCombine
+    Cells := TCellList.Create(Self);
+    try
+      Cells.ColumnSelectedCells(FLineList);
+      OwnerCell := TReportCell(Cells[0]);
+      // 合并同一列的单元格 -- 只要将下面行的Cell加入到第一行内cell的OwneredCell即可
+      For I := 1 To Cells.Count - 1 Do
+          OwnerCell.AddOwnedCell(TReportCell(Cells[I]));
+    finally
+      Cells.Free;
+    end;
+    Result := OwnerCell ;
+  end;
+  function CombineVert1:TReportCell;
   Var
     I, J, Count: Integer;
     CellsToCombine: TList;
@@ -2747,13 +2785,13 @@ Procedure TReportControl.CombineCell;
     try
       For I := 0 To FLineList.Count - 1 Do
       Begin
-        ThisLine := TReportLine(FLineList[I]);
+        ThisLine := FLineList[I];
         if ThisLine.IsSelected then
         begin
           For J := 0 To ThisLine.FCells.Count - 1 Do
           Begin
             ThisCell := TReportCell(ThisLine.FCells[J]);
-            If IsCellSelected(ThisCell) Then
+            If ThisCell.IsSelected Then
             Begin
                 CellsToCombine.Add(ThisCell);
                 Continue ;
@@ -2801,7 +2839,7 @@ Begin
     For J := 0 To ThisCell.FCellsList.Count - 1 Do
       FSelectCells.Add(ThisCell.FCellsList[J]);
   End;
-  CombineHorz;
+  FLineList.CombineHorz;
   OwnerCell := CombineVert;
   ClearSelect;
   OwnerCell.Select;
@@ -4106,6 +4144,33 @@ end;
 
 { TSelectedCells }
 
+procedure TCellList.ColumnSelectedCells(FLineList: TLineList);
+  Var
+    I, J, Count: Integer;
+    CellsToCombine: TCellList;
+    OwnerCell: TReportCell;
+    ThisCell, FirstCell: TReportCell;
+    ThisLine: TReportLine;
+    SelectedLines : TLineList;
+    SelectedCells :TCellList;
+begin
+    CellsToCombine := self;
+    SelectedLines := TLineList.Create;
+    SelectedLines.makeSelectedLines(FLineList);
+    For I := 0 To SelectedLines.Count - 1 Do
+    Begin
+      ThisLine := SelectedLines[I];
+      SelectedCells :=TCellList.Create(ReportControl);
+      try
+        SelectedCells.MakeSelectedCellsFromLine(ThisLine);
+        SelectedCells.Fill(CellsToCombine);
+      finally
+        SelectedCells.Free;
+      end;
+    End;
+    SelectedLines.Free;
+end;
+
 constructor TCellList.Create(ReportControl:TReportControl);
 begin
   self.ReportControl := ReportControl;
@@ -4117,6 +4182,14 @@ var
 begin
   For J := Count - 1 Downto 0 Do
     Items[J].OwnerLine.DeleteCell(Items[J]);
+end;
+
+procedure TCellList.Fill(Cells: TCellList);
+Var
+    J: Integer;
+begin
+    For J := 0 To Count - 1 Do
+      Cells.Add(TReportCell(Self[J]));
 end;
 
 function TCellList.Get(Index: Integer): TReportCell;
@@ -4151,7 +4224,6 @@ begin
         end;
       end;
     end;
-
   finally
     os.free;
   end;
@@ -4174,6 +4246,38 @@ begin
   For J := 0 To Count - 1 Do
     Result := Result + TReportCell(Items[J]).CellWidth;
 end;
+{ TLineList }
+
+procedure TLineList.CombineHorz;
+Var
+  I: Integer;
+begin
+   For I := 0 To Count - 1 Do
+     Items[I].CombineSelected;
+end;
+
+function TLineList.Get(Index: Integer): TReportLine;
+begin
+  Result := TReportLine(inherited Get(Index));
+end;
+
+procedure TLineList.MakeSelectedLines(FLineList:TLineList);
+  Var
+    I, J, Count: Integer;
+    CellsToCombine: TCellList;
+    OwnerCell: TReportCell;
+    ThisCell, FirstCell: TReportCell;
+    ThisLine: TReportLine;
+    SelectedLines : TLineList;
+begin
+    For I := 0 To FLineList.Count - 1 Do
+    Begin
+      ThisLine := FLineList[I];
+      if ThisLine.IsSelected then
+        add(ThisLine);
+    End;
+end;
+
 End.
 
 
