@@ -632,7 +632,7 @@ Begin
   Result := FCellsList.Count;
 End;
 
-Procedure TReportCell.AddOwnedCell(Cell: TReportCell);
+Procedure TReportCell.Own(Cell: TReportCell);
 Var
   I: Integer;
   TempCellList: TList;
@@ -641,22 +641,23 @@ Begin
     Exit;
 
   Cell.OwnerCell := Self;
-  FCellText := FCellText + Cell.CellText;
-  Cell.CellText := '';
-
   FCellsList.Add(Cell);
-
-  TempCellList := TList.Create;
-  For I := 0 To Cell.FCellsList.Count - 1 Do
-    TempCellList.Add(Cell.FCellsList[I]);
-
-  Cell.RemoveAllOwnedCell();
-
-  For I := 0 To TempCellList.Count - 1 Do
-  Begin
-    FCellsList.Add(TempCellList[I]);
-    TReportCell(TempCellList[I]).OwnerCell := Self;
-  End;
+  FCellText := FCellText + Cell.CellText;
+  Cell.CellText := ''; 
+  
+  // LCJ : 加个条件，说明只有有SlaveCells才做这些，更清楚些：）
+  if Cell.FCellsList.Count > 0 then
+  begin
+    TempCellList := TList.Create;
+    For I := 0 To Cell.FCellsList.Count - 1 Do
+      TempCellList.Add(Cell.FCellsList[I]);
+    Cell.RemoveAllOwnedCell();
+    For I := 0 To TempCellList.Count - 1 Do
+    Begin
+      FCellsList.Add(TempCellList[I]);
+      TReportCell(TempCellList[I]).OwnerCell := Self;
+    End;
+  end;
 End;
 
 Procedure TReportCell.RemoveAllOwnedCell;
@@ -669,9 +670,7 @@ Begin
     Cell := FCellsList[I];
     Cell.SetOwnerCell(Nil);
     Cell.CalcEveryHeight;
-
-  End;
-
+  End;                   
   FCellsList.Clear;
 End;
 

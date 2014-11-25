@@ -1,10 +1,9 @@
 object CReportDemoForm: TCReportDemoForm
   Left = 249
   Top = 130
-  BorderStyle = bsDialog
+  Width = 675
+  Height = 510
   Caption = 'creport '#31034#20363' ( '#26446#27901#20262'  lzl-self@sohu.com)'
-  ClientHeight = 414
-  ClientWidth = 662
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
   Font.Color = clWindowText
@@ -17,13 +16,6 @@ object CReportDemoForm: TCReportDemoForm
   OnPaint = FormPaint
   PixelsPerInch = 96
   TextHeight = 13
-  object SpeedButton1: TSpeedButton
-    Left = 568
-    Top = 144
-    Width = 89
-    Height = 24
-    Caption = #25171#21360'DbGrid1'
-  end
   object DBGrid1: TDBGrid
     Left = 40
     Top = 56
@@ -81,9 +73,9 @@ object CReportDemoForm: TCReportDemoForm
   object Panel1: TPanel
     Left = 0
     Top = 0
-    Width = 662
+    Width = 553
     Height = 56
-    Align = alTop
+    Align = alCustom
     BevelOuter = bvNone
     Caption = 'CReport '#31034#20363
     Font.Charset = GB2312_CHARSET
@@ -120,27 +112,27 @@ object CReportDemoForm: TCReportDemoForm
   end
   object Panel2: TPanel
     Left = 0
-    Top = 56
+    Top = 0
     Width = 33
-    Height = 358
+    Height = 472
     Align = alLeft
     BevelOuter = bvNone
     TabOrder = 2
   end
   object Panel4: TPanel
-    Left = 560
-    Top = 56
+    Left = 557
+    Top = 0
     Width = 102
-    Height = 358
+    Height = 472
     Align = alRight
     BevelOuter = bvNone
     TabOrder = 3
     object SpeedButton3: TSpeedButton
-      Left = -3
-      Top = 304
-      Width = 105
+      Left = 13
+      Top = 360
+      Width = 76
       Height = 24
-      Caption = #21160#24577#25253#34920#31034#20363
+      Caption = #21160#24577#25253#34920
       Font.Charset = GB2312_CHARSET
       Font.Color = clWindowText
       Font.Height = -14
@@ -193,7 +185,7 @@ object CReportDemoForm: TCReportDemoForm
     end
     object btnRect: TSpeedButton
       Left = 10
-      Top = 288
+      Top = 328
       Width = 84
       Height = 24
       Caption = 'Rect'
@@ -221,7 +213,7 @@ object CReportDemoForm: TCReportDemoForm
     end
     object btnCombineHorz: TSpeedButton
       Left = 10
-      Top = 272
+      Top = 280
       Width = 84
       Height = 24
       Caption = 'CombineH'
@@ -232,6 +224,20 @@ object CReportDemoForm: TCReportDemoForm
       Font.Style = []
       ParentFont = False
       OnClick = btnCombineHorzClick
+    end
+    object btnOwnerCell: TSpeedButton
+      Left = 10
+      Top = 304
+      Width = 84
+      Height = 24
+      Caption = 'OwnerCell'
+      Font.Charset = GB2312_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -14
+      Font.Name = #26999#20307'_GB2312'
+      Font.Style = []
+      ParentFont = False
+      OnClick = btnOwnerCellClick
     end
     object Button3: TButton
       Left = 10
@@ -253,7 +259,7 @@ object CReportDemoForm: TCReportDemoForm
     end
     object Button4: TButton
       Left = 10
-      Top = 336
+      Top = 392
       Width = 83
       Height = 18
       Caption = #20851#38381

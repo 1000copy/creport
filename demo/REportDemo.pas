@@ -19,7 +19,6 @@ type
     Button4: TButton;
     Button5: TButton;
     opbm1: TOpenPictureDialog;
-    SpeedButton1: TSpeedButton;
     CheckBox1: TCheckBox;
     ReportControl1: TReportControl;
     SaveDialog1: TSaveDialog;
@@ -31,6 +30,7 @@ type
     btnRect: TSpeedButton;
     btnCombineVert: TSpeedButton;
     btnCombineHorz: TSpeedButton;
+    btnOwnerCell: TSpeedButton;
     procedure Button4Click(Sender: TObject);
     //procedure Button3Click(Sender: TObject);
     procedure Button5Click(Sender: TObject);
@@ -46,6 +46,7 @@ type
     procedure btnRectClick(Sender: TObject);
     procedure btnCombineVertClick(Sender: TObject);
     procedure btnCombineHorzClick(Sender: TObject);
+    procedure btnOwnerCellClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -392,5 +393,40 @@ begin
     r.ResetContent;
     ReportRunTime1.EditReport(FileName);
 end;
+
+procedure TCReportDemoForm.btnOwnerCellClick(Sender: TObject);
+//AddOwnedCell Test .细微之处，必须这样测试：
+var Filename : string;
+    ThisCell:TReportCell;
+    R: TReportControl;
+begin
+ R := ReportControl1;
+    FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
+    r.SetWndSize(1058,748);
+    r.NewTable(2 ,3);
+    r.ClearSelect ;
+    r.Cells[1,0].Select;
+    r.Cells[2,0].Select;
+    r.CombineCell;
+    assert(R.Lines[0].FCells.count = 2);
+    assert(R.Lines[1].FCells.count = 2);
+    assert(R.Lines[2].FCells.count = 2);
+    Assert(r.Cells[1,0] = r.Cells[2,0].OwnerCell);
+    Assert(r.Cells[1,0].FCellsList.count = 1);
+    Assert(r.Cells[1,0].FCellsList[0] = r.Cells[2,0]);
+    r.Cells[0,0].Select;
+    r.Cells[1,0].Select;
+    // 这样，Cells[1,0] 就有CellList，同时需要被Cells[0,0] 捕获(Owned)
+    r.CombineCell;
+    Assert(r.Cells[0,0] = r.Cells[1,0].OwnerCell);
+    Assert(r.Cells[0,0] = r.Cells[2,0].OwnerCell);
+    Assert(r.Cells[0,0].FCellsList.count = 2);
+    Assert(r.Cells[0,0].FCellsList[0] = r.Cells[1,0]);
+    Assert(r.Cells[0,0].FCellsList[1] = r.Cells[2,0]);
+    r.SaveToFile(Filename);
+    r.ResetContent;
+    ReportRunTime1.EditReport(FileName);
+end;
+
 
 end.
