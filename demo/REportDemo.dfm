@@ -28,7 +28,7 @@ object CReportDemoForm: TCReportDemoForm
     Left = 40
     Top = 56
     Width = 513
-    Height = 321
+    Height = 345
     Color = clWhite
     DataSource = Dataform.DataSource1
     ImeName = #20116#31508#30011
@@ -122,7 +122,7 @@ object CReportDemoForm: TCReportDemoForm
     Left = 0
     Top = 56
     Width = 33
-    Height = 328
+    Height = 358
     Align = alLeft
     BevelOuter = bvNone
     TabOrder = 2
@@ -131,13 +131,13 @@ object CReportDemoForm: TCReportDemoForm
     Left = 560
     Top = 56
     Width = 102
-    Height = 328
+    Height = 358
     Align = alRight
     BevelOuter = bvNone
     TabOrder = 3
     object SpeedButton3: TSpeedButton
       Left = -3
-      Top = 272
+      Top = 304
       Width = 105
       Height = 24
       Caption = #21160#24577#25253#34920#31034#20363
@@ -193,7 +193,7 @@ object CReportDemoForm: TCReportDemoForm
     end
     object btnRect: TSpeedButton
       Left = 10
-      Top = 240
+      Top = 288
       Width = 84
       Height = 24
       Caption = 'Rect'
@@ -204,6 +204,34 @@ object CReportDemoForm: TCReportDemoForm
       Font.Style = []
       ParentFont = False
       OnClick = btnRectClick
+    end
+    object btnCombineVert: TSpeedButton
+      Left = 10
+      Top = 248
+      Width = 84
+      Height = 24
+      Caption = 'CombineV'
+      Font.Charset = GB2312_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -14
+      Font.Name = #26999#20307'_GB2312'
+      Font.Style = []
+      ParentFont = False
+      OnClick = btnCombineVertClick
+    end
+    object btnCombineHorz: TSpeedButton
+      Left = 10
+      Top = 272
+      Width = 84
+      Height = 24
+      Caption = 'CombineH'
+      Font.Charset = GB2312_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -14
+      Font.Name = #26999#20307'_GB2312'
+      Font.Style = []
+      ParentFont = False
+      OnClick = btnCombineHorzClick
     end
     object Button3: TButton
       Left = 10
@@ -225,7 +253,7 @@ object CReportDemoForm: TCReportDemoForm
     end
     object Button4: TButton
       Left = 10
-      Top = 296
+      Top = 336
       Width = 83
       Height = 18
       Caption = #20851#38381
@@ -274,15 +302,6 @@ object CReportDemoForm: TCReportDemoForm
       TabOrder = 3
       OnClick = Button1Click
     end
-  end
-  object Panel5: TPanel
-    Left = 0
-    Top = 384
-    Width = 662
-    Height = 30
-    Align = alBottom
-    BevelOuter = bvNone
-    TabOrder = 4
   end
   object ReportRunTime1: TReportRunTime
     Left = 519

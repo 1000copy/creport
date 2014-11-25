@@ -155,6 +155,7 @@ Type
     Procedure SetTextColor(TextColor: COLORREF);
 
   Public
+    procedure Select;
     function IsLastCell():boolean;
     Procedure AddOwnedCell(Cell: TReportCell);
     Procedure RemoveAllOwnedCell;
@@ -1415,6 +1416,18 @@ function TReportCell.IsLastCell: boolean;
 begin
   //result := OwnerLine.FCells.IndexOf(Self) = OwnerLine.FCells.Count - 1;
   result := CellIndex = OwnerLine.FCells.Count - 1;
+end;
+
+procedure TReportCell.Select;
+var
+  R: TReportControl ;
+begin
+  R := Self.OwnerLine.ReportControl ;
+  If not R.IsCellSelected(Self) Then
+  Begin
+    R.FSelectCells.Add(Self);
+    R.InvertCell(Self);
+  End;
 end;
 
 { TReportLine }
@@ -2770,7 +2783,8 @@ Begin
   CombineHorz;
   OwnerCell := CombineVert;
   ClearSelect;
-  AddSelectedCell(OwnerCell);
+//  AddSelectedCell(OwnerCell);
+  OwnerCell.Select;
   UpdateLines;
   Self.Invalidate;
 End;

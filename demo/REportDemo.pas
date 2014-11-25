@@ -15,7 +15,6 @@ type
     Panel1: TPanel;
     Panel2: TPanel;
     Panel4: TPanel;
-    Panel5: TPanel;
     Button3: TButton;
     Button4: TButton;
     Button5: TButton;
@@ -30,6 +29,8 @@ type
     btnVertSplit2: TSpeedButton;
     btnCombine: TSpeedButton;
     btnRect: TSpeedButton;
+    btnCombineVert: TSpeedButton;
+    btnCombineHorz: TSpeedButton;
     procedure Button4Click(Sender: TObject);
     //procedure Button3Click(Sender: TObject);
     procedure Button5Click(Sender: TObject);
@@ -43,6 +44,8 @@ type
     procedure btnVertSplit2Click(Sender: TObject);
     procedure btnCombineClick(Sender: TObject);
     procedure btnRectClick(Sender: TObject);
+    procedure btnCombineVertClick(Sender: TObject);
+    procedure btnCombineHorzClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -267,37 +270,17 @@ var Filename : string;
     ThisCell:TReportCell;
     R: TReportControl;
 begin
-//    R := ReportControl1;
-//    FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
-//    r.SetWndSize(1058,748);
-//    r.NewTable(2 ,2);
-//    r.AddSelectedCell(r.Cells[0,0]);
-//    r.AddSelectedCell(r.Cells[1,0]);
-//    r.CombineCell;
-//    r.SaveToFile(Filename);
-//    r.ResetContent;
-//    ReportRunTime1.EditReport(FileName);
     R := ReportControl1;
     FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
     r.SetWndSize(1058,748);
     r.NewTable(2 ,2);
-    r.ClearSelect ;       //    r.AddSelectedCell(r.Cells[0,0]);
-//    r.AddSelectedCell(r.Cells[0,1]);
-//    r.CombineCell;
-//    assert(R.Lines[0].FCells.count = 1); // 水平合并后，Cell确实减少
-
     r.AddSelectedCell(r.Cells[0,0]);
-    r.AddSelectedCell(r.Cells[1,0]); // 1 行 0 列
-    r.CombineCell ;
-    assert(R.Lines[0].FCells.count = 2); // 垂直合并后，Cell并不减少
-    assert(R.Lines[1].FCells.count = 2);
-    assert(R.Cells[0,0].OwnerCell = nil);
-    assert(R.Cells[1,0].OwnerCell = R.Cells[0,0]);
-    assert(R.Cells[0,0].FCellsList.Count = 1);
-    assert(R.Cells[0,0].FCellsList[0]  = R.Cells[1,0]);
+    r.AddSelectedCell(r.Cells[1,0]);
+    r.CombineCell;
     r.SaveToFile(Filename);
     r.ResetContent;
     ReportRunTime1.EditReport(FileName);
+
 end;
 
 procedure TCReportDemoForm.btnRectClick(Sender: TObject);
@@ -364,6 +347,50 @@ begin
     r2.Bottom := 1;
     w.contains(r1,r2);
 
+end;
+
+procedure TCReportDemoForm.btnCombineVertClick(Sender: TObject);
+var Filename : string;
+    ThisCell:TReportCell;
+    R: TReportControl;
+begin
+ R := ReportControl1;
+    FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
+    r.SetWndSize(1058,748);
+    r.NewTable(2 ,2);
+    // 垂直合并后，Cell并不减少
+    r.Cells[0,0].Select;
+    r.Cells[1,0].Select;
+    r.CombineCell ;
+    assert(R.Lines[0].FCells.count = 2);
+    assert(R.Lines[1].FCells.count = 2);
+    assert(R.Cells[0,0].OwnerCell = nil);
+    assert(R.Cells[1,0].OwnerCell = R.Cells[0,0]);
+    assert(R.Cells[0,0].FCellsList.Count = 1);
+    assert(R.Cells[0,0].FCellsList[0]  = R.Cells[1,0]);
+    r.SaveToFile(Filename);
+    r.ResetContent;
+    ReportRunTime1.EditReport(FileName);
+end;
+
+procedure TCReportDemoForm.btnCombineHorzClick(Sender: TObject);
+var Filename : string;
+    ThisCell:TReportCell;
+    R: TReportControl;
+begin
+ R := ReportControl1;
+    FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
+    r.SetWndSize(1058,748);
+    r.NewTable(2 ,2);
+    // 水平合并后，Cell确实减少
+    r.ClearSelect ;
+    r.Cells[0,0].Select;
+    r.Cells[0,1].Select;
+    r.CombineCell;
+    assert(R.Lines[0].FCells.count = 1);
+    r.SaveToFile(Filename);
+    r.ResetContent;
+    ReportRunTime1.EditReport(FileName);
 end;
 
 end.
