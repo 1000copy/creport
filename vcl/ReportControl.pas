@@ -60,6 +60,9 @@ Type
   TReportControl = Class;
 
   TReportCell = Class(TObject)
+  private
+    function GetReportControl: TReportControl;
+    function GetSelected: Boolean;
   public
     { Private declarations }
     FLeftMargin: Integer;               // 左边的空格
@@ -230,6 +233,8 @@ Type
 
     // font
     Property LogFont: TLOGFONT Read FLogFont Write SetLogFont;
+    property R: TReportControl read GetReportControl;
+    property IsSelected :Boolean read GetSelected;
   End;
   TReportLine = Class(TObject)
   private
@@ -266,14 +271,22 @@ Type
     procedure Select ;
     Constructor Create;
     Destructor Destroy; Override;
+    procedure DeleteCell(Cell:TReportCell);
 
   End;
   TCellList = class(TList)
   private
     ReportControl:TReportControl;
+    function Get(Index: Integer): TReportCell;
   public
     constructor Create(ReportControl:TReportControl);
     function IsRegularForCombine():Boolean;
+    procedure MakeSelectedCellsFromLine(ThisLine:TReportLine);
+    function TotalWidth:Integer;
+    // How to implement indexed [] default property
+    // http://stackoverflow.com/questions/10796417/how-to-implement-indexed-default-property
+    property Items[Index: Integer]: TReportCell read Get ;default;
+    procedure DeleteCells;
   end;
 
   TReportControl = Class(TWinControl)
@@ -1419,15 +1432,22 @@ begin
 end;
 
 procedure TReportCell.Select;
-var
-  R: TReportControl ;
 begin
-  R := Self.OwnerLine.ReportControl ;
   If not R.IsCellSelected(Self) Then
   Begin
     R.FSelectCells.Add(Self);
     R.InvertCell(Self);
   End;
+end;
+
+function TReportCell.GetReportControl: TReportControl;
+begin
+  Result := FOwnerLine.ReportControl ;
+end;
+
+function TReportCell.GetSelected: Boolean;
+begin
+  result := R.IsCellSelected(self);
 end;
 
 { TReportLine }
@@ -1599,6 +1619,12 @@ begin
       break;
     end;
    end;             
+end;
+
+procedure TReportLine.DeleteCell(Cell: TReportCell);
+begin
+  FCells.Remove(Cell);
+  Cell.Free;
 end;
 
 {TReportControl}
@@ -2684,6 +2710,30 @@ Procedure TReportControl.CombineCell;
    // 水平合并：将同一行上的单元格合并
   procedure CombineHorz;
   Var
+    I,J: Integer;
+    ThisLine: TReportLine;
+    Cells : TCellList;
+  begin
+      For I := 0 To FLineList.Count - 1 Do
+      begin
+        ThisLine := TReportLine(FLineList[I]) ;
+        If ThisLine.IsSelected Then
+        Begin
+          Cells := TCellList.Create(Self);
+          try
+            Cells.MakeSelectedCellsFromLine(FLineList[I]);
+            Cells[0].CellWidth := Cells.TotalWidth;
+            // 除了第一个Cell都删掉
+            Cells.Delete(0);
+            Cells.DeleteCells ;
+          finally
+            Cells.Free;
+          end;
+        End;
+      end;
+  end;
+  procedure CombineHorz1;
+  Var
     I, J: Integer;
     CellsToDelete: TList;
     ThisCell, FirstCell: TReportCell;
@@ -2766,11 +2816,23 @@ Procedure TReportControl.CombineCell;
 // LCJ : 把comment 字体的italic去掉。很舒服。感谢 steve jobs .
 // LCJ : 来帮忙的弟妹说{一个月来有阳光的日子不过4,5回，我都数过了:}。今天，阳光明媚+1。
 // LCJ : 丢掉了办公室内的交换机，也去掉了无线AP。为了办公室整洁，以后不用AP了。
-// LCJ : 看了 {你活的累吗} ：对抑郁症人而言，能够活着本身就是伟大的。释然。比至亲更懂我。
+
+// LCJ :
+// 看了 {你活的累吗} ：
+// LCJ : 对抑郁症人而言，能够活着本身就是伟大的。释然。比至亲更懂我。
+// LCJ : 他也没有干什么啊，为什么会累? 即使不干什么，每天的消耗也比常人大得多，这就是现实
+// LCJ : 当他抱怨的时候，太太只要说，年景如此不好，你还如此努力，真的是非常能干。就好了
+// LCJ : 即使是上班偷个懒，对抑郁症的人来说，也是经过非常辛苦的选择，这个过程，偷来的懒无法补偿
+// LCJ : 当发现有人真正了解自己，比自己还更理解，人就释然了。
+// LCJ : 有如神助般的调整过来了。
+// LCJ : 状态神勇的一天.
+
 var
     OwnerCell: TReportCell;
     I, J: Integer;
     ThisCell: TReportCell; 
+
+
 Begin
   checkError(FSelectCells.Count >= 2,'请至少选择两个单元格');
   checkError(FSelectCells.IsRegularForCombine  ,'选择矩形不够规整，请重选');
@@ -2783,7 +2845,6 @@ Begin
   CombineHorz;
   OwnerCell := CombineVert;
   ClearSelect;
-//  AddSelectedCell(OwnerCell);
   OwnerCell.Select;
   UpdateLines;
   Self.Invalidate;
@@ -4091,6 +4152,19 @@ begin
   self.ReportControl := ReportControl;
 end;
 
+procedure TCellList.DeleteCells;
+var
+  j :Integer ;
+begin
+  For J := Count - 1 Downto 0 Do
+    Items[J].OwnerLine.DeleteCell(Items[J]);
+end;
+
+function TCellList.Get(Index: Integer): TReportCell;
+begin
+  Result := TReportCell(inherited Get(Index));
+end;
+
 function TCellList.IsRegularForCombine(): Boolean;
 var i,j:integer;
   bigrect : TRect;
@@ -4124,6 +4198,23 @@ begin
   end;
 end;
 
+procedure TCellList.MakeSelectedCellsFromLine(ThisLine: TReportLine);
+var J :integer;ThisCell :TReportCell;
+begin
+  For J := 0 To ThisLine.FCells.Count - 1 Do
+  Begin
+    ThisCell := TReportCell(ThisLine.FCells[J]);
+    If ThisCell.IsSelected Then
+        Add(ThisCell);
+  End;
+end;
+function TCellList.TotalWidth: Integer;
+var J :integer;
+begin
+  Result :=0 ;
+  For J := 0 To Count - 1 Do
+    Result := Result + TReportCell(Items[J]).CellWidth;
+end;
 End.
 
 
