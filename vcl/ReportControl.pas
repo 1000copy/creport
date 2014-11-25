@@ -2668,56 +2668,13 @@ Begin
 End;
 
 Procedure TReportControl.CombineCell;
-Var
-  I, J: Integer;
-  ThisCell, FirstCell: TReportCell;
-  ThisLine: TReportLine;
-  TempLeft, TempRight: Integer;
-  TempRect: TMyRect;
-  LineArray :TList;
-  procedure freeLineArray;
-  begin
-    While LineArray.Count > 0 Do
-    Begin
-      TMyRect(LineArray[0]).Free;
-      LineArray.Delete(0);
-    End;
-    LineArray.Free;  
-  end;
-  function OutlineSelection(FSelectCells:TList):TList;
-  var LineArray:TList;
-  Var
-    I, J, Count: Integer;
-  begin
-      LineArray := TList.Create;
-      For I := 0 To FLineList.Count - 1 Do
-      Begin
-        TempRect := TMyRect.Create;
-        TempRect.Left := 65535;
-        TempRect.Top := 0;
-        TempRect.Right := 0;
-        TempRect.Bottom := 0;
-        LineArray.Add(TempRect);
-      End;
-      For I := 0 To FSelectCells.Count - 1 Do
-      Begin
-        ThisCell := TReportCell(FSelectCells[I]);
-        If ThisCell.CellLeft < TMyRect(LineArray[ThisCell.OwnerLine.Index]).Left
-          Then
-          TMyRect(LineArray[ThisCell.OwnerLine.Index]).Left := ThisCell.CellLeft;
-
-        If ThisCell.CellRect.Right >
-          TMyRect(LineArray[ThisCell.OwnerLine.Index]).Right Then
-          TMyRect(LineArray[ThisCell.OwnerLine.Index]).Right :=
-            ThisCell.CellRect.Right;
-      End;
-      result := LineArray;
-  end;
-   // 将同一行上的单元格合并
-  procedure CombineSameLineCell;
+   // 水平合并：将同一行上的单元格合并
+  procedure CombineHorz;
   Var
     I, J: Integer;
     CellsToDelete: TList;
+    ThisCell, FirstCell: TReportCell;
+    ThisLine: TReportLine;
   begin
     CellsToDelete := TList.Create;
     try
@@ -2754,92 +2711,53 @@ Var
       CellsToDelete.Free;
     end;
   end;
-  procedure CombineSameLineCell1;
-  Var
-    I, J, Count: Integer;
-    CellsToDelete: TList;
-  begin
-    LineArray := OutlineSelection(FSelectCells);
-    CellsToDelete := TList.Create;
-
-    For I := 0 To LineArray.Count - 1 Do
-    Begin
-      If TMyRect(LineArray[I]).Left = 65535 Then
-        Continue;
-
-      CellsToDelete.Clear;
-
-      FirstCell := Nil;
-      ThisLine := TReportLine(FLineList[I]);
-      For J := 0 To ThisLine.FCells.Count - 1 Do
-      Begin
-        ThisCell := TReportCell(ThisLine.FCells[J]);
-        If IsCellSelected(ThisCell) Then
-        Begin
-          If FirstCell = Nil Then
-          Begin
-            FirstCell := ThisCell;
-          End
-          Else
-          Begin
-            FirstCell.CellWidth := FirstCell.CellWidth + ThisCell.CellWidth;
-            CellsToDelete.Add(ThisCell);
-          End;
-        End;
-      End;             
-      For J := CellsToDelete.Count - 1 Downto 0 Do
-      Begin
-        ThisLine.FCells.Remove(CellsToDelete[J]);
-        RemoveSelectedCell(CellsToDelete[J]);
-        TReportCell(CellsToDelete[J]).Free;
-      End;
-    End;
-    freeLineArray;
-    CellsToDelete.Free;
-  end;
-  function CombineSameColumnCell:TReportCell;
+  // 垂直合并：同一列的Cell合并。Return：合并后的Cell。
+  function CombineVert:TReportCell;
   Var
     I, J, Count: Integer;
     CellsToCombine: TList;
-      OwnerCell: TReportCell;
+    OwnerCell: TReportCell;
+    ThisCell, FirstCell: TReportCell;
+    ThisLine: TReportLine;
   begin
-//    LineArray := OutlineSelection(FSelectCells);
     //GET CellsToCombine
     CellsToCombine := TList.Create;
-    For I := 0 To FLineList.Count - 1 Do
-    Begin
-      ThisLine := TReportLine(FLineList[I]);
-      if ThisLine.IsSelected then
-      begin
-        For J := 0 To ThisLine.FCells.Count - 1 Do
-        Begin
-          ThisCell := TReportCell(ThisLine.FCells[J]);
-          If IsCellSelected(ThisCell) Then
+    try
+      For I := 0 To FLineList.Count - 1 Do
+      Begin
+        ThisLine := TReportLine(FLineList[I]);
+        if ThisLine.IsSelected then
+        begin
+          For J := 0 To ThisLine.FCells.Count - 1 Do
           Begin
-              CellsToCombine.Add(ThisCell);
-              Continue ;
+            ThisCell := TReportCell(ThisLine.FCells[J]);
+            If IsCellSelected(ThisCell) Then
+            Begin
+                CellsToCombine.Add(ThisCell);
+                Continue ;
+            End;
           End;
-        End;
-      end;
-    End;
-    OwnerCell := TReportCell(CellsToCombine[0]);
-    // 合并同一列的单元格 -- 只要将下面行的Cell加入到第一行内cell的OwneredCell即可
-    For I := 1 To CellsToCombine.Count - 1 Do
-    Begin
-        OwnerCell.AddOwnedCell(TReportCell(CellsToCombine[I]));
-//        InvalidateRect(Handle, @TReportCell(FSelectCells[I]).CellRect, False);
-    End;
-    CellsToCombine.Free;
+        end;
+      End;
+      OwnerCell := TReportCell(CellsToCombine[0]);
+      // 合并同一列的单元格 -- 只要将下面行的Cell加入到第一行内cell的OwneredCell即可
+      For I := 1 To CellsToCombine.Count - 1 Do
+          OwnerCell.AddOwnedCell(TReportCell(CellsToCombine[I]));
+    finally
+      CellsToCombine.Free;
+    end;
     Result := OwnerCell ;
   end;
 
-  // LCJ : 描绘被选中的单元格的轮廓
-  // LCJ : 把comment 字体的italic去掉。很舒服。感谢 steve jobs .
-  // LCJ : 来帮忙的弟妹说一个月来有阳光的日子不过4,5回，我都数过了。今天，阳光明媚+1。
-  // LCJ : 丢掉了办公室内的交换机，也去掉了无线AP。为了办公室整洁，以后不用AP了。
-  // LCJ : 看了 {你活的累吗} ：对抑郁症人而言，能够活着本身就是伟大的。很释然。比至亲更懂我。
+// LCJ : 描绘被选中的单元格的轮廓
+// LCJ : 把comment 字体的italic去掉。很舒服。感谢 steve jobs .
+// LCJ : 来帮忙的弟妹说{一个月来有阳光的日子不过4,5回，我都数过了:}。今天，阳光明媚+1。
+// LCJ : 丢掉了办公室内的交换机，也去掉了无线AP。为了办公室整洁，以后不用AP了。
+// LCJ : 看了 {你活的累吗} ：对抑郁症人而言，能够活着本身就是伟大的。释然。比至亲更懂我。
 var
     OwnerCell: TReportCell;
+    I, J: Integer;
+    ThisCell: TReportCell; 
 Begin
   checkError(FSelectCells.Count >= 2,'请至少选择两个单元格');
   checkError(FSelectCells.IsRegularForCombine  ,'选择矩形不够规整，请重选');
@@ -2849,8 +2767,8 @@ Begin
     For J := 0 To ThisCell.FCellsList.Count - 1 Do
       FSelectCells.Add(ThisCell.FCellsList[J]);
   End;
-  CombineSameLineCell;
-  OwnerCell := CombineSameColumnCell;
+  CombineHorz;
+  OwnerCell := CombineVert;
   ClearSelect;
   AddSelectedCell(OwnerCell);
   UpdateLines;

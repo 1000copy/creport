@@ -281,9 +281,20 @@ begin
     FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
     r.SetWndSize(1058,748);
     r.NewTable(2 ,2);
+    r.ClearSelect ;       //    r.AddSelectedCell(r.Cells[0,0]);
+//    r.AddSelectedCell(r.Cells[0,1]);
+//    r.CombineCell;
+//    assert(R.Lines[0].FCells.count = 1); // 水平合并后，Cell确实减少
+
     r.AddSelectedCell(r.Cells[0,0]);
-    r.AddSelectedCell(r.Cells[0,1]);
-    r.CombineCell;
+    r.AddSelectedCell(r.Cells[1,0]); // 1 行 0 列
+    r.CombineCell ;
+    assert(R.Lines[0].FCells.count = 2); // 垂直合并后，Cell并不减少
+    assert(R.Lines[1].FCells.count = 2);
+    assert(R.Cells[0,0].OwnerCell = nil);
+    assert(R.Cells[1,0].OwnerCell = R.Cells[0,0]);
+    assert(R.Cells[0,0].FCellsList.Count = 1);
+    assert(R.Cells[0,0].FCellsList[0]  = R.Cells[1,0]);
     r.SaveToFile(Filename);
     r.ResetContent;
     ReportRunTime1.EditReport(FileName);
