@@ -31,6 +31,8 @@ type
     btnCombineVert: TSpeedButton;
     btnCombineHorz: TSpeedButton;
     btnOwnerCell: TSpeedButton;
+    btnPrintSetup: TSpeedButton;
+    PrinterSetupDialog1: TPrinterSetupDialog;
     procedure Button4Click(Sender: TObject);
     //procedure Button3Click(Sender: TObject);
     procedure Button5Click(Sender: TObject);
@@ -47,6 +49,7 @@ type
     procedure btnCombineVertClick(Sender: TObject);
     procedure btnCombineHorzClick(Sender: TObject);
     procedure btnOwnerCellClick(Sender: TObject);
+    procedure btnPrintSetupClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -428,5 +431,11 @@ begin
     r.EditReport(FileName);     
 end;
 
+
+procedure TCReportDemoForm.btnPrintSetupClick(Sender: TObject);
+begin
+//  Dialogs.TPrinterSetupDialog.Create(nil).Execute;
+  self.PrinterSetupDialog1.Execute ;
+end;
 
 end.

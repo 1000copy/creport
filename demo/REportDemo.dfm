@@ -239,6 +239,20 @@ object CReportDemoForm: TCReportDemoForm
       ParentFont = False
       OnClick = btnOwnerCellClick
     end
+    object btnPrintSetup: TSpeedButton
+      Left = 13
+      Top = 392
+      Width = 76
+      Height = 24
+      Caption = 'PrintSetup'
+      Font.Charset = GB2312_CHARSET
+      Font.Color = clWindowText
+      Font.Height = -14
+      Font.Name = #26999#20307'_GB2312'
+      Font.Style = []
+      ParentFont = False
+      OnClick = btnPrintSetupClick
+    end
     object Button3: TButton
       Left = 10
       Top = 45
@@ -259,7 +273,7 @@ object CReportDemoForm: TCReportDemoForm
     end
     object Button4: TButton
       Left = 10
-      Top = 392
+      Top = 424
       Width = 83
       Height = 18
       Caption = #20851#38381
@@ -330,5 +344,9 @@ object CReportDemoForm: TCReportDemoForm
     Filter = 'Excl'#25991#20214'|*.XLS'
     Left = 408
     Top = 8
+  end
+  object PrinterSetupDialog1: TPrinterSetupDialog
+    Left = 432
+    Top = 424
   end
 end

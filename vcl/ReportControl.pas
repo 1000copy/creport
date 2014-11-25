@@ -528,7 +528,10 @@ Begin
 End;
 procedure TPrinterPaper.SetPaperWithCurrent;
 begin
-  with Devmode^ do //设置打印纸  李泽伦
+  // LCJ : 我说好好的A4，干嘛总是进入信纸状态呢:)
+  if  FprPageNo = 0 then
+    exit;
+  with Devmode^ do  
   begin
     dmFields:=dmFields or DM_PAPERSIZE;
     dmPapersize:=FprPageNo;
