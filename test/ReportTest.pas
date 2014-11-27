@@ -9,14 +9,7 @@ uses
   ReportControl,
   uReportRunTime,
   // sys
-  DBClient,
-  db,
-  DBTables,
-  Graphics,
-  forms,
-  Windows,
-  SysUtils,
-  TestFramework;
+   Math,DBClient,  db,  DBTables,  Graphics,  forms,  Windows,  SysUtils,  TestFramework,Printers;
 
 type
   TCDSTest =  class(TTestCase)
@@ -32,11 +25,13 @@ type
     procedure SetUp; override;
     procedure TearDown; override;
   published
-    procedure TestCombineVertical;
-    procedure TestCombineHorz;
-    procedure TestOwner;
+    procedure CombineVertical;
+    procedure CombineHorz;
+    procedure Owner;
     procedure Rect;
     procedure dynamicReport;
+    procedure PrinterPagerWidth;
+    procedure PrinterCaps;
   end;
 
   TReportUITest = class(TTestCase)
@@ -99,8 +94,6 @@ begin
       R.SetDataSet('t2',t2);
       t1.Open;
       t2.Open;
-      {t1.Append;t1.FieldByName('f1').asstring:= '1' ;
-      t1.FieldByName('f2').asstring:= '2' ;t1.Post;}
       t1.AppendRecord([1,2]);
       t1.AppendRecord([1,2]);
       t1.AppendRecord([1,2]);
@@ -221,7 +214,7 @@ end;
 
 
 
-procedure TReportTest.TestCombineHorz;
+procedure TReportTest.CombineHorz;
 var Filename : string;
     ThisCell:TReportCell;
     R: TReportRunTime;
@@ -241,7 +234,7 @@ begin
     r.ResetContent;
     R.EditReport(FileName);
 end;
-procedure TReportTest.TestCombineVertical;
+procedure TReportTest.CombineVertical;
 var Filename : string;
     ThisCell:TReportCell;
     R: TReportRunTime;
@@ -313,7 +306,7 @@ begin
     end;
 end;
 
-procedure TReportTest.TestOwner;
+procedure TReportTest.Owner;
 // TReportCell.Own Testcase .细微之处，必须这样测试：
 var Filename : string;
     ThisCell:TReportCell;
@@ -377,6 +370,113 @@ begin
       Check(True,e.Message);
     end;
 end;
+procedure TReportTest.PrinterPagerWidth;
+var
+  p : TPrinterPaper;
+ FprPageNo, FprPageXy, fpaperLength,
+      fpaperWidth: Integer ;
+begin
+  p := TPrinterPaper.Create;
+  p.prDeviceMode;
+  p.SetPaper(DMPAPER_A4,DMORIENT_PORTRAIT,2970,2100);
+  p.GetPaper(FprPageNo, FprPageXy, fpaperLength,
+      fpaperWidth);
+  check(FprPageNo =DMPAPER_A4);
+  check(FprPageXy =DMORIENT_PORTRAIT);
+  CheckEquals(fpaperLength,2970);
+  CheckEquals(fpaperWidth,2100); 
+end;
+
+procedure TReportTest.PrinterCaps;
+  function GetDPI(D:HDC): Integer;
+  begin
+    Result := GetDeviceCaps(d, LOGPIXELSX)
+  end;
+  function GetPixelsPerInchX: Integer;
+  begin
+    Result := GetDeviceCaps(Printer.Handle, LOGPIXELSX)
+  end;
+
+  function GetPixelsPerInchY: Integer;
+  begin
+    Result := GetDeviceCaps(Printer.Handle, LOGPIXELSY)
+  end;
+  function GetHorzX: Integer;
+  begin
+    Result := GetDeviceCaps(Printer.Handle, HORZSIZE)
+  end;
+  function GetHORZRES: Integer;
+  begin
+    Result := GetDeviceCaps(Printer.Handle, HORZRES)
+  end;
+  function mm2dot(mm:integer;dpi:integer):integer;
+  begin
+      result := Ceil(mm/25.4 *dpi);
+  end;
+
+var dc:HDC;   dots:Integer;
+begin
+  // printer
+  //DPI
+  CheckEquals(600,GetPixelsPerInchX);// dpi
+  // Horz Resolution
+  CheckEquals(210,GetHorzX);// unit by mm
+  // and convet inch to cm
+  CheckEquals(4961,GetHORZRES);// unit by dot
+  // 验算 : 公式的由来！
+  CheckEquals(Ceil(GetHorzX/2.54/10 *GetPixelsPerInchX),GetHORZRES);
+  // Display，在屏幕上绘制20cm的线，应该转换成多少个Dot?
+
+  dc := GetDC(0);
+//  dots := mm2dot(100,GetDPI(dc))
+//  ;
+//
+//  MoveToEx(dc,0,100,nil);
+//  LineTo(dc,dots,100);
+
+  // 量了下，确实比实际上的长。说明DPI是不准确的。
+  // 那么问题来了。 I want to draw a line with a length of 1 cm, independent of the video
+  {
+      The trick is to know the size and resolution of the users screen.
+      There is a property (I think of the canvas) called "PixelsPerInch", but it is
+      unreliable.  For example, if the user is using a 10 foot projection monitor, the
+      value for "Pixels per inch" might be 96, wich is definitely not true, as 96
+      pixels might be more like a foot!
+      Therefore, you need to measure and compute the users pixels per inch.  To do
+      this, ask the user to use a ruler to measure a line on the screen, and enter in
+      the results.
+      Then, you have a scale to draw your line at.
+      This is the only accurate way that I know of to do what you want.
+  }
+  SetMapMode(dc, MM_LOMETRIC );
+  MoveToEx(dc, 0, -100 ,nil);
+  LineTo(dc, 1000,-100); // 0.1mm ,so 1000 = 10cm
+  ReleaseDC(0,dc);
+  {
+    Which mapping mode do you use?
+    You can use the MM_LOMETRIC mapping mode for this purpose. With MM_LOMETRIC, 
+    each logical unit is 0,1 mm. But take into account that you must use 
+    negative values on the y-axis! To Draw a vertical line with a length of 1 cm 
+    in the top left corner, use: 
+    SetMapMode( Canvas.Handle, MM_LOMETRIC ); 
+    Canvas.MoveTo( 0, 0 );
+    Canvas.LineTo( 0, -100 );
+    //
+    Q:
+    I write
+
+    SetMapMOde(canvas.Handle,MM_LOMETRIC);
+    Canvas.Rectange(0,0,100,100);
+
+    and it's do not work.
+    It draws nothing !!!
+    A:
+    1. Positive x is to the right; positive y is up
+    and 
+    2. Each logical unit is mapped to 0.1 millimeter
+  }
+end;
+
 initialization
-  RegisterTests('Framework Suites',[TReportTest.Suite,TReportUITest.Suite,TCDSTest]);
+  RegisterTests('Framework Suites',[TReportTest.Suite,TReportUITest.Suite,TCDSTest.Suite]);
 end.

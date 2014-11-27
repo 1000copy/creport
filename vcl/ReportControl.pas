@@ -24,15 +24,15 @@ type
     fpaperWidth: integer;
   private
     //取得当前打印机的DeviceMode的结构成员
+  public
+    procedure SetPaperWithCurrent;
+    procedure Batch;overload;
+    procedure Batch(FprPageNo,FprPageXy,fpaperLength,fpaperWidth:Integer);overload;
     Procedure prDeviceMode;
     procedure SetPaper(FprPageNo, FprPageXy, fpaperLength,
       fpaperWidth: Integer);
     procedure GetPaper(var FprPageNo, FprPageXy, fpaperLength,
       fpaperWidth: Integer);
-  public
-    procedure SetPaperWithCurrent;
-    procedure Batch;overload;
-    procedure Batch(FprPageNo,FprPageXy,fpaperLength,fpaperWidth:Integer);overload;
   end;
   //dsgnintf d5
 Const
