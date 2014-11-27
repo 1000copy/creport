@@ -566,7 +566,7 @@ Begin
         TempOwnerCell.Own(NewCell);
     End;
 
-    If ThisCell.FCellsList.Count > 0 Then
+    If ThisCell.FSlaveCells.Count > 0 Then
     Begin
       // 将自己加入到对照表中去
       TempCellTable := TCellTable.Create;
@@ -607,7 +607,7 @@ End;
         For j := 0 To ThisLine.FCells.Count - 1 Do
         Begin
           ThisCell := TreportCell(ThisLine.FCells[j]);
-          NewCell := TReportCell.Create;
+          NewCell := TReportCell.Create(Self);
           TempLine.FCells.Add(NewCell);
           NewCell.FOwnerLine := TempLine;
           //setnewcell(true, newcell, thiscell, TempDataSet);
@@ -633,7 +633,7 @@ function TReportRunTime.FillHeadList(var nHandHeight:integer):TList;
     For j := 0 To ThisLine.FCells.Count - 1 Do
     Begin
       ThisCell := TreportCell(ThisLine.FCells[j]);
-      NewCell := TReportCell.Create;
+      NewCell := TReportCell.Create(Self);
       TempLine.FCells.Add(NewCell);
       NewCell.FOwnerLine := TempLine;
       //能得到FDragHeight(代表线段拖动的高度)的值 Fminheight代表字高,二者取其高者为行高
@@ -705,7 +705,7 @@ function TReportRunTime.FillFootList(var nHootHeight:integer ):TList;
           HootLineList.Delete(HootLineList.count - 1);
           break;
         End;
-        NewCell := TReportCell.Create;
+        NewCell := TReportCell.Create(Self);
         TempLine.FCells.Add(NewCell);
         NewCell.FOwnerLine := TempLine;
         setnewcell(false, newcell, thiscell);
@@ -741,7 +741,7 @@ function TReportRunTime.FillFootList(var nHootHeight:integer ):TList;
       For j := 0 To ThisLine.FCells.Count - 1 Do
       Begin
         ThisCell := TreportCell(ThisLine.FCells[j]);
-        NewCell := TReportCell.Create;
+        NewCell := TReportCell.Create(Self);
         TempLine.FCells.Add(NewCell);
         NewCell.FOwnerLine := TempLine;
         setnewcell(false, newcell, thiscell);
@@ -842,7 +842,7 @@ var thisLine ,TempLine: TReportLine;
       For j := 0 To ThisLine.FCells.Count - 1 Do
       Begin
         ThisCell := TreportCell(ThisLine.FCells[j]);
-        NewCell := TReportCell.Create;
+        NewCell := TReportCell.Create(Self);
         TempLine.FCells.Add(NewCell);
         NewCell.FOwnerLine := TempLine;
         setnewcell(false, newcell, thiscell);
@@ -868,7 +868,7 @@ var thisLine ,TempLine: TReportLine;
       For j := 0 To ThisLine.FCells.Count - 1 Do
       Begin
         ThisCell := TreportCell(ThisLine.FCells[j]);
-        NewCell := TReportCell.Create;
+        NewCell := TReportCell.Create(Self);
         TempLine.FCells.Add(NewCell);
         NewCell.FOwnerLine := TempLine;
       End; //for j
@@ -1357,7 +1357,7 @@ End;
   end;
   procedure TReportRunTime.EachCell_CalcEveryHeight(ThisCell:TReportCell);
   begin
-    If ThisCell.FCellsList.Count > 0 Then
+    If ThisCell.FSlaveCells.Count > 0 Then
       thisCell.CalcEveryHeight ;
   end;
   procedure TReportRunTime.EachProc_CalcLineHeight(thisLine:TReportLine);
@@ -1411,7 +1411,7 @@ Begin
     Begin
       ThisCell := TReportCell(ThisLine.FCells[J]);
 
-      If ThisCell.FCellsList.Count > 0 Then
+      If ThisCell.FSlaveCells.Count > 0 Then
         ThisCell.CalcEveryHeight;
     End;
   End;

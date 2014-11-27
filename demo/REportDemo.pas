@@ -370,8 +370,8 @@ begin
     assert(R.Lines[1].FCells.count = 2);
     assert(R.Cells[0,0].OwnerCell = nil);
     assert(R.Cells[1,0].OwnerCell = R.Cells[0,0]);
-    assert(R.Cells[0,0].FCellsList.Count = 1);
-    assert(R.Cells[0,0].FCellsList[0]  = R.Cells[1,0]);
+    assert(R.Cells[0,0].FSlaveCells.Count = 1);
+    assert(R.Cells[0,0].FSlaveCells[0]  = R.Cells[1,0]);
     r.SaveToFile(Filename);
     r.ResetContent;
     ReportRunTime1.EditReport(FileName);
@@ -415,17 +415,17 @@ begin
     assert(R.Lines[1].FCells.count = 2);
     assert(R.Lines[2].FCells.count = 2);
     Assert(r.Cells[1,0] = r.Cells[2,0].OwnerCell);
-    Assert(r.Cells[1,0].FCellsList.count = 1);
-    Assert(r.Cells[1,0].FCellsList[0] = r.Cells[2,0]);
+    Assert(r.Cells[1,0].FSlaveCells.count = 1);
+    Assert(r.Cells[1,0].FSlaveCells[0] = r.Cells[2,0]);
     r.Cells[0,0].Select;
     r.Cells[1,0].Select;
     // 这样，Cells[1,0] 就有CellList，同时需要被Cells[0,0] 捕获(Owned)
     r.CombineCell;
     Assert(r.Cells[0,0] = r.Cells[1,0].OwnerCell);
     Assert(r.Cells[0,0] = r.Cells[2,0].OwnerCell);
-    Assert(r.Cells[0,0].FCellsList.count = 2);
-    Assert(r.Cells[0,0].FCellsList[0] = r.Cells[1,0]);
-    Assert(r.Cells[0,0].FCellsList[1] = r.Cells[2,0]);
+    Assert(r.Cells[0,0].FSlaveCells.count = 2);
+    Assert(r.Cells[0,0].FSlaveCells[0] = r.Cells[1,0]);
+    Assert(r.Cells[0,0].FSlaveCells[1] = r.Cells[2,0]);
     r.SaveToFile(Filename);
     r.ResetContent;
     r.EditReport(FileName);     
@@ -434,7 +434,6 @@ end;
 
 procedure TCReportDemoForm.btnPrintSetupClick(Sender: TObject);
 begin
-//  Dialogs.TPrinterSetupDialog.Create(nil).Execute;
   self.PrinterSetupDialog1.Execute ;
 end;
 

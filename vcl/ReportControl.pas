@@ -89,58 +89,45 @@ Type
   end;
   TReportCell = Class(TObject)
   private
+    ReportControl:TReportControl;
     function GetReportControl: TReportControl;
     function GetSelected: Boolean;
   public
-    { Private declarations }
     FLeftMargin: Integer;               // 左边的空格
     FOwnerLine: TReportLine;            // 隶属行
-    FOwnerCell: TReportCell;            // 隶属的单元格
-    FCellsList: TList;                  // 覆盖的Cell
-
+    FOwnerCell: TReportCell;            // Master Cell
+    FSlaveCells: TCellList;             // Slave Cell
     // Index
     FCellIndex: Integer;                // Cell在行中的索引
-
     // size & position
     FCellLeft: Integer;
     FCellWidth: Integer;
-
     FCellRect: TRect;                   // 计算得来
     FTextRect: TRect;
 
     FDragCellHeight: Integer;
     FMinCellHeight: Integer;
     FRequiredCellHeight: Integer;
-
-
     // border
     FLeftLine: Boolean;
     FLeftLineWidth: Integer;
-
     FTopLine: Boolean;
     FTopLineWidth: Integer;
-
     FRightLine: Boolean;
     FRightLineWidth: Integer;
-
     FBottomLine: Boolean;
-    FBottomLineWidth: Integer;
-
+    FBottomLineWidth: Integer;   
     // 斜线
     FDiagonal: UINT;
-
     // color
     FTextColor: COLORREF;
     FBackGroundColor: COLORREF;
-
     // align
     FHorzAlign: Integer;
-    FVertAlign: Integer;
-
+    FVertAlign: Integer;       
     // string
     FCellText: String;
-    FCellDispformat: String;
-
+    FCellDispformat: String;   
     FBmp: TBitmap;
     FbmpYn: boolean;
     // font
@@ -156,35 +143,25 @@ Type
     function GetTotalHeight(FOwnerCell: TReportCell): Integer;
     function Payload: Integer;
   Protected
-    { Protected declarations }
     Procedure SetLeftMargin(LeftMargin: Integer);
     Procedure SetOwnerLine(OwnerLine: TReportLine);
-
     Procedure SetOwnerCell(Cell: TReportCell);
-    Function GetOwnedCellCount: Integer;
-
+    Function GetOwnedCellCount: Integer;           
     Procedure SetCellLeft(CellLeft: Integer);
-    Procedure SetCellWidth(CellWidth: Integer);
-
+    Procedure SetCellWidth(CellWidth: Integer);    
     Procedure SetLeftLine(LeftLine: Boolean);
     Procedure SetLeftLineWidth(LeftLineWidth: Integer);
-
     Procedure SetTopLine(TopLine: Boolean);
-    Procedure SetTopLineWidth(TopLineWidth: Integer);
-
+    Procedure SetTopLineWidth(TopLineWidth: Integer);  
     Procedure SetRightLine(RightLine: Boolean);
     Procedure SetRightLineWidth(RightLineWidth: Integer);
-
     Procedure SetBottomLine(BottomLine: Boolean);
     Procedure SetBottomLineWidth(BottomLineWidth: Integer);
-
     Procedure SetCellText(CellText: String);
     Procedure SetCellDispformat(CellDispformat: String);
-    Procedure SetLogFont(NewFont: TLOGFONT);
-
+    Procedure SetLogFont(NewFont: TLOGFONT);               
     Procedure SetBackGroundColor(BkColor: COLORREF);
-    Procedure SetTextColor(TextColor: COLORREF);
-
+    Procedure SetTextColor(TextColor: COLORREF);           
   Public
     procedure Select;
     function IsLastCell():boolean;
@@ -196,69 +173,45 @@ Type
     Procedure CalcEveryHeight;
     Procedure PaintCell(hPaintDC: HDC; bPrint: Boolean);
     Procedure CopyCell(Cell: TReportCell; bInsert: Boolean);
-
-    Constructor Create;
-    Destructor Destroy; Override;
-
-    // Properties
+    Constructor Create(R:TReportControl);
+    Destructor Destroy; Override;                           
     Property LeftMargin: Integer Read FLeftMargin Write SetLeftMargin;
     Property OwnerLine: TReportLine Read FOwnerLine Write SetOwnerLine;
     Property OwnerCell: TReportCell Read FOwnerCell Write SetOwnerCell;
     Property OwnedCellCount: Integer Read GetOwnedCellCount;
-
     Property CellIndex: Integer Read FCellIndex Write FCellIndex;
-
     // size & position
     Property CellLeft: Integer Read FCellLeft Write SetCellLeft;
     Property CellWidth: Integer Read FCellWidth Write SetCellWidth;
     Property CellTop: Integer Read GetCellTop;
-    Property CellHeight: Integer Read GetCellHeight;
-
+    Property CellHeight: Integer Read GetCellHeight;             
     Property CellRect: TRect Read FCellRect;
-    Property TextRect: TRect Read FTextRect;
-
+    Property TextRect: TRect Read FTextRect;                     
     Property DragCellHeight: Integer Read FDragCellHeight;
     // or protected property ?
     Property MinCellHeight: Integer Read FMinCellHeight Write FMinCellHeight;
     Property RequiredCellHeight: Integer Read FRequiredCellHeight;
     Property OwnerLineHeight: Integer Read GetOwnerLineHeight;
-
     // border
     Property LeftLine: Boolean Read FLeftLine Write SetLeftLine Default True;
-    Property LeftLineWidth: Integer Read FLeftLineWidth Write SetLeftLineWidth
-      Default 1;
-
+    Property LeftLineWidth: Integer Read FLeftLineWidth Write SetLeftLineWidth  Default 1;
     Property TopLine: Boolean Read FTopLine Write SetTopLine Default True;
-    Property TopLineWidth: Integer Read FTopLineWidth Write SetTopLineWidth
-      Default 1;
-
+    Property TopLineWidth: Integer Read FTopLineWidth Write SetTopLineWidth Default 1;
     Property RightLine: Boolean Read FRightLine Write SetRightLine Default True;
-    Property RightLineWidth: Integer Read FRightLineWidth Write SetRightLineWidth
-      Default 1;
-
-    Property BottomLine: Boolean Read FBottomLine Write SetBottomLine Default
-      True;
-    Property BottomLineWidth: Integer Read FBottomLineWidth Write
-      SetBottomLineWidth Default 1;
-
+    Property RightLineWidth: Integer Read FRightLineWidth Write SetRightLineWidth Default 1;
+    Property BottomLine: Boolean Read FBottomLine Write SetBottomLine Default True;
+    Property BottomLineWidth: Integer Read FBottomLineWidth Write SetBottomLineWidth Default 1;
     // 斜线
     Property Diagonal: UINT Read FDiagonal Write FDiagonal;
-
     // color
-    Property TextColor: COLORREF Read FTextColor Write SetTextColor Default
-      clBlack;
-    Property BkColor: COLORREF Read FBackGroundColor Write SetBackGroundColor
-      Default clWhite;
-
+    Property TextColor: COLORREF Read FTextColor Write SetTextColor Default                          clBlack;
+    Property BkColor: COLORREF Read FBackGroundColor Write SetBackGroundColor Default clWhite;
     // align
     Property HorzAlign: Integer Read FHorzAlign Write FHorzAlign Default 1;
     Property VertAlign: Integer Read FVertAlign Write FVertAlign Default 1;
-
     // string
     Property CellText: String Read FCellText Write SetCellText;
-    Property CellDispformat: String Read FCellDispformat Write
-      SetCellDispformat;
-
+    Property CellDispformat: String Read FCellDispformat Write SetCellDispformat;
     // font
     Property LogFont: TLOGFONT Read FLogFont Write SetLogFont;
     property R: TReportControl read GetReportControl;
@@ -282,9 +235,9 @@ Type
     Procedure SetDragHeight(Const Value: Integer);
     Procedure SetLineTop(Const Value: Integer);
   Protected
-    { Protected declarations }
+
   Public
-    { Public declarations }
+ 
     Property ReportControl: TReportControl Read FReportControl Write
       FReportControl;
     Property Index: Integer Read FIndex Write FIndex;
@@ -449,7 +402,6 @@ Type
     property Cells[Row: Integer;Col: Integer]: TReportCell read GetCells ;
     property  AllowPreviewEdit: boolean read CPreviewEdit write CPreviewEdit;
   Published
-    { Published declarations }
     Property Left;
     Property Top;
     Property Cursor;
@@ -594,10 +546,8 @@ Begin
         {$WARNINGS ON}
         DeleteFile(FilePath + '\' + DeleteFilesSearchRec.Name);
       End;
-    End;
-
+    End;                              
     FindClose(DeleteFilesSearchRec);
-
   Except
     Result := false;
     Exit;
@@ -635,33 +585,33 @@ End;
 
 Function TReportCell.GetOwnedCellCount: Integer;
 Begin
-  Result := FCellsList.Count;
+  Result := FSlaveCells.Count;
 End;
 
 Procedure TReportCell.Own(Cell: TReportCell);
 Var
   I: Integer;
-  TempCellList: TList;
+  TempCellList: TCellList;
 Begin
-  If (Cell = Nil) Or (FCellsList.IndexOf(Cell) >= 0) Then
+  If (Cell = Nil) Or (FSlaveCells.IndexOf(Cell) >= 0) Then
     Exit;
 
   Cell.OwnerCell := Self;
-  FCellsList.Add(Cell);
+  FSlaveCells.Add(Cell);
   FCellText := FCellText + Cell.CellText;
   Cell.CellText := ''; 
   
   // LCJ : 加个条件，说明只有有SlaveCells才做这些，更清楚些：）
-  if Cell.FCellsList.Count > 0 then
+  if Cell.FSlaveCells.Count > 0 then
   begin
-    TempCellList := TList.Create;
-    For I := 0 To Cell.FCellsList.Count - 1 Do
-      TempCellList.Add(Cell.FCellsList[I]);
+    TempCellList := TCellList.Create(ReportControl);
+    For I := 0 To Cell.FSlaveCells.Count - 1 Do
+      TempCellList.Add(Cell.FSlaveCells[I]);
     Cell.RemoveAllOwnedCell();
     For I := 0 To TempCellList.Count - 1 Do
     Begin
-      FCellsList.Add(TempCellList[I]);
-      TReportCell(TempCellList[I]).OwnerCell := Self;
+      FSlaveCells.Add(TempCellList[I]);
+      TempCellList[I].OwnerCell := Self;
     End;
   end;
 End;
@@ -671,18 +621,18 @@ Var
   I: Integer;
   Cell: TReportCell;
 Begin
-  For I := 0 To FCellsList.Count - 1 Do
+  For I := 0 To FSlaveCells.Count - 1 Do
   Begin
-    Cell := FCellsList[I];
+    Cell := FSlaveCells[I];
     Cell.SetOwnerCell(Nil);
     Cell.CalcEveryHeight;
   End;                   
-  FCellsList.Clear;
+  FSlaveCells.Clear;
 End;
 
 Function TReportCell.IsCellOwned(Cell: TReportCell): Boolean;
 Begin
-  If FCellsList.IndexOf(Cell) >= 0 Then
+  If FSlaveCells.IndexOf(Cell) >= 0 Then
     Result := True
   Else
     Result := False;
@@ -918,9 +868,9 @@ End;
   begin
     BottomCell := Nil;
     Top := 0;
-    For I := 0 To FOwnerCell.FCellsList.Count - 1 Do
+    For I := 0 To FOwnerCell.FSlaveCells.Count - 1 Do
     Begin
-      ThisCell := FOwnerCell.FCellsList[i];
+      ThisCell := FOwnerCell.FSlaveCells[i];
       If ThisCell.CellTop > Top Then
       Begin
         BottomCell := ThisCell;
@@ -933,9 +883,9 @@ End;
   var BottomCell,ThisCell:TReportCell;I,Top,Height:Integer ;
   begin
     Height := 0 ;
-    For I := 0 To FOwnerCell.FCellsList.Count - 1 Do
+    For I := 0 To FOwnerCell.FSlaveCells.Count - 1 Do
     Begin
-      ThisCell := FOwnerCell.FCellsList[i];
+      ThisCell := FOwnerCell.FSlaveCells[i];
       ThisCell.FMinCellHeight := DefaultHeight(thiscell);
       ThisCell.OwnerLine.CalcLineHeight;
       Height := Height + ThisCell.OwnerLineHeight;
@@ -991,16 +941,16 @@ Begin
   End else begin
       GetTextRect(TempRect);
       RectHeight := TempRect.Bottom - TempRect.Top ;
-      If (FCellsList.Count = 0) and ( RectHeight > 0) Then
+      If (FSlaveCells.Count = 0) and ( RectHeight > 0) Then
           FMinCellHeight := RectHeight + Payload;
   end;
   // block resonsibility depart
-  If (FOwnerCell = Nil) and (FCellsList.Count > 0) Then
+  If (FOwnerCell = Nil) and (FSlaveCells.Count > 0) Then
   Begin
     FRequiredCellHeight := Calc_RequiredCellHeight();
     OwnerLine.CalcLineHeight;
-    For I := 0 To FCellsList.Count - 1 Do
-      TReportCell(FCellsList[I]).CalcEveryHeight;
+    For I := 0 To FSlaveCells.Count - 1 Do
+      FSlaveCells[I].CalcEveryHeight;
   End
 End;
 
@@ -1016,9 +966,10 @@ Procedure TReportCell.CalcCellTextRect;
     FCellRect.top := CellTop;
     FCellRect.right := FCellRect.left + FCellWidth;
      FCellRect.bottom := FCellRect.top + OwnerLineHeight;
-    if FCellsList.Count >0 then
-      For I := 0 To FCellsList.Count - 1 Do
-        FCellRect.bottom := FCellRect.bottom + TReportCell(FCellsList[I]).OwnerLineHeight;
+    if FSlaveCells.Count >0 then
+      For I := 0 To FSlaveCells.Count - 1 Do
+        FCellRect.bottom := FCellRect.bottom + FSlaveCells[I].OwnerLineHeight;
+        // LCJ : ALTER TO : Inc(FCellRect.bottom,TReportCell(FCellsList[I]).OwnerLineHeight);
   end;
   procedure CalcTextRect;
   Var
@@ -1030,7 +981,7 @@ Procedure TReportCell.CalcCellTextRect;
     TempRect.left := TempRect.Left + FLeftMargin + 1;
     TempRect.top := TempRect.top + FTopLineWidth + 1;
     TempRect.right := TempRect.right - FLeftMargin - 1;
-   If FCellsList.Count <= 0 Then
+   If FSlaveCells.Count <= 0 Then
   Begin
     TempRect.bottom := TempRect.top + FMinCellHeight - 2 - FTopLineWidth -
       FBottomLineWidth;
@@ -1243,12 +1194,13 @@ Begin
   end;
 End;
 
-Constructor TReportCell.Create;
+Constructor TReportCell.Create(R:TReportControl);
 Var
   hTempDC: HDC;
   pt, ptOrg: TPoint;
 Begin
-  FCellsList := TList.Create;
+  self.ReportControl := R;
+  FSlaveCells := TCellList.Create(R);
   Fbmp := TBitmap.Create;
   FLeftMargin := 5;
   FOwnerLine := Nil;
@@ -1333,8 +1285,8 @@ End;
 
 Destructor TReportCell.Destroy;
 Begin
-  FCellsList.Free;
-  FCellsList := Nil;
+  FSlaveCells.Free;
+  FSlaveCells := Nil;
   fbmp.Free;
   Inherited Destroy;
 End;
@@ -1404,8 +1356,8 @@ Begin
   Begin
     If bInsert Then
     Begin
-      Cell.OwnerCell.FCellsList.Insert(
-        Cell.OwnerCell.FCellsList.IndexOf(Cell),
+      Cell.OwnerCell.FSlaveCells.Insert(
+        Cell.OwnerCell.FSlaveCells.IndexOf(Cell),
         Self);
       FOwnerCell := Cell.OwnerCell;
     End
@@ -1425,7 +1377,7 @@ End;
 
 Procedure TReportCell.RemoveOwnedCell(Cell: TReportCell);
 Begin
-  FCellsList.Remove(Cell);
+  FSlaveCells.Remove(Cell);
   Cell.OwnerCell := Nil;
 End;
 // 一觉醒来，又是一个阳光灿烂的日子
@@ -1452,7 +1404,7 @@ end;
 
 function TReportCell.GetReportControl: TReportControl;
 begin
-  Result := FOwnerLine.ReportControl ;
+  Result := ReportControl ;
 end;
 
 function TReportCell.GetSelected: Boolean;
@@ -1498,7 +1450,7 @@ Begin
 
   For I := 0 To Line.FCells.Count - 1 Do
   Begin
-    NewCell := TReportCell.Create;
+    NewCell := TReportCell.Create(self.ReportControl);
     FCells.Add(NewCell);
     NewCell.FOwnerLine := Self;
     NewCell.CopyCell(Line.FCells[I], bInsert);
@@ -1546,7 +1498,7 @@ Begin
   CellWidth := trunc(PageWidth / CellNumber + 0.5);
   For I := 0 To CellNumber - 1 Do
   Begin
-    NewCell := TReportCell.Create;
+    NewCell := TReportCell.Create(ReportControl);
     FCells.Add(NewCell);
     NewCell.OwnerLine := Self;
     NewCell.CellIndex := I;
@@ -2114,7 +2066,7 @@ End;
 Procedure TReportControl.StartMouseDrag(point: TPoint);
 Var
   TempCell, TempNextCell, ThisCell, NextCell: TReportCell;
-  ThisCellsList: TList;
+  ThisCellsList: TCellList;
   TempRect, RectBorder, RectCell, RectClient: TRect;
   hClientDC: HDC;
   hInvertPen, hPrevPen: HPEN;
@@ -2132,7 +2084,7 @@ Begin
   RectCell := ThisCell.CellRect;
   FMousePoint := point;
   Windows.GetClientRect(Handle, RectClient);
-  ThisCellsList := TList.Create;
+  ThisCellsList := TCellList.Create(self);
 
   // 设置线形和绘制模式
   hClientDC := GetDC(Handle);
@@ -2354,7 +2306,7 @@ Begin
 
     // 改变行高
     // 改变行高
-    If ThisCell.FCellsList.Count <= 0 Then
+    If ThisCell.FSlaveCells.Count <= 0 Then
     Begin
       // 不跨越其他CELL时
       BottomCell := ThisCell;
@@ -2364,11 +2316,11 @@ Begin
       // 跨越其他CELL时，取得最下一行的CELL
       BottomCell := Nil;
       Top := 0;
-      For I := 0 To ThisCell.FCellsList.Count - 1 Do
+      For I := 0 To ThisCell.FSlaveCells.Count - 1 Do
       Begin
-        If TReportCell(ThisCell.FCellsList[I]).CellTop > Top Then
+        If ThisCell.FSlaveCells[I].CellTop > Top Then
         Begin
-          BottomCell := TReportCell(ThisCell.FCellsList[I]);
+          BottomCell := ThisCell.FSlaveCells[I];
           Top := BottomCell.CellTop;
         End;
       End;
@@ -2390,9 +2342,9 @@ Begin
 
     For I := 0 To DragBottom - 1 Do
     Begin
-      For J := 0 To TReportCell(ThisCellsList[I]).FCellsList.Count - 1 Do
+      For J := 0 To TReportCell(ThisCellsList[I]).FSlaveCells.Count - 1 Do
       Begin
-        ThisCellsList.Add(TReportCell(ThisCellsList[I]).FCellsList[J]);
+        ThisCellsList.Add(TReportCell(ThisCellsList[I]).FSlaveCells[J]);
       End;
     End;
 
@@ -2736,7 +2688,7 @@ Function TReportControl.CanSplit: Boolean;
 Begin
   If (FSelectCells.Count = 1) Then
   Begin
-    If TReportCell(FSelectCells.First).FCellsList.Count > 0 Then
+    If FSelectCells[0].FSlaveCells.Count > 0 Then
       Result := True
     Else
       Result := False;
@@ -2774,8 +2726,8 @@ Begin
   For I := 0 To FSelectCells.Count - 1 Do
   Begin
     ThisCell := TReportCell(FSelectCells[I]);
-    For J := 0 To ThisCell.FCellsList.Count - 1 Do
-      FSelectCells.Add(ThisCell.FCellsList[J]);
+    For J := 0 To ThisCell.FSlaveCells.Count - 1 Do
+      FSelectCells.Add(ThisCell.FSlaveCells[J]);
   End;
   FLineList.CombineHorz;
   OwnerCell := FLineList.CombineVert;
@@ -2887,8 +2839,8 @@ Begin
     TempCell := TReportCell(FSelectCells[0]);
     ClearSelect;              
     AddSelectedCell(TempCell);
-    For I := 0 To TempCell.FCellsList.Count - 1 Do
-      InvalidateRect(Handle, @TReportCell(TempCell.FCellsList[I]).CellRect,False);
+    For I := 0 To TempCell.FSlaveCells.Count - 1 Do
+      InvalidateRect(Handle, @(TempCell.FSlaveCells[I]).CellRect,False);
     // LCJ : 实际操作就是这一行代码
     TempCell.RemoveAllOwnedCell;
     UpdateLines;
@@ -3048,7 +3000,7 @@ Begin
     Begin
       ThisCell := TReportCell(ThisLine.FCells[J]);
 
-      If ThisCell.FCellsList.Count > 0 Then
+      If ThisCell.FSlaveCells.Count > 0 Then
         ThisCell.CalcEveryHeight;
     End;
   End;
@@ -3259,7 +3211,7 @@ Begin
     Exit;
   ThisCell := TReportCell(FSelectCells[0]);
   ThisLine := ThisCell.OwnerLine;
-  NewCell := TReportCell.Create;
+  NewCell := TReportCell.Create(Self);
   NewCell.OwnerLine := ThisLine;
   NewCell.CopyCell(TReportCell(ThisLine.FCells[ThisLine.FCells.Count - 1]),
     False);
@@ -3292,14 +3244,14 @@ Begin
   Begin
     ThisCell := TReportCell(FSelectCells[I]);
 
-    For J := ThisCell.FCellsList.Count - 1 Downto 0 Do
+    For J := ThisCell.FSlaveCells.Count - 1 Downto 0 Do
     Begin
-      TempCell := TReportCell(Thiscell.FCellsList[J]);
+      TempCell := Thiscell.FSlaveCells[J];
       TempCell.OwnerLine.FCells.Remove(TempCell);
       TempCell.Free;
     End;
 
-    ThisCell.FCellsList.Clear;
+    ThisCell.FSlaveCells.Clear;
 
     ThisCell.OwnerLine.FCells.Remove(ThisCell);
     RemoveSelectedCell(ThisCell);
@@ -3331,7 +3283,7 @@ Begin
 
   ThisCell := TReportCell(FSelectCells[0]);
   ThisLine := ThisCell.OwnerLine;
-  NewCell := TReportCell.Create;
+  NewCell := TReportCell.Create(Self);
   NewCell.CopyCell(ThisCell, False);
   NewCell.OwnerLine := ThisCell.OwnerLine;
 
@@ -3478,12 +3430,12 @@ Begin
             Write(TempInteger, SizeOf(TempInteger));
           End;
 
-          Count := ThisCell.FCellsList.Count;
+          Count := ThisCell.FSlaveCells.Count;
           Write(Count, SizeOf(Count));
 
-          For K := 0 To ThisCell.FCellsList.Count - 1 Do
+          For K := 0 To ThisCell.FSlaveCells.Count - 1 Do
           Begin
-            TempCell := TReportCell(ThisCell.FCellsList[K]);
+            TempCell := ThisCell.FSlaveCells[K];
             Write(TempCell.OwnerLine.FIndex, SizeOf(TempCell.OwnerLine.FIndex));
             Write(TempCell.FCellIndex, SizeOf(TempCell.FCellIndex));
           End;
@@ -3685,7 +3637,7 @@ Begin
           Begin
             Read(Count1, SizeOf(Count1));
             Read(Count2, SizeOf(Count2));
-            ThisCell.FCellsList.Add(TReportCell(TReportLine(FLineList[Count1]).FCells[Count2]));
+            ThisCell.FSlaveCells.Add(TReportCell(TReportLine(FLineList[Count1]).FCells[Count2]));
           End;
         End;
       End;               
@@ -3732,11 +3684,11 @@ Begin
     SplitCount);
 
   ThisCell.CellWidth := CellWidth;
-  For J := 0 To ThisCell.FCellsList.Count - 1 Do
-      TReportCell(ThisCell.FCellsList[J]).CellWidth := CellWidth;
+  For J := 0 To ThisCell.FSlaveCells.Count - 1 Do
+      TReportCell(ThisCell.FSlaveCells[J]).CellWidth := CellWidth;
   For I := 1 To SplitCount - 1 Do
   Begin
-    CurrentCell := TReportCell.Create;
+    CurrentCell := TReportCell.Create(Self);
     CurrentCell.CopyCell(ThisCell, False);
     CurrentCell.OwnerLine := ThisCell.OwnerLine;
     If i = SplitCount - 1 Then
@@ -3746,12 +3698,12 @@ Begin
     Else
       CurrentCell.OwnerLine.FCells.Insert(ThisCell.CellIndex  + 1, CurrentCell);
 
-    For J := 0 To ThisCell.FCellsList.Count - 1 Do
+    For J := 0 To ThisCell.FSlaveCells.Count - 1 Do
     Begin
-      Cell := TReportCell.Create;
+      Cell := TReportCell.Create(Self);
       Cell.CopyCell(CurrentCell, False);
       CurrentCell.Own(Cell);
-      ChildCell :=  TReportCell(ThisCell.FCellsList[J]);
+      ChildCell :=  ThisCell.FSlaveCells[J];
       Cell.OwnerLine := ChildCell.OwnerLine;
       If ThisCell.IsLastCell  Then
         ChildCell.OwnerLine.FCells.Add(Cell)
