@@ -19,7 +19,12 @@ uses
   TestFramework;
 
 type
-
+  TCDSTest =  class(TTestCase)
+  published
+    procedure ReproducedEAccessViolation;
+    procedure SolutedMissingDataProvider1;
+    procedure ReproducedMissingDataProvider;
+  end;
   TReportTest = class(TTestCase)
   private
     fTestCount: integer;
@@ -32,7 +37,6 @@ type
     procedure TestOwner;
     procedure Rect;
     procedure dynamicReport;
-    procedure CreateDatasetWayWayWay;
   end;
 
   TReportUITest = class(TTestCase)
@@ -47,36 +51,27 @@ type
   end;
 
 implementation
-// why Fields.add can't work?
+// why TClientDataset.Fields.add can't work?
 // and how to pupolate TClientDataset
 // http://www.informit.com/articles/article.aspx?p=24094&seqNum=5
-procedure TReportTest.CreateDatasetWayWayWay;
-var j:integer;
-    strFileDir:string;
-    CellFont: TLogFont;
-    cf: TFont;
-    R:TReportRunTime;
+procedure TCDSTest.ReproducedEAccessViolation;
+var
     t1 ,t2: TClientDataset;
     F : TStringField;
 begin
-    R:=TReportRunTime.Create(Application.MainForm);
-    R.Visible := False;
-    R.ClearDataSet;
     t1 := TClientDataset.Create(nil);
-    //    F := TStringField.Create(t1);
-    //    F.FieldName := 'zname';
-    //    t1.Fields.Add(F);
-    {
-     FCDS.FieldDefs.Add('ID', ftInteger, 0, True);
-     FCDS.FieldDefs.Add('Name', ftString, 20, True);
-     FCDS.FieldDefs.Add('Birthday', ftDateTime, 0, True);
-     FCDS.FieldDefs.Add('Salary', ftCurrency, 0, True);
-
-    }
-    // soluted : http://stackoverflow.com/questions/26564531/tclientdataset-missing-data-provider
-    {
-      FCDS.CreateDataSet;
-    }
+    F := TStringField.Create(t1);
+    F.FieldName := 'zname';
+    t1.Fields.Add(F);
+    t1.CreateDataSet;
+    t1.open;
+    t1.Append;
+    StartExpectingException(EAccessViolation);
+    // here EAccessViolation happened!
+    t1.FieldByName('zname').AsString := '1';
+    StopExpectingException();
+    t1.Post;
+    t1.free;
 end;
 
 procedure TReportTest.dynamicReport;
@@ -88,61 +83,65 @@ var j:integer;
     t1 ,t2: TClientDataset;
     F : TStringField;
 begin
-    R:=TReportRunTime.Create(Application.MainForm);
-    R.Visible := False;
-    R.ClearDataSet;
-    t1 := TClientDataset.Create(nil);
-    t1.FieldDefs.Add('f1',ftString,20,true);
-    t1.FieldDefs.Add('f2',ftString,20,true);
-    t2 := TClientDataset.Create(nil);
-    t2.FieldDefs.Add('f1',ftString,20,true);
+  try
+      R:=TReportRunTime.Create(Application.MainForm);
+      R.Visible := False;
+      R.ClearDataSet;
+      t1 := TClientDataset.Create(nil);
+      t1.FieldDefs.Add('f1',ftString,20,true);
+      t1.FieldDefs.Add('f2',ftString,20,true);
+      t2 := TClientDataset.Create(nil);
+      t2.FieldDefs.Add('f1',ftString,20,true);
 
-    t1.CreateDataSet;
-    t2.CreateDataSet;
-    R.SetDataSet('t1',t1);
-    R.SetDataSet('t2',t2);
-    t1.Open;
-    t2.Open;
-    t1.Append;t1.FieldByName('f1').asstring:= '1' ;t1.FieldByName('f2').asstring:= '2' ;t1.Post;
-    t1.AppendRecord([1,2]);
-    t1.AppendRecord([1,2]);
-    t1.AppendRecord([1,2]);
-    t1.AppendRecord([1,2]);
-    t1.AppendRecord([1,2]);
-    t2.Append;
-    t2.FieldByName('f1').asstring:= '2' ;
-    t2.Post;
-    strFileDir := ExtractFileDir(Application.ExeName);
-		with  R do
-		begin
-			SetWndSize(1058,748); 
-			NewTable(6 ,3);
-      Lines[0].Select;
-			CombineCell;
-      Lines[0].LineHeight := 80;
-			SetCellLines(false,false,false,false,1,1,1,1);
-      Cells[0,0].CellText := 'bill';
-			SetCellAlign(TEXT_ALIGN_CENTER, TEXT_ALIGN_VCENTER);
+      t1.CreateDataSet;
+      t2.CreateDataSet;
+      R.SetDataSet('t1',t1);
+      R.SetDataSet('t2',t2);
+      t1.Open;
+      t2.Open;
+      {t1.Append;t1.FieldByName('f1').asstring:= '1' ;
+      t1.FieldByName('f2').asstring:= '2' ;t1.Post;}
+      t1.AppendRecord([1,2]);
+      t1.AppendRecord([1,2]);
+      t1.AppendRecord([1,2]);
+      t1.AppendRecord([1,2]);
+      t1.AppendRecord([1,2]);
+      t1.AppendRecord([1,2]);
+      t2.Append;
+      t2.FieldByName('f1').asstring:= '2' ;
+      t2.Post;
+      strFileDir := ExtractFileDir(Application.ExeName);
+      with  R do
+      begin
+        SetWndSize(1058,748); 
+        NewTable(6 ,3);
+        Lines[0].Select;
+        CombineCell;
+        Lines[0].LineHeight := 80;
+        SetCellLines(false,false,false,false,1,1,1,1);
+        Cells[0,0].CellText := 'bill';
+        SetCellAlign(TEXT_ALIGN_CENTER, TEXT_ALIGN_VCENTER);
 
-			cf := Tfont.Create;
-			cf.Name := '¿¬Ìå_GB2312';
-			cf.Size := 22;
-			cf.style :=cf.style+ [fsBold];
-      SetSelectedCellFont(cf);
-			for j:=0 to t1.FieldDefs.Count -1  do
-			begin
-         Cells[1,j].CellText := t1.FieldDefs[j].Name;
-         Cells[2,j].CellText := '#T1.'+t1.FieldDefs[j].Name;
+        cf := Tfont.Create;
+        cf.Name := '¿¬Ìå_GB2312';
+        cf.Size := 22;
+        cf.style :=cf.style+ [fsBold];
+        SetSelectedCellFont(cf);
+        for j:=0 to t1.FieldDefs.Count -1  do
+        begin
+           Cells[1,j].CellText := t1.FieldDefs[j].Name;
+           Cells[2,j].CellText := '#T1.'+t1.FieldDefs[j].Name;
+        end;
+        SaveToFile(strFileDir+'\'+'xxx.ept');
+        ResetContent;
+        cf.Free;
       end;
-      SaveToFile(strFileDir+'\'+'xxx.ept');
-      ResetContent;
-      cf.Free;
-		end;
-		R.ReportFile:=strFileDir+'\'+'xxx.ept';
-		R.PrintPreview(true);
-//    r.EditReport(R.ReportFile);
-    T1.free;
-    T2.Free;
+      R.ReportFile:=strFileDir+'\'+'xxx.ept';
+      R.PrintPreview(true);
+    finally
+      T1.free;
+      T2.Free;
+    end;
 end;
 procedure TReportTest.Rect;
 var
@@ -348,6 +347,36 @@ begin
     r.ResetContent;
     r.EditReport(FileName);     
 end;
+procedure TCDSTest.SolutedMissingDataProvider1;
+var j:integer;
+    strFileDir:string;
+    CellFont: TLogFont;
+    cf: TFont;
+    R:TReportRunTime;
+    t1 ,t2: TClientDataset;
+    F : TStringField;
+begin
+    t1 := TClientDataset.Create(nil);
+    t1.FieldDefs.Add('ID', ftInteger, 0, True);
+    t1.CreateDataSet;// key clause
+    t1.open;
+    t1.Append;
+    t1.FieldByName('id').AsString := '1';
+    t1.Post;
+    t1.free;
+end;
+procedure TCDSTest.ReproducedMissingDataProvider;
+var t1 ,t2: TClientDataset;
+begin
+    // CreateDataset required ,else MissingDataProvider happened;
+    t1 := TClientDataset.Create(nil);
+    t1.FieldDefs.Add('ID', ftInteger, 0, True);
+    try
+      t1.open;
+    Except on E: EDatabaseError do
+      Check(True,e.Message);
+    end;
+end;
 initialization
-  RegisterTests('Framework Suites',[TReportTest.Suite,TReportUITest.Suite]);
+  RegisterTests('Framework Suites',[TReportTest.Suite,TReportUITest.Suite,TCDSTest]);
 end.
