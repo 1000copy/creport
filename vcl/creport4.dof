@@ -136,6 +136,12 @@ ProductVersion=1.0.0.0
 Comments=
 [Excluded Packages]
 c:\program files\borland\delphi6\Projects\Bpl\dclusr60.bpl=Borland User Components
+[HistoryLists\hlUnitAliases]
+Count=1
+Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
+[HistoryLists\hlOutputDirectorry]
+Count=1
+Item0=c:\dcu
 [Exception Log]
 EurekaLog Version=513
 Activate=0
@@ -453,3 +459,4 @@ Count mtSend_FailureMsg=1
 mtSend_FailureMsg0="Sorry, sending the message didn't work."
 
 
+li..à

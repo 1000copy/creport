@@ -1634,6 +1634,7 @@ Var
   nPixelsPerInch: Integer;
 Begin
   Inherited Create(AOwner);
+  Parent := TWinControl(aOwner);
   PrintPaper:= TPrinterPaper.Create;
   // 设定为无光标，防止光标闪烁。
   //  Cursor := crNone;
