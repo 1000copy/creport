@@ -91,7 +91,7 @@ ImageBase=4194304
 ExeDescription=
 [Directories]
 OutputDir=c:\dcu
-UnitOutputDir=
+UnitOutputDir=c:\dcu
 PackageDLLOutputDir=
 PackageDCPOutputDir=
 SearchPath=
@@ -137,6 +137,9 @@ Comments=
 [HistoryLists\hlUnitAliases]
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
+[HistoryLists\hlUnitOutputDirectory]
+Count=1
+Item0=c:\dcu
 [HistoryLists\hlOutputDirectorry]
 Count=1
 Item0=c:\dcu
@@ -457,3 +460,6 @@ Count mtSend_FailureMsg=1
 mtSend_FailureMsg0="Sorry, sending the message didn't work."
 
 
+al¥f“
+¥f“
+

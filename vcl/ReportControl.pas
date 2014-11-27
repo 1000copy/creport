@@ -1418,8 +1418,8 @@ Var
   I: Integer;
   ThisCell: TReportCell;
 Begin
-  FMinHeight := 0;
-
+//LCJ 2014-11-27 
+//  FMinHeight := 0;
   For I := 0 To FCells.Count - 1 Do
   Begin
     ThisCell := TReportCell(FCells[I]);
