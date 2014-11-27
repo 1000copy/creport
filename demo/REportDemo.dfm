@@ -1,6 +1,6 @@
 object CReportDemoForm: TCReportDemoForm
-  Left = 249
-  Top = 130
+  Left = 315
+  Top = 238
   Width = 675
   Height = 510
   Caption = 'creport '#31034#20363' ( '#26446#27901#20262'  lzl-self@sohu.com)'
@@ -139,7 +139,6 @@ object CReportDemoForm: TCReportDemoForm
       Font.Name = #26999#20307'_GB2312'
       Font.Style = []
       ParentFont = False
-      OnClick = SpeedButton3Click
     end
     object btnVertSplite: TSpeedButton
       Left = 13
@@ -264,5 +263,11 @@ object CReportDemoForm: TCReportDemoForm
   object PrinterSetupDialog1: TPrinterSetupDialog
     Left = 432
     Top = 424
+  end
+  object ClientDataSet1: TClientDataSet
+    Aggregates = <>
+    Params = <>
+    Left = 240
+    Top = 432
   end
 end

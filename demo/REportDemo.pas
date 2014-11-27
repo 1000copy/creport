@@ -6,7 +6,7 @@ interface
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
   ReportControl, StdCtrls, Db, DBTables, Grids, DBGrids,printers, Buttons,
-  ExtCtrls, ExtDlgs,uReportRunTime,osservice;
+  ExtCtrls, ExtDlgs,uReportRunTime,osservice, DBClient;
 
 type
   TCReportDemoForm = class(TForm)
@@ -27,6 +27,7 @@ type
     btnVertSplite: TSpeedButton;
     btnVertSplit2: TSpeedButton;
     PrinterSetupDialog1: TPrinterSetupDialog;
+    ClientDataSet1: TClientDataSet;
     procedure Button4Click(Sender: TObject);
     //procedure Button3Click(Sender: TObject);
     procedure Button5Click(Sender: TObject);
@@ -34,7 +35,6 @@ type
     procedure FormCreate(Sender: TObject);
     procedure CheckBox1Click(Sender: TObject);
     procedure FormPaint(Sender: TObject);
-    procedure SpeedButton3Click(Sender: TObject);
     procedure Button1Click(Sender: TObject);
     procedure btnVertSpliteClick(Sender: TObject);
     procedure btnVertSplit2Click(Sender: TObject);
@@ -114,100 +114,6 @@ begin
   CheckBox1.Checked:= ReportRunTime1.AddSpace;   
 end;
 
-procedure TCReportDemoForm.SpeedButton3Click(Sender: TObject);
-var j:integer;
-    strFileDir:string;
-    CellFont: TLogFont;
-    cf: TFont;
-begin
-    ReportRunTime1.ClearDataSet;
-    ReportRunTime1.SetDataSet('t1',dataform.table1);
-    ReportRunTime1.SetDataSet('t2',dataform.table2);
- 		strFileDir := ExtractFileDir(Application.ExeName);
-		with  ReportControl1 do
-		begin
-			SetWndSize(1058,748); 
-			NewTable(dbgrid1.Columns.Count ,6);
-      Lines[0].Select;
-			CombineCell;
-      Lines[0].LineHeight := 80;
-			SetCellLines(false,false,false,false,1,1,1,1);
-      Cells[0,0].CellText := 'Ö§Æ±112';
-			SetCellAlign(TEXT_ALIGN_CENTER, TEXT_ALIGN_VCENTER);
-
-			cf := Tfont.Create;
-			cf.Name := '¿¬Ìå_GB2312';
-			cf.Size := 22;
-			cf.style :=cf.style+ [fsBold];
-      SetSelectedCellFont(cf);
-			for j:=0 to dbgrid1.Columns.Count -1 do
-			begin
-       Cells[1,j].CellText := dbgrid1.Columns[j].FieldName;
-       Cells[2,j].CellText := '#T1.'+dbgrid1.Columns[j].FieldName;
-			 ClearSelect;
-			 SetCellFocus(2,j);
-
-			 if dbgrid1.DataSource.DataSet.FieldByName(dbgrid1.Columns[j].FieldName) is tnumericField then
-			 begin
-			   SetCellAlign(2, 1);
-			   SetCellDispFormt('0,.00');
-			 end
-			 else
-			   SetCellAlign(3, 1);
-			end;
-
-      Lines[1].LineHeight := 40;
-			ClearSelect;
-			SelectLine(1);
-			SetCellAlign(1, 1);
-
-			cf.Name := '·ÂËÎ_GB2312';
-			cf.Size := 16;
-			cf.Style:=[];
-			SetSelectedCellFont(cf);
-			SetCellColor(clRed, clWhite);
-
-      Cells[3,0].CellText := 'Ö§Æ±' ;
-      Cells[3,3].CellText := '`SumAll(4)' ;
-			ClearSelect;
-			SetCellFocus(3,3);
-			SetCellAlign(2, 1);
-			SetCellDispFormt('0,.00');
-
-
-			ClearSelect;
-			SelectLine(4);
-			SetCellLines(false,false,false,false,1,1,1,1);
-			CombineCell;
-      Cells[4,0].CellText := '`PageNum/' ;
-			SetCellAlign(1, 1);
-
-			ClearSelect;
-			SelectLines(1,3);
-			SetCellFocus(4,0);
-			cf.Name := 'MS Serif';
-			cf.Size :=10;
-			cf.Style:=[];
-			GetObject(cf.Handle, SizeOf(CellFont), @CellFont);
-			SetCellFont(CellFont);
-
-			ClearSelect;
-			SelectLine(5);
-			SetCellLines(false,false,false,false,1,1,1,1);
-			CombineCell;
-      Cells[5,0].CellText := '@T2.Loel' ;
-
-      Lines[5].LineHeight := 250;
-			SaveToFile(strFileDir+'\'+'xxx.ept');
-			ResetContent;
-			cf.Free;
-		end;
-
-		dataform.Table1.DisableControls;
-		ReportRunTime1.ReportFile:=strFileDir+'\'+'xxx.ept';
-		ReportRunTime1.PrintPreview(true); 
-		dataform.Table1.EnableControls;
-end;
 procedure TCReportDemoForm.Button1Click(Sender: TObject);
 var strFileDir : string;
 begin
