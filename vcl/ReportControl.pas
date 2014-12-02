@@ -88,10 +88,12 @@ Type
     function CombineVert:TReportCell;
   end;
   TReportCell = Class(TObject)
-  private
+  public
+    FMinCellHeight: Integer;
     ReportControl:TReportControl;
     function GetReportControl: TReportControl;
     function GetSelected: Boolean;
+//    property FDragCellHeight: Integer read FMinCellHeight write FMinCellHeight ;
   public
     FLeftMargin: Integer;               // 左边的空格
     FOwnerLine: TReportLine;            // 隶属行
@@ -105,8 +107,7 @@ Type
     FCellRect: TRect;                   // 计算得来
     FTextRect: TRect;
 
-    FDragCellHeight: Integer;
-    FMinCellHeight: Integer;
+
     FRequiredCellHeight: Integer;
     // border
     FLeftLine: Boolean;
@@ -132,9 +133,9 @@ Type
     FbmpYn: boolean;
     // font
     FLogFont: TLOGFONT;
-    // Cell的Top属性从隶属的行中取得
     // Cell的Height属性从隶属行和跨越行中取得
     Function GetCellHeight: Integer;
+    // Cell的Top属性从隶属的行中取得
     Function GetCellTop: Integer;
     Function GetOwnerLineHeight: Integer;
     function DefaultHeight(cell: TReportCell): integer;
@@ -187,9 +188,8 @@ Type
     Property CellHeight: Integer Read GetCellHeight;             
     Property CellRect: TRect Read FCellRect;
     Property TextRect: TRect Read FTextRect;                     
-    Property DragCellHeight: Integer Read FDragCellHeight;
     // or protected property ?
-    Property MinCellHeight: Integer Read FMinCellHeight Write FMinCellHeight;
+//    Property MinCellHeight: Integer Read FMinCellHeight Write FMinCellHeight;
     Property RequiredCellHeight: Integer Read FRequiredCellHeight;
     Property OwnerLineHeight: Integer Read GetOwnerLineHeight;
     // border
@@ -669,10 +669,10 @@ End;
 Function TReportCell.GetCellHeight: Integer;
 Begin
   Assert(FOwnerLine <> Nil );
-  If FDragCellHeight > FMinCellHeight Then
-    Result := FDragCellHeight
-  Else
-    Result := FMinCellHeight;
+//  If FDragCellHeight > FMinCellHeight Then
+//    Result := FDragCellHeight
+//  Else
+  Result := FMinCellHeight;
 End;
 
 Function TReportCell.GetCellTop: Integer;
@@ -797,7 +797,8 @@ Begin
 End;
 
  procedure TReportCell.GetTextRect(var TempRect:TRect);
-  var   hTempFont, hPrevFont: HFONT;
+var
+  hTempFont, hPrevFont: HFONT;
   hTempDC: HDC;
   TempString: String;
   Var
@@ -806,92 +807,92 @@ End;
   BottomCell, ThisCell: TReportCell;
   TotalHeight,Top: Integer;
   TempSize: TSize;
-  begin
-    // LCJ : 最小高度需要能够放下文字，并且留下直线的宽度和2个点的空间出来。
-    //       因此，需要实际绘制文字在DC 0 上，获得它的TempRect-文字所占的空间
-    //       - FLeftMargin : Cell 内文字和边线之间留下的空的宽度
-    hTempFont := CreateFontIndirect(FLogFont);
-    If (Length(FCellText) <= 0) Then
-    TempString := '汉'
-    Else
-    TempString := FCellText;
+begin
+  // LCJ : 最小高度需要能够放下文字，并且留下直线的宽度和2个点的空间出来。
+  //       因此，需要实际绘制文字在DC 0 上，获得它的TempRect-文字所占的空间
+  //       - FLeftMargin : Cell 内文字和边线之间留下的空的宽度
+  hTempFont := CreateFontIndirect(FLogFont);
+  If (Length(FCellText) <= 0) Then
+  TempString := '汉'
+  Else
+  TempString := FCellText;
 
-    hTempDC := GetDC(0);
-    hPrevFont := SelectObject(hTempDC, hTempFont);
+  hTempDC := GetDC(0);
+  hPrevFont := SelectObject(hTempDC, hTempFont);
 
-    SetRect(TempRect, 0, 0, 0, 0);
+  SetRect(TempRect, 0, 0, 0, 0);
 
-    TempRect.left := FCellLeft + FLeftMargin;
-    TempRect.top := GetCellTop + 2;
-    ;
-    TempRect.right := FCellLeft + FCellWidth - FLeftMargin;
-    TempRect.bottom := 65535;
+  TempRect.left := FCellLeft + FLeftMargin;
+  TempRect.top := GetCellTop + 2;
+  ;
+  TempRect.right := FCellLeft + FCellWidth - FLeftMargin;
+  TempRect.bottom := 65535;
 
-    Format := DT_EDITCONTROL Or DT_WORDBREAK;
-    Case FHorzAlign Of
-    0:
-      Format := Format Or DT_LEFT;
-    1:
-      Format := Format Or DT_CENTER;
-    2:
-      Format := Format Or DT_RIGHT;
-    Else
+  Format := DT_EDITCONTROL Or DT_WORDBREAK;
+  Case FHorzAlign Of
+  0:
     Format := Format Or DT_LEFT;
-    End;
+  1:
+    Format := Format Or DT_CENTER;
+  2:
+    Format := Format Or DT_RIGHT;
+  Else
+  Format := Format Or DT_LEFT;
+  End;
 
-    Format := Format Or DT_CALCRECT;
-    // lpRect [in, out] !  TempRect.Bottom ,TempRect.Right  会被修改 。但是手册上没有提到。
-    DrawText(hTempDC, PChar(TempString), Length(TempString), TempRect, Format);
-    //  DrawText(hTempDC, PChar(TempString), -1, TempRect, Format);
+  Format := Format Or DT_CALCRECT;
+  // lpRect [in, out] !  TempRect.Bottom ,TempRect.Right  会被修改 。但是手册上没有提到。
+  DrawText(hTempDC, PChar(TempString), Length(TempString), TempRect, Format);
+  //  DrawText(hTempDC, PChar(TempString), -1, TempRect, Format);
 
-    // 补偿文字最后的回车带来的误差
-    If Length(TempString) >= 2 Then
-    Begin
-    If (TempString[Length(TempString)] = Chr(10)) And
-    (TempString[Length(TempString) - 1] = Chr(13)) Then
-    Begin
-      GetTextExtentPoint(hTempDC, 'A', 1, TempSize);
-      TempRect.Bottom := TempRect.Bottom + TempSize.cy;
-    End;
-    End;
+  // 补偿文字最后的回车带来的误差
+  If Length(TempString) >= 2 Then
+  Begin
+  If (TempString[Length(TempString)] = Chr(10)) And
+  (TempString[Length(TempString) - 1] = Chr(13)) Then
+  Begin
+    GetTextExtentPoint(hTempDC, 'A', 1, TempSize);
+    TempRect.Bottom := TempRect.Bottom + TempSize.cy;
+  End;
+  End;
 
-    SelectObject(hTempDc, hPrevFont);
-    DeleteObject(hTempFont);
-    ReleaseDC(0, hTempDC);
-  end;
-  function TReportCell.DefaultHeight(cell : TReportCell) : integer; begin
-    result := 16 + 2 + cell.FTopLineWidth + cell.FBottomLineWidth ;
-  end;
-  // 取得最下的单元格
-  function TReportCell.GetBottomest(FOwnerCell:TReportCell):TReportCell;
-  var BottomCell,ThisCell:TReportCell;I,Top:Integer ;
-  begin
-    BottomCell := Nil;
-    Top := 0;
-    For I := 0 To FOwnerCell.FSlaveCells.Count - 1 Do
+  SelectObject(hTempDc, hPrevFont);
+  DeleteObject(hTempFont);
+  ReleaseDC(0, hTempDC);
+end;
+function TReportCell.DefaultHeight(cell : TReportCell) : integer; begin
+  result := 16 + 2 + cell.FTopLineWidth + cell.FBottomLineWidth ;
+end;
+// 取得最下的单元格
+function TReportCell.GetBottomest(FOwnerCell:TReportCell):TReportCell;
+var BottomCell,ThisCell:TReportCell;I,Top:Integer ;
+begin
+  BottomCell := Nil;
+  Top := 0;
+  For I := 0 To FOwnerCell.FSlaveCells.Count - 1 Do
+  Begin
+    ThisCell := FOwnerCell.FSlaveCells[i];
+    If ThisCell.CellTop > Top Then
     Begin
-      ThisCell := FOwnerCell.FSlaveCells[i];
-      If ThisCell.CellTop > Top Then
-      Begin
-        BottomCell := ThisCell;
-        Top := ThisCell.CellTop;
-      End;
+      BottomCell := ThisCell;
+      Top := ThisCell.CellTop;
     End;
-    result := BottomCell;
-  end;
-  function TReportCell.GetTotalHeight(FOwnerCell:TReportCell):Integer;
-  var BottomCell,ThisCell:TReportCell;I,Top,Height:Integer ;
-  begin
-    Height := 0 ;
-    For I := 0 To FOwnerCell.FSlaveCells.Count - 1 Do
-    Begin
-      ThisCell := FOwnerCell.FSlaveCells[i];
-      ThisCell.FMinCellHeight := DefaultHeight(thiscell);
-      ThisCell.OwnerLine.CalcLineHeight;
-      Height := Height + ThisCell.OwnerLineHeight;
-    End;
-    result := Height + FOwnerCell.OwnerLineHeight;
-  end;
+  End;
+  result := BottomCell;
+end;
+function TReportCell.GetTotalHeight(FOwnerCell:TReportCell):Integer;
+var BottomCell,ThisCell:TReportCell;I,Top,Height:Integer ;
+begin
+  Height := 0 ;
+  For I := 0 To FOwnerCell.FSlaveCells.Count - 1 Do
+  Begin
+    ThisCell := FOwnerCell.FSlaveCells[i];
+    ThisCell.FMinCellHeight := DefaultHeight(thiscell);
+    ThisCell.OwnerLine.CalcLineHeight;
+    Height := Height + ThisCell.OwnerLineHeight;
+  End;
+  result := Height + FOwnerCell.OwnerLineHeight;
+end;
 // 开始噩梦，噩梦中我把屏幕上的象素点一个一个干掉
 // LCJ: 在 Calc_MinCellHeight 内，期望仅仅计算 CalcEveryHeight ；实际上同时在计算
 //  FMinCellHeight ，FRequiredCellHeight ，还调用了 OwnerLine.CalcLineHeight
@@ -904,10 +905,10 @@ End;
 //  而MinCellHeight,后者是最小Cell的高度，不管它有没有合并和拆分，
 //  都固定表示一个cell的高度。普通cell用  MinCellHeight，合并的cell可能需要用RequiredCellHeight
 //  概念辨析:)
-  function TReportCell.Payload : Integer;
-  begin
-    result := 2  + FTopLineWidth + FBottomLineWidth ;
-  end;
+function TReportCell.Payload : Integer;
+begin
+  result := 2  + FTopLineWidth + FBottomLineWidth ;
+end;
 
 Procedure TReportCell.CalcEveryHeight;
 Var
@@ -1221,7 +1222,7 @@ Begin
   FTextRect.Right := 0;
   FTextRect.Bottom := 0;
 
-  FDragCellHeight := 0;
+//  FDragCellHeight := 0;
   FMinCellHeight := 0;
   FRequiredCellHeight := 0;
 
@@ -1319,7 +1320,7 @@ Begin
   FTextRect.Right := 0;
   FTextRect.Bottom := 0;
 
-  FDragCellHeight := Cell.FDragCellHeight;
+//  FDragCellHeight := Cell.FDragCellHeight;
   FMinCellHeight := Cell.FMinCellHeight;
 
   // border
@@ -3370,8 +3371,8 @@ Begin
 
           Write(ThisCell.FCellRect, SizeOf(ThisCell.FCellRect));
           Write(ThisCell.FTextrect, SizeOf(ThisCell.FTextRect));
-
-          Write(ThisCell.FDragCellHeight, SizeOf(ThisCell.FDragCellHeight));
+          // LCJ :DELETE on the road 
+          Write(ThisCell.FMinCellHeight, SizeOf(ThisCell.FMinCellHeight));
           Write(ThisCell.FMinCellHeight, SizeOf(ThisCell.FMinCellHeight));
           Write(ThisCell.FRequiredCellHeight,
             SizeOf(ThisCell.FRequiredCellHeight));
