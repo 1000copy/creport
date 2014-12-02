@@ -575,7 +575,7 @@ Begin
       FOwnerCellList.Add(TempCellTable);
     End;
 
-    CalcEveryHeight;
+    CalcMinCellHeight;
   End;
 End;
 //lzl 增加 ,完全重写的 PreparePrint,并增加了用空行补满一页 统计等功能
@@ -1358,7 +1358,7 @@ End;
   procedure TReportRunTime.EachCell_CalcEveryHeight(ThisCell:TReportCell);
   begin
     If ThisCell.FSlaveCells.Count > 0 Then
-      thisCell.CalcEveryHeight ;
+      thisCell.CalcMinCellHeight ;
   end;
   procedure TReportRunTime.EachProc_CalcLineHeight(thisLine:TReportLine);
   begin
@@ -1412,7 +1412,7 @@ Begin
       ThisCell := TReportCell(ThisLine.FCells[J]);
 
       If ThisCell.FSlaveCells.Count > 0 Then
-        ThisCell.CalcEveryHeight;
+        ThisCell.CalcMinCellHeight;
     End;
   End;
 

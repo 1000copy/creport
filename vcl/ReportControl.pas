@@ -91,9 +91,9 @@ Type
   private
     function GetTotalHeight: Integer;
     function Calc_RequiredCellHeight: Integer;
-    procedure CalcEveryHeight1;
     function GetBottomest(FOwnerCell: TReportCell): TReportCell;
-    function GetBottomestSlaveCell: TReportCell;
+    function GetTextHeight: Integer;
+    procedure ExpandHeight(delta: integer);
   public
     FMinCellHeight: Integer;
     ReportControl:TReportControl;
@@ -175,7 +175,7 @@ Type
     Function IsCellOwned(Cell: TReportCell): Boolean;
     Procedure CalcCellTextRect;
     function IsBottomest():Boolean;
-    Procedure CalcEveryHeight;
+    Procedure CalcMinCellHeight;
     Procedure PaintCell(hPaintDC: HDC; bPrint: Boolean);
     Procedure CopyCell(Cell: TReportCell; bInsert: Boolean);
     Constructor Create(R:TReportControl);
@@ -569,7 +569,7 @@ Begin
     (LeftMargin < 5) Or (LeftMargin > 5) Then
     Exit;  
   FLeftMargin := LeftMargin;
-  CalcEveryHeight;
+  CalcMinCellHeight;
 End;
 
 Procedure TReportCell.SetOwnerLine(OwnerLine: TReportLine);
@@ -626,7 +626,7 @@ Begin
   Begin
     Cell := FSlaveCells[I];
     Cell.SetOwnerCell(Nil);
-    Cell.CalcEveryHeight;
+    Cell.CalcMinCellHeight;
   End;                   
   FSlaveCells.Clear;
 End;
@@ -656,13 +656,13 @@ Begin
   If CellWidth > 10 Then
   Begin
     FCellWidth := CellWidth;
-    CalcEveryHeight;
+    CalcMinCellHeight;
     CalcCellTextRect;
   End
   Else
   Begin
     FCellWidth := 10;
-    CalcEveryHeight;
+    CalcMinCellHeight;
     CalcCellTextRect;
   End;
 End;
@@ -688,7 +688,7 @@ Begin
     Exit;
 
   FLeftLine := LeftLine;
-  CalcEveryHeight;
+  CalcMinCellHeight;
   CalcCellTextRect;
 End;
 
@@ -698,7 +698,7 @@ Begin
     Exit;
 
   FLeftLineWidth := LeftLineWidth;
-  CalcEveryHeight;
+  CalcMinCellHeight;
   CalcCellTextRect;
 End;
 
@@ -708,7 +708,7 @@ Begin
     Exit;
 
   FTopLine := TopLine;
-  CalcEveryHeight;
+  CalcMinCellHeight;
   CalcCellTextRect;
 End;
 
@@ -718,7 +718,7 @@ Begin
     Exit;
 
   FTopLineWidth := TopLineWidth;
-  CalcEveryHeight;
+  CalcMinCellHeight;
   CalcCellTextRect;
 End;
 
@@ -728,7 +728,7 @@ Begin
     Exit;
 
   FRightLine := RightLine;
-  CalcEveryHeight;
+  CalcMinCellHeight;
   CalcCellTextRect;
 End;
 
@@ -738,7 +738,7 @@ Begin
     Exit;
 
   FRightLineWidth := RightLineWidth;
-  CalcEveryHeight;
+  CalcMinCellHeight;
   CalcCellTextRect;
 End;
 
@@ -748,7 +748,7 @@ Begin
     Exit;
 
   FBottomLine := BottomLine;
-  CalcEveryHeight;
+  CalcMinCellHeight;
   CalcCellTextRect;
 
 End;
@@ -759,7 +759,7 @@ Begin
     Exit;
 
   FBottomLineWidth := BottomLineWidth;
-  CalcEveryHeight;
+  CalcMinCellHeight;
   CalcCellTextRect;
 End;
 
@@ -769,14 +769,14 @@ Begin
     Exit;
 
   FCellText := CellText;
-  CalcEveryHeight;
+  CalcMinCellHeight;
 
 End;
 
 Procedure TReportCell.SetLogFont(NewFont: TLOGFONT);
 Begin
   FLogFont := NewFont;
-  CalcEveryHeight;
+  CalcMinCellHeight;
 End;
 
 Procedure TReportCell.SetBackGroundColor(BkColor: COLORREF);
@@ -796,7 +796,16 @@ Begin
   FTextColor := TextColor;
   // InvalidateRect
 End;
-
+function TReportCell.GetTextHeight():Integer;
+var r :TRect;
+begin
+  If FCellWidth <= FLeftMargin * 2 Then
+    Result := 16 
+  else begin
+    r := GetTextRect();
+    result := r.Bottom - r.Top ;
+  end;
+end;
 function TReportCell.GetTextRect():TRect;
 var
   TempRect:TRect;
@@ -805,7 +814,6 @@ var
   TempString: String;
   Var
   Format: UINT;
-  I: Integer;
   BottomCell, ThisCell: TReportCell;
   TotalHeight,Top: Integer;
   TempSize: TSize;
@@ -909,60 +917,30 @@ end;
 // 要是Cell 太窄，窄到无法放入任何文字，就不要到后面去计算高度了。
 // 直接默认 字高 16 即可。
 // 没有 RightMargin ,原作者把RightMargin 和LeftMargin等同，所以又下面的 FLeftMargin * 2
-Procedure TReportCell.CalcEveryHeight;
+Procedure TReportCell.CalcMinCellHeight;
 Var
   I: Integer;
-  btmCell,ThisCell: TReportCell;
-  Top: Integer;
-  TempSize: TSize;
-  TempRect: TRect;
+  btmCell,ThisCell,Last: TReportCell;
+  Top,dalta: Integer;
+
 Begin
   FMinCellHeight := DefaultHeight;
   If FCellWidth <= FLeftMargin * 2 Then
-    Exit ;
-  if ctNormalCell = GetCellType()  then begin
-      TempRect := GetTextRect;
-      If  TempRect.Bottom - TempRect.Top > 0  Then
-          FMinCellHeight := TempRect.Bottom - TempRect.Top + Payload;
-  end else
-  if ctOwnerCell = GetCellType()  then begin
+    exit;
+  if ctNormalCell = GetCellType()  then 
+    FMinCellHeight := GetTextHeight + Payload
+  else if ctOwnerCell = GetCellType()  then begin
     FRequiredCellHeight := Calc_RequiredCellHeight();
-    if FRequiredCellHeight > GetTotalHeight() Then begin
-        btmCell := GetBottomestSlaveCell();
-        btmCell.FMinCellHeight := FRequiredCellHeight - GetTotalHeight + btmCell.OwnerLineHeight;
-    end;
+    Last := FSlaveCells[FSlaveCells.count -1];
+    Last.ExpandHeight (FRequiredCellHeight - GetTotalHeight);
   End ;
 end;
-Procedure TReportCell.CalcEveryHeight1;
-Var
-  I: Integer;
-  BottomCell, ThisCell: TReportCell;
-  Top,RectHeight: Integer;
-  TempSize: TSize;
-  TempRect: TRect;
-Begin
-  FMinCellHeight := DefaultHeight;
-  If FCellWidth <= FLeftMargin * 2 Then
-    Exit ;
-  // Switch by 3 choises : OwnerCell,SlaveCell,NormalCell
-  if (ctSlaveCell = GetCellType()) Then Begin
-      If IsBottomest()  and
-        (FOwnerCell.FRequiredCellHeight > FOwnerCell.GetTotalHeight()) Then
-        FMinCellHeight := FOwnerCell.FRequiredCellHeight - FOwnerCell.GetTotalHeight() + OwnerLineHeight;
-  End else
-  if ctNormalCell = GetCellType()  then begin
-      TempRect := GetTextRect();
-      RectHeight := TempRect.Bottom - TempRect.Top ;
-      If (FSlaveCells.Count = 0) and ( RectHeight > 0) Then
-          FMinCellHeight := RectHeight + Payload;
-  end else
-  if ctOwnerCell = GetCellType()  then begin
-    FRequiredCellHeight := Calc_RequiredCellHeight();
-    //  FRequiredCellHeight 修改，会影响到  OwnerLine 's Height ? 
-    //    OwnerLine.CalcLineHeight;
-    For I := 0 To FSlaveCells.Count - 1 Do
-      FSlaveCells[I].CalcEveryHeight;
-  End ;
+procedure TReportCell.ExpandHeight(delta:integer);
+begin
+  if delta >0  Then
+//  LCJ : 存疑？ OwnerLineHeight vs.  FMinCellHeight
+//    FMinCellHeight := OwnerLineHeight + delta ;
+      inc (FMinCellHeight,delta);
 end;
 
 // Calc CellRect & TextRect here
@@ -1216,7 +1194,9 @@ Begin
   FLeftMargin := 5;
   FOwnerLine := Nil;
   FOwnerCell := Nil;
-
+    //  FDragCellHeight := 0;
+  FMinCellHeight := 0;
+  FRequiredCellHeight := 0;
   FCellIndex := -1;
 
   FCellLeft := 0;
@@ -1232,9 +1212,7 @@ Begin
   FTextRect.Right := 0;
   FTextRect.Bottom := 0;
 
-//  FDragCellHeight := 0;
-  FMinCellHeight := 0;
-  FRequiredCellHeight := 0;
+
 
   // border
   FLeftLine := True;
@@ -1422,10 +1400,7 @@ function TReportCell.GetSelected: Boolean;
 begin
   result := R.IsCellSelected(self);
 end;
-function TReportCell.GetBottomestSlaveCell():TReportCell;
-begin
-  result := FSlaveCells[FSlaveCells.count -1];
-end;
+
 
 
 function TReportCell.GetBottomest(FOwnerCell:TReportCell):TReportCell;
@@ -1464,6 +1439,7 @@ begin
     exit;
   end;                   
 end;
+
 
 { TReportLine }
 Procedure TReportLine.CalcLineHeight;
@@ -2381,7 +2357,7 @@ Begin
       End;
     End;
 
-    BottomCell.CalcEveryHeight;
+    BottomCell.CalcMinCellHeight;
     BottomCell.OwnerLine.LineHeight := FMousePoint.Y -
       BottomCell.OwnerLine.LineTop;
     UpdateLines;
@@ -3056,7 +3032,7 @@ Begin
       ThisCell := TReportCell(ThisLine.FCells[J]);
 
       If ThisCell.FSlaveCells.Count > 0 Then
-        ThisCell.CalcEveryHeight;
+        ThisCell.CalcMinCellHeight;
     End;
   End;
 

@@ -543,19 +543,14 @@ begin
       Check(R.Cells[0,0].FSlaveCells.Count = 2);
       Check(R.Cells[0,0].FSlaveCells[0]  = R.Cells[1,0]);
       Check(R.Cells[0,0].FSlaveCells[1]  = R.Cells[2,0]);
-      R.Cells[0,0].CellText := 'long text so FRequiredCellHeight is incremented absolutly ' ;
-      R.Cells[0,0].CellText := TextDouble(R.Cells[0,0].CellText);
-      R.Cells[0,0].CellText := TextDouble(R.Cells[0,0].CellText);
+      R.Cells[0,0].CellText := TextDouble(TextDouble(
+        'long text so FRequiredCellHeight is incremented absolutly ' ));
       CheckEquals(68,R.Cells[0,0].FRequiredCellHeight );
       CheckEquals(0,R.Cells[1,0].FRequiredCellHeight );
       CheckEquals(0,R.Cells[2,0].FRequiredCellHeight );
       CheckEquals(R.Cells[0,0].DefaultHeight,R.Cells[0,0].FMinCellHeight );
       CheckEquals(R.Cells[1,0].DefaultHeight,R.Cells[1,0].FMinCellHeight );
-      CheckEquals(28,R.Cells[2,0].FMinCellHeight );
-
-//      r.SaveToFile(Filename);
-//      r.ResetContent;
-//      R.EditReport(FileName);
+      CheckEquals(28,R.Cells[2,0].FMinCellHeight );    
     finally
       R.Free;
     end;
