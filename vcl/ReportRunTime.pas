@@ -427,8 +427,8 @@ Begin
     FTextRect.Top := 0;
     FTextRect.Right := 0;
     FTextRect.Bottom := 0;
-    FDragCellHeight := ThisCell.FDragCellHeight;
-    FDragCellHeight := 0;
+//    FDragCellHeight := ThisCell.FDragCellHeight;
+//    FDragCellHeight := 0;
     FMinCellHeight := ThisCell.FMinCellHeight;
     FMinCellHeight := 0;
     // border

@@ -32,6 +32,8 @@ type
     procedure dynamicReport;
     procedure PrinterPagerWidth;
     procedure PrinterCaps;
+    procedure OwnerCellRequiredHeight;
+    procedure OwnerCellRequiredHeightIncrement;
   end;
 
   TReportUITest = class(TTestCase)
@@ -475,6 +477,88 @@ begin
     and 
     2. Each logical unit is mapped to 0.1 millimeter
   }
+end;
+
+procedure TReportTest.OwnerCellRequiredHeight;
+var Filename : string;
+    ThisCell:TReportCell;
+    R: TReportRunTime;
+begin
+    R := TReportRunTime.Create(Application.MainForm);
+    R.Visible := false;
+    try
+      FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
+      r.SetWndSize(1058,748);
+      r.NewTable(2 ,3);
+      // 垂直合并后，Cell并不减少
+      r.Cells[0,0].Select;
+      r.Cells[1,0].Select;
+      r.Cells[2,0].Select;
+      r.CombineCell ;
+      Check(R.Lines[0].FCells.count = 2);
+      Check(R.Lines[1].FCells.count = 2);
+      Check(R.Lines[2].FCells.count = 2);
+      Check(R.Cells[0,0].OwnerCell = nil);
+      Check(R.Cells[1,0].OwnerCell = R.Cells[0,0]);
+      Check(R.Cells[2,0].OwnerCell = R.Cells[0,0]);
+      Check(R.Cells[0,0].FSlaveCells.Count = 2);
+      Check(R.Cells[0,0].FSlaveCells[0]  = R.Cells[1,0]);
+      Check(R.Cells[0,0].FSlaveCells[1]  = R.Cells[2,0]);
+//      r.SaveToFile(Filename);
+//      r.ResetContent;
+//      R.EditReport(FileName);
+      CheckEquals(20,R.Cells[0,0].FRequiredCellHeight );
+      CheckEquals(0,R.Cells[1,0].FRequiredCellHeight );
+      CheckEquals(0,R.Cells[2,0].FRequiredCellHeight );
+    finally
+      R.Free;
+    end;
+end;
+function TextDouble(s : string):string;
+begin
+  result := s + s;
+end;
+procedure TReportTest.OwnerCellRequiredHeightIncrement;
+var Filename : string;
+    ThisCell:TReportCell;
+    R: TReportRunTime;
+begin
+    R := TReportRunTime.Create(Application.MainForm);
+    R.Visible := false;
+    try
+      FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
+      r.SetWndSize(1058,748);
+      r.NewTable(2 ,3);
+      // 垂直合并后，Cell并不减少
+      r.Cells[0,0].Select;
+      r.Cells[1,0].Select;
+      r.Cells[2,0].Select;
+      r.CombineCell ;
+      Check(R.Lines[0].FCells.count = 2);
+      Check(R.Lines[1].FCells.count = 2);
+      Check(R.Lines[2].FCells.count = 2);
+      Check(R.Cells[0,0].OwnerCell = nil);
+      Check(R.Cells[1,0].OwnerCell = R.Cells[0,0]);
+      Check(R.Cells[2,0].OwnerCell = R.Cells[0,0]);
+      Check(R.Cells[0,0].FSlaveCells.Count = 2);
+      Check(R.Cells[0,0].FSlaveCells[0]  = R.Cells[1,0]);
+      Check(R.Cells[0,0].FSlaveCells[1]  = R.Cells[2,0]);
+      R.Cells[0,0].CellText := 'long text so FRequiredCellHeight is incremented absolutly ' ;
+      R.Cells[0,0].CellText := TextDouble(R.Cells[0,0].CellText);
+      R.Cells[0,0].CellText := TextDouble(R.Cells[0,0].CellText);
+      CheckEquals(68,R.Cells[0,0].FRequiredCellHeight );
+      CheckEquals(0,R.Cells[1,0].FRequiredCellHeight );
+      CheckEquals(0,R.Cells[2,0].FRequiredCellHeight );
+      CheckEquals(R.Cells[0,0].DefaultHeight,R.Cells[0,0].FMinCellHeight );
+      CheckEquals(R.Cells[1,0].DefaultHeight,R.Cells[1,0].FMinCellHeight );
+      CheckEquals(28,R.Cells[2,0].FMinCellHeight );
+
+//      r.SaveToFile(Filename);
+//      r.ResetContent;
+//      R.EditReport(FileName);
+    finally
+      R.Free;
+    end;
 end;
 
 initialization

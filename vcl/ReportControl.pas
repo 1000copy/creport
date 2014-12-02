@@ -10,7 +10,7 @@ Uses
   Forms, Dialogs, Printers, Menus, Db,
   DesignEditors, ExtCtrls,osservice;
 type
-
+  CellType = (ctOwnerCell,ctSlaveCell,ctNormalCell);
   TPrinterPaper = class
   private
     // google : msdn DEVMODE structure
@@ -88,6 +88,9 @@ Type
     function CombineVert:TReportCell;
   end;
   TReportCell = Class(TObject)
+  private
+    function GetTotalHeight: Integer;
+    function Calc_RequiredCellHeight: Integer;
   public
     FMinCellHeight: Integer;
     ReportControl:TReportControl;
@@ -106,8 +109,6 @@ Type
     FCellWidth: Integer;
     FCellRect: TRect;                   // 计算得来
     FTextRect: TRect;
-
-
     FRequiredCellHeight: Integer;
     // border
     FLeftLine: Boolean;
@@ -138,10 +139,7 @@ Type
     // Cell的Top属性从隶属的行中取得
     Function GetCellTop: Integer;
     Function GetOwnerLineHeight: Integer;
-    function DefaultHeight(cell: TReportCell): integer;
-    function GetBottomest(FOwnerCell: TReportCell): TReportCell;
     procedure GetTextRect(var TempRect: TRect);
-    function GetTotalHeight(FOwnerCell: TReportCell): Integer;
     function Payload: Integer;
   Protected
     Procedure SetLeftMargin(LeftMargin: Integer);
@@ -164,6 +162,8 @@ Type
     Procedure SetBackGroundColor(BkColor: COLORREF);
     Procedure SetTextColor(TextColor: COLORREF);           
   Public
+    function GetCellType:CellType;
+    function DefaultHeight(): integer;
     procedure Select;
     function IsLastCell():boolean;
     Procedure Own(Cell: TReportCell);
@@ -171,6 +171,7 @@ Type
     Procedure RemoveOwnedCell(Cell: TReportCell);
     Function IsCellOwned(Cell: TReportCell): Boolean;
     Procedure CalcCellTextRect;
+    function IsBottomest():Boolean;
     Procedure CalcEveryHeight;
     Procedure PaintCell(hPaintDC: HDC; bPrint: Boolean);
     Procedure CopyCell(Cell: TReportCell; bInsert: Boolean);
@@ -188,9 +189,6 @@ Type
     Property CellHeight: Integer Read GetCellHeight;             
     Property CellRect: TRect Read FCellRect;
     Property TextRect: TRect Read FTextRect;                     
-    // or protected property ?
-//    Property MinCellHeight: Integer Read FMinCellHeight Write FMinCellHeight;
-    Property RequiredCellHeight: Integer Read FRequiredCellHeight;
     Property OwnerLineHeight: Integer Read GetOwnerLineHeight;
     // border
     Property LeftLine: Boolean Read FLeftLine Write SetLeftLine Default True;
@@ -860,39 +858,10 @@ begin
   DeleteObject(hTempFont);
   ReleaseDC(0, hTempDC);
 end;
-function TReportCell.DefaultHeight(cell : TReportCell) : integer; begin
-  result := 16 + 2 + cell.FTopLineWidth + cell.FBottomLineWidth ;
+function TReportCell.DefaultHeight() : integer; begin
+  result := 16 + 2 + FTopLineWidth + FBottomLineWidth ;
 end;
 // 取得最下的单元格
-function TReportCell.GetBottomest(FOwnerCell:TReportCell):TReportCell;
-var BottomCell,ThisCell:TReportCell;I,Top:Integer ;
-begin
-  BottomCell := Nil;
-  Top := 0;
-  For I := 0 To FOwnerCell.FSlaveCells.Count - 1 Do
-  Begin
-    ThisCell := FOwnerCell.FSlaveCells[i];
-    If ThisCell.CellTop > Top Then
-    Begin
-      BottomCell := ThisCell;
-      Top := ThisCell.CellTop;
-    End;
-  End;
-  result := BottomCell;
-end;
-function TReportCell.GetTotalHeight(FOwnerCell:TReportCell):Integer;
-var BottomCell,ThisCell:TReportCell;I,Top,Height:Integer ;
-begin
-  Height := 0 ;
-  For I := 0 To FOwnerCell.FSlaveCells.Count - 1 Do
-  Begin
-    ThisCell := FOwnerCell.FSlaveCells[i];
-    ThisCell.FMinCellHeight := DefaultHeight(thiscell);
-    ThisCell.OwnerLine.CalcLineHeight;
-    Height := Height + ThisCell.OwnerLineHeight;
-  End;
-  result := Height + FOwnerCell.OwnerLineHeight;
-end;
 // 开始噩梦，噩梦中我把屏幕上的象素点一个一个干掉
 // LCJ: 在 Calc_MinCellHeight 内，期望仅仅计算 CalcEveryHeight ；实际上同时在计算
 //  FMinCellHeight ，FRequiredCellHeight ，还调用了 OwnerLine.CalcLineHeight
@@ -901,59 +870,71 @@ end;
 //  要覆盖测试的话，只要combine一个贯穿三行的Cell，每个cell会各走一个分支。Yeah。
 //  这个cover，脑袋里面演示下，还是没有问题的
 //  2014-11-7 现在，你体会下，这就是职责分离的快感。
-//   RequiredCellHeight 就是在跨行合并的Cell中表达 CellText需要的高度。区别于
-//  而MinCellHeight,后者是最小Cell的高度，不管它有没有合并和拆分，
-//  都固定表示一个cell的高度。普通cell用  MinCellHeight，合并的cell可能需要用RequiredCellHeight
-//  概念辨析:)
+
 function TReportCell.Payload : Integer;
 begin
   result := 2  + FTopLineWidth + FBottomLineWidth ;
 end;
-
+function TReportCell.GetTotalHeight():Integer;
+var BottomCell,ThisCell:TReportCell;I,Top,Height:Integer ;
+begin
+  Height := 0 ;
+  For I := 0 To FSlaveCells.Count - 1 Do
+  Begin
+    ThisCell := FSlaveCells[i];
+    ThisCell.FMinCellHeight := thiscell.DefaultHeight();
+    ThisCell.OwnerLine.CalcLineHeight;
+    Height := Height + ThisCell.OwnerLineHeight;
+  End;
+  result := Height + OwnerLineHeight;
+end;
+//   FRequiredCellHeight 就是在跨行合并的Cell中表达 CellText需要的高度。区别于
+//  而MinCellHeight,后者是最小Cell的高度，不管它有没有合并和拆分，
+//  都固定表示一个cell的高度。普通cell用  MinCellHeight，合并的cell可能需要用RequiredCellHeight
+//  概念辨析:)
+function TReportCell.Calc_RequiredCellHeight( ): Integer;
+var Height : integer;  TempRect: TRect;
+begin
+  GetTextRect(TempRect);
+  Height := 16 ;
+  If TempRect.Bottom - TempRect.Top > 0 Then
+    Height := TempRect.Bottom - TempRect.Top;
+  result := Height + Payload ;
+end;
+// 要是Cell 太窄，窄到无法放入任何文字，就不要到后面去计算高度了。
+// 直接默认 字高 16 即可。
+// 没有 RightMargin ,原作者把RightMargin 和LeftMargin等同，所以又下面的 FLeftMargin * 2
 Procedure TReportCell.CalcEveryHeight;
 Var
   I: Integer;
   BottomCell, ThisCell: TReportCell;
-  TotalHeight,Top,RectHeight: Integer;
+  Top,RectHeight: Integer;
   TempSize: TSize;
   TempRect: TRect;
-  function Calc_RequiredCellHeight( ): Integer;
-  var Height : integer;  TempRect: TRect;
-  begin
-    GetTextRect(TempRect);
-    Height := 16 ;
-    If TempRect.Bottom - TempRect.Top > 0 Then
-      Height := TempRect.Bottom - TempRect.Top;
-    result := Height + Payload ;
-  end;
 Begin
-  FMinCellHeight := DefaultHeight(self);
-  // 要是Cell 太窄，窄到无法放入任何文字，就不要到后面去计算高度了。
-  // 直接默认 字高 16 即可。
-  // 没有 RightMargin ,原作者把RightMargin 和LeftMargin等同，所以又下面的 FLeftMargin * 2
+  FMinCellHeight := DefaultHeight;
   If FCellWidth <= FLeftMargin * 2 Then
     Exit ;
-  if (FOwnerCell <> Nil) Then
-  Begin
-      BottomCell := GetBottomest(FOwnerCell);
-      TotalHeight := GetTotalHeight(FOwnerCell) ;
-      If (BottomCell = Self ) and (FOwnerCell.RequiredCellHeight > TotalHeight) Then
-        FMinCellHeight := FOwnerCell.RequiredCellHeight - TotalHeight + OwnerLineHeight;
-  End else begin
+  // Switch by 3 choises : OwnerCell,SlaveCell,NormalCell
+  if (ctSlaveCell = GetCellType()) Then Begin
+      If IsBottomest()  and
+        (FOwnerCell.FRequiredCellHeight > FOwnerCell.GetTotalHeight()) Then
+        FMinCellHeight := FOwnerCell.FRequiredCellHeight - FOwnerCell.GetTotalHeight() + OwnerLineHeight;
+  End else
+  if ctNormalCell = GetCellType()  then begin
       GetTextRect(TempRect);
       RectHeight := TempRect.Bottom - TempRect.Top ;
       If (FSlaveCells.Count = 0) and ( RectHeight > 0) Then
           FMinCellHeight := RectHeight + Payload;
-  end;
-  // block resonsibility depart
-  If (FOwnerCell = Nil) and (FSlaveCells.Count > 0) Then
-  Begin
+  end else
+  if ctOwnerCell = GetCellType()  then begin
     FRequiredCellHeight := Calc_RequiredCellHeight();
-    OwnerLine.CalcLineHeight;
+    //  FRequiredCellHeight 修改，会影响到  OwnerLine 's Height ? 
+    //    OwnerLine.CalcLineHeight;
     For I := 0 To FSlaveCells.Count - 1 Do
       FSlaveCells[I].CalcEveryHeight;
-  End
-End;
+  End ;
+end;
 
 // Calc CellRect & TextRect here
 // 如果CELL的大小或者文本框的大小改变，自动的置窗口的失效区
@@ -1413,6 +1394,44 @@ begin
   result := R.IsCellSelected(self);
 end;
 
+function TReportCell.IsBottomest: Boolean;
+  function GetBottomest(FOwnerCell:TReportCell):TReportCell;
+  var BottomCell,ThisCell:TReportCell;I,Top:Integer ;
+  begin
+    BottomCell := Nil;
+    Top := 0;
+    For I := 0 To FOwnerCell.FSlaveCells.Count - 1 Do
+    Begin
+      ThisCell := FOwnerCell.FSlaveCells[i];
+      If ThisCell.CellTop > Top Then
+      Begin
+        BottomCell := ThisCell;
+        Top := ThisCell.CellTop;
+      End;
+    End;
+    result := BottomCell;
+  end;
+
+begin
+  result:= GetBottomest(OwnerCell) = Self ;
+end;
+
+function TReportCell.GetCellType: CellType;
+begin
+  if (FOwnerCell = nil) and (FSlaveCells.Count = 0) then begin
+    result := ctNormalCell ;
+    exit;
+  end;
+  if (FOwnerCell = nil) and (FSlaveCells.Count > 0) then begin
+    result := ctOwnerCell ;
+    exit;
+  end;
+  if FOwnerCell <> nil  then begin
+    result := ctSlaveCell ;
+    exit;
+  end;                   
+end;
+
 { TReportLine }
 Procedure TReportLine.CalcLineHeight;
 Var
@@ -1420,17 +1439,18 @@ Var
   ThisCell: TReportCell;
 Begin
 //LCJ 2014-11-27 
-//  FMinHeight := 0;
   For I := 0 To FCells.Count - 1 Do
   Begin
     ThisCell := TReportCell(FCells[I]);
+    // calc FMinHeight
     If ThisCell.CellHeight > FMinHeight Then
       FMinHeight := ThisCell.CellHeight;
+    // calc CellIndex
     ThisCell.CellIndex := I;
-
+    // calc CellLeft
     If (I = 0) And (ReportControl <> Nil) Then
       ThisCell.CellLeft := ReportControl.FLeftMargin;
-
+    // calc CellWidth
     If I > 0 Then
       ThisCell.CellLeft := TReportCell(FCells[I - 1]).CellLeft +
         TReportCell(FCells[I - 1]).CellWidth;
@@ -3567,8 +3587,8 @@ Begin
 
           Read(ThisCell.FCellRect, SizeOf(ThisCell.FCellRect));
           Read(ThisCell.FTextrect, SizeOf(ThisCell.FTextRect));
-
-          Read(ThisCell.FDragCellHeight, SizeOf(ThisCell.FDragCellHeight));
+          // LCJ :DELETE on the road
+          Read(ThisCell.FMinCellHeight, SizeOf(ThisCell.FMinCellHeight));
           Read(ThisCell.FMinCellHeight, SizeOf(ThisCell.FMinCellHeight));
           Read(ThisCell.FRequiredCellHeight,
             SizeOf(ThisCell.FRequiredCellHeight));
