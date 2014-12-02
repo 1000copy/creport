@@ -7,7 +7,7 @@ uses
   // user
   osservice,
   ReportControl,
-  uReportRunTime,
+  ReportRunTime,
   // sys
    Math,DBClient,  db,  DBTables,  Graphics,  forms,  Windows,  SysUtils,  TestFramework,Printers;
 

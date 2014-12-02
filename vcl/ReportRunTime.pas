@@ -1,4 +1,4 @@
-unit uReportRunTime;
+unit ReportRunTime;
 
 interface
 uses ReportControl,  Windows, Messages, SysUtils,

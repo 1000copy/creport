@@ -11,7 +11,7 @@ uses
   GUITesting in '..\dunit\src\GUITesting.pas',
   ReportTest in 'ReportTest.pas',
   ReportControl in '..\vcl\ReportControl.pas',
-  uReportRunTime in '..\vcl\uReportRunTime.pas',
+  ReportRunTime in '..\vcl\ReportRunTime.pas',
   osservice in '..\vcl\osservice.pas';
 
 {$R *.res}

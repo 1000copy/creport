@@ -6,7 +6,7 @@ interface
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
   ReportControl, StdCtrls, Db, DBTables, Grids, DBGrids,printers, Buttons,
-  ExtCtrls, ExtDlgs,uReportRunTime,osservice, DBClient;
+  ExtCtrls, ExtDlgs,ReportRunTime,osservice, DBClient;
 
 type
   TCReportDemoForm = class(TForm)
@@ -22,7 +22,6 @@ type
     CheckBox1: TCheckBox;
     ReportControl1: TReportControl;
     SaveDialog1: TSaveDialog;
-    SpeedButton3: TSpeedButton;
     Button1: TButton;
     btnVertSplite: TSpeedButton;
     btnVertSplit2: TSpeedButton;

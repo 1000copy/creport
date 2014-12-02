@@ -127,19 +127,6 @@ object CReportDemoForm: TCReportDemoForm
     Align = alRight
     BevelOuter = bvNone
     TabOrder = 3
-    object SpeedButton3: TSpeedButton
-      Left = 13
-      Top = 360
-      Width = 76
-      Height = 24
-      Caption = #21160#24577#25253#34920
-      Font.Charset = GB2312_CHARSET
-      Font.Color = clWindowText
-      Font.Height = -14
-      Font.Name = #26999#20307'_GB2312'
-      Font.Style = []
-      ParentFont = False
-    end
     object btnVertSplite: TSpeedButton
       Left = 13
       Top = 152
