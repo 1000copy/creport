@@ -91,6 +91,9 @@ Type
   private
     function GetTotalHeight: Integer;
     function Calc_RequiredCellHeight: Integer;
+    procedure CalcEveryHeight1;
+    function GetBottomest(FOwnerCell: TReportCell): TReportCell;
+    function GetBottomestSlaveCell: TReportCell;
   public
     FMinCellHeight: Integer;
     ReportControl:TReportControl;
@@ -139,7 +142,7 @@ Type
     // Cell的Top属性从隶属的行中取得
     Function GetCellTop: Integer;
     Function GetOwnerLineHeight: Integer;
-    procedure GetTextRect(var TempRect: TRect);
+    function GetTextRect():TRect;
     function Payload: Integer;
   Protected
     Procedure SetLeftMargin(LeftMargin: Integer);
@@ -160,7 +163,7 @@ Type
     Procedure SetCellDispformat(CellDispformat: String);
     Procedure SetLogFont(NewFont: TLOGFONT);               
     Procedure SetBackGroundColor(BkColor: COLORREF);
-    Procedure SetTextColor(TextColor: COLORREF);           
+    Procedure SetTextColor(TextColor: COLORREF);
   Public
     function GetCellType:CellType;
     function DefaultHeight(): integer;
@@ -794,8 +797,9 @@ Begin
   // InvalidateRect
 End;
 
- procedure TReportCell.GetTextRect(var TempRect:TRect);
+function TReportCell.GetTextRect():TRect;
 var
+  TempRect:TRect;
   hTempFont, hPrevFont: HFONT;
   hTempDC: HDC;
   TempString: String;
@@ -857,6 +861,7 @@ begin
   SelectObject(hTempDc, hPrevFont);
   DeleteObject(hTempFont);
   ReleaseDC(0, hTempDC);
+  result := TempRect;
 end;
 function TReportCell.DefaultHeight() : integer; begin
   result := 16 + 2 + FTopLineWidth + FBottomLineWidth ;
@@ -895,7 +900,7 @@ end;
 function TReportCell.Calc_RequiredCellHeight( ): Integer;
 var Height : integer;  TempRect: TRect;
 begin
-  GetTextRect(TempRect);
+  TempRect := GetTextRect();
   Height := 16 ;
   If TempRect.Bottom - TempRect.Top > 0 Then
     Height := TempRect.Bottom - TempRect.Top;
@@ -905,6 +910,30 @@ end;
 // 直接默认 字高 16 即可。
 // 没有 RightMargin ,原作者把RightMargin 和LeftMargin等同，所以又下面的 FLeftMargin * 2
 Procedure TReportCell.CalcEveryHeight;
+Var
+  I: Integer;
+  btmCell,ThisCell: TReportCell;
+  Top: Integer;
+  TempSize: TSize;
+  TempRect: TRect;
+Begin
+  FMinCellHeight := DefaultHeight;
+  If FCellWidth <= FLeftMargin * 2 Then
+    Exit ;
+  if ctNormalCell = GetCellType()  then begin
+      TempRect := GetTextRect;
+      If  TempRect.Bottom - TempRect.Top > 0  Then
+          FMinCellHeight := TempRect.Bottom - TempRect.Top + Payload;
+  end else
+  if ctOwnerCell = GetCellType()  then begin
+    FRequiredCellHeight := Calc_RequiredCellHeight();
+    if FRequiredCellHeight > GetTotalHeight() Then begin
+        btmCell := GetBottomestSlaveCell();
+        btmCell.FMinCellHeight := FRequiredCellHeight - GetTotalHeight + btmCell.OwnerLineHeight;
+    end;
+  End ;
+end;
+Procedure TReportCell.CalcEveryHeight1;
 Var
   I: Integer;
   BottomCell, ThisCell: TReportCell;
@@ -922,7 +951,7 @@ Begin
         FMinCellHeight := FOwnerCell.FRequiredCellHeight - FOwnerCell.GetTotalHeight() + OwnerLineHeight;
   End else
   if ctNormalCell = GetCellType()  then begin
-      GetTextRect(TempRect);
+      TempRect := GetTextRect();
       RectHeight := TempRect.Bottom - TempRect.Top ;
       If (FSlaveCells.Count = 0) and ( RectHeight > 0) Then
           FMinCellHeight := RectHeight + Payload;
@@ -1393,25 +1422,29 @@ function TReportCell.GetSelected: Boolean;
 begin
   result := R.IsCellSelected(self);
 end;
+function TReportCell.GetBottomestSlaveCell():TReportCell;
+begin
+  result := FSlaveCells[FSlaveCells.count -1];
+end;
 
-function TReportCell.IsBottomest: Boolean;
-  function GetBottomest(FOwnerCell:TReportCell):TReportCell;
-  var BottomCell,ThisCell:TReportCell;I,Top:Integer ;
-  begin
-    BottomCell := Nil;
-    Top := 0;
-    For I := 0 To FOwnerCell.FSlaveCells.Count - 1 Do
+
+function TReportCell.GetBottomest(FOwnerCell:TReportCell):TReportCell;
+var BottomCell,ThisCell:TReportCell;I,Top:Integer ;
+begin
+  BottomCell := Nil;
+  Top := 0;
+  For I := 0 To FOwnerCell.FSlaveCells.Count - 1 Do
+  Begin
+    ThisCell := FOwnerCell.FSlaveCells[i];
+    If ThisCell.CellTop > Top Then
     Begin
-      ThisCell := FOwnerCell.FSlaveCells[i];
-      If ThisCell.CellTop > Top Then
-      Begin
-        BottomCell := ThisCell;
-        Top := ThisCell.CellTop;
-      End;
+      BottomCell := ThisCell;
+      Top := ThisCell.CellTop;
     End;
-    result := BottomCell;
-  end;
-
+  End;
+  result := BottomCell;
+end;
+function TReportCell.IsBottomest: Boolean;   
 begin
   result:= GetBottomest(OwnerCell) = Self ;
 end;
