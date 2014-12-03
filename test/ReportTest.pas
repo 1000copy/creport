@@ -34,6 +34,11 @@ type
     procedure PrinterCaps;
     procedure OwnerCellRequiredHeight;
     procedure OwnerCellRequiredHeightIncrement;
+    procedure GetTextHeight;
+    procedure TextHeightCRCompensate;
+    procedure CalcTextHeight;
+    procedure LogFont;
+    procedure TFont1;
   end;
 
   TReportUITest = class(TTestCase)
@@ -556,6 +561,159 @@ begin
     end;
 end;
 
+procedure TReportTest.GetTextHeight;
+var Filename ,s: string;
+    ThisCell:TReportCell;
+    R: TReportRunTime;
+    rect : TRect;
+begin
+    R := TReportRunTime.Create(Application.MainForm);
+    R.Visible := false;
+    try
+      FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
+      r.SetWndSize(1058,748);
+      r.NewTable(2 ,3);
+      // 垂直合并后，Cell并不减少
+      r.Cells[0,0].Select;
+      r.Cells[1,0].Select;
+      r.Cells[2,0].Select;
+      r.CombineCell ;
+      s := 'long text so FRequiredCellHeight is incremented absolutly ' ;
+      s := TextDouble(TextDouble(s));  
+      rect := R.Cells[0,0].GetTextRectInternal(s);
+      CheckEquals(64,rect.bottom - rect.top); 
+    finally
+      R.Free;
+    end;
+end;
+ // 补偿文字最后的回车带来的误差
+procedure TReportTest.TextHeightCRCompensate;
+var Filename ,s: string;
+    ThisCell:TReportCell;
+    R: TReportRunTime;
+    rect : TRect;
+begin
+
+    R := TReportRunTime.Create(Application.MainForm);
+    R.Visible := false;
+    try
+      FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
+      r.SetWndSize(1058,748);
+      r.NewTable(2 ,3);
+      r.Cells[0,0].Select;
+      r.Cells[1,0].Select;
+      r.Cells[2,0].Select;
+      r.CombineCell ;
+      s := 'long text so FRequiredCellHeight is incremented absolutly ' ;
+      s := TextDouble(TextDouble(s))+chr(13)+chr(10);
+      rect := R.Cells[0,0].GetTextRectInternal(s);
+      CheckEquals(96,rect.bottom - rect.top);
+//      CheckEquals(96, r.Cells[0,0].CellWidth);
+    finally
+      R.Free;
+    end;
+    //  DT_LEFT; DT_CENTER ;DT_RIGHT
+//    CalcBottom( TempString,TempRect, HAlign2DT(FHorzAlign))
+end;
+
+procedure TReportTest.CalcTextHeight;
+var Filename ,s: string;
+    ThisCell:TReportCell;
+    R: TReportRunTime;
+    rect : TRect;
+    FLogFont: TLogFont ;
+    Var
+  hTempDC: HDC;
+  pt, ptOrg: TPoint;
+begin
+      FLogFont.lfHeight := 120;
+      FLogFont.lfWidth := 0;
+      FLogFont.lfEscapement := 0;
+      FLogFont.lfOrientation := 0;
+      FLogFont.lfWeight := 0;
+      FLogFont.lfItalic := 0;
+      FLogFont.lfUnderline := 0;
+      FLogFont.lfStrikeOut := 0;
+      FLogFont.lfCharSet := DEFAULT_CHARSET;
+      FLogFont.lfOutPrecision := 0;
+      FLogFont.lfClipPrecision := 0;
+      FLogFont.lfQuality := 0;
+      FLogFont.lfPitchAndFamily := 0;
+      FLogFont.lfFaceName := '宋体';
+      // Hey, I pass a invalid window's handle to you, what you return to me ?
+      // Haha, is a device context of the DESKTOP WINDOW !
+      hTempDC := GetDC(0);
+
+      pt.y := GetDeviceCaps(hTempDC, LOGPIXELSY) * FLogFont.lfHeight;
+      pt.y := trunc(pt.y / 720 + 0.5);      // 72 points/inch, 10 decipoints/point
+      DPtoLP(hTempDC, pt, 1);
+      ptOrg.x := 0;
+      ptOrg.y := 0;
+      DPtoLP(hTempDC, ptOrg, 1);
+      FLogFont.lfHeight := -abs(pt.y - ptOrg.y);
+      ReleaseDC(0, hTempDC);
+
+      s := 'long text so FRequiredCellHeight is incremented absolutly ' ;
+      s := TextDouble(TextDouble(s))+chr(13)+chr(10);
+      rect.Top := 0 ;
+      rect.Right := 462 ; // CellWidth(472) - 2*FLeftMargin
+      rect.Left := 0 ;
+      rect.bottom  := CalcBottom( s,rect,DT_LEFT,FLogFont);
+      CheckEquals(96,rect.bottom - rect.top);
+    //  DT_LEFT; DT_CENTER ;DT_RIGHT
+//
+end;
+function ConverToLogFontHeight(PointSize :Integer):Integer;
+var h : HDC;
+begin
+  h := GetDC(0);
+  try
+    result :=  -MulDiv(PointSize, GetDeviceCaps(h, LOGPIXELSY), 72);
+  finally
+    ReleaseDC(0, h);
+  end;
+end;
+function ConverToLogFontHeight1(PointSize :Integer):Integer;
+var h : HDC;
+    Var
+  hTempDC: HDC;
+  pt, ptOrg: TPoint;
+begin
+    h := GetDC(0);
+    try
+      pt.y := GetDeviceCaps(h, LOGPIXELSY) * PointSize;
+      pt.y := trunc(pt.y / 72 + 0.5);      // 72 points/inch, 10 decipoints/point
+      DPtoLP(h, pt, 1);
+      ptOrg.x := 0;
+      ptOrg.y := 0;
+      DPtoLP(h, ptOrg, 1);
+      result := -abs(pt.y - ptOrg.y);
+    finally
+      ReleaseDC(0, h);
+    end;
+end;
+procedure TReportTest.LogFont;
+begin
+    CheckEquals(-16,ConverToLogFontHeight(12));
+    CheckEquals(-16,ConverToLogFontHeight1(12));
+end;
+// GOOGLE : TFont,TLogFont使用
+procedure TReportTest.TFont1;
+var
+  LF: TLogFont;
+  Font: TFont;
+begin
+    Font := TFont.Create;
+//    Font.Name := 'Arial';//或者 宋体 .都一样。
+    Font.Size := 12;
+    try
+      GetObject(Font.Handle, sizeof(LF), @LF) ;
+      CheckEquals(-16,LF.lfheight);
+    finally
+      Font.Free;
+    end;
+
+end;
 initialization
   RegisterTests('Framework Suites',[TReportTest.Suite,TReportUITest.Suite,TCDSTest.Suite]);
 end.

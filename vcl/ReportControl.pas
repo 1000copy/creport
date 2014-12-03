@@ -9,7 +9,9 @@ Uses
    Classes, Graphics, Controls,
   Forms, Dialogs, Printers, Menus, Db,
   DesignEditors, ExtCtrls,osservice;
-type
+  function calcBottom(TempString:string ;TempRect:TRect;AlighFormat :UINT;FLogFont: TLOGFONT):Integer;
+
+  type
   CellType = (ctOwnerCell,ctSlaveCell,ctNormalCell);
   TPrinterPaper = class
   private
@@ -75,6 +77,7 @@ Type
     procedure DeleteCells;
     procedure ColumnSelectedCells(FLineList:TLineList);
     procedure Fill(Cells :TCellList);
+    function Last : TReportCell ;
   end;
   TLineList = class(TList)
   private
@@ -94,11 +97,13 @@ Type
     function GetBottomest(FOwnerCell: TReportCell): TReportCell;
     function GetTextHeight: Integer;
     procedure ExpandHeight(delta: integer);
+
   public
     FMinCellHeight: Integer;
     ReportControl:TReportControl;
     function GetReportControl: TReportControl;
     function GetSelected: Boolean;
+    function GetTextRectInternal(TempString: String): TRect;
 //    property FDragCellHeight: Integer read FMinCellHeight write FMinCellHeight ;
   public
     FLeftMargin: Integer;               // 左边的空格
@@ -807,68 +812,42 @@ begin
   end;
 end;
 function TReportCell.GetTextRect():TRect;
+var s : string;
+begin
+  If (Length(FCellText) <= 0) Then
+    s := '汉'
+  Else
+    s := FCellText;
+  result := GetTextRectInternal(s);
+end;
+function TReportCell.GetTextRectInternal(TempString:String):TRect;
+  function HAlign2DT(FHorzAlign:UINT):UINT;
+  var dt : Integer ;
+  begin
+    Case FHorzAlign Of
+      0:dt := DT_LEFT;
+      1:dt := DT_CENTER;
+      2:dt := DT_RIGHT;
+      Else dt := DT_LEFT;
+    End;
+    Result := dt;
+  end;
+
 var
   TempRect:TRect;
   hTempFont, hPrevFont: HFONT;
   hTempDC: HDC;
-  TempString: String;
-  Var
   Format: UINT;
   BottomCell, ThisCell: TReportCell;
   TotalHeight,Top: Integer;
   TempSize: TSize;
 begin
-  // LCJ : 最小高度需要能够放下文字，并且留下直线的宽度和2个点的空间出来。
-  //       因此，需要实际绘制文字在DC 0 上，获得它的TempRect-文字所占的空间
-  //       - FLeftMargin : Cell 内文字和边线之间留下的空的宽度
-  hTempFont := CreateFontIndirect(FLogFont);
-  If (Length(FCellText) <= 0) Then
-  TempString := '汉'
-  Else
-  TempString := FCellText;
-
-  hTempDC := GetDC(0);
-  hPrevFont := SelectObject(hTempDC, hTempFont);
-
   SetRect(TempRect, 0, 0, 0, 0);
 
   TempRect.left := FCellLeft + FLeftMargin;
   TempRect.top := GetCellTop + 2;
-  ;
   TempRect.right := FCellLeft + FCellWidth - FLeftMargin;
-  TempRect.bottom := 65535;
-
-  Format := DT_EDITCONTROL Or DT_WORDBREAK;
-  Case FHorzAlign Of
-  0:
-    Format := Format Or DT_LEFT;
-  1:
-    Format := Format Or DT_CENTER;
-  2:
-    Format := Format Or DT_RIGHT;
-  Else
-  Format := Format Or DT_LEFT;
-  End;
-
-  Format := Format Or DT_CALCRECT;
-  // lpRect [in, out] !  TempRect.Bottom ,TempRect.Right  会被修改 。但是手册上没有提到。
-  DrawText(hTempDC, PChar(TempString), Length(TempString), TempRect, Format);
-  //  DrawText(hTempDC, PChar(TempString), -1, TempRect, Format);
-
-  // 补偿文字最后的回车带来的误差
-  If Length(TempString) >= 2 Then
-  Begin
-  If (TempString[Length(TempString)] = Chr(10)) And
-  (TempString[Length(TempString) - 1] = Chr(13)) Then
-  Begin
-    GetTextExtentPoint(hTempDC, 'A', 1, TempSize);
-    TempRect.Bottom := TempRect.Bottom + TempSize.cy;
-  End;
-  End;
-
-  SelectObject(hTempDc, hPrevFont);
-  DeleteObject(hTempFont);
-  ReleaseDC(0, hTempDC);
+  TempRect.bottom := CalcBottom( TempString,TempRect, HAlign2DT(FHorzAlign),FLogFont);
   result := TempRect;
 end;
 function TReportCell.DefaultHeight() : integer; begin
@@ -918,28 +897,20 @@ end;
 // 直接默认 字高 16 即可。
 // 没有 RightMargin ,原作者把RightMargin 和LeftMargin等同，所以又下面的 FLeftMargin * 2
 Procedure TReportCell.CalcMinCellHeight;
-Var
-  I: Integer;
-  btmCell,ThisCell,Last: TReportCell;
-  Top,dalta: Integer;
-
 Begin
   FMinCellHeight := DefaultHeight;
   If FCellWidth <= FLeftMargin * 2 Then
     exit;
   if ctNormalCell = GetCellType()  then 
-    FMinCellHeight := GetTextHeight + Payload
-  else if ctOwnerCell = GetCellType()  then begin
+    FMinCellHeight := GetTextHeight + Payload ;
+  if ctOwnerCell = GetCellType()  then begin
     FRequiredCellHeight := Calc_RequiredCellHeight();
-    Last := FSlaveCells[FSlaveCells.count -1];
-    Last.ExpandHeight (FRequiredCellHeight - GetTotalHeight);
+    FSlaveCells.Last.ExpandHeight (FRequiredCellHeight - GetTotalHeight);
   End ;
 end;
 procedure TReportCell.ExpandHeight(delta:integer);
 begin
   if delta >0  Then
-//  LCJ : 存疑？ OwnerLineHeight vs.  FMinCellHeight
-//    FMinCellHeight := OwnerLineHeight + delta ;
       inc (FMinCellHeight,delta);
 end;
 
@@ -4151,6 +4122,11 @@ begin
   end;
 end;
 
+function TCellList.Last: TReportCell;
+begin
+  Result := Items[count -1];
+end;
+
 procedure TCellList.MakeSelectedCellsFromLine(ThisLine: TReportLine);
 var J :integer;ThisCell :TReportCell;
 begin
@@ -4224,7 +4200,43 @@ begin
         add(ThisLine);
     End;
 end;
+function IsCRTail(s : string):Boolean;
+begin        
+  Result := (Length(s) >= 2) and (s[Length(s)] = Chr(10)) And (s[Length(s) - 1] = Chr(13));
+end;
 
+function calcBottom(TempString:string ;TempRect:TRect;AlighFormat :UINT;FLogFont: TLOGFONT):Integer;
+var
+  hTempFont, hPrevFont: HFONT;
+  hTempDC: HDC;
+  Format: UINT;
+  TempSize: TSize;
+begin
+  // LCJ : 最小高度需要能够放下文字，并且留下直线的宽度和2个点的空间出来。 + 4
+  //       因此，需要实际绘制文字在DC 0 上，获得它的TempRect-文字所占的空间
+  //       - FLeftMargin : Cell 内文字和边线之间留下的空的宽度
+  hTempFont := CreateFontIndirect(FLogFont);
+  hTempDC := GetDC(0);
+  hPrevFont := SelectObject(hTempDC, hTempFont);
+  try
+    Format := DT_EDITCONTROL Or DT_WORDBREAK;
+    Format := Format Or AlighFormat ;
+    Format := Format Or DT_CALCRECT;
+    // lpRect [in, out] !  TempRect.Bottom ,TempRect.Right  会被修改 。但是手册上没有提到。
+    DrawText(hTempDC, PChar(TempString), Length(TempString), TempRect, Format);
+    // 补偿文字最后的回车带来的误差
+    If  IsCRTail(TempString) Then
+    Begin
+        GetTextExtentPoint(hTempDC, 'A', 1, TempSize);
+        TempRect.Bottom := TempRect.Bottom + TempSize.cy;
+    End;
+    result := TempRect.Bottom ;
+  finally
+    SelectObject(hTempDc, hPrevFont);
+    DeleteObject(hTempFont);
+    ReleaseDC(0, hTempDC);
+  end;
+end;
 End.
 
 
