@@ -700,15 +700,30 @@ end;
 // GOOGLE : TFont,TLogFont使用
 procedure TReportTest.TFont1;
 var
-  LF: TLogFont;
+  FLogFont: TLogFont;
   Font: TFont;
 begin
     Font := TFont.Create;
 //    Font.Name := 'Arial';//或者 宋体 .都一样。
     Font.Size := 12;
     try
-      GetObject(Font.Handle, sizeof(LF), @LF) ;
-      CheckEquals(-16,LF.lfheight);
+      GetObject(Font.Handle, sizeof(FLogFont), @FLogFont) ;
+      CheckEquals(-16,FLogFont.lfheight);
+      CheckEquals(FLogFont.lfWidth , 0);
+      CheckEquals(FLogFont.lfEscapement , 0);
+      CheckEquals(FLogFont.lfOrientation , 0);
+      //The weight of the font in the range 0 through 1000.
+      //For example, 400 is normal and 700 is bold.
+      //If this value is zero, a default weight is used.
+      CheckEquals(FLogFont.lfWeight , 400); 
+      CheckEquals(FLogFont.lfItalic , 0);
+      CheckEquals(FLogFont.lfUnderline , 0);
+      CheckEquals(FLogFont.lfStrikeOut , 0);
+      CheckEquals(FLogFont.lfCharSet , DEFAULT_CHARSET);
+      CheckEquals(FLogFont.lfOutPrecision , 0);
+      CheckEquals(FLogFont.lfClipPrecision , 0);
+      CheckEquals(FLogFont.lfQuality , 0);
+      CheckEquals(FLogFont.lfPitchAndFamily , 0);          
     finally
       Font.Free;
     end;
