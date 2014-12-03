@@ -13,8 +13,8 @@ uses
 
 type
   TCDSTest =  class(TTestCase)
-  published
     procedure ReproducedEAccessViolation;
+  published
     procedure SolutedMissingDataProvider1;
     procedure ReproducedMissingDataProvider;
   end;
