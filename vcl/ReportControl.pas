@@ -877,7 +877,8 @@ begin
   For I := 0 To FSlaveCells.Count - 1 Do
   Begin
     ThisCell := FSlaveCells[i];
-    ThisCell.FMinCellHeight := thiscell.DefaultHeight();
+    // LCJ : 你大爷，在这里改了MinCellHeight !
+    //  ThisCell.FMinCellHeight := thiscell.DefaultHeight();
     ThisCell.OwnerLine.CalcLineHeight;
     Height := Height + ThisCell.OwnerLineHeight;
   End;
@@ -909,7 +910,10 @@ Begin
     FMinCellHeight := GetTextHeight + Payload ;
   if IsOwnerCell  then begin
     FRequiredCellHeight := Calc_RequiredCellHeight();
+    // 太讨厌了呃，GetOwnerCellHeight 内修改了  FMinCellHeight 
     FSlaveCells.Last.ExpandHeight (FRequiredCellHeight - GetOwnerCellHeight);
+    ReportControl.Cells[1,1].CellText :=
+      ReportControl.Cells[1,1].CellText + IntToStr(FRequiredCellHeight )+'/' ;
   End ;
 end;
 procedure TReportCell.ExpandHeight(delta:integer);
@@ -1471,7 +1475,7 @@ Var
   I: Integer;
   ThisCell: TReportCell;
 Begin
-//LCJ 2014-11-27 
+  //LCJ 2014-11-27 
   For I := 0 To FCells.Count - 1 Do
   Begin
     ThisCell := TReportCell(FCells[I]);

@@ -196,6 +196,8 @@ type
     property ReportControl: TReportControl read ReportControl1;
     procedure DoCenter ;
     class function  EditReport(FileName: String):TReportControl;
+    class function InitReport: TCreportForm;
+    class function UninitReport(): TReportControl;
   end;
 
 const
@@ -1151,7 +1153,30 @@ begin
   diagonalform.Free;
   marginform.Free;
   frmNewTable.Free;
-  vsplitform.Free;   
+  vsplitform.Free;
+end;
+class function  TCreportForm.InitReport():TCreportForm;
+begin
+  Application.CreateForm(TCreportform,Creportform);
+  Application.CreateForm(Tfrm_About, frm_About);
+  Application.CreateForm(TBorderform,Borderform );
+  Application.CreateForm(TColorform,Colorform );
+  Application.CreateForm(Tdiagonalform,diagonalform);
+  Application.CreateForm(Tmarginform,marginform );
+  Application.CreateForm(TfrmNewTable,frmNewTable);
+  Application.CreateForm(Tvsplitform,vsplitform);
+  Result := Creportform ;
+end;
+class function  TCreportForm.UninitReport():TReportControl;
+begin
+  Creportform.Free;
+  frm_About.Free;
+  Borderform.Free;
+  Colorform.Free;
+  diagonalform.Free;
+  marginform.Free;
+  frmNewTable.Free;
+  vsplitform.Free;
 end;
 
 end.
