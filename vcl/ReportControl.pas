@@ -4,7 +4,7 @@ Unit ReportControl;
 Interface
 
 Uses
-  Windows, Messages, SysUtils,
+  Windows, Messages, SysUtils,Math,
   {$WARNINGS OFF}FileCtrl,{$WARNINGS ON}
    Classes, Graphics, Controls,
   Forms, Dialogs, Printers, Menus, Db,
@@ -92,7 +92,7 @@ Type
   end;
   TReportCell = Class(TObject)
   private
-    function GetTotalHeight: Integer;
+    function GetOwnerCellHeight: Integer;
     function Calc_RequiredCellHeight: Integer;
     function GetBottomest(FOwnerCell: TReportCell): TReportCell;
     function GetTextHeight: Integer;
@@ -179,6 +179,7 @@ Type
     Procedure RemoveOwnedCell(Cell: TReportCell);
     Function IsCellOwned(Cell: TReportCell): Boolean;
     Procedure CalcCellTextRect;
+    function IsOwnerCell :Boolean ;
     function IsBottomest():Boolean;
     Procedure CalcMinCellHeight;
     Procedure PaintCell(hPaintDC: HDC; bPrint: Boolean);
@@ -867,7 +868,7 @@ function TReportCell.Payload : Integer;
 begin
   result := 2  + FTopLineWidth + FBottomLineWidth ;
 end;
-function TReportCell.GetTotalHeight():Integer;
+function TReportCell.GetOwnerCellHeight():Integer;
 var BottomCell,ThisCell:TReportCell;I,Top,Height:Integer ;
 begin
   Height := 0 ;
@@ -901,11 +902,11 @@ Begin
   FMinCellHeight := DefaultHeight;
   If FCellWidth <= FLeftMargin * 2 Then
     exit;
-  if ctNormalCell = GetCellType()  then 
+  if ctNormalCell = GetCellType()  then
     FMinCellHeight := GetTextHeight + Payload ;
   if ctOwnerCell = GetCellType()  then begin
     FRequiredCellHeight := Calc_RequiredCellHeight();
-    FSlaveCells.Last.ExpandHeight (FRequiredCellHeight - GetTotalHeight);
+    FSlaveCells.Last.ExpandHeight (FRequiredCellHeight - GetOwnerCellHeight);
   End ;
 end;
 procedure TReportCell.ExpandHeight(delta:integer);
@@ -919,68 +920,99 @@ end;
 Procedure TReportCell.CalcCellTextRect;
   procedure CalcCellRect;
   Var
-    TotalHeight: Integer;
     I: Integer;
   begin
     FCellRect.left := FCellLeft;
     FCellRect.top := CellTop;
     FCellRect.right := FCellRect.left + FCellWidth;
-     FCellRect.bottom := FCellRect.top + OwnerLineHeight;
-    if FSlaveCells.Count >0 then
+    FCellRect.bottom := FCellRect.top + OwnerLineHeight;
+    if IsOwnerCell then
       For I := 0 To FSlaveCells.Count - 1 Do
-        FCellRect.bottom := FCellRect.bottom + FSlaveCells[I].OwnerLineHeight;
-        // LCJ : ALTER TO : Inc(FCellRect.bottom,TReportCell(FCellsList[I]).OwnerLineHeight);
+        Inc(FCellRect.Bottom,FSlaveCells[I].OwnerLineHeight);
   end;
+  // TODO : 感觉和RequiredCellHeight 有重复，并且同一件事，算法不同。
   procedure CalcTextRect;
   Var
-  TempRect: TRect;
-  TotalHeight: Integer;
+  R: TRect;
+  TextInplaceHeight,CellInplaceHeight: Integer;
   I: Integer;
   begin
-    TempRect := FCellRect;
-    TempRect.left := TempRect.Left + FLeftMargin + 1;
-    TempRect.top := TempRect.top + FTopLineWidth + 1;
-    TempRect.right := TempRect.right - FLeftMargin - 1;
-   If FSlaveCells.Count <= 0 Then
-  Begin
-    TempRect.bottom := TempRect.top + FMinCellHeight - 2 - FTopLineWidth -
-      FBottomLineWidth;
+    R := FCellRect;
+    R.left := R.Left + FLeftMargin + 1;
+    R.top := R.top + FTopLineWidth + 1;
+    R.right := R.right - FLeftMargin - 1; 
+    If IsOwnerCell Then begin
+      CellInplaceHeight:= FCellRect.Bottom - FCellRect.Top ;
+      TextInplaceHeight := FRequiredCellHeight ;
+    end else begin
+      CellInplaceHeight:= OwnerLineHeight ;
+      TextInplaceHeight := FMinCellHeight ;
+    end;
+    R.bottom := R.top + TextInplaceHeight - 2 - FTopLineWidth - FBottomLineWidth;
     Case FVertAlign Of
       TEXT_ALIGN_VCENTER:
       Begin
-        TempRect.Top := TempRect.Top + trunc((OwnerLineHeight - FMinCellHeight)
-        / 2 + 0.5);
-        TempRect.Bottom := TempRect.Bottom + trunc((OwnerLineHeight -
-        FMinCellHeight) / 2 + 0.5);
+        inc (R.Top ,Ceil((CellInplaceHeight - TextInplaceHeight)/ 2 ));
+        inc(R.Bottom , Ceil((CellInplaceHeight -TextInplaceHeight) / 2 ));
       End;
       TEXT_ALIGN_BOTTOM:
       Begin
-        TempRect.Top := TempRect.Top + OwnerLineHeight - FMinCellHeight;
-        TempRect.Bottom := TempRect.Bottom + OwnerLineHeight - FMinCellHeight;
+       Inc(R.Top , CellInplaceHeight - TextInplaceHeight);
+       Inc(R.Bottom , CellInplaceHeight - TextInplaceHeight);
       End;
     End;
-   End Else
-   Begin
-      TempRect.bottom := TempRect.top + FRequiredCellHeight - 2 - FTopLineWidth -
+    FTextRect := R;
+  end;
+  procedure CalcTextRect1;
+  Var
+    R: TRect;
+    TextInplaceHeight,CellInplaceHeight: Integer;
+    I: Integer;
+  begin
+    R := FCellRect;
+    R.left := R.Left + FLeftMargin + 1;
+    R.top := R.top + FTopLineWidth + 1;
+    R.right := R.right - FLeftMargin - 1;
+    If FSlaveCells.Count <= 0 Then
+    Begin
+      R.bottom := R.top + FMinCellHeight - 2 - FTopLineWidth -
         FBottomLineWidth;
       Case FVertAlign Of
-      TEXT_ALIGN_VCENTER:
-      Begin
-        TempRect.Top := TempRect.Top + trunc((FCellRect.Bottom - FCellRect.Top
-        - FRequiredCellHeight) / 2 + 0.5);
-        TempRect.Bottom := TempRect.Bottom + trunc((FCellRect.Bottom -
-        FCellRect.Top - FRequiredCellHeight) / 2 + 0.5);
+        TEXT_ALIGN_VCENTER:
+        Begin
+          R.Top := R.Top + trunc((OwnerLineHeight - FMinCellHeight)
+          / 2 + 0.5);
+          R.Bottom := R.Bottom + trunc((OwnerLineHeight -
+          FMinCellHeight) / 2 + 0.5);
+        End;
+        TEXT_ALIGN_BOTTOM:
+        Begin
+          R.Top := R.Top + OwnerLineHeight - FMinCellHeight;
+          R.Bottom := R.Bottom + OwnerLineHeight - FMinCellHeight;
+        End;
       End;
-      TEXT_ALIGN_BOTTOM:
-      Begin
-        TempRect.Top := TempRect.Top + FCellRect.Bottom - FCellRect.Top -
-        FRequiredCellHeight;
-        TempRect.Bottom := TempRect.Bottom + FCellRect.Bottom - FCellRect.Top
-        - FRequiredCellHeight;
-      End;
-      End;
+    End Else
+    Begin
+        R.bottom := R.top + FRequiredCellHeight - 2 - FTopLineWidth -
+          FBottomLineWidth;
+        Case FVertAlign Of
+        TEXT_ALIGN_VCENTER:
+        Begin
+          R.Top := R.Top + trunc((FCellRect.Bottom - FCellRect.Top
+          - FRequiredCellHeight) / 2 + 0.5);
+          R.Bottom := R.Bottom + trunc((FCellRect.Bottom -
+          FCellRect.Top - FRequiredCellHeight) / 2 + 0.5);
+        End;
+        TEXT_ALIGN_BOTTOM:
+        Begin
+          R.Top := R.Top + FCellRect.Bottom - FCellRect.Top -
+          FRequiredCellHeight;
+          R.Bottom := R.Bottom + FCellRect.Bottom - FCellRect.Top
+          - FRequiredCellHeight;
+        End;
+        End;
     End;
-    FTextRect := TempRect;
+    FTextRect := R;
   end;
 Begin
   CalcCellRect;
@@ -1411,6 +1443,11 @@ begin
   end;                   
 end;
 
+
+function TReportCell.IsOwnerCell: Boolean;
+begin
+  Result := FSlaveCells.Count  >0 ;
+end;
 
 { TReportLine }
 Procedure TReportLine.CalcLineHeight;

@@ -39,6 +39,9 @@ type
     procedure CalcTextHeight;
     procedure LogFont;
     procedure TFont1;
+    procedure Inc_vs_Add;
+    procedure CalcText_Cell_Rect;
+    procedure Trunc_vs_ceil;
   end;
 
   TReportUITest = class(TTestCase)
@@ -729,6 +732,107 @@ begin
     end;
 
 end;
+procedure TReportTest.Inc_vs_Add;
+var
+   r: TRect ;
+begin
+    SetRectEmpty(r);
+    r.Bottom :=  10 ;
+    r.Bottom := R.Bottom +2;
+    CheckEquals(12,r.Bottom);
+    Inc(r.Bottom,2);
+    CheckEquals(14,r.bottom);
+
+end;
+
+procedure TReportTest.CalcText_Cell_Rect;
+var Filename ,s: string;
+    c0:TReportCell;
+    R: TReportRunTime;
+    rect : TRect;
+    w1,w2 :integer;
+begin
+    R := TReportRunTime.Create(Application.MainForm);
+    R.Visible := false;
+    try
+      FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
+      r.SetWndSize(1058,748);
+      r.NewTable(2 ,3);
+      CheckEquals(20,r.Cells[0,0].CellRect.Bottom -r.Cells[0,0].CellRect.Top);
+      c0 :=   r.Cells[0,0] ;
+      CheckEquals(
+            c0.CellRect.Top+c0.FTopLineWidth +1,
+            c0.TextRect.Top
+      );
+      CheckEquals(
+            c0.CellRect.Bottom,
+            c0.TextRect.Bottom+c0.FBottomLineWidth +1
+      );
+      CheckEquals(
+            c0.CellRect.Right,
+            c0.TextRect.Right+c0.FRightLineWidth + c0.FLeftMargin 
+      );
+      CheckEquals(
+            c0.CellRect.Left+c0.FLeftLineWidth + c0.FLeftMargin,
+            c0.TextRect.Left
+      );
+      r.Cells[0,0].Select;
+      r.Cells[1,0].Select;
+      r.Cells[2,0].Select;
+      r.CombineCell ;
+      CheckEquals(60,r.Cells[0,0].FCellRect.Bottom -r.Cells[0,0].FCellRect.Top);
+      CheckEquals(
+            c0.CellRect.Top+c0.FTopLineWidth +1,
+            c0.TextRect.Top
+      );
+      CheckEquals(
+            c0.CellRect.Bottom,
+            c0.TextRect.Bottom+c0.FBottomLineWidth +1
+      );
+      CheckEquals(
+            c0.CellRect.Right,
+            c0.TextRect.Right+c0.FRightLineWidth + c0.FLeftMargin 
+      );
+      CheckEquals(
+            c0.CellRect.Left+c0.FLeftLineWidth + c0.FLeftMargin,
+            c0.TextRect.Left
+      );
+    finally
+      R.Free;
+    end;
+    R := TReportRunTime.Create(Application.MainForm);
+    R.Visible := false;
+    try
+      FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
+      r.SetWndSize(1058,748);
+      r.NewTable(2 ,3);
+      w1 := r.Cells[0,0].FCellRect.Right -r.Cells[0,0].FCellRect.Left;
+      r.Cells[0,0].Select;
+      r.Cells[0,1].Select;
+      r.CombineCell ;
+      w2 := r.Cells[0,0].FCellRect.Right -r.Cells[0,0].FCellRect.Left;
+      CheckEquals(w1*2,w2);
+    finally
+      R.Free;
+    end;
+end;
+// should we  
+// alter : R.Top := R.Top + trunc((FCellRect.Bottom - FCellRect.Top - FRequiredCellHeight) / 2 + 0.5);
+// to :  Inc(R.Top,Ceil(FCellRect.Bottom - FCellRect.Top - FRequiredCellHeight) / 2)
+procedure TReportTest.Trunc_vs_ceil;
+var r,i,base :integer;
+    a :array[0..3] of Integer;
+begin
+  base := 2;
+  for i := 0 to Trunc (Power(10,6)) do begin
+      r := i ;
+      CheckEquals(
+        trunc(r / base + 0.5),
+        Ceil(r/base)
+      );
+  end;
+end;
+
 initialization
   RegisterTests('Framework Suites',[TReportTest.Suite,TReportUITest.Suite,TCDSTest.Suite]);
 end.
