@@ -912,10 +912,6 @@ Begin
     FRequiredCellHeight := Calc_RequiredCellHeight();
     // LCJ : 太讨厌了呃，GetOwnerCellHeight 内修改了  FMinCellHeight 
     FSlaveCells.Last.ExpandHeight (FRequiredCellHeight - GetOwnerCellHeight);
-//    ReportControl.Cells[1,1].CellText :=
-//      ReportControl.Cells[1,1].CellText + IntToStr(FRequiredCellHeight )+'/' ;
-    ReportControl.Cells[1,1].CellText :=
-      ReportControl.Cells[1,1].CellText + IntToStr(FRequiredCellHeight )+'/' ;
   End ;
 end;
 procedure TReportCell.ExpandHeight(delta:integer);
@@ -944,89 +940,42 @@ Procedure TReportCell.CalcCellTextRect;
   procedure CalcTextRect;
   Var
   R: TRect;
-  SpaceHeight,HalfSpaceHeight,TextInplaceHeight: Integer;
+  SpaceHeight,HalfSpaceHeight,TextHeight,RealHeight,delta: Integer;
   I: Integer;
   begin
     R := FCellRect;
     R.left := R.Left + FLeftMargin + 1;
     R.top := R.top + FTopLineWidth + 1;
     R.right := R.right - FLeftMargin - 1; 
-    If IsOwnerCell Then begin 
-      SpaceHeight:= FCellRect.Bottom - FCellRect.Top - FRequiredCellHeight ;
-      TextInplaceHeight := FRequiredCellHeight ;
+    If IsOwnerCell Then begin
+      TextHeight := FRequiredCellHeight ;
+      RealHeight := FCellRect.Bottom - FCellRect.Top ;
     end
     else begin
-      SpaceHeight := OwnerLineHeight -FMinCellHeight ;
-      TextInplaceHeight := FMinCellHeight ;
+      TextHeight := FMinCellHeight ;
+      RealHeight := OwnerLineHeight ;
     end;
+    SpaceHeight := RealHeight - TextHeight ;
     HalfSpaceHeight := Ceil(SpaceHeight/ 2 );
-    R.bottom := R.top + TextInplaceHeight -( 2 + FTopLineWidth +FBottomLineWidth);
-    //R.bottom := R.top + TextInplaceHeight +( 2 + FTopLineWidth +FBottomLineWidth);
+    // R.bottom := R.top + TextHeight -( 2 + FTopLineWidth +FBottomLineWidth);
+    R.bottom := R.top + TextHeight - Payload;
     Case FVertAlign Of
       TEXT_ALIGN_VCENTER:
       Begin
-        inc (R.Top ,HalfSpaceHeight);
-        inc(R.Bottom , HalfSpaceHeight);
+        delta :=  HalfSpaceHeight ;
+        Inc(R.Top ,delta);
+        Inc(R.Bottom , delta);
       End;
       TEXT_ALIGN_BOTTOM:
       Begin
-       Inc(R.Top ,SpaceHeight);
-       Inc(R.Bottom , SpaceHeight);
+        delta :=  SpaceHeight ;
+        Inc(R.Top ,delta);
+        Inc(R.Bottom , delta);
       End;
     End;
+
     FTextRect := R;
-  end;
-  procedure CalcTextRect1;
-  Var
-    R: TRect;
-    TextInplaceHeight,CellInplaceHeight: Integer;
-    I: Integer;
-  begin
-    R := FCellRect;
-    R.left := R.Left + FLeftMargin + 1;
-    R.top := R.top + FTopLineWidth + 1;
-    R.right := R.right - FLeftMargin - 1;
-    If FSlaveCells.Count <= 0 Then
-    Begin
-      R.bottom := R.top + FMinCellHeight - 2 - FTopLineWidth -
-        FBottomLineWidth;
-      Case FVertAlign Of
-        TEXT_ALIGN_VCENTER:
-        Begin
-          R.Top := R.Top + trunc((OwnerLineHeight - FMinCellHeight)
-          / 2 + 0.5);
-          R.Bottom := R.Bottom + trunc((OwnerLineHeight -
-          FMinCellHeight) / 2 + 0.5);
-        End;
-        TEXT_ALIGN_BOTTOM:
-        Begin
-          R.Top := R.Top + OwnerLineHeight - FMinCellHeight;
-          R.Bottom := R.Bottom + OwnerLineHeight - FMinCellHeight;
-        End;
-      End;
-    End Else
-    Begin
-        R.bottom := R.top + FRequiredCellHeight - 2 - FTopLineWidth -
-          FBottomLineWidth;
-        Case FVertAlign Of
-        TEXT_ALIGN_VCENTER:
-        Begin
-          R.Top := R.Top + trunc((FCellRect.Bottom - FCellRect.Top
-          - FRequiredCellHeight) / 2 + 0.5);
-          R.Bottom := R.Bottom + trunc((FCellRect.Bottom -
-          FCellRect.Top - FRequiredCellHeight) / 2 + 0.5);
-        End;
-        TEXT_ALIGN_BOTTOM:
-        Begin
-          R.Top := R.Top + FCellRect.Bottom - FCellRect.Top -
-          FRequiredCellHeight;
-          R.Bottom := R.Bottom + FCellRect.Bottom - FCellRect.Top
-          - FRequiredCellHeight;
-        End;
-        End;
-    End;
-    FTextRect := R;
-  end;
+  end;                  
 Begin
   CalcCellRect;
   CalcTextRect;
