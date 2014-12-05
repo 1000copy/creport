@@ -9,6 +9,7 @@ uses
   ReportControl,
   ReportRunTime,creport,
   // sys
+  Classes,
    Math,DBClient,  db,  DBTables,  Graphics,  forms,  Windows,  SysUtils,  TestFramework,Printers;
 
 type
@@ -51,6 +52,7 @@ type
     procedure DirectLoad;
     procedure TopAlign;
     procedure LoadSave_now_it_is_shift_to_you ;
+    procedure ReadTYpe ;
   end;
 
   TReportUITest = class(TTestCase)
@@ -913,14 +915,23 @@ begin
       TCreportForm.UninitReport();
     end;
 end;
+
 procedure TReportTest.LoadSave_now_it_is_shift_to_you;
 var s,b,Filename : string;
     ThisCell:TReportCell;
     R: TReportControl;
     form : TCreportForm;
+Var
+  TargetFile: TSimpleFileStream;
+  FileFlag: WORD;
+  Count1, Count2, Count3: Integer;
+  ThisLine: TReportLine;
+  I, J, K: Integer;
+  TempPChar: Array[0..3000] Of Char;
+  bHasDataSet: Boolean;
 begin
     form := TCreportForm.InitReport ;
-    try
+
       R := form.ReportControl1;
       r.SetWndSize(1058,748);
       r.NewTable(2 ,3);
@@ -931,16 +942,44 @@ begin
       r.CombineCell ;
       r.Cells[0,0].VertAlign := TEXT_ALIGN_TOP ;
       r.Cells[0,0].CalcMinCellHeight;
-      s := 'long text so is incremented absolutly ';
+      s := 'long text 111so is incremented absolutly ';
       r.Cells[0,0].CellText := s ;
       FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
       R.SaveToFile(FileName);
-      R.LoadFromFile(FileName);
-      CheckEquals(3,R.LineList.count);
-      // TODO : 继续ut，以便重构代码 Load / Save 部分。分化之。
+      TargetFile := TSimpleFileStream.Create(FileName, fmOpenRead);
+      Try
+        With TargetFile Do
+        Begin
+          ReadWord(FileFlag);CheckEquals($AA57,FileFlag);
+          // TODO : 继续ut，以便重构代码 Load / Save 部分。分化之。
+      end;
     finally
+      targetFile.Free;
       TCreportForm.UninitReport();
     end;
+end;
+
+
+
+procedure TReportTest.ReadTYpe;
+var
+   a:word ;
+   b:integer ;
+   c:uint ;
+   d:char;
+   f:real ;
+   g:byte ;
+   h :TRect ;
+   i : cardinal;
+begin
+  checkEquals(sizeof(a),sizeof(word));
+  checkEquals(sizeof(b),sizeof(integer));
+  checkEquals(sizeof(c),sizeof(uint));
+  checkEquals(sizeof(d),sizeof(char));
+  checkEquals(sizeof(f),sizeof(real));
+  checkEquals(sizeof(g),sizeof(byte));
+  checkEquals(sizeof(h),sizeof(TREct));
+  checkEquals(sizeof(i),sizeof(cardinal));
 end;
 
 initialization

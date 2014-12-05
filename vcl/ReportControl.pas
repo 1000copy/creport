@@ -13,6 +13,20 @@ Uses
 type
   TOnChanged = procedure(Sender:TObject;str:String) of object;
 type
+   TSimpleFileStream = class(TFileStream)
+  private
+   public
+     procedure ReadWord(var a : Word);
+     procedure WriteWord(var a: Word);
+     procedure WriteInteger(var a: Integer);
+     procedure WriteBoolean(var a: Boolean);
+     procedure WriteRect(var a:TRect);
+     procedure WriteCardinal(var a:Cardinal);
+     procedure WriteString(var a:String);
+     procedure WriteTLOGFONT(var a:TLOGFONT);
+
+   end;
+type
   CellType = (ctOwnerCell,ctSlaveCell,ctNormalCell);
   TPrinterPaper = class
   private
@@ -273,6 +287,8 @@ Type
     procedure InternalSaveToFile(FLineList: TList; FileName: String;
       PageNumber, Fpageall: integer);
     function RectEquals(r1, r2: TRect): Boolean;
+    procedure InternalSaveToFile1(FLineList: TList; FileName: String;
+      PageNumber, Fpageall: integer);
   protected
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
@@ -3304,6 +3320,151 @@ end;
 Procedure TReportControl.InternalSaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);
 Var
 
+  TargetFile: TSimpleFileStream;
+  FileFlag: WORD;
+  Count: Integer;
+  I, J, K: Integer;
+  ThisLine: TReportLine;
+  ThisCell, TempCell: TReportCell;
+  TempInteger: Integer;
+  TempPChar: Array[0..3000] Of char;
+  strFileDir: String;
+  celltext: String;
+Begin
+  TargetFile := TSimpleFileStream.Create(FileName, fmOpenWrite Or fmCreate);
+  Try
+    With TargetFile Do
+    Begin  
+      FileFlag := $AA57;
+      WriteWord(FileFlag);
+      WriteInteger(FReportScale);
+      WriteInteger(FPageWidth);
+      WriteInteger(FPageHeight);
+
+      WriteInteger(FLeftMargin);
+      WriteInteger(FTopMargin);
+      WriteInteger(FRightMargin);
+      WriteInteger(FBottomMargin);
+
+      WriteInteger(FLeftMargin1);
+      WriteInteger(FTopMargin1);
+      WriteInteger(FRightMargin1);
+      WriteInteger(FBottomMargin1);
+
+      WriteBoolean(FNewTable);
+      WriteInteger(FDataLine);
+      WriteInteger(FTablePerPage);
+
+      // 多少行
+      Count := FLineList.Count;
+      WriteInteger(Count);
+
+      // 每行有多少个CELL
+      For I := 0 To FLineList.Count - 1 Do
+      Begin
+        ThisLine := TReportLine(FLineList[I]);
+        Count := ThisLine.FCells.Count;
+        WriteInteger(Count);
+      End;
+
+      // 每行的属性
+      For I := 0 To FLineList.Count - 1 Do
+      Begin
+        ThisLine := TReportLine(FLineList[I]);
+
+        WriteInteger(ThisLine.FIndex);
+        WriteInteger(ThisLine.FMinHeight);
+        WriteInteger(ThisLine.FDragHeight);
+        WriteInteger(ThisLine.FLineTop);
+        WriteRect(ThisLine.FLineRect);
+
+        // 每个CELL的属性
+        For J := 0 To ThisLine.FCells.Count - 1 Do
+        Begin
+          ThisCell := TReportCell(ThisLine.FCells[J]);
+          // Write Cell's Property here;
+          WriteInteger(ThisCell.FLeftMargin);
+          WriteInteger(ThisCell.FCellIndex);
+
+          WriteInteger(ThisCell.FCellLeft);
+          WriteInteger(ThisCell.FCellWidth);
+
+          WriteRect(ThisCell.FCellRect);
+          WriteRect(ThisCell.FTextrect);
+          // LCJ :DELETE on the road 
+          WriteInteger(ThisCell.FMinCellHeight);
+          WriteInteger(ThisCell.FMinCellHeight);
+          WriteInteger(ThisCell.FRequiredCellHeight);
+
+          WriteBoolean(ThisCell.FLeftLine);
+          WriteInteger(ThisCell.FLeftLineWidth);
+
+          WriteBoolean(ThisCell.FTopLine);
+          WriteInteger(ThisCell.FTopLineWidth);
+
+          WriteBoolean(ThisCell.FRightLine);
+          WriteInteger(ThisCell.FRightLineWidth);
+
+          WriteBoolean(ThisCell.FBottomLine);
+          WriteInteger(ThisCell.FBottomLineWidth);
+
+          WriteCardinal(ThisCell.FDiagonal);
+
+          WriteCardinal(ThisCell.FTextColor );
+          WriteCardinal(ThisCell.FBackGroundColor );
+
+          WriteInteger(ThisCell.FHorzAlign);
+          WriteInteger(ThisCell.FVertAlign);
+
+          CellText := RenderText(ThisCell,PageNumber, Fpageall);
+          WriteString(CellText);
+          WriteString(ThisCell.FCellDispformat);
+
+          WriteBoolean(thiscell.Fbmpyn); 
+          If thiscell.FbmpYn Then
+            ThisCell.FBmp.SaveToStream(TargetFile);
+          WriteTLogFont(ThisCell.FLogFont);
+
+          // 属主CELL的行，列索引
+          If ThisCell.FOwnerCell <> Nil Then
+          Begin
+            WriteInteger(ThisCell.FOwnerCell.OwnerLine.FIndex);
+            WriteInteger(ThisCell.FOwnerCell.FCellIndex);
+          End
+          Else
+          Begin
+            TempInteger := -1;
+            WriteInteger(TempInteger);
+            WriteInteger(TempInteger);
+          End;
+
+          Count := ThisCell.FSlaveCells.Count;
+          WriteInteger(Count);
+
+          For K := 0 To ThisCell.FSlaveCells.Count - 1 Do
+          Begin
+            TempCell := ThisCell.FSlaveCells[K];
+            WriteInteger(TempCell.OwnerLine.FIndex);
+            WriteInteger(TempCell.FCellIndex);
+          End;
+        End;
+      End;
+
+      Begin
+        WriteInteger(FprPageNo);
+        WriteInteger(FprPageXy);
+        WriteInteger(fPaperLength);
+        WriteInteger(fPaperWidth);
+      End;
+      WriteInteger(FHootNo);
+    End;
+  Finally
+    TargetFile.Free;
+  End;
+End;
+Procedure TReportControl.InternalSaveToFile1(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);
+Var
+
   TargetFile: TFileStream;
   FileFlag: WORD;
   Count: Integer;
@@ -4255,6 +4416,50 @@ begin
       (r1.Bottom = r2.Bottom)
              ;
 end;
+procedure TSimpleFileStream.ReadWord(var a: Word);
+begin
+  Read(a,SizeOf(word))
+end;
+procedure TSimpleFileStream.WriteWord(var a: Word);
+begin
+  Write(a,SizeOf(word))
+end;
+procedure TSimpleFileStream.WriteInteger(var a: Integer);
+begin
+  Write(a,SizeOf(Integer))
+end;
+
+procedure TSimpleFileStream.WriteBoolean(var a: Boolean);
+begin
+  Write(a,SizeOf(boolean));
+
+end;
+
+procedure TSimpleFileStream.WriteRect(var a: TRect);
+begin
+  Write(a,SizeOf(TRect))
+end;
+
+procedure TSimpleFileStream.WriteCardinal(var a: Cardinal);
+begin
+    Write(a,SizeOf(Cardinal))
+end;
+
+procedure TSimpleFileStream.WriteString(var a: String);
+var   TempPChar: Array[0..3000] Of char;count ,k:integer; 
+begin
+    Count := Length(a);
+    WriteInteger(Count);
+    StrPCopy(TempPChar, a);
+    For K := 0 To Count - 1 Do
+      Write(TempPChar[K], 1);    
+end;
+
+procedure TSimpleFileStream.WriteTLOGFONT(var a: TLOGFONT);
+begin
+   Write(a,SizeOf(TLOGFONT))
+end;
+
 End.
 
 
