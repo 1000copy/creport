@@ -100,7 +100,7 @@ Type
     procedure ExpandHeight(delta: integer);
 
   public
-    FMinCellHeight: Integer;
+
     ReportControl:TReportControl;
     function GetReportControl: TReportControl;
     function GetSelected: Boolean;
@@ -118,7 +118,12 @@ Type
     FCellWidth: Integer;
     FCellRect: TRect;                   // 计算得来
     FTextRect: TRect;
+    //   FRequiredCellHeight 就是在跨行合并的Cell中表达 CellText需要的高度。区别于
+    //  而MinCellHeight,后者是最小Cell的高度，不管它有没有合并和拆分，
+    //  都固定表示一个cell的高度。普通cell用  MinCellHeight，合并的cell可能需要用RequiredCellHeight
+    //  概念辨析:)
     FRequiredCellHeight: Integer;
+    FMinCellHeight: Integer;
     // border
     FLeftLine: Boolean;
     FLeftLineWidth: Integer;
@@ -884,10 +889,6 @@ begin
   End;
   result := Height + OwnerLineHeight;
 end;
-//   FRequiredCellHeight 就是在跨行合并的Cell中表达 CellText需要的高度。区别于
-//  而MinCellHeight,后者是最小Cell的高度，不管它有没有合并和拆分，
-//  都固定表示一个cell的高度。普通cell用  MinCellHeight，合并的cell可能需要用RequiredCellHeight
-//  概念辨析:)
 function TReportCell.Calc_RequiredCellHeight( ): Integer;
 var Height : integer;  TempRect: TRect;
 begin

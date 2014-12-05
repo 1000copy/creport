@@ -938,6 +938,7 @@ begin
       r.Cells[2,0].Select;
       r.CombineCell ;
       r.Cells[0,0].VertAlign := TEXT_ALIGN_TOP ;
+      r.Cells[0,0].CalcMinCellHeight;
       s := 'long text so is incremented absolutly ';
       r.Cells[0,0].CellText := s ;
       form.ShowModal;      
