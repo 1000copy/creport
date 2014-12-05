@@ -910,21 +910,19 @@ Begin
     FMinCellHeight := GetTextHeight + Payload ;
   if IsOwnerCell  then begin
     FRequiredCellHeight := Calc_RequiredCellHeight();
-    // 太讨厌了呃，GetOwnerCellHeight 内修改了  FMinCellHeight 
+    // LCJ : 太讨厌了呃，GetOwnerCellHeight 内修改了  FMinCellHeight 
     FSlaveCells.Last.ExpandHeight (FRequiredCellHeight - GetOwnerCellHeight);
+//    ReportControl.Cells[1,1].CellText :=
+//      ReportControl.Cells[1,1].CellText + IntToStr(FRequiredCellHeight )+'/' ;
     ReportControl.Cells[1,1].CellText :=
       ReportControl.Cells[1,1].CellText + IntToStr(FRequiredCellHeight )+'/' ;
   End ;
 end;
 procedure TReportCell.ExpandHeight(delta:integer);
 begin
-  if delta <= 0  Then Exit;
-//  inc (FMinCellHeight,delta);
-  FMinCellHeight := FMinCellHeight + delta ;
-  // inplace holder
-  FMinCellHeight := FMinCellHeight+1;
-  FMinCellHeight := FMinCellHeight-1;
-
+  if delta <= 0  Then
+    Exit;
+  inc (FMinCellHeight,delta);
 end;
 
 // Calc CellRect & TextRect here
