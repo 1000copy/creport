@@ -195,7 +195,7 @@ type
     zoomxxx:INTEGER;
     property ReportControl: TReportControl read ReportControl1;
     procedure DoCenter ;
-    class procedure EditReport(FileName:String);
+    class function  EditReport(FileName: String):TReportControl;
   end;
 
 const
@@ -1125,7 +1125,7 @@ begin
     ShowWindow(ReportControl1.Handle, SW_SHOW);
 end;
 
-class procedure TCreportForm.EditReport(FileName: String);
+class function  TCreportForm.EditReport(FileName: String):TReportControl;
 begin
   Application.CreateForm(TCreportform,Creportform);
   Application.CreateForm(Tfrm_About, frm_About);
@@ -1137,6 +1137,7 @@ begin
   Application.CreateForm(Tvsplitform,vsplitform);
 
   Creportform.ReportControl1.LoadFromFile(filename);
+  Result := Creportform.ReportControl1;
   Creportform.Caption:= filename;
 
   Creportform.Thefile :=filename;
@@ -1150,7 +1151,7 @@ begin
   diagonalform.Free;
   marginform.Free;
   frmNewTable.Free;
-  vsplitform.Free;         
+  vsplitform.Free;   
 end;
 
 end.

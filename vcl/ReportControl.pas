@@ -10,8 +10,9 @@ Uses
   Forms, Dialogs, Printers, Menus, Db,
   DesignEditors, ExtCtrls,osservice;
   function calcBottom(TempString:string ;TempRect:TRect;AlighFormat :UINT;FLogFont: TLOGFONT):Integer;
-
-  type
+type
+  TOnChanged = procedure(Sender:TObject;str:String) of object;
+type
   CellType = (ctOwnerCell,ctSlaveCell,ctNormalCell);
   TPrinterPaper = class
   private
@@ -242,10 +243,7 @@ Type
     Function GetLineRect: TRect;
     Procedure SetDragHeight(Const Value: Integer);
     Procedure SetLineTop(Const Value: Integer);
-  Protected
-
-  Public
- 
+  Public 
     Property ReportControl: TReportControl Read FReportControl Write
       FReportControl;
     Property Index: Integer Read FIndex Write FIndex;
@@ -263,13 +261,13 @@ Type
     procedure DeleteCell(Cell:TReportCell);
     procedure CombineSelected;
     procedure CombineCells(Cells:TCellList);
-
   End;
 
   TReportControl = Class(TWinControl)
   private
     procedure InternalSaveToFile(FLineList: TList; FileName: String;
       PageNumber, Fpageall: integer);
+    function RectEquals(r1, r2: TRect): Boolean;
   protected
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
@@ -307,11 +305,13 @@ Type
     FEditWnd: HWND;
     FEditBrush: HBRUSH;
     FEditFont: HFONT;
+    FOnChanged : TOnChanged;
     function GetNhassumall: Integer;
     Procedure SetCellSFocus(row1, col1, row2, col2: integer);
     function Get(Index: Integer): TReportLine;
     function GetCells(Row, Col: Integer): TReportCell;
     procedure InvertCell(Cell: TReportCell);
+    procedure DoEdit(str:string);
   Protected
     hasdatano: integer;
     function RenderText(ThisCell: TReportCell; PageNumber,Fpageall: Integer): String;virtual ;
@@ -341,6 +341,7 @@ Type
     Procedure ResetContent;
     Procedure SetScale(Const Value: Integer);
     Property cellFont: TlogFont Read Fcellfont Write Fcellfont;
+    property OnChanged : TOnChanged read FOnChanged write FOnChanged;
     // Message Handler
     Procedure WMLButtonDown(Var Message: TMessage); Message WM_LBUTTONDOWN;
     Procedure WMLButtonDBLClk(Var Message: TMessage); Message WM_LBUTTONDBLCLK;
@@ -900,7 +901,8 @@ end;
 // 没有 RightMargin ,原作者把RightMargin 和LeftMargin等同，所以又下面的 FLeftMargin * 2
 Procedure TReportCell.CalcMinCellHeight;
 Begin
-  FMinCellHeight := DefaultHeight;
+  if FMinCellHeight  = 0 then
+    FMinCellHeight := DefaultHeight;
   If FCellWidth <= FLeftMargin * 2 Then
     exit;
   if IsNormalCell  then
@@ -912,8 +914,13 @@ Begin
 end;
 procedure TReportCell.ExpandHeight(delta:integer);
 begin
-  if delta >0  Then
-      inc (FMinCellHeight,delta);
+  if delta <= 0  Then Exit;
+//  inc (FMinCellHeight,delta);
+  FMinCellHeight := FMinCellHeight + delta ;
+  // inplace holder
+  FMinCellHeight := FMinCellHeight+1;
+  FMinCellHeight := FMinCellHeight-1;
+
 end;
 
 // Calc CellRect & TextRect here
@@ -3211,18 +3218,16 @@ Begin
       Begin
         r := FEditCell.TextRect;
         GetWindowText(FEditWnd, TempChar, 3000);
-        FEditCell.CellText := TempChar;
+        DoEdit ( TempChar);
 
+        if Assigned (FOnChanged) then
+          FOnChanged(Self,FEditCell.CellText);
         UpdateLines;
-
-        If (r.Left <> FEditCell.TextRect.Left) Or
-          (r.Top <> FEditCell.TextRect.Top) Or
-          (r.Right <> FEditCell.TextRect.Right) Or
-          (r.Bottom <> FEditCell.TextRect.Bottom) Then
+        if not RectEquals (r , FEditCell.TextRect) then
         Begin
           MoveWindow(FEditWnd, FEditCell.TextRect.left, FEditCell.TextRect.Top,
             FEditCell.TextRect.Right - FEditCell.TextRect.Left,
-            FEditCell.TextRect.Bottom - FEditCell.TextRect.Top, True);  
+            FEditCell.TextRect.Bottom - FEditCell.TextRect.Top, True);
         End;
       End;
   End;
@@ -4190,6 +4195,11 @@ begin
   For J := 0 To Count - 1 Do
     Result := Result + TReportCell(Items[J]).CellWidth;
 end;
+procedure TReportControl.DoEdit(str: string);
+begin
+  FEditCell.CellText := str;
+end;
+
 { TLineList }
 
 procedure TLineList.CombineHorz;
@@ -4282,6 +4292,15 @@ begin
     DeleteObject(hTempFont);
     ReleaseDC(0, hTempDC);
   end;
+end;
+function TReportControl.RectEquals (r1,r2:TRect):Boolean;
+begin
+  result :=
+      (r1.left = r2.left) and
+      (r1.Right = r2.Right) and
+      (r1.Top = r2.Top )and
+      (r1.Bottom = r2.Bottom)
+             ;
 end;
 End.
 

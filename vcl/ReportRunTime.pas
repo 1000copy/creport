@@ -108,7 +108,7 @@ type
     Property allprint: boolean Read Fallprint Write Fallprint Default true;
     Procedure ResetContent;
     Procedure PrintPreview(bPreviewMode: Boolean);
-    Procedure EditReport (FileName:String);
+    function  EditReport (FileName:String):TReportControl;
     Function shpreview: boolean;        //重新生成预览有关文件
     Function PrintSET(prfile: String): boolean; //纸张及边距设置，lzl
     Procedure updatepage;               //
@@ -1781,9 +1781,9 @@ Begin
 End;
 
 
-procedure TReportRunTime.EditReport(FileName:String);
+function TReportRunTime.EditReport(FileName:String):TReportControl;
 begin
-  TCreportform.EditReport(FileName);
+  result := TCreportform.EditReport(FileName);
 end;
 Procedure TReportRunTime.updatepage;
 Var

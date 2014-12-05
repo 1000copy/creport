@@ -20,7 +20,11 @@ type
   end;
   TReportTest = class(TTestCase)
   private
+    R: TReportRunTime;
+    Filename : string;
     fTestCount: integer;
+
+    procedure DoChanged (Sender:TObject;str:String) ;
 
   protected
     procedure SetUp; override;
@@ -44,6 +48,7 @@ type
     procedure CalcText_Cell_Rect;
     procedure Trunc_vs_ceil;
     procedure TextLine_vs_RequiredHeight;
+    procedure OnChanged___;
   end;
 
   TReportUITest = class(TTestCase)
@@ -212,17 +217,7 @@ begin
     r2.Bottom := 1;
     w.contains(r1,r2);
 end;
-procedure TReportTest.SetUp;
-begin
-  inherited;
 
-end;
-
-procedure TReportTest.TearDown;
-begin
-  inherited;
-
-end;
 
 
 
@@ -866,6 +861,50 @@ begin
       R.Free;
     end;
 end;
+
+
+procedure TReportTest.OnChanged___;
+var s,b : string;
+    ThisCell:TReportCell;
+    r1 : TReportControl;
+begin
+    try
+      s := '1 '+  chr(13)+chr(10);
+      r.SaveToFile(Filename);
+      //r.ResetContent;
+      r1 := R.EditReport(FileName);  // 这里的ReportControl 是另外一个实例了。
+      r1.OnChanged := DoChanged ;
+    finally
+
+    end;
+end;
+procedure TReportTest.SetUp;
+begin
+  inherited;
+  R := TReportRunTime.Create(Application.MainForm);
+  R.Visible := false;
+  FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
+  r.SetWndSize(1058,748);
+  r.NewTable(2 ,3);
+  // 垂直合并后，Cell并不减少
+  r.Cells[0,0].Select;
+  r.Cells[1,0].Select;
+  r.Cells[2,0].Select;
+  r.CombineCell ;
+end;
+
+procedure TReportTest.TearDown;
+begin
+  R.Free;
+  inherited;
+end;
+
+procedure TReportTest.DoChanged(Sender: TObject; str: String);
+begin
+//   Application.MainForm.Caption :=
+//    Application.MainForm.Caption + Inttostr(R.Cells[0,0].FRequiredCellHeight)+',' ;
+end;
+
 initialization
   RegisterTests('Framework Suites',[TReportTest.Suite,TReportUITest.Suite,TCDSTest.Suite]);
 end.
