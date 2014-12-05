@@ -149,6 +149,7 @@ Type
     Function GetOwnerLineHeight: Integer;
     function GetTextRect():TRect;
     function Payload: Integer;
+    function IsNormalCell:Boolean;
   Protected
     Procedure SetLeftMargin(LeftMargin: Integer);
     Procedure SetOwnerLine(OwnerLine: TReportLine);
@@ -892,7 +893,7 @@ begin
   Height := 16 ;
   If TempRect.Bottom - TempRect.Top > 0 Then
     Height := TempRect.Bottom - TempRect.Top;
-  result := Height + Payload ;
+  result := Height  + Payload;
 end;
 // 要是Cell 太窄，窄到无法放入任何文字，就不要到后面去计算高度了。
 // 直接默认 字高 16 即可。
@@ -902,9 +903,9 @@ Begin
   FMinCellHeight := DefaultHeight;
   If FCellWidth <= FLeftMargin * 2 Then
     exit;
-  if ctNormalCell = GetCellType()  then
+  if IsNormalCell  then
     FMinCellHeight := GetTextHeight + Payload ;
-  if ctOwnerCell = GetCellType()  then begin
+  if IsOwnerCell  then begin
     FRequiredCellHeight := Calc_RequiredCellHeight();
     FSlaveCells.Last.ExpandHeight (FRequiredCellHeight - GetOwnerCellHeight);
   End ;
@@ -934,31 +935,34 @@ Procedure TReportCell.CalcCellTextRect;
   procedure CalcTextRect;
   Var
   R: TRect;
-  TextInplaceHeight,CellInplaceHeight: Integer;
+  SpaceHeight,HalfSpaceHeight,TextInplaceHeight: Integer;
   I: Integer;
   begin
     R := FCellRect;
     R.left := R.Left + FLeftMargin + 1;
     R.top := R.top + FTopLineWidth + 1;
     R.right := R.right - FLeftMargin - 1; 
-    If IsOwnerCell Then begin
-      CellInplaceHeight:= FCellRect.Bottom - FCellRect.Top ;
+    If IsOwnerCell Then begin 
+      SpaceHeight:= FCellRect.Bottom - FCellRect.Top - FRequiredCellHeight ;
       TextInplaceHeight := FRequiredCellHeight ;
-    end else begin
-      CellInplaceHeight:= OwnerLineHeight ;
+    end
+    else begin
+      SpaceHeight := OwnerLineHeight -FMinCellHeight ;
       TextInplaceHeight := FMinCellHeight ;
     end;
-    R.bottom := R.top + TextInplaceHeight - 2 - FTopLineWidth - FBottomLineWidth;
+    HalfSpaceHeight := Ceil(SpaceHeight/ 2 );
+    R.bottom := R.top + TextInplaceHeight -( 2 + FTopLineWidth +FBottomLineWidth);
+    //R.bottom := R.top + TextInplaceHeight +( 2 + FTopLineWidth +FBottomLineWidth);
     Case FVertAlign Of
       TEXT_ALIGN_VCENTER:
       Begin
-        inc (R.Top ,Ceil((CellInplaceHeight - TextInplaceHeight)/ 2 ));
-        inc(R.Bottom , Ceil((CellInplaceHeight -TextInplaceHeight) / 2 ));
+        inc (R.Top ,HalfSpaceHeight);
+        inc(R.Bottom , HalfSpaceHeight);
       End;
       TEXT_ALIGN_BOTTOM:
       Begin
-       Inc(R.Top , CellInplaceHeight - TextInplaceHeight);
-       Inc(R.Bottom , CellInplaceHeight - TextInplaceHeight);
+       Inc(R.Top ,SpaceHeight);
+       Inc(R.Bottom , SpaceHeight);
       End;
     End;
     FTextRect := R;
@@ -1447,6 +1451,11 @@ end;
 function TReportCell.IsOwnerCell: Boolean;
 begin
   Result := FSlaveCells.Count  >0 ;
+end;
+
+function TReportCell.IsNormalCell: Boolean;
+begin
+  result := ctNormalCell = GetCellType()
 end;
 
 { TReportLine }

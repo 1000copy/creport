@@ -21,6 +21,7 @@ type
   TReportTest = class(TTestCase)
   private
     fTestCount: integer;
+
   protected
     procedure SetUp; override;
     procedure TearDown; override;
@@ -42,6 +43,7 @@ type
     procedure Inc_vs_Add;
     procedure CalcText_Cell_Rect;
     procedure Trunc_vs_ceil;
+    procedure TextLine_vs_RequiredHeight;
   end;
 
   TReportUITest = class(TTestCase)
@@ -832,7 +834,38 @@ begin
       );
   end;
 end;
-
+procedure TReportTest.TextLine_vs_RequiredHeight;
+var s,b,Filename : string;
+    ThisCell:TReportCell;
+    R: TReportRunTime;
+begin
+    R := TReportRunTime.Create(Application.MainForm);
+    R.Visible := false;
+    try
+      FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
+      r.SetWndSize(1058,748);
+      r.NewTable(2 ,3);
+      // 垂直合并后，Cell并不减少
+      r.Cells[0,0].Select;
+      r.Cells[1,0].Select;
+      r.Cells[2,0].Select;
+      r.CombineCell ;
+      s := 'long text so is incremented absolutly ';
+      r.Cells[0,0].CellText := s ;
+      CheckEquals(16,R.Cells[0,0].FRequiredCellHeight );
+      b := s + chr(13)+chr(10) + S ;
+      r.Cells[0,0].CellText := b ;
+      CheckEquals(32,R.Cells[0,0].FRequiredCellHeight );
+      b := s + chr(13)+chr(10) + S + chr(13)+chr(10) + S;
+      r.Cells[0,0].CellText := b ;
+      CheckEquals(48,R.Cells[0,0].FRequiredCellHeight );
+      r.SaveToFile(Filename);
+      r.ResetContent;
+      R.EditReport(FileName);
+    finally
+      R.Free;
+    end;
+end;
 initialization
   RegisterTests('Framework Suites',[TReportTest.Suite,TReportUITest.Suite,TCDSTest.Suite]);
 end.
