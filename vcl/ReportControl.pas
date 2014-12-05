@@ -17,6 +17,13 @@ type
   private
    public
      procedure ReadWord(var a : Word);
+     procedure ReadInteger(var a: Integer);
+     procedure ReadBoolean(var a: Boolean);
+     procedure ReadRect(var a:TRect);
+     procedure ReadCardinal(var a:Cardinal);
+     procedure ReadString(var a:String);
+     procedure ReadTLOGFONT(var a:TLOGFONT);
+
      procedure WriteWord(var a: Word);
      procedure WriteInteger(var a: Integer);
      procedure WriteBoolean(var a: Boolean);
@@ -289,6 +296,7 @@ Type
     function RectEquals(r1, r2: TRect): Boolean;
     procedure InternalSaveToFile1(FLineList: TList; FileName: String;
       PageNumber, Fpageall: integer);
+    procedure InternalLoadFromFile1(FileName: string; FLineList: TList);
   protected
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
@@ -3650,6 +3658,158 @@ Begin
 End;
 Procedure TReportControl.InternalLoadFromFile(FileName:string;FLineList:TList);
 Var
+  TargetFile: TSimpleFileStream;
+  FileFlag: WORD;
+  Count1, Count2, Count3: Integer;
+  ThisLine: TReportLine;
+  ThisCell: TReportCell;
+  I, J, K: Integer;
+  TempPChar: Array[0..3000] Of Char;
+  bHasDataSet: Boolean;
+Begin
+  TargetFile := TSimpleFileStream.Create(FileName, fmOpenRead);
+  Try
+    With TargetFile Do
+    Begin
+      ReadWord(FileFlag);
+      If (FileFlag <> $AA55) And (FileFlag <> $AA56) And (FileFlag <> $AA57)
+        Then
+        raise Exception.create('打开文件错误');
+      For I := 0 To FLineList.Count - 1 Do
+      Begin
+        ThisLine := TReportLine(FLineList[I]);
+        ThisLine.Free;
+      End;
+
+      FLineList.Clear;
+
+      
+
+      ReadInteger(FReportScale);
+      ReadInteger(FPageWidth);
+      ReadInteger(FPageHeight);
+      Width := FPageWidth;
+      Height := FPageHeight;
+      ReadInteger(FLeftMargin);
+      ReadInteger(FTopMargin);
+      ReadInteger(FRightMargin);
+      ReadInteger(FBottomMargin);
+
+      ReadInteger(FLeftMargin1);
+      ReadInteger(FTopMargin1);
+      ReadInteger(FRightMargin1);
+      ReadInteger(FBottomMargin1);
+
+      ReadBoolean(FNewTable);
+      ReadInteger(FDataLine);
+      ReadInteger(FTablePerPage);
+      // 多少行
+      ReadInteger(Count1);
+      For I := 0 To Count1 - 1 Do
+      Begin
+        ThisLine := TReportLine.Create;
+  		  if (self is TReportControl) then
+        	ThisLine.FReportControl := Self;
+        FLineList.Add(ThisLine);
+        ReadInteger(Count2);
+        ThisLine.CreateLine(0, Count2, FRightMargin - FLeftMargin);
+      End;
+
+      // 每行的属性
+      For I := 0 To FLineList.Count - 1 Do
+      Begin
+        ThisLine := TReportLine(FLineList[I]);
+
+        ReadInteger(ThisLine.FIndex);
+        ReadInteger(ThisLine.FMinHeight);
+        ReadInteger(ThisLine.FDragHeight);
+        ReadInteger(ThisLine.FLineTop);
+        ReadRect(ThisLine.FLineRect);
+
+        // 每个CELL的属性
+        For J := 0 To ThisLine.FCells.Count - 1 Do
+        Begin
+          ThisCell := TReportCell(ThisLine.FCells[J]);
+          // Write Cell's Property here;
+          ReadInteger(ThisCell.FLeftMargin);
+          ReadInteger(ThisCell.FCellIndex);
+
+          ReadInteger(ThisCell.FCellLeft);
+          ReadInteger(ThisCell.FCellWidth);
+
+          ReadRect(ThisCell.FCellRect);
+          ReadRect(ThisCell.FTextRect);
+          // LCJ :DELETE on the road
+          ReadInteger(ThisCell.FMinCellHeight);
+          ReadInteger(ThisCell.FMinCellHeight);
+          ReadInteger(ThisCell.FRequiredCellHeight);
+
+          ReadBoolean(ThisCell.FLeftLine);
+          ReadInteger(ThisCell.FLeftLineWidth);
+
+          ReadBoolean(ThisCell.FTopLine);
+          ReadInteger(ThisCell.FTopLineWidth);
+
+          ReadBoolean(ThisCell.FRightLine);
+          ReadInteger(ThisCell.FRightLineWidth);
+
+          ReadBoolean(ThisCell.FBottomLine);
+          ReadInteger(ThisCell.FBottomLineWidth);
+
+          ReadCardinal(ThisCell.FDiagonal);
+
+          ReadCardinal(ThisCell.FTextColor);
+          ReadCardinal(ThisCell.FBackGroundColor);
+
+          ReadInteger(ThisCell.FHorzAlign);
+          ReadInteger(ThisCell.FVertAlign);
+
+          ReadString(ThisCell.FCellText);
+
+          If FileFlag <> $AA55 Then
+            ReadString(ThisCell.FCellDispformat);
+
+          If FileFlag = $AA57 Then
+          Begin
+            read(thiscell.Fbmpyn, SizeOf(thiscell.FbmpYn));
+            If thiscell.FbmpYn Then
+              thiscell.FBmp.LoadFromStream(TargetFile);     
+          End;
+
+          ReadTLogFont(ThisCell.FLogFont);
+
+          ReadInteger(Count1);
+          ReadInteger(Count2);
+
+          If (Count1 < 0) Or (Count2 < 0) Then
+            ThisCell.FOwnerCell := Nil
+          Else
+            ThisCell.FOwnerCell :=
+              TReportCell(TReportLine(FLineList[Count1]).FCells[Count2]);
+
+          ReadInteger(Count3);
+
+          For K := 0 To Count3 - 1 Do
+          Begin
+            ReadInteger(Count1);
+            ReadInteger(Count2);
+            ThisCell.FSlaveCells.Add(TReportCell(TReportLine(FLineList[Count1]).FCells[Count2]));
+          End;
+        End;
+      End;              
+
+      ReadInteger(FprPageNo);
+      ReadInteger(FprPageXy);
+      ReadInteger(fpaperLength);
+      ReadInteger(fpaperWidth);
+      ReadInteger(FHootNo);
+    End;
+  Finally
+    TargetFile.Free;
+  End;
+End;
+Procedure TReportControl.InternalLoadFromFile1(FileName:string;FLineList:TList);
+Var
   TargetFile: TFileStream;
   FileFlag: WORD;
   Count1, Count2, Count3: Integer;
@@ -4452,12 +4612,48 @@ begin
     WriteInteger(Count);
     StrPCopy(TempPChar, a);
     For K := 0 To Count - 1 Do
-      Write(TempPChar[K], 1);    
+      Write(TempPChar[K], 1);
 end;
 
 procedure TSimpleFileStream.WriteTLOGFONT(var a: TLOGFONT);
 begin
    Write(a,SizeOf(TLOGFONT))
+end;
+
+procedure TSimpleFileStream.ReadBoolean(var a: Boolean);
+begin
+  Read(a,SizeOf(Boolean))
+end;
+
+procedure TSimpleFileStream.ReadCardinal(var a: Cardinal);
+begin
+    Read(a,SizeOf(Cardinal))
+end;
+
+procedure TSimpleFileStream.ReadInteger(var a: Integer);
+begin
+    Read(a,SizeOf(Integer))
+end;
+
+procedure TSimpleFileStream.ReadRect(var a: TRect);
+begin
+      Read(a,SizeOf(TRect))
+end;
+
+procedure TSimpleFileStream.ReadString(var a: String);
+var count1,k:integer;TempPChar: Array[0..3000] Of char;
+begin
+    ReadInteger(Count1);
+    tempPchar := #0;
+    For K := 0 To Count1 - 1 Do
+      Read(TempPChar[K], 1);
+    TempPChar[Count1] := #0;
+    a := StrPas(TempPChar);
+end;
+
+procedure TSimpleFileStream.ReadTLOGFONT(var a: TLOGFONT);
+begin
+      Read(a,SizeOf(TLOGFONT))
 end;
 
 End.
