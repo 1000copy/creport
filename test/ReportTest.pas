@@ -50,6 +50,7 @@ type
     procedure TextLine_vs_RequiredHeight;
     procedure DirectLoad;
     procedure TopAlign;
+    procedure LoadSave_now_it_is_shift_to_you ;
   end;
 
   TReportUITest = class(TTestCase)
@@ -912,6 +913,36 @@ begin
       TCreportForm.UninitReport();
     end;
 end;
+procedure TReportTest.LoadSave_now_it_is_shift_to_you;
+var s,b,Filename : string;
+    ThisCell:TReportCell;
+    R: TReportControl;
+    form : TCreportForm;
+begin
+    form := TCreportForm.InitReport ;
+    try
+      R := form.ReportControl1;
+      r.SetWndSize(1058,748);
+      r.NewTable(2 ,3);
+      // 垂直合并后，Cell并不减少
+      r.Cells[0,0].Select;
+      r.Cells[1,0].Select;
+      r.Cells[2,0].Select;
+      r.CombineCell ;
+      r.Cells[0,0].VertAlign := TEXT_ALIGN_TOP ;
+      r.Cells[0,0].CalcMinCellHeight;
+      s := 'long text so is incremented absolutly ';
+      r.Cells[0,0].CellText := s ;
+      FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
+      R.SaveToFile(FileName);
+      R.LoadFromFile(FileName);
+      CheckEquals(3,R.LineList.count);
+      // TODO : 继续ut，以便重构代码 Load / Save 部分。分化之。
+    finally
+      TCreportForm.UninitReport();
+    end;
+end;
+
 initialization
   RegisterTests('Framework Suites',[TReportTest.Suite,TReportUITest.Suite,TCDSTest.Suite]);
 end.

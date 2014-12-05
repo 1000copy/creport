@@ -413,6 +413,7 @@ Type
     Property DataLine: Integer Read FDataLine Write FDataLine ;
     Property TablePerPage: Integer Read FTablePerPage Write FTablePerPage ;
     property Lines[Index: Integer]: TReportLine read Get  ;
+    property LineList : TLineList read FLineList;
     property Cells[Row: Integer;Col: Integer]: TReportCell read GetCells ;
     property  AllowPreviewEdit: boolean read CPreviewEdit write CPreviewEdit;
   Published
