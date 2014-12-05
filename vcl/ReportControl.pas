@@ -939,9 +939,9 @@ Procedure TReportCell.CalcCellTextRect;
   // TODO : 感觉和RequiredCellHeight 有重复，并且同一件事，算法不同。
   procedure CalcTextRect;
   Var
-  R: TRect;
-  SpaceHeight,HalfSpaceHeight,TextHeight,RealHeight,delta: Integer;
-  I: Integer;
+    R: TRect;
+    SpaceHeight,HalfSpaceHeight,TextHeight,RealHeight,delta: Integer;
+    I: Integer;
   begin
     R := FCellRect;
     R.left := R.Left + FLeftMargin + 1;
@@ -958,6 +958,7 @@ Procedure TReportCell.CalcCellTextRect;
     SpaceHeight := RealHeight - TextHeight ;
     HalfSpaceHeight := Ceil(SpaceHeight/ 2 );
     // R.bottom := R.top + TextHeight -( 2 + FTopLineWidth +FBottomLineWidth);
+    // LCJ : 这个Payload ，一会儿加，一会儿不加的，不规律呢。
     R.bottom := R.top + TextHeight - Payload;
     Case FVertAlign Of
       TEXT_ALIGN_VCENTER:
@@ -972,8 +973,7 @@ Procedure TReportCell.CalcCellTextRect;
         Inc(R.Top ,delta);
         Inc(R.Bottom , delta);
       End;
-    End;
-
+    End;         
     FTextRect := R;
   end;                  
 Begin
