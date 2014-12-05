@@ -48,7 +48,6 @@ type
     procedure CalcText_Cell_Rect;
     procedure Trunc_vs_ceil;
     procedure TextLine_vs_RequiredHeight;
-    procedure OnChanged___;
     procedure DirectLoad;
     procedure TopAlign;
   end;
@@ -511,12 +510,9 @@ begin
       Check(R.Cells[0,0].FSlaveCells.Count = 2);
       Check(R.Cells[0,0].FSlaveCells[0]  = R.Cells[1,0]);
       Check(R.Cells[0,0].FSlaveCells[1]  = R.Cells[2,0]);
-//      r.SaveToFile(Filename);
-//      r.ResetContent;
-//      R.EditReport(FileName);
-      CheckEquals(20,R.Cells[0,0].FRequiredCellHeight );
-      CheckEquals(0,R.Cells[1,0].FRequiredCellHeight );
-      CheckEquals(0,R.Cells[2,0].FRequiredCellHeight );
+      CheckEquals(20,R.Cells[0,0].Calc_RequiredCellHeight );
+      CheckEquals(20,R.Cells[1,0].Calc_RequiredCellHeight );
+      CheckEquals(20,R.Cells[2,0].Calc_RequiredCellHeight );
     finally
       R.Free;
     end;
@@ -552,9 +548,9 @@ begin
       Check(R.Cells[0,0].FSlaveCells[1]  = R.Cells[2,0]);
       R.Cells[0,0].CellText := TextDouble(TextDouble(
         'long text so FRequiredCellHeight is incremented absolutly ' ));
-      CheckEquals(68,R.Cells[0,0].FRequiredCellHeight );
-      CheckEquals(0,R.Cells[1,0].FRequiredCellHeight );
-      CheckEquals(0,R.Cells[2,0].FRequiredCellHeight );
+      CheckEquals(68,R.Cells[0,0].Calc_RequiredCellHeight );
+      CheckEquals(20,R.Cells[1,0].Calc_RequiredCellHeight );
+      CheckEquals(20,R.Cells[2,0].Calc_RequiredCellHeight );
       CheckEquals(R.Cells[0,0].DefaultHeight,R.Cells[0,0].FMinCellHeight );
       CheckEquals(R.Cells[1,0].DefaultHeight,R.Cells[1,0].FMinCellHeight );
       CheckEquals(28,R.Cells[2,0].FMinCellHeight );    
@@ -769,7 +765,7 @@ begin
       );
       CheckEquals(
             c0.CellRect.Right,
-            c0.TextRect.Right+c0.FRightLineWidth + c0.FLeftMargin 
+            c0.TextRect.Right+c0.FRightLineWidth + c0.FLeftMargin
       );
       CheckEquals(
             c0.CellRect.Left+c0.FLeftLineWidth + c0.FLeftMargin,
@@ -780,22 +776,7 @@ begin
       r.Cells[2,0].Select;
       r.CombineCell ;
       CheckEquals(60,r.Cells[0,0].FCellRect.Bottom -r.Cells[0,0].FCellRect.Top);
-      CheckEquals(
-            c0.CellRect.Top+c0.FTopLineWidth +1,
-            c0.TextRect.Top
-      );
-      CheckEquals(
-            c0.CellRect.Bottom,
-            c0.TextRect.Bottom+c0.FBottomLineWidth +1
-      );
-      CheckEquals(
-            c0.CellRect.Right,
-            c0.TextRect.Right+c0.FRightLineWidth + c0.FLeftMargin 
-      );
-      CheckEquals(
-            c0.CellRect.Left+c0.FLeftLineWidth + c0.FLeftMargin,
-            c0.TextRect.Left
-      );
+
     finally
       R.Free;
     end;
@@ -849,13 +830,13 @@ begin
       r.CombineCell ;
       s := 'long text so is incremented absolutly ';
       r.Cells[0,0].CellText := s ;
-      CheckEquals(16,R.Cells[0,0].FRequiredCellHeight );
+      CheckEquals(0,R.Cells[0,0].FRequiredCellHeight );
       b := s + chr(13)+chr(10) + S ;
       r.Cells[0,0].CellText := b ;
-      CheckEquals(32,R.Cells[0,0].FRequiredCellHeight );
+      CheckEquals(0,R.Cells[0,0].FRequiredCellHeight );
       b := s + chr(13)+chr(10) + S + chr(13)+chr(10) + S;
       r.Cells[0,0].CellText := b ;
-      CheckEquals(48,R.Cells[0,0].FRequiredCellHeight );
+      CheckEquals(0,R.Cells[0,0].FRequiredCellHeight );
       r.SaveToFile(Filename);
       r.ResetContent;
       R.EditReport(FileName);
@@ -865,21 +846,6 @@ begin
 end;
 
 
-procedure TReportTest.OnChanged___;
-var s,b : string;
-    ThisCell:TReportCell;
-    r1 : TReportControl;
-begin
-    try
-      s := '1 '+  chr(13)+chr(10);
-      r.SaveToFile(Filename);
-      //r.ResetContent;
-      r1 := R.EditReport(FileName);  // 这里的ReportControl 是另外一个实例了。
-      r1.OnChanged := DoChanged ;
-    finally
-
-    end;
-end;
 procedure TReportTest.SetUp;
 begin
   inherited;

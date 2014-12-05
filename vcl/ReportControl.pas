@@ -94,7 +94,6 @@ Type
   TReportCell = Class(TObject)
   private
     function GetOwnerCellHeight: Integer;
-    function Calc_RequiredCellHeight: Integer;
     function GetBottomest(FOwnerCell: TReportCell): TReportCell;
     function GetTextHeight: Integer;
     procedure ExpandHeight(delta: integer);
@@ -102,6 +101,7 @@ Type
   public
 
     ReportControl:TReportControl;
+    function Calc_RequiredCellHeight: Integer;
     function GetReportControl: TReportControl;
     function GetSelected: Boolean;
     function GetTextRectInternal(TempString: String): TRect;
@@ -910,9 +910,9 @@ Begin
   if IsNormalCell  then
     FMinCellHeight := GetTextHeight + Payload ;
   if IsOwnerCell  then begin
-    FRequiredCellHeight := Calc_RequiredCellHeight();
-    // LCJ : 太讨厌了呃，GetOwnerCellHeight 内修改了  FMinCellHeight 
-    FSlaveCells.Last.ExpandHeight (FRequiredCellHeight - GetOwnerCellHeight);
+//    FRequiredCellHeight := Calc_RequiredCellHeight();
+    // LCJ : 太讨厌了呃，GetOwnerCellHeight 内修改了  FMinCellHeight
+    FSlaveCells.Last.ExpandHeight (Calc_RequiredCellHeight - GetOwnerCellHeight);
   End ;
 end;
 procedure TReportCell.ExpandHeight(delta:integer);
@@ -949,7 +949,7 @@ Procedure TReportCell.CalcCellTextRect;
     R.top := R.top + FTopLineWidth + 1;
     R.right := R.right - FLeftMargin - 1; 
     If IsOwnerCell Then begin
-      TextHeight := FRequiredCellHeight ;
+      TextHeight := Calc_RequiredCellHeight ;
       RealHeight := FCellRect.Bottom - FCellRect.Top ;
     end
     else begin
