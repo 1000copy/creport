@@ -53,6 +53,7 @@ type
     procedure TopAlign;
     procedure LoadSave_now_it_is_shift_to_you ;
     procedure ReadTYpe ;
+    procedure MeasureConvert;
   end;
 
   TReportUITest = class(TTestCase)
@@ -980,6 +981,31 @@ begin
   checkEquals(sizeof(g),sizeof(byte));
   checkEquals(sizeof(h),sizeof(TREct));
   checkEquals(sizeof(i),sizeof(cardinal));
+end;
+
+procedure TReportTest.MeasureConvert;
+var f,e,c,d,a,b, nPixelsPerInch:integer;hDesktopDC :THandle;
+  os : WindowsOS ;
+begin
+  hDesktopDC := GetDC(0);
+  nPixelsPerInch := GetDeviceCaps(hDesktopDC, LOGPIXELSX);
+  // 以毫米为单位
+  a := 20;
+  b := 10;
+  f := 15;
+
+  c:= trunc(nPixelsPerInch * a/ 25 + 0.5);
+  d:= trunc(nPixelsPerInch * b/ 25 + 0.5);
+  e:= trunc(nPixelsPerInch * f/ 25 + 0.5);
+  ReleaseDC(0, hDesktopDC);
+  CheckEquals(77,c);
+  CheckEquals(38,d);
+  CheckEquals(58,e);
+  os := WIndowsOS.Create;
+  CheckEquals(77,os.MM2Dot(a));
+  CheckEquals(38,os.MM2Dot(b));
+  CheckEquals(58,os.MM2Dot(f));
+  os.Free;
 end;
 
 initialization

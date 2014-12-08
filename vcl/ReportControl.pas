@@ -333,6 +333,7 @@ Type
     FEditBrush: HBRUSH;
     FEditFont: HFONT;
     FOnChanged : TOnChanged;
+    Os :WindowsOS ;
     function GetNhassumall: Integer;
     Procedure SetCellSFocus(row1, col1, row2, col2: integer);
     function Get(Index: Integer): TReportLine;
@@ -889,7 +890,9 @@ begin
   result := 2  + FTopLineWidth + FBottomLineWidth ;
 end;
 function TReportCell.GetOwnerCellHeight():Integer;
-var BottomCell,ThisCell:TReportCell;I,Top,Height:Integer ;
+var
+  BottomCell,ThisCell:TReportCell;
+  I,Top,Height:Integer ;
 begin
   Height := 0 ;
   For I := 0 To FSlaveCells.Count - 1 Do
@@ -1166,6 +1169,36 @@ Constructor TReportCell.Create(R:TReportControl);
 Var
   hTempDC: HDC;
   pt, ptOrg: TPoint;
+  procedure FillFont ;
+  begin
+    FLogFont.lfHeight := 120;
+    FLogFont.lfWidth := 0;
+    FLogFont.lfEscapement := 0;
+    FLogFont.lfOrientation := 0;
+    FLogFont.lfWeight := 0;
+    FLogFont.lfItalic := 0;
+    FLogFont.lfUnderline := 0;
+    FLogFont.lfStrikeOut := 0;
+    FLogFont.lfCharSet := DEFAULT_CHARSET;
+    FLogFont.lfOutPrecision := 0;
+    FLogFont.lfClipPrecision := 0;
+    FLogFont.lfQuality := 0;
+    FLogFont.lfPitchAndFamily := 0;
+    FLogFont.lfFaceName := '宋体';
+
+    // Hey, I pass a invalid window's handle to you, what you return to me ?
+    // Haha, is a device context of the DESKTOP WINDOW !
+    hTempDC := GetDC(0);
+
+    pt.y := GetDeviceCaps(hTempDC, LOGPIXELSY) * FLogFont.lfHeight;
+    pt.y := trunc(pt.y / 720 + 0.5);      // 72 points/inch, 10 decipoints/point
+    DPtoLP(hTempDC, pt, 1);
+    ptOrg.x := 0;
+    ptOrg.y := 0;
+    DPtoLP(hTempDC, ptOrg, 1);
+    FLogFont.lfHeight := -abs(pt.y - ptOrg.y);
+    ReleaseDC(0, hTempDC);
+  end;
 Begin
   self.ReportControl := R;
   FSlaveCells := TCellList.Create(R);
@@ -1173,14 +1206,11 @@ Begin
   FLeftMargin := 5;
   FOwnerLine := Nil;
   FOwnerCell := Nil;
-    //  FDragCellHeight := 0;
   FMinCellHeight := 0;
   FRequiredCellHeight := 0;
   FCellIndex := -1;
-
   FCellLeft := 0;
   FCellWidth := 0;
-
   FCellRect.Left := 0;
   FCellRect.Top := 0;
   FCellRect.Right := 0;
@@ -1190,65 +1220,21 @@ Begin
   FTextRect.Top := 0;
   FTextRect.Right := 0;
   FTextRect.Bottom := 0;
-
-
-
-  // border
   FLeftLine := True;
   FLeftLineWidth := 1;
-
   FTopLine := True;
   FTopLineWidth := 1;
-
   FRightLine := True;
-  FRightLineWidth := 1;
-
+  FRightLineWidth := 1; 
   FBottomLine := True;
   FBottomLineWidth := 1;
-
-  // 斜线
   FDiagonal := 0;
-
-  // color
   FTextColor := RGB(0, 0, 0);
   FBackGroundColor := RGB(255, 255, 255);
-
-  // align
   FHorzAlign := TEXT_ALIGN_LEFT;
   FVertAlign := TEXT_ALIGN_CENTER;
-
-  // string
   FCellText := '';
-
-  // font
-  FLogFont.lfHeight := 120;
-  FLogFont.lfWidth := 0;
-  FLogFont.lfEscapement := 0;
-  FLogFont.lfOrientation := 0;
-  FLogFont.lfWeight := 0;
-  FLogFont.lfItalic := 0;
-  FLogFont.lfUnderline := 0;
-  FLogFont.lfStrikeOut := 0;
-  FLogFont.lfCharSet := DEFAULT_CHARSET;
-  FLogFont.lfOutPrecision := 0;
-  FLogFont.lfClipPrecision := 0;
-  FLogFont.lfQuality := 0;
-  FLogFont.lfPitchAndFamily := 0;
-  FLogFont.lfFaceName := '宋体';
-
-  // Hey, I pass a invalid window's handle to you, what you return to me ?
-  // Haha, is a device context of the DESKTOP WINDOW !
-  hTempDC := GetDC(0);
-
-  pt.y := GetDeviceCaps(hTempDC, LOGPIXELSY) * FLogFont.lfHeight;
-  pt.y := trunc(pt.y / 720 + 0.5);      // 72 points/inch, 10 decipoints/point
-  DPtoLP(hTempDC, pt, 1);
-  ptOrg.x := 0;
-  ptOrg.y := 0;
-  DPtoLP(hTempDC, ptOrg, 1);
-  FLogFont.lfHeight := -abs(pt.y - ptOrg.y);
-  ReleaseDC(0, hTempDC);
-
+  FillFont ;
 End;
 
 Destructor TReportCell.Destroy;
@@ -1348,13 +1334,6 @@ Begin
   FSlaveCells.Remove(Cell);
   Cell.OwnerCell := Nil;
 End;
-// 一觉醒来，又是一个阳光灿烂的日子
-
-///////////////////////////////////////////////////////////////////////////
-// CReportLine
-
-
-
 function TReportCell.IsLastCell: boolean;
 begin
   //result := OwnerLine.FCells.IndexOf(Self) = OwnerLine.FCells.Count - 1;
@@ -1440,74 +1419,73 @@ Var
   TempPChar: Array[0..3000] Of Char;
   bHasDataSet: Boolean;
 begin
-   // Write Cell's Property here;
- with stream do
- begin
-  ReadInteger(FLeftMargin);
-  ReadInteger(FCellIndex);
+  with stream do
+  begin
+    ReadInteger(FLeftMargin);
+    ReadInteger(FCellIndex);
 
-  ReadInteger(FCellLeft);
-  ReadInteger(FCellWidth);
+    ReadInteger(FCellLeft);
+    ReadInteger(FCellWidth);
 
-  ReadRect(FCellRect);
-  ReadRect(FTextRect);
-  // LCJ :DELETE on the road
-  ReadInteger(FMinCellHeight);
-  ReadInteger(FMinCellHeight);
-  ReadInteger(FRequiredCellHeight);
+    ReadRect(FCellRect);
+    ReadRect(FTextRect);
+    // LCJ :DELETE on the road
+    ReadInteger(FMinCellHeight);
+    ReadInteger(FMinCellHeight);
+    ReadInteger(FRequiredCellHeight);
 
-  ReadBoolean(FLeftLine);
-  ReadInteger(FLeftLineWidth);
+    ReadBoolean(FLeftLine);
+    ReadInteger(FLeftLineWidth);
 
-  ReadBoolean(FTopLine);
-  ReadInteger(FTopLineWidth);
+    ReadBoolean(FTopLine);
+    ReadInteger(FTopLineWidth);
 
-  ReadBoolean(FRightLine);
-  ReadInteger(FRightLineWidth);
+    ReadBoolean(FRightLine);
+    ReadInteger(FRightLineWidth);
 
-  ReadBoolean(FBottomLine);
-  ReadInteger(FBottomLineWidth);
+    ReadBoolean(FBottomLine);
+    ReadInteger(FBottomLineWidth);
 
-  ReadCardinal(FDiagonal);
+    ReadCardinal(FDiagonal);
 
-  ReadCardinal(FTextColor);
-  ReadCardinal(FBackGroundColor);
+    ReadCardinal(FTextColor);
+    ReadCardinal(FBackGroundColor);
 
-  ReadInteger(FHorzAlign);
-  ReadInteger(FVertAlign);
+    ReadInteger(FHorzAlign);
+    ReadInteger(FVertAlign);
 
-  ReadString(FCellText);
+    ReadString(FCellText);
 
-  If FileFlag <> $AA55 Then
-    ReadString(FCellDispformat);
+    If FileFlag <> $AA55 Then
+      ReadString(FCellDispformat);
 
-  If FileFlag = $AA57 Then
-  Begin
-    read(Fbmpyn, SizeOf(FbmpYn));
-    If FbmpYn Then
-      FBmp.LoadFromStream(stream);
-  End;
+    If FileFlag = $AA57 Then
+    Begin
+      read(Fbmpyn, SizeOf(FbmpYn));
+      If FbmpYn Then
+        FBmp.LoadFromStream(stream);
+    End;
 
-  ReadTLogFont(FLogFont);
+    ReadTLogFont(FLogFont);
 
-  ReadInteger(Count1);
-  ReadInteger(Count2);
-
-  If (Count1 < 0) Or (Count2 < 0) Then
-    FOwnerCell := Nil
-  Else
-    FOwnerCell :=
-      TReportCell(TReportLine(Self.ReportControl. FLineList[Count1]).FCells[Count2]);
-
-  ReadInteger(Count3);
-
-  For K := 0 To Count3 - 1 Do
-  Begin
     ReadInteger(Count1);
     ReadInteger(Count2);
-    FSlaveCells.Add(TReportCell(TReportLine(Self.ReportControl.FLineList[Count1]).FCells[Count2]));
-  End;
- end;
+
+    If (Count1 < 0) Or (Count2 < 0) Then
+      FOwnerCell := Nil
+    Else
+      FOwnerCell :=
+        TReportCell(TReportLine(Self.ReportControl. FLineList[Count1]).FCells[Count2]);
+
+    ReadInteger(Count3);
+
+    For K := 0 To Count3 - 1 Do
+    Begin
+      ReadInteger(Count1);
+      ReadInteger(Count2);
+      FSlaveCells.Add(TReportCell(TReportLine(Self.ReportControl.FLineList[Count1]).FCells[Count2]));
+    End;
+   end;
 end;
 
 procedure TReportCell.Save(s: TSimpleFileStream;PageNumber, Fpageall:integer);
@@ -1819,6 +1797,7 @@ Var
   nPixelsPerInch: Integer;
 Begin
   Inherited Create(AOwner);
+  Os := WindowsOS.create;
   Parent := TWinControl(aOwner);
   PrintPaper:= TPrinterPaper.Create;
   // 设定为无光标，防止光标闪烁。
@@ -1843,21 +1822,23 @@ Begin
   FPageWidth := 0;
   FPageHeight := 0;
 
-  hDesktopDC := GetDC(0);
-  nPixelsPerInch := GetDeviceCaps(hDesktopDC, LOGPIXELSX);
-
+  // 以毫米为单位
   FLeftMargin1 := 20;
   FRightMargin1 := 10;
   FTopMargin1 := 20;
   FBottomMargin1 := 15;
-
-  FLeftMargin := trunc(nPixelsPerInch * FLeftMargin1 / 25 + 0.5);
-  FRightMargin := trunc(nPixelsPerInch * FRightMargin1 / 25 + 0.5);
-  FTopMargin := trunc(nPixelsPerInch * FTopMargin1 / 25 + 0.5);
-  FBottomMargin := trunc(nPixelsPerInch * FBottomMargin1 / 25 + 0.5);
-
-  ReleaseDC(0, hDesktopDC);
-
+  // 以Dot为单位
+  //  hDesktopDC := GetDC(0);
+  //  nPixelsPerInch := GetDeviceCaps(hDesktopDC, LOGPIXELSX);
+  //  FLeftMargin := trunc(nPixelsPerInch * FLeftMargin1 / 25 + 0.5);
+  //  FRightMargin := trunc(nPixelsPerInch * FRightMargin1 / 25 + 0.5);
+  //  FTopMargin := trunc(nPixelsPerInch * FTopMargin1 / 25 + 0.5);
+  //  FBottomMargin := trunc(nPixelsPerInch * FBottomMargin1 / 25 + 0.5);
+  //  ReleaseDC(0, hDesktopDC);
+  FLeftMargin := os.MM2Dot(FLeftMargin1);
+  FRightMargin := os.MM2Dot(FRightMargin1);
+  FTopMargin := os.MM2Dot(FTopMargin1);
+  FBottomMargin := os.MM2Dot(FBottomMargin1);    
   // 鼠标操作支持
   FMousePoint.x := 0;
   FMousePoint.y := 0;
@@ -1886,6 +1867,7 @@ Begin
   FLineList.Free;
   FLineList := Nil;
   PrintPaper.Free;
+  Os.Free;
   Inherited Destroy;
 End;
 

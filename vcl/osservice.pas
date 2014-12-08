@@ -3,17 +3,22 @@ unit osservice;
 interface
 
 uses
-   windows ,classes,SysUtils;
+   windows ,classes,SysUtils,Math;
 
 type
   TBlueException = class(Exception);
   WindowsOS = class
   private
+    nPixelsPerInch:integer;
+    hDesktopDC :THandle;
   public
     function UnionRect(lprcSrc1, lprcSrc2: TRect): TRect;
     function IntersectRect(lprcSrc1, lprcSrc2: TRect): TRect;
     function Contains(Bigger, smaller: TRect):boolean;
     procedure SetRectEmpty(var r :TRect);
+    function MM2Dot(a:integer):integer;
+    constructor Create;
+    destructor Destroy;
   end;
   procedure CheckError(condition:Boolean ;msg :string);
 implementation
@@ -54,6 +59,23 @@ end;
 procedure WindowsOS.SetRectEmpty(var r: TRect);
 begin
   windows.SetRectEmpty(r);
+end;
+
+function WindowsOS.MM2Dot(a: integer): integer;
+begin
+  Result := Trunc(nPixelsPerInch * a/ 25 + 0.5);   // LCJ: or 25 -> 25.4?
+end;
+
+constructor WindowsOS.Create;
+
+begin
+  hDesktopDC := GetDC(0);
+  nPixelsPerInch := GetDeviceCaps(hDesktopDC, LOGPIXELSX);
+end;
+
+destructor WindowsOS.Destroy;
+begin
+    ReleaseDC(0, hDesktopDC);
 end;
 
 end.
