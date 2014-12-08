@@ -6,6 +6,9 @@ uses
    windows ,classes,SysUtils,Math;
 
 type
+  EachCellProc =  procedure (ThisCell:TReportCell) of object;
+  EachLineProc =  procedure (ThisLine:TReportLine)of object;
+  EachLineIndexProc = procedure (ThisLine:TReportLine;Index:Integer)of object;
   TBlueException = class(Exception);
   WindowsOS = class
   private
@@ -17,6 +20,7 @@ type
     function Contains(Bigger, smaller: TRect):boolean;
     procedure SetRectEmpty(var r :TRect);
     function MM2Dot(a:integer):integer;
+    function MapDots(FromHandle, ToHandle: THandle;FromLen: Integer): Integer;
     constructor Create;
     destructor Destroy;
   end;
@@ -77,5 +81,9 @@ destructor WindowsOS.Destroy;
 begin
     ReleaseDC(0, hDesktopDC);
 end;
-
+function WindowsOS.MapDots(FromHandle:THandle;ToHandle:THandle;FromLen:Integer):Integer;
+begin
+  result := trunc(FromLen / GetDeviceCaps(FromHandle,LOGPIXELSX)
+      * GetDeviceCaps(ToHandle, LOGPIXELSX) + 0.5);
+end;
 end.

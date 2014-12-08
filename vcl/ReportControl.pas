@@ -288,13 +288,16 @@ Type
     procedure Load (s:TSimpleFileStream);
     procedure Save(s:TSimpleFileStream);
   End;
+  EachCellProc =  procedure (ThisCell:TReportCell) of object;
+  EachLineProc =  procedure (ThisLine:TReportLine)of object;
+  EachLineIndexProc = procedure (ThisLine:TReportLine;Index:Integer)of object;
 
   TReportControl = Class(TWinControl)
   private
     procedure InternalSaveToFile(
       FLineList: TList; FileName: String;PageNumber, Fpageall: integer);
     function RectEquals(r1, r2: TRect): Boolean;
-
+    procedure EachCell_MasterCalcMinCellHeight(c: TReportCell);  
   protected
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
@@ -350,6 +353,19 @@ Type
   Public
     FLastPrintPageWidth, FLastPrintPageHeight: integer;
     PrintPaper:TPrinterPaper;
+    procedure EachCell(EachProc: EachCellProc);
+    procedure EachLine(EachProc: EachLineProc);
+    procedure EachCell_CalcEveryHeight(ThisCell: TReportCell);
+    procedure EachProc_CalcLineHeight(thisLine: TReportLine);
+    procedure EachLineIndex(EachProc: EachLineIndexProc);
+    procedure EachLineIndexProc_UpdateIndex(thisLine: TReportLine;
+      Index: integer);
+    procedure EachProc_UpdateIndex(thisLine: TReportLine; I: integer);
+    procedure EachProc_UpdateLineRect(thisLine: TReportLine;
+      Index: integer);
+    procedure EachProc_UpdateLineTop(thisLine: TReportLine;
+      I: integer);
+
     procedure DoVertSplitCell(ThisCell : TReportCell;SplitCount: Integer);
     function ZoomRate(height,width,HConst, WConst: integer): Integer;
     property SelectedCells: TCellList read FSelectCells ;
@@ -1875,11 +1891,7 @@ End;
 Procedure TReportControl.CalcWndSize;
 Var
   hClientDC: HDC;
-  function MapDots(FromHandle:THandle;ToHandle:THandle;FromLen:Integer):Integer;
-  begin
-    result := trunc(FromLen / GetDeviceCaps(FromHandle,LOGPIXELSX)
-        * GetDeviceCaps(ToHandle, LOGPIXELSX) + 0.5);
-  end;
+
 Begin
   If printer.Printers.Count <= 0 Then
   Begin
@@ -1903,8 +1915,8 @@ Begin
     Begin
       hClientDC := GetDC(0);
       try
-        FPageWidth :=MapDots(Printer.Handle, hClientDC,Printer.PageWidth);
-        FPageHeight :=MapDots(Printer.Handle, hClientDC,Printer.PageHeight);
+        FPageWidth :=os.MapDots(Printer.Handle, hClientDC,Printer.PageWidth);
+        FPageHeight :=os.MapDots(Printer.Handle, hClientDC,Printer.PageHeight);
       finally
         ReleaseDC(0, hClientDC);
       end;
@@ -3152,6 +3164,12 @@ Begin
   UpdateLines;
 End;
 
+procedure TReportControl.EachCell_MasterCalcMinCellHeight(c:TReportCell);
+begin
+   If c.FSlaveCells.Count > 0 Then
+      c.CalcMinCellHeight;
+end;
+
 Procedure TReportControl.UpdateLines;
 Var
   PrevRect, TempRect: TRect;
@@ -3160,18 +3178,19 @@ Var
   ThisCell: TReportCell;
 Begin
   // 首先计算合并后的单元格
-  For I := 0 To FLineList.Count - 1 Do
-  Begin
-    ThisLine := TReportLine(FLineList[I]);
-
-    For J := 0 To ThisLine.FCells.Count - 1 Do
-    Begin
-      ThisCell := TReportCell(ThisLine.FCells[J]);
-
-      If ThisCell.FSlaveCells.Count > 0 Then
-        ThisCell.CalcMinCellHeight;
-    End;
-  End;
+  EachCell(EachCell_MasterCalcMinCellHeight);
+//  For I := 0 To FLineList.Count - 1 Do
+//  Begin
+//    ThisLine := TReportLine(FLineList[I]);
+//
+//    For J := 0 To ThisLine.FCells.Count - 1 Do
+//    Begin
+//      ThisCell := TReportCell(ThisLine.FCells[J]);
+//
+//      If ThisCell.FSlaveCells.Count > 0 Then
+//        ThisCell.CalcMinCellHeight;
+//    End;
+//  End;
 
   // 计算每行的高度
   For I := 0 To FLineList.Count - 1 Do
@@ -4120,6 +4139,7 @@ begin
   FEditCell.CellText := str;
 end;
 
+
 { TLineList }
 
 procedure TLineList.CombineHorz;
@@ -4221,6 +4241,77 @@ begin
       (r1.Top = r2.Top )and
       (r1.Bottom = r2.Bottom)
              ;
+end;
+procedure TReportControl.EachCell(EachProc:EachCellProc);
+var
+  ThisLine: TReportLine;
+  ThisCell: TReportCell;
+  i ,j :integer;
+begin
+   For I := 0 To FLineList.Count - 1 Do
+    Begin
+    ThisLine := TReportLine(FLineList[I]);
+    For J := 0 To ThisLine.FCells.Count - 1 Do
+    Begin
+      ThisCell := TReportCell(ThisLine.FCells[J]);
+      EachProc(ThisCell);
+    End;
+   End;
+end;
+procedure TReportControl.EachLine(EachProc:EachLineProc);
+var
+  ThisLine: TReportLine;
+  ThisCell: TReportCell;
+  i ,j :integer;
+begin
+   For I := 0 To FLineList.Count - 1 Do
+    Begin
+    ThisLine := TReportLine(FLineList[I]);
+    EachProc(ThisLine);
+   End;
+end;
+procedure TReportControl.EachLineIndex(EachProc:EachLineIndexProc);
+var
+  ThisLine: TReportLine;
+  ThisCell: TReportCell;
+  i ,j :integer;
+begin
+   For I := 0 To FLineList.Count - 1 Do
+    Begin
+    ThisLine := TReportLine(FLineList[I]);
+    EachProc(ThisLine,I);
+   End;
+end;
+procedure TReportControl.EachCell_CalcEveryHeight(ThisCell:TReportCell);
+begin
+  If ThisCell.FSlaveCells.Count > 0 Then
+    thisCell.CalcMinCellHeight ;
+end;
+procedure TReportControl.EachProc_CalcLineHeight(thisLine:TReportLine);
+begin
+    thisLine.CalcLineHeight ;
+end;
+procedure TReportControl.EachLineIndexProc_UpdateIndex(thisLine:TReportLine;Index:integer);
+begin
+    thisLine.CalcLineHeight ;
+end;
+
+//
+procedure TReportControl.EachProc_UpdateIndex(thisLine:TReportLine;I:integer);
+begin
+    ThisLine.Index := I;
+end;
+procedure TReportControl.EachProc_UpdateLineTop(thisLine:TReportLine;I:integer);
+begin
+   If I = 0 Then
+    ThisLine.LineTop := FTopMargin
+   else
+    ThisLine.LineTop := TReportLine(FLineList[I - 1]).LineTop +
+                              TReportLine(FLineList[I - 1]).LineHeight;
+end;
+procedure TReportControl.EachProc_UpdateLineRect(thisLine:TReportLine;Index:integer);
+begin
+     ThisLine.LineRect;
 end;
 procedure TSimpleFileStream.ReadWord(var a: Word);
 begin

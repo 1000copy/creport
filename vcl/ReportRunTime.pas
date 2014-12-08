@@ -9,9 +9,6 @@ uses ReportControl,  Windows, Messages, SysUtils,
 Procedure Register;
 
 type
-  EachCellProc =  procedure (ThisCell:TReportCell) of object;
-  EachLineProc =  procedure (ThisLine:TReportLine)of object;
-  EachLineIndexProc = procedure (ThisLine:TReportLine;Index:Integer)of object;  
   TReportRunTime = Class(TReportControl)
   private
     function GetHeaderHeight: Integer;
