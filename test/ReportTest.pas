@@ -55,6 +55,7 @@ type
     procedure ReadTYpe ;
     procedure MeasureConvert;
     procedure SlaveHeight;
+    procedure CopyLine_bInsert;
   end;
 
   TReportUITest = class(TTestCase)
@@ -320,7 +321,6 @@ begin
 end;
 
 procedure TReportTest.Owner;
-// TReportCell.Own Testcase .细微之处，必须这样测试：
 var Filename : string;
     ThisCell:TReportCell;
     R: TReportRunTime;
@@ -886,7 +886,7 @@ begin
       r.CombineCell ;
       s := 'long text so is incremented absolutly ';
       r.Cells[0,0].CellText := s ;
-      form.ShowModal;      
+      form.ShowModal;
     finally
       TCreportForm.UninitReport();
     end;
@@ -1032,6 +1032,38 @@ begin
       TCreportForm.UninitReport();
     end;
 end;
+//cover test bInsert
+//  Procedure TReportCell.CopyCell(Cell: TReportCell; bInsert: Boolean);
+procedure TReportTest.CopyLine_bInsert;
+var s,b,Filename : string;
+    ThisCell:TReportCell;
+    R: TReportControl;
+    form : TCreportForm;
+begin
+    form := TCreportForm.InitReport ;
+    try
+      R := form.ReportControl1;
+      r.SetWndSize(1058,748);
+      r.NewTable(2 ,3);
+      r.Cells[0,0].Select;
+      r.Cells[1,0].Select;
+      r.Cells[2,0].Select;
+      r.CombineCell ;
+      r.ClearSelect;
+      r.Cells[1,1].Select;
+      CheckEquals(1,r.SelectedCells[0].OwnerLine.Index );
+      r.InsertLine; // will copyLine(bInsert = true)
+      CheckEquals(2,r.SelectedCells[0].OwnerLine.Index );
+      CheckEquals(4,r.LineList.Count );
+      r.AddLine;  //// will copyLine(bInsert = false)
+      CheckEquals(2,r.SelectedCells[0].OwnerLine.Index );
+      CheckEquals(5,r.LineList.Count );
+      form.ShowModal;
+    finally
+      TCreportForm.UninitReport();
+    end;
+end;
+
 initialization
   RegisterTests('Framework Suites',[TReportTest.Suite,TReportUITest.Suite,TCDSTest.Suite]);
 end.

@@ -199,7 +199,8 @@ Type
     function DefaultHeight(): integer;
     procedure Select;
     function IsLastCell():boolean;
-    Procedure Own(Cell: TReportCell);
+    Procedure Own(Cell: TReportCell);overload;
+    Procedure Own(Cell: TReportCell;bInsert:Boolean;InsertIndex:Integer);overload;
     Procedure RemoveAllOwnedCell;
     Procedure RemoveOwnedCell(Cell: TReportCell);
     Function IsCellOwned(Cell: TReportCell): Boolean;
@@ -208,7 +209,11 @@ Type
     function IsBottomest():Boolean;
     Procedure CalcHeight;
     Procedure PaintCell(hPaintDC: HDC; bPrint: Boolean);
-    Procedure CopyCell(Cell: TReportCell; bInsert: Boolean);
+    // 把Cell认作兄弟 。
+    // 同为MasterCell的儿子。并且插入到 MasterCells内，自己位置index之前
+    procedure Sibling(Cell:TReportCell);
+    Procedure CopyCell(Cell: TReportCell; bInsert: Boolean);overload;
+    Procedure CopyCell(Cell: TReportCell; bInsert: Boolean;OwnerLine:TReportLine);overload;
     Constructor Create(R:TReportControl);
     Destructor Destroy; Override;                           
     Property LeftMargin: Integer Read FLeftMargin Write SetLeftMargin;
@@ -645,8 +650,7 @@ Function TReportCell.GetOwnedCellCount: Integer;
 Begin
   Result := FSlaveCells.Count;
 End;
-
-Procedure TReportCell.Own(Cell: TReportCell);
+procedure TReportCell.Own(Cell:TReportCell;bInsert:Boolean;InsertIndex:Integer);
 Var
   I: Integer;
   TempCellList: TCellList;
@@ -655,7 +659,10 @@ Begin
     Exit;
 
   Cell.OwnerCell := Self;
-  FSlaveCells.Add(Cell);
+  if bInsert then
+      FSlaveCells.Insert(InsertIndex,Cell)
+  else
+    FSlaveCells.Add(Cell);
   FCellText := FCellText + Cell.CellText;
   Cell.CellText := ''; 
   
@@ -672,6 +679,14 @@ Begin
       TempCellList[I].OwnerCell := Self;
     End;
   end;
+End;
+
+Procedure TReportCell.Own(Cell: TReportCell);
+Var
+  I: Integer;
+  TempCellList: TCellList;
+Begin
+  Own(Cell,false,0);
 End;
 
 Procedure TReportCell.RemoveAllOwnedCell;
@@ -1263,73 +1278,45 @@ Begin
   Assert(FOwnerLine <> Nil );
   Result := FOwnerLine.LineHeight;
 End;
-
+Procedure TReportCell.CopyCell(Cell: TReportCell; bInsert: Boolean;OwnerLine:TReportLine);
+begin
+   CopyCell(cell,bInsert);
+   self.OwnerLine := OwnerLine;
+end;
 Procedure TReportCell.CopyCell(Cell: TReportCell; bInsert: Boolean);
 Begin
   FLeftMargin := Cell.FLeftMargin;
-
   // Index
   FCellIndex := Cell.FCellIndex;
-
   // size & position
   FCellLeft := Cell.FCellLeft;
   FCellWidth := Cell.FCellWidth;
-
   FCellRect.Left := 0;
   FCellRect.Top := 0;
   FCellRect.Right := 0;
-  FCellRect.Bottom := 0;
-
+  FCellRect.Bottom := 0;    
   FTextRect.Left := 0;
   FTextRect.Top := 0;
   FTextRect.Right := 0;
   FTextRect.Bottom := 0;
-
-//  FDragCellHeight := Cell.FDragCellHeight;
   FCellHeight := Cell.FCellHeight;
-
-  // border
   FLeftLine := Cell.FLeftLine;
   FLeftLineWidth := Cell.FLeftLineWidth;
 
   FTopLine := Cell.FTopLine;
   FTopLineWidth := Cell.FTopLineWidth;
-
   FRightLine := Cell.FRightLine;
   FRightLineWidth := Cell.FRightLineWidth;
-
   FBottomLine := Cell.FBottomLine;
   FBottomLineWidth := Cell.FBottomLineWidth;
-
-  // 斜线
   FDiagonal := Cell.FDiagonal;
-
-  // color
   FTextColor := Cell.FTextColor;
   FBackGroundColor := Cell.FBackGroundColor;
-
-  // align
   FHorzAlign := Cell.FHorzAlign;
   FVertAlign := Cell.FVertAlign;
-
-  // string
-//  FCellText := Cell.FCellText;
-
-  // font
-  FLogFont := Cell.FLogFont;
-
+  FLogFont := Cell.FLogFont;    
   If Cell.OwnerCell <> Nil Then
-  Begin
-    If bInsert Then
-    Begin
-      Cell.OwnerCell.FSlaveCells.Insert(
-        Cell.OwnerCell.FSlaveCells.IndexOf(Cell),
-        Self);
-      FOwnerCell := Cell.OwnerCell;
-    End
-    Else
-      Cell.OwnerCell.Own(Self);
-  End;
+      Cell.Sibling(Self);
 End;
 Procedure TReportCell.SetCellDispformat(CellDispformat: String);
 Begin
@@ -1566,6 +1553,11 @@ begin
   end;
 end;
 
+procedure TReportCell.Sibling(Cell: TReportCell);
+begin
+  OwnerCell.Own(Cell,true,OwnerCell.FSlaveCells.IndexOf(Self));
+end;
+
 { TReportLine }
 Procedure TReportLine.CalcLineHeight;
 Var
@@ -1607,8 +1599,7 @@ Begin
   Begin
     NewCell := TReportCell.Create(self.ReportControl);
     FCells.Add(NewCell);
-    NewCell.FOwnerLine := Self;
-    NewCell.CopyCell(Line.FCells[I], bInsert);
+    NewCell.CopyCell(TReportCell( Line.FCells[I]), bInsert,Self);
   End;
 End;
 
@@ -3381,16 +3372,12 @@ Begin
   ThisCell := TReportCell(FSelectCells[0]);
   ThisLine := ThisCell.OwnerLine;
   NewCell := TReportCell.Create(Self);
-  NewCell.OwnerLine := ThisLine;
   NewCell.CopyCell(TReportCell(ThisLine.FCells[ThisLine.FCells.Count - 1]),
-    False);
+    False,ThisLine);
   NewCell.CellLeft := TReportCell(ThisLine.FCells[ThisLine.FCells.Count -
     1]).CellRect.Right;
   ThisLine.FCells.Add(NewCell);
   UpdateLines;
-
-  // FSelectCells.Clear;
-
 End;
 
 
@@ -3453,9 +3440,7 @@ Begin
   ThisCell := FSelectCells[0];
   ThisLine := ThisCell.OwnerLine;
   NewCell := TReportCell.Create(Self);
-  NewCell.CopyCell(ThisCell, False);
-  NewCell.OwnerLine := ThisCell.OwnerLine;
-
+  NewCell.CopyCell(ThisCell, False,ThisLine);
   ThisLine.FCells.Insert(ThisLine.FCells.IndexOf(ThisCell), NewCell);
   UpdateLines;
 End;
@@ -3662,8 +3647,7 @@ Begin
   For I := 1 To SplitCount - 1 Do
   Begin
     CurrentCell := TReportCell.Create(Self);
-    CurrentCell.CopyCell(ThisCell, False);
-    CurrentCell.OwnerLine := ThisCell.OwnerLine;
+    CurrentCell.CopyCell(ThisCell, False,ThisCell.OwnerLine);
     If i = SplitCount - 1 Then
       CurrentCell.CellWidth := CellWidth + xx;
     if ThisCell.IsLastCell() then
@@ -3673,11 +3657,10 @@ Begin
 
     For J := 0 To ThisCell.FSlaveCells.Count - 1 Do
     Begin
-      Cell := TReportCell.Create(Self);
-      Cell.CopyCell(CurrentCell, False);
-      CurrentCell.Own(Cell);
       ChildCell :=  ThisCell.FSlaveCells[J];
-      Cell.OwnerLine := ChildCell.OwnerLine;
+      Cell := TReportCell.Create(Self);
+      Cell.CopyCell(CurrentCell, False,ChildCell.OwnerLine);
+      CurrentCell.Own(Cell);
       If ThisCell.IsLastCell  Then
         ChildCell.OwnerLine.FCells.Add(Cell)
       Else
