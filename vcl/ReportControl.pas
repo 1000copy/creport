@@ -252,6 +252,7 @@ Type
   TReportLine = Class(TObject)
   private
     function GetSelected: Boolean;
+    procedure DoInvalidate;
   public
     { Private declarations }
     FReportControl: TReportControl;     // Report ControlµÄÖ¸Õë
@@ -3181,49 +3182,41 @@ procedure TReportControl.EachLine_CalcLineHeight(c:TReportLine);
 begin
   c.CalcLineHeight;
 end;
-
-Procedure TReportControl.UpdateLines;
-Var
+procedure TReportLine.DoInvalidate;
+var   R :TRect;   Var
   PrevRect, TempRect: TRect;
+begin
+  Reportcontrol.os.SetRectEmpty(r);
+  PrevRect := PrevLineRect;
+  TempRect := LineRect;
+
+  If not Reportcontrol.RectEquals(PrevRect,TempRect) And
+    (TempRect.top <= Reportcontrol.ClientRect.bottom) Then
+  Begin
+    PrevRect.Right := PrevRect.Right + 1;
+    PrevRect.Bottom := PrevRect.Bottom + 1;
+    TempRect.Right := TempRect.Right + 1;
+    TempRect.Bottom := TempRect.Bottom + 1;
+    R := Reportcontrol.os.UnionRect(r,prevRect);
+    R := Reportcontrol.os.UnionRect(r,TempRect);
+  End;
+  InvalidateRect(Reportcontrol.Handle, @R, False);
+end;
+Procedure TReportControl.UpdateLines;
+var
   I, J: Integer;
   ThisLine: TReportLine;
   ThisCell: TReportCell;
-  R :TRect;
 Begin
   EachCell(EachCell_CalcMinCellHeight_If_Master);
-  EachLine(EachLine_CalcLineHeight);         
-
+  EachLine(EachLine_CalcLineHeight);
   For I := 0 To FLineList.Count - 1 Do
   Begin
     ThisLine := TReportLine(FLineList[I]);
-
     ThisLine.Index := I;
     ThisLine.CalcLineTop ;
-    os.SetRectEmpty(r);
-    PrevRect := ThisLine.PrevLineRect;
-    TempRect := ThisLine.LineRect;
-
-    If not RectEquals(PrevRect,TempRect) And
-      (TempRect.top <= ClientRect.bottom) Then
-    Begin
-//      For J := 0 To ThisLine.FCells.Count - 1 Do
-//      Begin
-//        ThisCell := TReportCell(ThisLine.FCells[J]);
-//        If ThisCell.OwnerCell <> Nil Then
-//          InvalidateRect(Handle, @ThisCell.OwnerCell.CellRect, False);
-//      End;
-      PrevRect.Right := PrevRect.Right + 1;
-      PrevRect.Bottom := PrevRect.Bottom + 1;
-      TempRect.Right := TempRect.Right + 1;
-      TempRect.Bottom := TempRect.Bottom + 1;
-//      InvalidateRect(Handle, @PrevRect, False);
-//      InvalidateRect(Handle, @TempRect, False);
-      R := os.UnionRect(r,prevRect);
-      R := os.UnionRect(r,TempRect);
-    End;
-    InvalidateRect(Handle, @R, False);
-  End;
-
+    ThisLine.DoInvalidate;                
+  End;       
 End;
 
 procedure TReportControl.InvertCell(Cell:TReportCell);
@@ -3457,7 +3450,7 @@ Begin
   If FSelectCells.Count <> 1 Then
     Exit;
 
-  ThisCell := TReportCell(FSelectCells[0]);
+  ThisCell := FSelectCells[0];
   ThisLine := ThisCell.OwnerLine;
   NewCell := TReportCell.Create(Self);
   NewCell.CopyCell(ThisCell, False);
