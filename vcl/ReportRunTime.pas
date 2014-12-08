@@ -763,7 +763,7 @@ function TReportRunTime.FillFootList(var nHootHeight:integer ):TList;
         templine := CloneEmptyLine(thisLine);
         While true Do
         Begin
-          TempLine.CalcLineHeight;
+          TempLine.UpdateLineHeight;
           nPrevdataHeight := ndataHeight ;
           ndataHeight := ndataHeight + templine.GetLineHeight;
           If IsLastPageFull Then
@@ -833,7 +833,7 @@ var thisLine ,TempLine: TReportLine;
         setnewcell(false, newcell, thiscell);
         //SumCell(ThisCell,j) ;
       End; //for j
-      TempLine.CalcLineHeight;
+      TempLine.UpdateLineHeight;
       ndataHeight := ndataHeight + TempLine.GetLineHeight;
       result := TempLine;
     end;
@@ -857,7 +857,7 @@ var thisLine ,TempLine: TReportLine;
         TempLine.FCells.Add(NewCell);
         NewCell.FOwnerLine := TempLine;
       End; //for j
-      TempLine.CalcLineHeight;
+      TempLine.UpdateLineHeight;
       ndataHeight := ndataHeight + TempLine.GetLineHeight;
       result := TempLine;
     end;
@@ -1335,7 +1335,7 @@ Begin
   For I := 0 To FPrintLineList.Count - 1 Do
   Begin
     ThisLine := TReportLine(FPrintLineList[I]);
-    ThisLine.CalcLineHeight;
+    ThisLine.UpdateLineHeight;
   End;
 
   For I := 0 To FPrintLineList.Count - 1 Do
