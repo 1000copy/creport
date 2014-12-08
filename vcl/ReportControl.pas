@@ -1573,14 +1573,6 @@ begin
 
 end;
 
-{ TReportLine }
-//Procedure TReportLine.CalcLineHeight;
-//
-//Begin
-//  UpdateLineHeight;
-//  UpdateCellIndex;
-//  UpdateCellLeft;
-//End;
 Procedure TReportLine.UpdateLineHeight;
 Var
   I: Integer;
@@ -3215,12 +3207,6 @@ begin
       c.CalcHeight;
 end;
 
-procedure TReportControl.EachLine_CalcLineHeight(c:TReportLine);
-begin
-  c.UpdateLineHeight;
-  c.UpdateCellIndex;
-  c.UpdateCellLeft;
-end;
 procedure TReportLine.DoInvalidate;
 var
   R :TRect;   
@@ -3254,7 +3240,7 @@ end;
 Procedure TReportControl.UpdateLines;
 var
   I, J: Integer;
-  ThisLine: TReportLine;
+  c,ThisLine: TReportLine;
   ThisCell: TReportCell;
 Begin
   EachCell(EachCell_CalcMinCellHeight_If_Master);
@@ -4173,6 +4159,13 @@ begin
   FEditCell.CellText := str;
 end;
 
+
+procedure TReportControl.EachLine_CalcLineHeight(c: TReportLine);
+begin
+    c.UpdateLineHeight;
+    c.UpdateCellIndex;
+    c.UpdateCellLeft;
+end;
 
 { TLineList }
 
