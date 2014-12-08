@@ -215,7 +215,7 @@ Type
     Procedure CopyCell(Cell: TReportCell; bInsert: Boolean);overload;
     Procedure CopyCell(Cell: TReportCell; bInsert: Boolean;OwnerLine:TReportLine);overload;
     Constructor Create(R:TReportControl);
-    zDestructor Destroy; Override;
+    Destructor Destroy; Override;
     Property LeftMargin: Integer Read FLeftMargin Write SetLeftMargin;
     Property OwnerLine: TReportLine Read FOwnerLine Write SetOwnerLine;
     Property OwnerCell: TReportCell Read FOwnerCell Write SetOwnerCell;
@@ -258,6 +258,7 @@ Type
   private
     function GetSelected: Boolean;
     procedure DoInvalidate;
+    procedure AddCell;
   public
     { Private declarations }
     FReportControl: TReportControl;     // Report ControlµÄÖ¸Õë
@@ -3369,14 +3370,7 @@ Var
 Begin
   If FSelectCells.Count <> 1 Then
     Exit;
-  ThisCell := TReportCell(FSelectCells[0]);
-  ThisLine := ThisCell.OwnerLine;
-  NewCell := TReportCell.Create(Self);
-  NewCell.CopyCell(TReportCell(ThisLine.FCells[ThisLine.FCells.Count - 1]),
-    False,ThisLine);
-  NewCell.CellLeft := TReportCell(ThisLine.FCells[ThisLine.FCells.Count -
-    1]).CellRect.Right;
-  ThisLine.FCells.Add(NewCell);
+  FSelectCells[0].OwnerLine.AddCell;
   UpdateLines;
 End;
 
@@ -3993,6 +3987,16 @@ begin
 end;
 
 { TSelectedCells }
+
+procedure TReportLine.AddCell;
+Var
+  c: TReportCell;
+begin
+  c := TReportCell.Create(ReportControl);
+  c.CopyCell(TReportCell(FCells.Last),False,Self);
+  c.CellLeft := TReportCell(FCells.Last).CellRect.Right;
+  FCells.Add(c);
+end;
 
 procedure TCellList.ColumnSelectedCells(FLineList: TLineList);
   Var

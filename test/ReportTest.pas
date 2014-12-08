@@ -31,6 +31,7 @@ type
     procedure SetUp; override;
     procedure TearDown; override;
   published
+    procedure AddCell;
     procedure CombineVertical;
     procedure CombineHorz;
     procedure Owner;
@@ -56,6 +57,7 @@ type
     procedure MeasureConvert;
     procedure SlaveHeight;
     procedure CopyLine_bInsert;
+
   end;
 
   TReportUITest = class(TTestCase)
@@ -1063,7 +1065,27 @@ begin
       TCreportForm.UninitReport();
     end;
 end;
-
+procedure TReportTest.AddCell;
+var s,b,Filename : string;
+    ThisCell:TReportCell;
+    R: TReportControl;
+    form : TCreportForm;
+begin
+    form := TCreportForm.InitReport ;
+    try
+      R := form.ReportControl1;
+      r.SetWndSize(1058,748);
+      r.NewTable(2 ,2);
+      r.Cells[0,1].Select;
+      r.Cells[0,1].CellWidth := 10;
+      r.AddCell;
+      CheckEquals(3,r.Lines[0].FCells.count);
+      CheckEquals(10,r.Cells[0,2].Cellwidth );
+      //form.ShowModal;
+    finally
+      TCreportForm.UninitReport();
+    end;
+end;
 initialization
   RegisterTests('Framework Suites',[TReportTest.Suite,TReportUITest.Suite,TCDSTest.Suite]);
 end.
