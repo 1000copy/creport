@@ -215,7 +215,7 @@ Type
     Procedure CopyCell(Cell: TReportCell; bInsert: Boolean);overload;
     Procedure CopyCell(Cell: TReportCell; bInsert: Boolean;OwnerLine:TReportLine);overload;
     Constructor Create(R:TReportControl);
-    Destructor Destroy; Override;                           
+    zDestructor Destroy; Override;
     Property LeftMargin: Integer Read FLeftMargin Write SetLeftMargin;
     Property OwnerLine: TReportLine Read FOwnerLine Write SetOwnerLine;
     Property OwnerCell: TReportCell Read FOwnerCell Write SetOwnerCell;
