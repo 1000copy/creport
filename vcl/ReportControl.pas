@@ -259,6 +259,7 @@ Type
     function GetSelected: Boolean;
     procedure DoInvalidate;
     procedure AddCell;
+    procedure InsertCell(RefCell:TReportCell);
   public
     { Private declarations }
     FReportControl: TReportControl;     // Report ControlµÄÖ¸Õë
@@ -1795,6 +1796,14 @@ begin
       PrevLine:=TReportLine(ReportControl.FLineList[Index - 1]);
       LineTop :=  PrevLine.LineTop + PrevLine.LineHeight;
     end;                    
+end;
+
+procedure TReportLine.InsertCell(RefCell:TReportCell);
+var c:TReportCell;
+begin
+  c := TReportCell.Create(ReportControl);
+  c.CopyCell(RefCell, False,Self);
+  FCells.Insert(FCells.IndexOf(RefCell), c);
 end;
 
 {TReportControl}
@@ -3425,17 +3434,11 @@ End;
 
 Procedure TReportControl.InsertCell;
 Var
-  ThisCell, NewCell: TReportCell;
-  ThisLine: TReportLine;
+  NewCell: TReportCell;
 Begin
   If FSelectCells.Count <> 1 Then
-    Exit;
-
-  ThisCell := FSelectCells[0];
-  ThisLine := ThisCell.OwnerLine;
-  NewCell := TReportCell.Create(Self);
-  NewCell.CopyCell(ThisCell, False,ThisLine);
-  ThisLine.FCells.Insert(ThisLine.FCells.IndexOf(ThisCell), NewCell);
+    Exit;          
+  FSelectCells[0].OwnerLine.InsertCell (FSelectCells[0]);
   UpdateLines;
 End;
 function TReportControl.RenderText(ThisCell:TReportCell;PageNumber, Fpageall: Integer):String;
