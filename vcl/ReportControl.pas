@@ -23,14 +23,13 @@ type
      procedure ReadCardinal(var a:Cardinal);
      procedure ReadString(var a:String);
      procedure ReadTLOGFONT(var a:TLOGFONT);
-
-     procedure WriteWord(var a: Word);
-     procedure WriteInteger(var a: Integer);
-     procedure WriteBoolean(var a: Boolean);
-     procedure WriteRect(var a:TRect);
-     procedure WriteCardinal(var a:Cardinal);
-     procedure WriteString(var a:String);
-     procedure WriteTLOGFONT(var a:TLOGFONT);
+     procedure WriteWord(a: Word);
+     procedure WriteInteger(a: Integer);
+     procedure WriteBoolean(a: Boolean);
+     procedure WriteRect(a:TRect);
+     procedure WriteCardinal(a:Cardinal);
+     procedure WriteString(a:String);
+     procedure WriteTLOGFONT(a:TLOGFONT);
 
    end;
 type
@@ -58,7 +57,6 @@ type
     procedure GetPaper(var FprPageNo, FprPageXy, fpaperLength,
       fpaperWidth: Integer);
   end;
-  //dsgnintf d5
 Const
   // Horz Align
   TEXT_ALIGN_LEFT = 0;
@@ -114,14 +112,12 @@ Type
   end;
   TReportCell = Class(TObject)
   private
+    ReportControl:TReportControl;
     function GetOwnerCellHeight: Integer;
     function GetBottomest(FOwnerCell: TReportCell): TReportCell;
     function GetTextHeight: Integer;
     procedure ExpandHeight(delta: integer);
-
   public
-
-    ReportControl:TReportControl;
     function Calc_RequiredCellHeight: Integer;
     function GetReportControl: TReportControl;
     function GetSelected: Boolean;
@@ -198,6 +194,8 @@ Type
     Procedure SetBackGroundColor(BkColor: COLORREF);
     Procedure SetTextColor(TextColor: COLORREF);
   Public
+    procedure Load(stream:TSimpleFileStream;FileFlag:Word);
+    procedure Save(s:TSimpleFileStream;PageNumber, Fpageall:integer);
     function GetCellType:CellType;
     function DefaultHeight(): integer;
     procedure Select;
@@ -287,12 +285,14 @@ Type
     procedure DeleteCell(Cell:TReportCell);
     procedure CombineSelected;
     procedure CombineCells(Cells:TCellList);
+    procedure Load (s:TSimpleFileStream);
+    procedure Save(s:TSimpleFileStream);
   End;
 
   TReportControl = Class(TWinControl)
   private
-    procedure InternalSaveToFile(FLineList: TList; FileName: String;
-      PageNumber, Fpageall: integer);
+    procedure InternalSaveToFile(
+      FLineList: TList; FileName: String;PageNumber, Fpageall: integer);
     function RectEquals(r1, r2: TRect): Boolean;
 
   protected
@@ -866,7 +866,6 @@ function TReportCell.GetTextRectInternal(TempString:String):TRect;
 
 var
   TempRect:TRect;
-  hTempFont, hPrevFont: HFONT;
   hTempDC: HDC;
   Format: UINT;
   BottomCell, ThisCell: TReportCell;
@@ -884,15 +883,6 @@ end;
 function TReportCell.DefaultHeight() : integer; begin
   result := 16 + 2 + FTopLineWidth + FBottomLineWidth ;
 end;
-// 取得最下的单元格
-// 开始噩梦，噩梦中我把屏幕上的象素点一个一个干掉
-// LCJ: 在 Calc_MinCellHeight 内，期望仅仅计算 CalcEveryHeight ；实际上同时在计算
-//  FMinCellHeight ，FRequiredCellHeight ，还调用了 OwnerLine.CalcLineHeight
-//  不能不说，看的有点焦虑 。。。
-//  2014-11-6. 某人又在招人了，说拉了点投资。做猎头得了。
-//  要覆盖测试的话，只要combine一个贯穿三行的Cell，每个cell会各走一个分支。Yeah。
-//  这个cover，脑袋里面演示下，还是没有问题的
-//  2014-11-7 现在，你体会下，这就是职责分离的快感。
 
 function TReportCell.Payload : Integer;
 begin
@@ -1440,6 +1430,152 @@ begin
   result := ctNormalCell = GetCellType()
 end;
 
+procedure TReportCell.Load(stream: TSimpleFileStream;FileFlag:Word);
+Var
+  TargetFile: TSimpleFileStream;
+  Count1, Count2, Count3: Integer;
+  ThisLine: TReportLine;
+  ThisCell: TReportCell;
+  I, J, K: Integer;
+  TempPChar: Array[0..3000] Of Char;
+  bHasDataSet: Boolean;
+begin
+   // Write Cell's Property here;
+ with stream do
+ begin
+  ReadInteger(FLeftMargin);
+  ReadInteger(FCellIndex);
+
+  ReadInteger(FCellLeft);
+  ReadInteger(FCellWidth);
+
+  ReadRect(FCellRect);
+  ReadRect(FTextRect);
+  // LCJ :DELETE on the road
+  ReadInteger(FMinCellHeight);
+  ReadInteger(FMinCellHeight);
+  ReadInteger(FRequiredCellHeight);
+
+  ReadBoolean(FLeftLine);
+  ReadInteger(FLeftLineWidth);
+
+  ReadBoolean(FTopLine);
+  ReadInteger(FTopLineWidth);
+
+  ReadBoolean(FRightLine);
+  ReadInteger(FRightLineWidth);
+
+  ReadBoolean(FBottomLine);
+  ReadInteger(FBottomLineWidth);
+
+  ReadCardinal(FDiagonal);
+
+  ReadCardinal(FTextColor);
+  ReadCardinal(FBackGroundColor);
+
+  ReadInteger(FHorzAlign);
+  ReadInteger(FVertAlign);
+
+  ReadString(FCellText);
+
+  If FileFlag <> $AA55 Then
+    ReadString(FCellDispformat);
+
+  If FileFlag = $AA57 Then
+  Begin
+    read(Fbmpyn, SizeOf(FbmpYn));
+    If FbmpYn Then
+      FBmp.LoadFromStream(stream);
+  End;
+
+  ReadTLogFont(FLogFont);
+
+  ReadInteger(Count1);
+  ReadInteger(Count2);
+
+  If (Count1 < 0) Or (Count2 < 0) Then
+    FOwnerCell := Nil
+  Else
+    FOwnerCell :=
+      TReportCell(TReportLine(Self.ReportControl. FLineList[Count1]).FCells[Count2]);
+
+  ReadInteger(Count3);
+
+  For K := 0 To Count3 - 1 Do
+  Begin
+    ReadInteger(Count1);
+    ReadInteger(Count2);
+    FSlaveCells.Add(TReportCell(TReportLine(Self.ReportControl.FLineList[Count1]).FCells[Count2]));
+  End;
+ end;
+end;
+
+procedure TReportCell.Save(s: TSimpleFileStream;PageNumber, Fpageall:integer);
+var k :  integer;
+begin
+  with s do begin
+    WriteInteger(FLeftMargin);
+    WriteInteger(FCellIndex);
+
+    WriteInteger(FCellLeft);
+    WriteInteger(FCellWidth);
+
+    WriteRect(FCellRect);
+    WriteRect(FTextrect);
+    // LCJ :DELETE on the road 
+    WriteInteger(FMinCellHeight);
+    WriteInteger(FMinCellHeight);
+    WriteInteger(FRequiredCellHeight);
+
+    WriteBoolean(FLeftLine);
+    WriteInteger(FLeftLineWidth);
+
+    WriteBoolean(FTopLine);
+    WriteInteger(FTopLineWidth);
+
+    WriteBoolean(FRightLine);
+    WriteInteger(FRightLineWidth);
+
+    WriteBoolean(FBottomLine);
+    WriteInteger(FBottomLineWidth);
+
+    WriteCardinal(FDiagonal);
+
+    WriteCardinal(FTextColor );
+    WriteCardinal(FBackGroundColor );
+
+    WriteInteger(FHorzAlign);
+    WriteInteger(FVertAlign);
+
+
+    WriteString(Self.ReportControl.renderText(Self, PageNumber,  Fpageall));
+    WriteString(FCellDispformat);
+
+    WriteBoolean(Fbmpyn); 
+    If FbmpYn Then
+      FBmp.SaveToStream(s);
+    WriteTLogFont(FLogFont);
+
+    // 属主CELL的行，列索引
+    If FOwnerCell <> Nil Then
+    Begin
+      WriteInteger(FOwnerCell.OwnerLine.FIndex);
+      WriteInteger(FOwnerCell.FCellIndex);
+    End
+    Else
+    Begin
+      WriteInteger(-1);
+      WriteInteger(-1);
+    End;                              
+    WriteInteger(FSlaveCells.Count);
+    For K := 0 To FSlaveCells.Count - 1 Do
+    Begin
+      WriteInteger(FSlaveCells[K].OwnerLine.FIndex);
+      WriteInteger(FSlaveCells[K].FCellIndex);
+    End;
+  end;
+end;
+
 { TReportLine }
 Procedure TReportLine.CalcLineHeight;
 Var
@@ -1645,6 +1781,26 @@ begin
   // 除了第一个Cell都删掉
   Cells.Delete(0);
   Cells.DeleteCells ;
+end;
+
+procedure TReportLine.Load(s: TSimpleFileStream);
+begin
+  s.ReadInteger(FIndex);
+  s.ReadInteger(FMinHeight);
+  s.ReadInteger(FDragHeight);
+  s.ReadInteger(FLineTop);
+  s.ReadRect(FLineRect);
+end;
+
+procedure TReportLine.Save(s: TSimpleFileStream);
+begin
+  with s do begin
+    WriteInteger(FIndex);
+    WriteInteger(FMinHeight);
+    WriteInteger(FDragHeight);
+    WriteInteger(FLineTop);
+    WriteRect(FLineRect);
+  end;
 end;
 
 {TReportControl}
@@ -3325,143 +3481,42 @@ end;
 
 Procedure TReportControl.InternalSaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);
 Var
-
   TargetFile: TSimpleFileStream;
-  FileFlag: WORD;
-  Count: Integer;
-  I, J, K: Integer;
-  ThisLine: TReportLine;
-  ThisCell, TempCell: TReportCell;
-  TempInteger: Integer;
-  TempPChar: Array[0..3000] Of char;
-  strFileDir: String;
-  celltext: String;
+  I,j: Integer;
 Begin
   TargetFile := TSimpleFileStream.Create(FileName, fmOpenWrite Or fmCreate);
   Try
     With TargetFile Do
     Begin  
-      FileFlag := $AA57;
-      WriteWord(FileFlag);
+      WriteWord($AA57);
       WriteInteger(FReportScale);
       WriteInteger(FPageWidth);
       WriteInteger(FPageHeight);
-
       WriteInteger(FLeftMargin);
       WriteInteger(FTopMargin);
       WriteInteger(FRightMargin);
       WriteInteger(FBottomMargin);
-
       WriteInteger(FLeftMargin1);
       WriteInteger(FTopMargin1);
       WriteInteger(FRightMargin1);
       WriteInteger(FBottomMargin1);
-
       WriteBoolean(FNewTable);
       WriteInteger(FDataLine);
-      WriteInteger(FTablePerPage);
-
-      // 多少行
-      Count := FLineList.Count;
-      WriteInteger(Count);
-
-      // 每行有多少个CELL
+      WriteInteger(FTablePerPage);  
+      WriteInteger(FLineList.Count);
+      For I := 0 To FLineList.Count - 1 Do
+        WriteInteger(TReportLine(FLineList[I]).FCells.Count);
       For I := 0 To FLineList.Count - 1 Do
       Begin
-        ThisLine := TReportLine(FLineList[I]);
-        Count := ThisLine.FCells.Count;
-        WriteInteger(Count);
+        TReportLine(FLineList[I]).Save(TargetFile);
+        For J := 0 To TReportLine(FLineList[I]).FCells.Count - 1 Do
+          TReportCell(TReportLine(FLineList[I]).FCells[J]).Save(TargetFile,PageNumber, Fpageall);
+          //Cells[I,J].Save(TargetFile,PageNumber, Fpageall);
       End;
-
-      // 每行的属性
-      For I := 0 To FLineList.Count - 1 Do
-      Begin
-        ThisLine := TReportLine(FLineList[I]);
-
-        WriteInteger(ThisLine.FIndex);
-        WriteInteger(ThisLine.FMinHeight);
-        WriteInteger(ThisLine.FDragHeight);
-        WriteInteger(ThisLine.FLineTop);
-        WriteRect(ThisLine.FLineRect);
-
-        // 每个CELL的属性
-        For J := 0 To ThisLine.FCells.Count - 1 Do
-        Begin
-          ThisCell := TReportCell(ThisLine.FCells[J]);
-          // Write Cell's Property here;
-          WriteInteger(ThisCell.FLeftMargin);
-          WriteInteger(ThisCell.FCellIndex);
-
-          WriteInteger(ThisCell.FCellLeft);
-          WriteInteger(ThisCell.FCellWidth);
-
-          WriteRect(ThisCell.FCellRect);
-          WriteRect(ThisCell.FTextrect);
-          // LCJ :DELETE on the road 
-          WriteInteger(ThisCell.FMinCellHeight);
-          WriteInteger(ThisCell.FMinCellHeight);
-          WriteInteger(ThisCell.FRequiredCellHeight);
-
-          WriteBoolean(ThisCell.FLeftLine);
-          WriteInteger(ThisCell.FLeftLineWidth);
-
-          WriteBoolean(ThisCell.FTopLine);
-          WriteInteger(ThisCell.FTopLineWidth);
-
-          WriteBoolean(ThisCell.FRightLine);
-          WriteInteger(ThisCell.FRightLineWidth);
-
-          WriteBoolean(ThisCell.FBottomLine);
-          WriteInteger(ThisCell.FBottomLineWidth);
-
-          WriteCardinal(ThisCell.FDiagonal);
-
-          WriteCardinal(ThisCell.FTextColor );
-          WriteCardinal(ThisCell.FBackGroundColor );
-
-          WriteInteger(ThisCell.FHorzAlign);
-          WriteInteger(ThisCell.FVertAlign);
-
-          CellText := RenderText(ThisCell,PageNumber, Fpageall);
-          WriteString(CellText);
-          WriteString(ThisCell.FCellDispformat);
-
-          WriteBoolean(thiscell.Fbmpyn); 
-          If thiscell.FbmpYn Then
-            ThisCell.FBmp.SaveToStream(TargetFile);
-          WriteTLogFont(ThisCell.FLogFont);
-
-          // 属主CELL的行，列索引
-          If ThisCell.FOwnerCell <> Nil Then
-          Begin
-            WriteInteger(ThisCell.FOwnerCell.OwnerLine.FIndex);
-            WriteInteger(ThisCell.FOwnerCell.FCellIndex);
-          End
-          Else
-          Begin
-            TempInteger := -1;
-            WriteInteger(TempInteger);
-            WriteInteger(TempInteger);
-          End;
-
-          Count := ThisCell.FSlaveCells.Count;
-          WriteInteger(Count);
-
-          For K := 0 To ThisCell.FSlaveCells.Count - 1 Do
-          Begin
-            TempCell := ThisCell.FSlaveCells[K];
-            WriteInteger(TempCell.OwnerLine.FIndex);
-            WriteInteger(TempCell.FCellIndex);
-          End;
-        End;
-      End;
-
-      Begin
-        WriteInteger(FprPageNo);
-        WriteInteger(FprPageXy);
-        WriteInteger(fPaperLength);
-        WriteInteger(fPaperWidth);
-      End;
+      WriteInteger(FprPageNo);
+      WriteInteger(FprPageXy);
+      WriteInteger(fPaperLength);
+      WriteInteger(fPaperWidth);
       WriteInteger(FHootNo);
     End;
   Finally
@@ -3506,30 +3561,37 @@ Var
   I, J, K: Integer;
   TempPChar: Array[0..3000] Of Char;
   bHasDataSet: Boolean;
+  procedure Before ;
+  var
+    I : Integer;
+  begin
+      For I := 0 To FLineList.Count - 1 Do
+      Begin
+        ThisLine := TReportLine(FLineList[I]);
+        ThisLine.Free;
+      End;
+      FLineList.Clear;
+  end;
+  procedure After;
+  begin
+      Width := FPageWidth;
+      Height := FPageHeight;
+  end;
 Begin
   TargetFile := TSimpleFileStream.Create(FileName, fmOpenRead);
   Try
     With TargetFile Do
     Begin
       ReadWord(FileFlag);
-      If (FileFlag <> $AA55) And (FileFlag <> $AA56) And (FileFlag <> $AA57)
-        Then
+      If (FileFlag <> $AA55) And (FileFlag <> $AA56) And (FileFlag <> $AA57) Then
         raise Exception.create('打开文件错误');
-      For I := 0 To FLineList.Count - 1 Do
-      Begin
-        ThisLine := TReportLine(FLineList[I]);
-        ThisLine.Free;
-      End;
 
-      FLineList.Clear;
-
-      
+      Before ;      
 
       ReadInteger(FReportScale);
       ReadInteger(FPageWidth);
       ReadInteger(FPageHeight);
-      Width := FPageWidth;
-      Height := FPageHeight;
+
       ReadInteger(FLeftMargin);
       ReadInteger(FTopMargin);
       ReadInteger(FRightMargin);
@@ -3553,91 +3615,19 @@ Begin
         FLineList.Add(ThisLine);
         ReadInteger(Count2);
         ThisLine.CreateLine(0, Count2, FRightMargin - FLeftMargin);
-      End;
-
+      End;      
       // 每行的属性
       For I := 0 To FLineList.Count - 1 Do
       Begin
         ThisLine := TReportLine(FLineList[I]);
-
-        ReadInteger(ThisLine.FIndex);
-        ReadInteger(ThisLine.FMinHeight);
-        ReadInteger(ThisLine.FDragHeight);
-        ReadInteger(ThisLine.FLineTop);
-        ReadRect(ThisLine.FLineRect);
-
+        ThisLine.Load(TargetFile);
         // 每个CELL的属性
         For J := 0 To ThisLine.FCells.Count - 1 Do
         Begin
           ThisCell := TReportCell(ThisLine.FCells[J]);
-          // Write Cell's Property here;
-          ReadInteger(ThisCell.FLeftMargin);
-          ReadInteger(ThisCell.FCellIndex);
-
-          ReadInteger(ThisCell.FCellLeft);
-          ReadInteger(ThisCell.FCellWidth);
-
-          ReadRect(ThisCell.FCellRect);
-          ReadRect(ThisCell.FTextRect);
-          // LCJ :DELETE on the road
-          ReadInteger(ThisCell.FMinCellHeight);
-          ReadInteger(ThisCell.FMinCellHeight);
-          ReadInteger(ThisCell.FRequiredCellHeight);
-
-          ReadBoolean(ThisCell.FLeftLine);
-          ReadInteger(ThisCell.FLeftLineWidth);
-
-          ReadBoolean(ThisCell.FTopLine);
-          ReadInteger(ThisCell.FTopLineWidth);
-
-          ReadBoolean(ThisCell.FRightLine);
-          ReadInteger(ThisCell.FRightLineWidth);
-
-          ReadBoolean(ThisCell.FBottomLine);
-          ReadInteger(ThisCell.FBottomLineWidth);
-
-          ReadCardinal(ThisCell.FDiagonal);
-
-          ReadCardinal(ThisCell.FTextColor);
-          ReadCardinal(ThisCell.FBackGroundColor);
-
-          ReadInteger(ThisCell.FHorzAlign);
-          ReadInteger(ThisCell.FVertAlign);
-
-          ReadString(ThisCell.FCellText);
-
-          If FileFlag <> $AA55 Then
-            ReadString(ThisCell.FCellDispformat);
-
-          If FileFlag = $AA57 Then
-          Begin
-            read(thiscell.Fbmpyn, SizeOf(thiscell.FbmpYn));
-            If thiscell.FbmpYn Then
-              thiscell.FBmp.LoadFromStream(TargetFile);     
-          End;
-
-          ReadTLogFont(ThisCell.FLogFont);
-
-          ReadInteger(Count1);
-          ReadInteger(Count2);
-
-          If (Count1 < 0) Or (Count2 < 0) Then
-            ThisCell.FOwnerCell := Nil
-          Else
-            ThisCell.FOwnerCell :=
-              TReportCell(TReportLine(FLineList[Count1]).FCells[Count2]);
-
-          ReadInteger(Count3);
-
-          For K := 0 To Count3 - 1 Do
-          Begin
-            ReadInteger(Count1);
-            ReadInteger(Count2);
-            ThisCell.FSlaveCells.Add(TReportCell(TReportLine(FLineList[Count1]).FCells[Count2]));
-          End;
+          ThisCell.Load(TargetFile,FileFlag);
         End;
-      End;              
-
+      End;
       ReadInteger(FprPageNo);
       ReadInteger(FprPageXy);
       ReadInteger(fpaperLength);
@@ -3646,6 +3636,7 @@ Begin
     End;
   Finally
     TargetFile.Free;
+    After;
   End;
 End;
 
@@ -3952,7 +3943,10 @@ end;
 
 function TReportControl.GetCells(Row, Col: Integer): TReportCell;
 begin
+//  assert (Row < FLineList.Count );
+//  assert (Col < TReportLine(FLineList[Row ]).Fcells.count);
   result := TReportCell(TReportLine(FLineList[Row ]).FCells[Col]);
+//            TReportCell(TReportLine(FLineList[I]).FCells[J])
 end;
 
 Procedure TReportControl.savebmp(thiscell: Treportcell; filename: String);  // add lzl
@@ -4250,33 +4244,33 @@ procedure TSimpleFileStream.ReadWord(var a: Word);
 begin
   Read(a,SizeOf(word))
 end;
-procedure TSimpleFileStream.WriteWord(var a: Word);
+procedure TSimpleFileStream.WriteWord(a: Word);
 begin
   Write(a,SizeOf(word))
 end;
-procedure TSimpleFileStream.WriteInteger(var a: Integer);
+procedure TSimpleFileStream.WriteInteger(a: Integer);
 begin
   Write(a,SizeOf(Integer))
 end;
 
-procedure TSimpleFileStream.WriteBoolean(var a: Boolean);
+procedure TSimpleFileStream.WriteBoolean(a: Boolean);
 begin
   Write(a,SizeOf(boolean));
 
 end;
 
-procedure TSimpleFileStream.WriteRect(var a: TRect);
+procedure TSimpleFileStream.WriteRect( a: TRect);
 begin
   Write(a,SizeOf(TRect))
 end;
 
-procedure TSimpleFileStream.WriteCardinal(var a: Cardinal);
+procedure TSimpleFileStream.WriteCardinal(a: Cardinal);
 begin
     Write(a,SizeOf(Cardinal))
 end;
 
-procedure TSimpleFileStream.WriteString(var a: String);
-var   TempPChar: Array[0..3000] Of char;count ,k:integer; 
+procedure TSimpleFileStream.WriteString(a: String);
+var   TempPChar: Array[0..3000] Of char;count ,k:integer;
 begin
     Count := Length(a);
     WriteInteger(Count);
@@ -4285,7 +4279,7 @@ begin
       Write(TempPChar[K], 1);
 end;
 
-procedure TSimpleFileStream.WriteTLOGFONT(var a: TLOGFONT);
+procedure TSimpleFileStream.WriteTLOGFONT(a: TLOGFONT);
 begin
    Write(a,SizeOf(TLOGFONT))
 end;
