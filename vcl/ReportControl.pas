@@ -261,9 +261,6 @@ Type
     procedure DoInvalidate;
     procedure AddCell;
     procedure InsertCell(RefCell:TReportCell);
-    procedure UpdateCellIndex;
-    procedure UpdateCellLeft;
-    procedure UpdateLineHeight;
   public
     { Private declarations }
     FReportControl: TReportControl;     // Report Control的指针
@@ -280,7 +277,10 @@ Type
     Procedure SetLineTop(Const Value: Integer);
     procedure calcLineTop;
 
-  Public 
+  Public
+    procedure UpdateCellIndex;
+    procedure UpdateCellLeft;
+    procedure UpdateLineHeight;
     Property ReportControl: TReportControl Read FReportControl Write
       FReportControl;
     Property Index: Integer Read FIndex Write FIndex;
@@ -289,7 +289,6 @@ Type
     Property LineRect: TRect Read GetLineRect;
     Property PrevLineRect: TRect Read FLineRect;
     property IsSelected : Boolean read GetSelected;
-    Procedure CalcLineHeight;
     Procedure CreateLine(LineLeft, CellNumber, PageWidth: Integer);
     Procedure CopyLine(Line: TReportLine; bInsert: Boolean);
     procedure Select ;
@@ -311,8 +310,6 @@ Type
       FLineList: TList; FileName: String;PageNumber, Fpageall: integer);
     function RectEquals(r1, r2: TRect): Boolean;
 
-    procedure EachCell_CalcMinCellHeight_If_Master(c: TReportCell);
-    procedure EachLine_CalcLineHeight(c:TReportLine);
   protected
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
@@ -368,19 +365,17 @@ Type
   Public
     FLastPrintPageWidth, FLastPrintPageHeight: integer;
     PrintPaper:TPrinterPaper;
-    procedure DoVSplit_Test(ThisCell: TReportCell; Number: Integer);
     procedure EachCell(EachProc: EachCellProc);
     procedure EachLine(EachProc: EachLineProc);
     procedure EachCell_CalcEveryHeight(ThisCell: TReportCell);
-    procedure EachProc_CalcLineHeight(thisLine: TReportLine);
     procedure EachLineIndex(EachProc: EachLineIndexProc);
-    procedure EachLineIndexProc_UpdateIndex(thisLine: TReportLine;
-      Index: integer);
     procedure EachProc_UpdateIndex(thisLine: TReportLine; I: integer);
     procedure EachProc_UpdateLineRect(thisLine: TReportLine;
       Index: integer);
     procedure EachProc_UpdateLineTop(thisLine: TReportLine;
       I: integer);
+    procedure EachCell_CalcMinCellHeight_If_Master(c: TReportCell);
+    procedure EachLine_CalcLineHeight(c:TReportLine);
 
     procedure DoVertSplitCell(ThisCell : TReportCell;SplitCount: Integer);
     function ZoomRate(height,width,HConst, WConst: integer): Integer;
@@ -938,7 +933,9 @@ begin
   For I := 0 To FSlaveCells.Count - 1 Do
   Begin
     ThisCell := FSlaveCells[i];
-    ThisCell.OwnerLine.CalcLineHeight;
+    // LCJ : TODO : 这样行不行？
+//    ThisCell.OwnerLine.CalcLineHeight;
+    ThisCell.OwnerLine.UpdateLineHeight ;
     Height := Height + ThisCell.OwnerLineHeight;
   End;
   result := Height + OwnerLineHeight;
@@ -1577,15 +1574,13 @@ begin
 end;
 
 { TReportLine }
-Procedure TReportLine.CalcLineHeight;
-Var
-  I: Integer;
-  ThisCell: TReportCell;
-Begin
-  UpdateLineHeight;
-  UpdateCellIndex;
-  UpdateCellLeft;
-End;
+//Procedure TReportLine.CalcLineHeight;
+//
+//Begin
+//  UpdateLineHeight;
+//  UpdateCellIndex;
+//  UpdateCellLeft;
+//End;
 Procedure TReportLine.UpdateLineHeight;
 Var
   I: Integer;
@@ -3222,7 +3217,9 @@ end;
 
 procedure TReportControl.EachLine_CalcLineHeight(c:TReportLine);
 begin
-  c.CalcLineHeight;
+  c.UpdateLineHeight;
+  c.UpdateCellIndex;
+  c.UpdateCellLeft;
 end;
 procedure TReportLine.DoInvalidate;
 var
@@ -3390,7 +3387,8 @@ Begin
 
         if Assigned (FOnChanged) then
           FOnChanged(Self,FEditCell.CellText);
-        UpdateLines;
+        UpdateLines
+        ;
         if not RectEquals (r , FEditCell.TextRect) then
         Begin
           MoveWindow(FEditWnd, FEditCell.TextRect.left, FEditCell.TextRect.Top,
@@ -3669,11 +3667,12 @@ Begin
 End;
 procedure TReportControl.DoVSplit(ThisCell:TReportCell;Number: Integer);
 Var
-  MaxCellCount,ActullyNum,MinCellWidth,I : Integer;
+  MaxCellCount,ActullyNum: Integer;
   rect : trect;
   ThisLine : TReportLine;
 begin
   // LCJ : 奇葩的Paint，没有他不会重画。放到函数尾部也不会重画。
+  // 原来，拆分后CellRect就变了：）——一点也不奇葩
   rect := ThisCell.CellRect;
   MaxCellCount := ThisCell.MaxSplitNum;
   If MaxCellCount > Number Then
@@ -3681,8 +3680,6 @@ begin
   else
     ActullyNum := MaxCellCount ;
   DoVertSplitCell(ThisCell,ActullyNum);
-  // 原来，拆分后CellRect就变了：）——一点也不奇葩
-  // 那么，可以不用UpdateLine吗？Why不行？
   //  UpdateLines;
   ThisCell.OwnerLine.UpdateCellIndex ;
   ThisCell.OwnerLine.UpdateCellLeft ;
@@ -4323,14 +4320,6 @@ procedure TReportControl.EachCell_CalcEveryHeight(ThisCell:TReportCell);
 begin
   If ThisCell.FSlaveCells.Count > 0 Then
     thisCell.CalcHeight ;
-end;
-procedure TReportControl.EachProc_CalcLineHeight(thisLine:TReportLine);
-begin
-    thisLine.CalcLineHeight ;
-end;
-procedure TReportControl.EachLineIndexProc_UpdateIndex(thisLine:TReportLine;Index:integer);
-begin
-    thisLine.CalcLineHeight ;
 end;
 
 //

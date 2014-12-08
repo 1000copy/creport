@@ -634,7 +634,7 @@ function TReportRunTime.FillHeadList(var nHandHeight:integer):TList;
         setnewcell(false, newcell, thiscell);
       End;                              //with  NewCell do
     End;                                //for j
-    TempLine.CalcLineHeight;
+    TempLine.UpdateLineHeight;
     nHandHeight := nHandHeight + TempLine.GetLineHeight;
    End;
    result :=   HandLineList ;
@@ -697,7 +697,7 @@ function TReportRunTime.FillFootList(var nHootHeight:integer ):TList;
       End;
       If (UpperCase(copy(ThisCell.FCellText, 1, 7)) <> '`SUMALL') Then
       Begin
-        TempLine.CalcLineHeight;
+        TempLine.UpdateLineHeight;
         nHootHeight := nHootHeight + TempLine.GetLineHeight;
       End;
     End;
@@ -731,7 +731,7 @@ function TReportRunTime.FillFootList(var nHootHeight:integer ):TList;
         NewCell.FOwnerLine := TempLine;
         setnewcell(false, newcell, thiscell);
       End;                              //for j
-      TempLine.CalcLineHeight;
+      TempLine.UpdateLineHeight;
       nSumAllHeight := nSumAllHeight + TempLine.GetLineHeight;
     End;
     result :=  sumAllList;
@@ -745,7 +745,7 @@ function TReportRunTime.FillFootList(var nHootHeight:integer ):TList;
         While true Do
         Begin
           dataLineList.Add(templine);
-          TempLine.CalcLineHeight;
+          TempLine.UpdateLineHeight;
           ndataHeight := ndataHeight + templine.GetLineHeight;
           If IsLastPageFull Then
           Begin
@@ -1304,7 +1304,7 @@ End;
 Procedure TReportRunTime.UpdateLines;
 Begin
   EachCell(EachCell_CalcEveryHeight);
-  EachLine(EachProc_CalcLineHeight);
+  EachLine(EachLine_CalcLineHeight);
   EachLineIndex(EachProc_UpdateIndex);
   EachLineIndex(EachProc_UpdateLineTop);
   EachLineIndex(EachProc_UpdateLineRect);
