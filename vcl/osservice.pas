@@ -6,9 +6,6 @@ uses
    windows ,classes,SysUtils,Math;
 
 type
-  EachCellProc =  procedure (ThisCell:TReportCell) of object;
-  EachLineProc =  procedure (ThisLine:TReportLine)of object;
-  EachLineIndexProc = procedure (ThisLine:TReportLine;Index:Integer)of object;
   TBlueException = class(Exception);
   WindowsOS = class
   private

@@ -78,18 +78,6 @@ type
     function ExpandLine_Height(var HasDataNo,
       ndataHeight: integer): TReportLine;
     function GetDataSetFromCell(HasDataNo,CellIndex:Integer):TDataset;
-    procedure EachCell(EachProc: EachCellProc);
-    procedure EachLine(EachProc: EachLineProc);
-    procedure EachCell_CalcEveryHeight(ThisCell: TReportCell);
-    procedure EachProc_CalcLineHeight(thisLine: TReportLine);
-    procedure EachLineIndex(EachProc: EachLineIndexProc);
-    procedure EachLineIndexProc_UpdateIndex(thisLine: TReportLine;
-      Index: integer);
-    procedure EachProc_UpdateIndex(thisLine: TReportLine; I: integer);
-    procedure EachProc_UpdateLineRect(thisLine: TReportLine;
-      Index: integer);
-    procedure EachProc_UpdateLineTop(thisLine: TReportLine;
-      I: integer);
     function GetPrintRange(var A, Z: Integer): boolean;
     procedure LoadPage(I: integer);
     procedure PrintRange(Title: String; FromPage, ToPage: Integer);
@@ -426,8 +414,8 @@ Begin
     FTextRect.Bottom := 0;
 //    FDragCellHeight := ThisCell.FDragCellHeight;
 //    FDragCellHeight := 0;
-    FMinCellHeight := ThisCell.FMinCellHeight;
-    FMinCellHeight := 0;
+    FCellHeight := ThisCell.FCellHeight;
+//    FCellHeight := 0;
     // border
     FLeftLine := ThisCell.FLeftLine;
     FLeftLineWidth := ThisCell.FLeftLineWidth;
@@ -572,7 +560,7 @@ Begin
       FOwnerCellList.Add(TempCellTable);
     End;
 
-    CalcMinCellHeight;
+    CalcHeight;
   End;
 End;
 //lzl 增加 ,完全重写的 PreparePrint,并增加了用空行补满一页 统计等功能
@@ -1312,77 +1300,7 @@ Begin
     LoadReport;
 End;
 
- procedure TReportRunTime.EachCell(EachProc:EachCellProc);
-  var
-    ThisLine: TReportLine;
-    ThisCell: TReportCell;
-    i ,j :integer;
-  begin
-     For I := 0 To FLineList.Count - 1 Do
-      Begin
-      ThisLine := TReportLine(FLineList[I]);
-      For J := 0 To ThisLine.FCells.Count - 1 Do
-      Begin
-        ThisCell := TReportCell(ThisLine.FCells[J]);
-        EachProc(ThisCell);
-      End;
-     End;
-  end;
-  procedure TReportRunTime.EachLine(EachProc:EachLineProc);
-  var
-    ThisLine: TReportLine;
-    ThisCell: TReportCell;
-    i ,j :integer;
-  begin
-     For I := 0 To FLineList.Count - 1 Do
-      Begin
-      ThisLine := TReportLine(FLineList[I]);
-      EachProc(ThisLine);
-     End;
-  end;
-  procedure TReportRunTime.EachLineIndex(EachProc:EachLineIndexProc);
-  var
-    ThisLine: TReportLine;
-    ThisCell: TReportCell;
-    i ,j :integer;
-  begin
-     For I := 0 To FLineList.Count - 1 Do
-      Begin
-      ThisLine := TReportLine(FLineList[I]);
-      EachProc(ThisLine,I);
-     End;
-  end;
-  procedure TReportRunTime.EachCell_CalcEveryHeight(ThisCell:TReportCell);
-  begin
-    If ThisCell.FSlaveCells.Count > 0 Then
-      thisCell.CalcMinCellHeight ;
-  end;
-  procedure TReportRunTime.EachProc_CalcLineHeight(thisLine:TReportLine);
-  begin
-      thisLine.CalcLineHeight ;
-  end;
-  procedure TReportRunTime.EachLineIndexProc_UpdateIndex(thisLine:TReportLine;Index:integer);
-  begin
-      thisLine.CalcLineHeight ;
-  end;
 
-  //
-  procedure TReportRunTime.EachProc_UpdateIndex(thisLine:TReportLine;I:integer);
-  begin
-      ThisLine.Index := I;
-  end;
-  procedure TReportRunTime.EachProc_UpdateLineTop(thisLine:TReportLine;I:integer);
-  begin
-     If I = 0 Then
-      ThisLine.LineTop := FTopMargin
-     else
-      ThisLine.LineTop := TReportLine(FLineList[I - 1]).LineTop +
-                                TReportLine(FLineList[I - 1]).LineHeight;
-  end;
-  procedure TReportRunTime.EachProc_UpdateLineRect(thisLine:TReportLine;Index:integer);
-  begin
-       ThisLine.LineRect;
-  end;
 Procedure TReportRunTime.UpdateLines;
 Begin
   EachCell(EachCell_CalcEveryHeight);
@@ -1409,7 +1327,7 @@ Begin
       ThisCell := TReportCell(ThisLine.FCells[J]);
 
       If ThisCell.FSlaveCells.Count > 0 Then
-        ThisCell.CalcMinCellHeight;
+        ThisCell.CalcHeight;
     End;
   End;
 

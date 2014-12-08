@@ -54,6 +54,7 @@ type
     procedure LoadSave_now_it_is_shift_to_you ;
     procedure ReadTYpe ;
     procedure MeasureConvert;
+    procedure SlaveHeight;
   end;
 
   TReportUITest = class(TTestCase)
@@ -555,9 +556,9 @@ begin
       CheckEquals(68,R.Cells[0,0].Calc_RequiredCellHeight );
       CheckEquals(20,R.Cells[1,0].Calc_RequiredCellHeight );
       CheckEquals(20,R.Cells[2,0].Calc_RequiredCellHeight );
-      CheckEquals(R.Cells[0,0].DefaultHeight,R.Cells[0,0].FMinCellHeight );
-      CheckEquals(R.Cells[1,0].DefaultHeight,R.Cells[1,0].FMinCellHeight );
-      CheckEquals(28,R.Cells[2,0].FMinCellHeight );    
+      CheckEquals(R.Cells[0,0].DefaultHeight,R.Cells[0,0].FCellHeight );
+      CheckEquals(R.Cells[1,0].DefaultHeight,R.Cells[1,0].FCellHeight );
+      CheckEquals(28,R.Cells[2,0].FCellHeight );    
     finally
       R.Free;
     end;
@@ -908,7 +909,7 @@ begin
       r.Cells[2,0].Select;
       r.CombineCell ;
       r.Cells[0,0].VertAlign := TEXT_ALIGN_TOP ;
-      r.Cells[0,0].CalcMinCellHeight;
+      r.Cells[0,0].CalcHeight;
       s := 'long text so is incremented absolutly ';
       r.Cells[0,0].CellText := s ;
       form.ShowModal;      
@@ -942,7 +943,7 @@ begin
       r.Cells[2,0].Select;
       r.CombineCell ;
       r.Cells[0,0].VertAlign := TEXT_ALIGN_TOP ;
-      r.Cells[0,0].CalcMinCellHeight;
+      r.Cells[0,0].CalcHeight;
       s := 'long text 111so is incremented absolutly ';
       r.Cells[0,0].CellText := s ;
       FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
@@ -1008,6 +1009,29 @@ begin
   os.Free;
 end;
 
+procedure TReportTest.SlaveHeight;
+var s,b,Filename : string;
+    ThisCell:TReportCell;
+    R: TReportControl;
+    form : TCreportForm;
+begin
+    form := TCreportForm.InitReport ;
+    try
+      R := form.ReportControl1;
+      r.SetWndSize(1058,748);
+      r.NewTable(2 ,3);
+      // 垂直合并后，Cell并不减少
+      r.Cells[0,0].Select;
+      r.Cells[1,0].Select;
+      r.Cells[2,0].Select;
+      r.CombineCell ;
+      checkequals(20,r.Cells[0,0].FCellHeight);
+      checkequals(20,r.Cells[1,0].FCellHeight);
+      checkequals(20,r.Cells[2,0].FCellHeight);
+    finally
+      TCreportForm.UninitReport();
+    end;
+end;
 initialization
   RegisterTests('Framework Suites',[TReportTest.Suite,TReportUITest.Suite,TCDSTest.Suite]);
 end.
