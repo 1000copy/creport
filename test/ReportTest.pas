@@ -1100,7 +1100,7 @@ begin
       r.NewTable(2 ,2);
       // 验证：UpdateLine做的事情，是否都那么必要？
       // CalcLineHeight 内做的事情有点杂，需要分离职责。
-      r.DOvsplit_Test(R.Cells[0,0],3);
+      r.DOvsplit(R.Cells[0,0],3);
       CheckEquals(4,r.Lines[0].FCells.count);
       CheckEquals(0,r.Cells[0,0].CellIndex);
       CheckEquals(1,r.Cells[0,1].CellIndex);

@@ -3667,27 +3667,6 @@ Begin
   DoVSplit(FSelectCells[0],Number);
 
 End;
-procedure TReportControl.DoVSplit_Test(ThisCell:TReportCell;Number: Integer);
-Var
-  MaxCellCount,ActullyNum,MinCellWidth,I : Integer;
-  rect : trect;
-  ThisLine : TReportLine;
-begin
-  // LCJ : 奇葩的Paint，没有他不会重画。放到函数尾部也不会重画。
-  rect := ThisCell.CellRect;
-  MaxCellCount := ThisCell.MaxSplitNum;
-  If MaxCellCount > Number Then
-    ActullyNum := Number
-  else
-    ActullyNum := MaxCellCount ;
-  DoVertSplitCell(ThisCell,ActullyNum);
-  // 原来，拆分后CellRect就变了：）——一点也不奇葩
-  // 那么，可以不用UpdateLine吗？Why不行？
-//  UpdateLines;
-  ThisCell.OwnerLine.UpdateCellIndex ;
-  ThisCell.OwnerLine.UpdateCellLeft ;
-  InvalidateRect(Handle, @rect, False);
-end;
 procedure TReportControl.DoVSplit(ThisCell:TReportCell;Number: Integer);
 Var
   MaxCellCount,ActullyNum,MinCellWidth,I : Integer;
@@ -3704,9 +3683,12 @@ begin
   DoVertSplitCell(ThisCell,ActullyNum);
   // 原来，拆分后CellRect就变了：）——一点也不奇葩
   // 那么，可以不用UpdateLine吗？Why不行？
-  UpdateLines;
+  //  UpdateLines;
+  ThisCell.OwnerLine.UpdateCellIndex ;
+  ThisCell.OwnerLine.UpdateCellLeft ;
   InvalidateRect(Handle, @rect, False);
 end;
+
 Procedure TReportControl.DoVertSplitCell(ThisCell : TReportCell;SplitCount: Integer);
 Var
   CurrentCell, Cell,ChildCell: TReportCell;
