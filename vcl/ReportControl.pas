@@ -114,6 +114,7 @@ Type
   private
     ReportControl:TReportControl;
     function GetOwnerCellHeight: Integer;
+    function MaxSplitNum :integer;
     function GetBottomest(FOwnerCell: TReportCell): TReportCell;
     function GetTextHeight: Integer;
     procedure ExpandHeight(delta: integer);
@@ -260,6 +261,9 @@ Type
     procedure DoInvalidate;
     procedure AddCell;
     procedure InsertCell(RefCell:TReportCell);
+    procedure UpdateCellIndex;
+    procedure UpdateCellLeft;
+    procedure UpdateLineHeight;
   public
     { Private declarations }
     FReportControl: TReportControl;     // Report Control的指针
@@ -364,6 +368,7 @@ Type
   Public
     FLastPrintPageWidth, FLastPrintPageHeight: integer;
     PrintPaper:TPrinterPaper;
+    procedure DoVSplit_Test(ThisCell: TReportCell; Number: Integer);
     procedure EachCell(EachProc: EachCellProc);
     procedure EachLine(EachProc: EachLineProc);
     procedure EachCell_CalcEveryHeight(ThisCell: TReportCell);
@@ -422,6 +427,7 @@ Type
     Procedure CombineCell;
     Procedure SplitCell;
     Procedure VSplitCell(Number: Integer);
+    procedure DoVSplit(ThisCell:TReportCell;Number: Integer);
     Function CanSplit: Boolean;
     Function CountFcells(crow: integer): integer;
     Procedure SetCellLines(bLeftLine, bTopLine, bRightLine, bBottomLine:
@@ -1560,31 +1566,66 @@ begin
   OwnerCell.Own(Cell,true,OwnerCell.FSlaveCells.IndexOf(Self));
 end;
 
+function TReportCell.MaxSplitNum: integer;
+var   MinCellWidth : Integer;
+begin
+  MinCellWidth :=12 ;
+  result :=
+    trunc((CellRect.Right - CellRect.Left) / MinCellWidth
+    + 0.5);
+
+end;
+
 { TReportLine }
 Procedure TReportLine.CalcLineHeight;
 Var
   I: Integer;
   ThisCell: TReportCell;
 Begin
-  //LCJ 2014-11-27 
+  UpdateLineHeight;
+  UpdateCellIndex;
+  UpdateCellLeft;
+End;
+Procedure TReportLine.UpdateLineHeight;
+Var
+  I: Integer;
+  ThisCell: TReportCell;
+Begin
   For I := 0 To FCells.Count - 1 Do
   Begin
     ThisCell := TReportCell(FCells[I]);
-    // calc FMinHeight
     If ThisCell.CellHeight > FMinHeight Then
       FMinHeight := ThisCell.CellHeight;
-    // calc CellIndex
+  End;
+End;
+
+Procedure TReportLine.UpdateCellIndex;
+Var
+  I: Integer;
+  ThisCell: TReportCell;
+Begin
+  For I := 0 To FCells.Count - 1 Do
+  Begin
+    ThisCell := TReportCell(FCells[I]);
     ThisCell.CellIndex := I;
-    // calc CellLeft
+  End;
+End;
+Procedure TReportLine.UpdateCellLeft;
+Var
+  I: Integer;
+  ThisCell: TReportCell;
+Begin
+  For I := 0 To FCells.Count - 1 Do
+  Begin
+    ThisCell := TReportCell(FCells[I]);
     If (I = 0) And (ReportControl <> Nil) Then
       ThisCell.CellLeft := ReportControl.FLeftMargin;
-    // calc CellWidth
+    // calc CellLeft
     If I > 0 Then
       ThisCell.CellLeft := TReportCell(FCells[I - 1]).CellLeft +
         TReportCell(FCells[I - 1]).CellWidth;
   End;
 End;
-
 Procedure TReportLine.CopyLine(Line: TReportLine; bInsert: Boolean);
 Var
   I: Integer;
@@ -1795,7 +1836,7 @@ begin
     else begin
       PrevLine:=TReportLine(ReportControl.FLineList[Index - 1]);
       LineTop :=  PrevLine.LineTop + PrevLine.LineHeight;
-    end;                    
+    end;
 end;
 
 procedure TReportLine.InsertCell(RefCell:TReportCell);
@@ -3184,8 +3225,10 @@ begin
   c.CalcLineHeight;
 end;
 procedure TReportLine.DoInvalidate;
-var   R :TRect;   Var
+var
+  R :TRect;   
   PrevRect, TempRect: TRect;
+  ThisCell : TReportCell;j:Integer;
 begin
   Reportcontrol.os.SetRectEmpty(r);
   PrevRect := PrevLineRect;
@@ -3194,6 +3237,14 @@ begin
   If not Reportcontrol.RectEquals(PrevRect,TempRect) And
     (TempRect.top <= Reportcontrol.ClientRect.bottom) Then
   Begin
+    // 不知道是否应该删除
+    For J := 0 To FCells.Count - 1 Do
+    Begin
+      ThisCell := TReportCell(FCells[J]);
+      If ThisCell.OwnerCell <> Nil Then
+        InvalidateRect(ReportControl.Handle, @ThisCell.OwnerCell.CellRect, False);
+    End;
+    // end comment
     PrevRect.Right := PrevRect.Right + 1;
     PrevRect.Bottom := PrevRect.Bottom + 1;
     TempRect.Right := TempRect.Right + 1;
@@ -3609,24 +3660,53 @@ End;
 
 // 垂直切分单元格。一个单元格拆分成多个横向单元格（和OwnerCell无关
 Procedure TReportControl.VSplitCell(Number: Integer);
-Var
-  ThisCell, TempCell, Cell2,ChildCell: TReportCell;
-  xx, I, J, CellWidth, MaxCellCount: Integer;
 Begin
   If FSelectCells.Count <> 1 Then
     Exit;
 
-  ThisCell := TReportCell(FSelectCells[0]);
-  InvalidateRect(Handle, @ThisCell.CellRect, False);
+  DoVSplit(FSelectCells[0],Number);
 
-  MaxCellCount := trunc((ThisCell.CellRect.Right - ThisCell.CellRect.Left) / 12
-    + 0.5);
-
-  If MaxCellCount > Number Then
-    MaxCellCount := Number;
-  DoVertSplitCell(ThisCell,MaxCellCount);
-  UpdateLines;
 End;
+procedure TReportControl.DoVSplit_Test(ThisCell:TReportCell;Number: Integer);
+Var
+  MaxCellCount,ActullyNum,MinCellWidth,I : Integer;
+  rect : trect;
+  ThisLine : TReportLine;
+begin
+  // LCJ : 奇葩的Paint，没有他不会重画。放到函数尾部也不会重画。
+  rect := ThisCell.CellRect;
+  MaxCellCount := ThisCell.MaxSplitNum;
+  If MaxCellCount > Number Then
+    ActullyNum := Number
+  else
+    ActullyNum := MaxCellCount ;
+  DoVertSplitCell(ThisCell,ActullyNum);
+  // 原来，拆分后CellRect就变了：）——一点也不奇葩
+  // 那么，可以不用UpdateLine吗？Why不行？
+//  UpdateLines;
+  ThisCell.OwnerLine.UpdateCellIndex ;
+  ThisCell.OwnerLine.UpdateCellLeft ;
+  InvalidateRect(Handle, @rect, False);
+end;
+procedure TReportControl.DoVSplit(ThisCell:TReportCell;Number: Integer);
+Var
+  MaxCellCount,ActullyNum,MinCellWidth,I : Integer;
+  rect : trect;
+  ThisLine : TReportLine;
+begin
+  // LCJ : 奇葩的Paint，没有他不会重画。放到函数尾部也不会重画。
+  rect := ThisCell.CellRect;
+  MaxCellCount := ThisCell.MaxSplitNum;
+  If MaxCellCount > Number Then
+    ActullyNum := Number
+  else
+    ActullyNum := MaxCellCount ;
+  DoVertSplitCell(ThisCell,ActullyNum);
+  // 原来，拆分后CellRect就变了：）——一点也不奇葩
+  // 那么，可以不用UpdateLine吗？Why不行？
+  UpdateLines;
+  InvalidateRect(Handle, @rect, False);
+end;
 Procedure TReportControl.DoVertSplitCell(ThisCell : TReportCell;SplitCount: Integer);
 Var
   CurrentCell, Cell,ChildCell: TReportCell;
@@ -3644,6 +3724,7 @@ Begin
   For I := 1 To SplitCount - 1 Do
   Begin
     CurrentCell := TReportCell.Create(Self);
+    // 此时，CellIndex是错的。需要UpdateLines ,或者CalcLineHeight 重算。
     CurrentCell.CopyCell(ThisCell, False,ThisCell.OwnerLine);
     If i = SplitCount - 1 Then
       CurrentCell.CellWidth := CellWidth + xx;

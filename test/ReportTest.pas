@@ -31,6 +31,7 @@ type
     procedure SetUp; override;
     procedure TearDown; override;
   published
+    procedure VSplitCell_UpdateLines_Associcated;
     procedure AddCell;
     procedure CombineVertical;
     procedure CombineHorz;
@@ -1082,6 +1083,32 @@ begin
       CheckEquals(3,r.Lines[0].FCells.count);
       CheckEquals(10,r.Cells[0,2].Cellwidth );
       //form.ShowModal;
+    finally
+      TCreportForm.UninitReport();
+    end;
+end;
+procedure TReportTest.VSplitCell_UpdateLines_Associcated;
+var s,b,Filename : string;
+    ThisCell:TReportCell;
+    R: TReportControl;
+    form : TCreportForm;
+begin
+    form := TCreportForm.InitReport ;
+    try
+      R := form.ReportControl1;
+      r.SetWndSize(1058,748);
+      r.NewTable(2 ,2);
+      // 验证：UpdateLine做的事情，是否都那么必要？
+      // CalcLineHeight 内做的事情有点杂，需要分离职责。
+      r.DOvsplit_Test(R.Cells[0,0],3);
+      CheckEquals(4,r.Lines[0].FCells.count);
+      CheckEquals(0,r.Cells[0,0].CellIndex);
+      CheckEquals(1,r.Cells[0,1].CellIndex);
+      CheckEquals(2,r.Cells[0,2].CellIndex);
+      CheckEquals(3,r.Cells[0,3].CellIndex);
+      CheckNotEquals(0,r.Cells[0,1].CellTop);
+      CheckNotEquals(0,r.Cells[0,1].CellHeight);
+      form.ShowModal;
     finally
       TCreportForm.UninitReport();
     end;
