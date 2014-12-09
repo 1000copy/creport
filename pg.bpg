@@ -9,8 +9,7 @@ MAKE = $(ROOT)\bin\make.exe -$(MAKEFLAGS) -f$**
 DCC = $(ROOT)\bin\dcc32.exe $**
 BRCC = $(ROOT)\bin\brcc32.exe $**
 #------------------------------------------------------------------------------
-PROJECTS = CReportEdit.exe creport4.bpl CReport_Demo.exe ReportTests.exe \
-  UnitTestsW32.exe
+PROJECTS = CReportEdit.exe creport4.bpl CReport_Demo.exe ReportTests.exe
 #------------------------------------------------------------------------------
 default: $(PROJECTS)
 #------------------------------------------------------------------------------
@@ -25,9 +24,6 @@ CReport_Demo.exe: demo\CReport_Demo.dpr
   $(DCC)
 
 ReportTests.exe: test\ReportTests.dpr
-  $(DCC)
-
-UnitTestsW32.exe: dunit\tests\UnitTestsW32.dpr
   $(DCC)
 
 

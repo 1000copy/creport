@@ -1303,7 +1303,7 @@ End;
 
 Procedure TReportRunTime.UpdateLines;
 Begin
-  EachCell(EachCell_CalcEveryHeight);
+  EachCell(EachCell_CalcHeight);
   EachLine(EachLine_CalcLineHeight);
   EachLineIndex(EachProc_UpdateIndex);
   EachLineIndex(EachProc_UpdateLineTop);

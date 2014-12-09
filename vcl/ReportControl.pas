@@ -135,7 +135,7 @@ Type
     FCellWidth: Integer;
     FCellRect: TRect;                   // 计算得来
     FTextRect: TRect;
-    //   FRequiredCellHeight 就是在跨行合并的Cell中表达 CellText需要的高度。区别于
+    //   RequiredCellHeight 就是在跨行合并的Cell中表达 CellText需要的高度。区别于
     //  而MinCellHeight,后者是最小Cell的高度，不管它有没有合并和拆分，
     //  都固定表示一个cell的高度。普通cell用  MinCellHeight，合并的cell可能需要用RequiredCellHeight
     //  概念辨析:)
@@ -367,7 +367,7 @@ Type
     PrintPaper:TPrinterPaper;
     procedure EachCell(EachProc: EachCellProc);
     procedure EachLine(EachProc: EachLineProc);
-    procedure EachCell_CalcEveryHeight(ThisCell: TReportCell);
+    procedure EachCell_CalcHeight(ThisCell: TReportCell);
     procedure EachLineIndex(EachProc: EachLineIndexProc);
     procedure EachProc_UpdateIndex(thisLine: TReportLine; I: integer);
     procedure EachProc_UpdateLineRect(thisLine: TReportLine;
@@ -4309,7 +4309,7 @@ begin
     EachProc(ThisLine,I);
    End;
 end;
-procedure TReportControl.EachCell_CalcEveryHeight(ThisCell:TReportCell);
+procedure TReportControl.EachCell_CalcHeight(ThisCell:TReportCell);
 begin
   If ThisCell.FSlaveCells.Count > 0 Then
     thisCell.CalcHeight ;

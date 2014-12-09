@@ -58,7 +58,7 @@ type
     procedure MeasureConvert;
     procedure SlaveHeight;
     procedure CopyLine_bInsert;
-
+    procedure ProcedureAnonymos;
   end;
 
   TReportUITest = class(TTestCase)
@@ -555,7 +555,7 @@ begin
       Check(R.Cells[0,0].FSlaveCells[0]  = R.Cells[1,0]);
       Check(R.Cells[0,0].FSlaveCells[1]  = R.Cells[2,0]);
       R.Cells[0,0].CellText := TextDouble(TextDouble(
-        'long text so FRequiredCellHeight is incremented absolutly ' ));
+        'long text so RequiredCellHeight is incremented absolutly ' ));
       CheckEquals(68,R.Cells[0,0].Calc_RequiredCellHeight );
       CheckEquals(20,R.Cells[1,0].Calc_RequiredCellHeight );
       CheckEquals(20,R.Cells[2,0].Calc_RequiredCellHeight );
@@ -584,7 +584,7 @@ begin
       r.Cells[1,0].Select;
       r.Cells[2,0].Select;
       r.CombineCell ;
-      s := 'long text so FRequiredCellHeight is incremented absolutly ' ;
+      s := 'long text so RequiredCellHeight is incremented absolutly ' ;
       s := TextDouble(TextDouble(s));  
       rect := R.Cells[0,0].GetTextRectInternal(s);
       CheckEquals(64,rect.bottom - rect.top); 
@@ -610,7 +610,7 @@ begin
       r.Cells[1,0].Select;
       r.Cells[2,0].Select;
       r.CombineCell ;
-      s := 'long text so FRequiredCellHeight is incremented absolutly ' ;
+      s := 'long text so RequiredCellHeight is incremented absolutly ' ;
       s := TextDouble(TextDouble(s))+chr(13)+chr(10);
       rect := R.Cells[0,0].GetTextRectInternal(s);
       CheckEquals(96,rect.bottom - rect.top);
@@ -659,7 +659,7 @@ begin
       FLogFont.lfHeight := -abs(pt.y - ptOrg.y);
       ReleaseDC(0, hTempDC);
 
-      s := 'long text so FRequiredCellHeight is incremented absolutly ' ;
+      s := 'long text so RequiredCellHeight is incremented absolutly ' ;
       s := TextDouble(TextDouble(s))+chr(13)+chr(10);
       rect.Top := 0 ;
       rect.Right := 462 ; // CellWidth(472) - 2*FLeftMargin
@@ -804,9 +804,6 @@ begin
       R.Free;
     end;
 end;
-// should we  
-// alter : R.Top := R.Top + trunc((FCellRect.Bottom - FCellRect.Top - FRequiredCellHeight) / 2 + 0.5);
-// to :  Inc(R.Top,Ceil(FCellRect.Bottom - FCellRect.Top - FRequiredCellHeight) / 2)
 procedure TReportTest.Trunc_vs_ceil;
 var r,i,base :integer;
     a :array[0..3] of Integer;
@@ -838,13 +835,13 @@ begin
       r.CombineCell ;
       s := 'long text so is incremented absolutly ';
       r.Cells[0,0].CellText := s ;
-      CheckEquals(0,R.Cells[0,0].FRequiredCellHeight );
+      CheckEquals(0,R.Cells[0,0].Calc_RequiredCellHeight );
       b := s + chr(13)+chr(10) + S ;
       r.Cells[0,0].CellText := b ;
-      CheckEquals(0,R.Cells[0,0].FRequiredCellHeight );
+      CheckEquals(0,R.Cells[0,0].Calc_RequiredCellHeight );
       b := s + chr(13)+chr(10) + S + chr(13)+chr(10) + S;
       r.Cells[0,0].CellText := b ;
-      CheckEquals(0,R.Cells[0,0].FRequiredCellHeight );
+      CheckEquals(0,R.Cells[0,0].Calc_RequiredCellHeight );
       r.SaveToFile(Filename);
       r.ResetContent;
       R.EditReport(FileName);
@@ -1112,6 +1109,10 @@ begin
     finally
       TCreportForm.UninitReport();
     end;
+end;
+procedure TReportTest.ProcedureAnonymos;
+begin
+  // Anonymous Method 是有的，不过在Delphi 2009 之后 ：）——
 end;
 initialization
   RegisterTests('Framework Suites',[TReportTest.Suite,TReportUITest.Suite,TCDSTest.Suite]);
