@@ -100,7 +100,7 @@ Type
     function Last : TReportCell ;
   end;
   TLineList = class(TList)
-  private
+  private                     
     R:TReportControl;
     function Get(Index: Integer): TReportLine;
   public
@@ -308,7 +308,6 @@ Type
   private
     procedure InternalSaveToFile(
       FLineList: TList; FileName: String;PageNumber, Fpageall: integer);
-    function RectEquals(r1, r2: TRect): Boolean;
 
   protected
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
@@ -1891,7 +1890,7 @@ Begin
   FLeftMargin := os.MM2Dot(FLeftMargin1);
   FRightMargin := os.MM2Dot(FRightMargin1);
   FTopMargin := os.MM2Dot(FTopMargin1);
-  FBottomMargin := os.MM2Dot(FBottomMargin1);    
+  FBottomMargin := os.MM2Dot(FBottomMargin1);
   // 鼠标操作支持
   FMousePoint.x := 0;
   FMousePoint.y := 0;
@@ -3179,23 +3178,24 @@ Var
 Begin
   For I := 0 To FSelectCells.Count - 1 Do
   Begin
-    TReportCell(FSelectCells[I]).LeftLine := bLeftLine;
-    TReportCell(FSelectCells[I]).LeftLineWidth := nLeftLineWidth;
+    FSelectCells[I].LeftLine := bLeftLine;
+    FSelectCells[I].LeftLineWidth := nLeftLineWidth;
 
-    TReportCell(FSelectCells[I]).TopLine := bTopLine;
-    TReportCell(FSelectCells[I]).TopLineWidth := nTopLineWidth;
+    FSelectCells[I].TopLine := bTopLine;
+    FSelectCells[I].TopLineWidth := nTopLineWidth;
 
-    TReportCell(FSelectCells[I]).RightLine := bRightLine;
-    TReportCell(FSelectCells[I]).RightLineWidth := nRightLineWidth;
+    FSelectCells[I].RightLine := bRightLine;
+    FSelectCells[I].RightLineWidth := nRightLineWidth;
 
-    TReportCell(FSelectCells[I]).BottomLine := bBottomLine;
-    TReportCell(FSelectCells[I]).BottomLineWidth := nBottomLineWidth;
+    FSelectCells[I].BottomLine := bBottomLine;
+    FSelectCells[I].BottomLineWidth := nBottomLineWidth;
 
-    CellRect := TReportCell(FSelectCells[I]).CellRect;
-    CellRect.Left := CellRect.left - 1;
-    CellRect.Top := CellRect.top - 1;
-    CellRect.Right := CellRect.Right + 1;
-    CellRect.Bottom := CellRect.Bottom + 1;
+    CellRect := FSelectCells[I].CellRect;
+//    CellRect.Left := CellRect.left - 1;
+//    CellRect.Top := CellRect.top - 1;
+//    CellRect.Right := CellRect.Right + 1;
+//    CellRect.Bottom := CellRect.Bottom + 1;
+    os.InflateRect(CellRect,1,1);
     InvalidateRect(Handle, @CellRect, false);
   End;
   UpdateLines;
@@ -3217,7 +3217,7 @@ begin
   PrevRect := PrevLineRect;
   TempRect := LineRect;
 
-  If not Reportcontrol.RectEquals(PrevRect,TempRect) And
+  If not ReportControl.os.RectEquals(PrevRect,TempRect) And
     (TempRect.top <= Reportcontrol.ClientRect.bottom) Then
   Begin
     // 不知道是否应该删除
@@ -3375,7 +3375,7 @@ Begin
           FOnChanged(Self,FEditCell.CellText);
         UpdateLines
         ;
-        if not RectEquals (r , FEditCell.TextRect) then
+        if not os.RectEquals (r , FEditCell.TextRect) then
         Begin
           MoveWindow(FEditWnd, FEditCell.TextRect.left, FEditCell.TextRect.Top,
             FEditCell.TextRect.Right - FEditCell.TextRect.Left,
@@ -4259,15 +4259,6 @@ begin
     DeleteObject(hTempFont);
     ReleaseDC(0, hTempDC);
   end;
-end;
-function TReportControl.RectEquals (r1,r2:TRect):Boolean;
-begin
-  result :=
-      (r1.left = r2.left) and
-      (r1.Right = r2.Right) and
-      (r1.Top = r2.Top )and
-      (r1.Bottom = r2.Bottom)
-             ;
 end;
 procedure TReportControl.EachCell(EachProc:EachCellProc);
 var

@@ -31,6 +31,8 @@ type
     procedure SetUp; override;
     procedure TearDown; override;
   published
+    procedure RectInflate;
+    procedure TFont2;
     procedure VSplitCell_UpdateLines_Associcated;
     procedure AddCell;
     procedure CombineVertical;
@@ -613,8 +615,7 @@ begin
       s := 'long text so RequiredCellHeight is incremented absolutly ' ;
       s := TextDouble(TextDouble(s))+chr(13)+chr(10);
       rect := R.Cells[0,0].GetTextRectInternal(s);
-      CheckEquals(96,rect.bottom - rect.top);
-//      CheckEquals(96, r.Cells[0,0].CellWidth);
+      CheckEquals(80,rect.bottom - rect.top);
     finally
       R.Free;
     end;
@@ -659,13 +660,15 @@ begin
       FLogFont.lfHeight := -abs(pt.y - ptOrg.y);
       ReleaseDC(0, hTempDC);
 
-      s := 'long text so RequiredCellHeight is incremented absolutly ' ;
-      s := TextDouble(TextDouble(s))+chr(13)+chr(10);
+      s := '1' ;
+      s := s +chr(13)+chr(10);
+      s := s +chr(13)+chr(10);
       rect.Top := 0 ;
       rect.Right := 462 ; // CellWidth(472) - 2*FLeftMargin
       rect.Left := 0 ;
       rect.bottom  := CalcBottom( s,rect,DT_LEFT,FLogFont);
-      CheckEquals(96,rect.bottom - rect.top);
+      // three lines 
+      CheckEquals(48,rect.bottom - rect.top);
     //  DT_LEFT; DT_CENTER ;DT_RIGHT
 //
 end;
@@ -679,29 +682,41 @@ begin
     ReleaseDC(0, h);
   end;
 end;
-function ConverToLogFontHeight1(PointSize :Integer):Integer;
-var h : HDC;
-    Var
-  hTempDC: HDC;
-  pt, ptOrg: TPoint;
-begin
-    h := GetDC(0);
-    try
-      pt.y := GetDeviceCaps(h, LOGPIXELSY) * PointSize;
-      pt.y := trunc(pt.y / 72 + 0.5);      // 72 points/inch, 10 decipoints/point
-      DPtoLP(h, pt, 1);
-      ptOrg.x := 0;
-      ptOrg.y := 0;
-      DPtoLP(h, ptOrg, 1);
-      result := -abs(pt.y - ptOrg.y);
-    finally
-      ReleaseDC(0, h);
-    end;
-end;
+
 procedure TReportTest.LogFont;
+var os : WindowsOs;
 begin
-    CheckEquals(-16,ConverToLogFontHeight(12));
-    CheckEquals(-16,ConverToLogFontHeight1(12));
+    os :=WindowsOs.Create;
+    CheckEquals(-16,os.Height2LogFontHeight(12));
+    CheckEquals(-16,os.Height2LogFontHeight(12));
+    os.free;
+end;
+// GOOGLE : TFont,TLogFont使用
+procedure TReportTest.TFont2;
+var
+  FLogFont: TLogFont;
+  os : WindowsOS;
+begin
+    os := WindowsOS.Create;
+    try
+      FLogFont := os.MakeLogFont('Arial',12);
+      CheckEquals(-16,FLogFont.lfheight);
+      CheckEquals(FLogFont.lfWidth , 0);
+      CheckEquals(FLogFont.lfEscapement , 0);
+      CheckEquals(FLogFont.lfOrientation , 0);
+      CheckEquals(FLogFont.lfWeight , 400);
+      CheckEquals(FLogFont.lfItalic , 0);
+      CheckEquals(FLogFont.lfUnderline , 0);
+      CheckEquals(FLogFont.lfStrikeOut , 0);
+      CheckEquals(FLogFont.lfCharSet , DEFAULT_CHARSET);
+      CheckEquals(FLogFont.lfOutPrecision , 0);
+      CheckEquals(FLogFont.lfClipPrecision , 0);
+      CheckEquals(FLogFont.lfQuality , 0);
+      CheckEquals(FLogFont.lfPitchAndFamily , 0);
+    finally
+      os.Free;
+    end;
+
 end;
 // GOOGLE : TFont,TLogFont使用
 procedure TReportTest.TFont1;
@@ -1114,6 +1129,20 @@ procedure TReportTest.ProcedureAnonymos;
 begin
   // Anonymous Method 是有的，不过在Delphi 2009 之后 ：）——
 end;
+procedure TReportTest.RectInflate;
+var R,R2:TRect;os:WindowsOS;
+begin
+    os := Windowsos.Create ;
+    Os.SetRectEmpty(R);
+    R.Left := R.left - 1;
+    R.Top := R.top - 1;
+    R.Right := R.Right + 1;
+    R.Bottom := R.Bottom + 1;
+    Os.SetRectEmpty(R2);
+    os.InflateRect(r2,1,1);
+    checkTrue(os.RectEquals(r,r2));
+end;
+
 initialization
   RegisterTests('Framework Suites',[TReportTest.Suite,TReportUITest.Suite,TCDSTest.Suite]);
 end.
