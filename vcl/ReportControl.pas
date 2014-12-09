@@ -3050,7 +3050,7 @@ Begin
     ClearSelect;
     // LCJ : 实际操作就是这一行代码
     //so, Why not c.CellRect?
-    Self.DoInvalidateRect( c.FSlaveCells.CellRect);
+    DoInvalidateRect( c.FSlaveCells.CellRect);
     c.RemoveAllOwnedCell;
     UpdateLines;
     AddSelectedCell(c);
