@@ -98,6 +98,7 @@ Type
     procedure ColumnSelectedCells(FLineList:TLineList);
     procedure Fill(Cells :TCellList);
     function Last : TReportCell ;
+    function CellRect:TRect;
   end;
   TLineList = class(TList)
   private                     
@@ -308,7 +309,7 @@ Type
   private
     procedure InternalSaveToFile(
       FLineList: TList; FileName: String;PageNumber, Fpageall: integer);
-
+    procedure DoInvalidateRect(Rect:TRect);
   protected
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
@@ -854,18 +855,14 @@ Procedure TReportCell.SetBackGroundColor(BkColor: COLORREF);
 Begin
   If BkColor = FBackGroundColor Then
     Exit;
-
   FBackGroundColor := BkColor;
-  // InvalidateRect
 End;
 
 Procedure TReportCell.SetTextColor(TextColor: COLORREF);
 Begin
   If TextColor = FTextColor Then
     Exit;
-
   FTextColor := TextColor;
-  // InvalidateRect
 End;
 function TReportCell.GetTextHeight():Integer;
 var r :TRect;
@@ -2632,12 +2629,10 @@ Begin
 
       If PrevCellWidth <> ThisCell.CellWidth Then
       Begin
-        //        InvalidateRect(Handle, @TempRect, True);
         InvalidateRect(Handle, @TempRect, False);
         TempRect := ThisCell.CellRect;
         TempRect.Right := TempRect.Right + 1;
         TempRect.Bottom := TempRect.Bottom + 1;
-        //        InvalidateRect(Handle, @TempRect, True);
         InvalidateRect(Handle, @TempRect, False);
       End;
 
@@ -2653,12 +2648,10 @@ Begin
 
         If PrevCellWidth <> NextCell.CellWidth Then
         Begin
-          //          InvalidateRect(Handle, @TempRect, True);
           InvalidateRect(Handle, @TempRect, False);
           TempRect := NextCell.CellRect;
           TempRect.Right := TempRect.Right + 1;
           TempRect.Bottom := TempRect.Bottom + 1;
-          //          InvalidateRect(Handle, @TempRect, True);
           InvalidateRect(Handle, @TempRect, False);
         End;
       End;
@@ -2998,10 +2991,10 @@ Begin
       End;
       TReportLine(FLineList[I]).Free;
       FLineList.Delete(I);
-      //InvalidateRect(Handle, @ThisLineRect, False);
     End;
   End;
-  InvalidateRect(Handle, @BigRect, False);
+//  InvalidateRect(Handle, @BigRect, False);
+  self.DoInvalidateRect(bigrect);
   LineArray.Free;
   UpdateLines;
 End;
@@ -3047,19 +3040,20 @@ End;
 
 Procedure TReportControl.SplitCell;
 Var
-  TempCell: TReportCell;
+  c: TReportCell;
+  r : TRect;
   I: Integer;
 Begin
   If CanSplit Then
   Begin
-    TempCell := TReportCell(FSelectCells[0]);
-    ClearSelect;              
-    AddSelectedCell(TempCell);
-    For I := 0 To TempCell.FSlaveCells.Count - 1 Do
-      InvalidateRect(Handle, @(TempCell.FSlaveCells[I]).CellRect,False);
+    c := TReportCell(FSelectCells[0]);
+    ClearSelect;
     // LCJ : 实际操作就是这一行代码
-    TempCell.RemoveAllOwnedCell;
+    //so, Why not c.CellRect?
+    Self.DoInvalidateRect( c.FSlaveCells.CellRect);
+    c.RemoveAllOwnedCell;
     UpdateLines;
+    AddSelectedCell(c);
   End;
 End;
 
@@ -4047,6 +4041,14 @@ begin
   FCells.Add(c);
 end;
 
+function TCellList.CellRect: TRect;
+var i :integer;
+begin
+  ReportControl.os.SetRectEmpty(result);
+  For I := 0 To Count - 1 Do
+   result := ReportControl.os.UnionRect(result,Items[i].CellRect);
+end;
+
 procedure TCellList.ColumnSelectedCells(FLineList: TLineList);
   Var
     I, J, Count: Integer;
@@ -4165,6 +4167,11 @@ begin
     c.UpdateLineHeight;
     c.UpdateCellIndex;
     c.UpdateCellLeft;
+end;
+
+procedure TReportControl.DoInvalidateRect(Rect: TRect);
+begin
+  os.InvalidateRect(Handle, @Rect, False);
 end;
 
 { TLineList }

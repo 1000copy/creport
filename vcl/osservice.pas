@@ -12,6 +12,7 @@ type
     nPixelsPerInch:integer;
     hDesktopDC :THandle;
   public
+    function InvalidateRect(hWnd: HWND; lpRect: PRect; bErase: BOOL): BOOL; 
     function RectEquals(r1, r2: TRect): Boolean;
     procedure InflateRect(var r: TRect; dx, dy: integer);
     function UnionRect(lprcSrc1, lprcSrc2: TRect): TRect;
@@ -156,6 +157,12 @@ end;
 procedure WindowsOS.InflateRect(var r: TRect; dx, dy: integer);
 begin
   windows.inflateRect(r,dx,dy);
+end;
+
+function WindowsOS.InvalidateRect(hWnd: HWND; lpRect: PRect;
+  bErase: BOOL): BOOL;
+begin
+  result := Windows.InvalidateRect(hwnd,lprect,berase);
 end;
 
 end.
