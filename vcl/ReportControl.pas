@@ -2993,7 +2993,6 @@ Begin
       FLineList.Delete(I);
     End;
   End;
-//  InvalidateRect(Handle, @BigRect, False);
   self.DoInvalidateRect(bigrect);
   LineArray.Free;
   UpdateLines;
@@ -3063,8 +3062,8 @@ Var
 Begin    
   For I := 0 To FSelectCells.Count - 1 Do
   Begin
-    TReportCell(FSelectCells[I]).HorzAlign := NewHorzAlign;
-    InvalidateRect(Handle, @TReportCell(FSelectCells[I]).CellRect, False);
+    FSelectCells[I].HorzAlign := NewHorzAlign;
+    doInvalidateRect(FSelectCells[I].CellRect);
   End;
 End;
 
@@ -3075,7 +3074,7 @@ Begin
   For I := 0 To FSelectCells.Count - 1 Do
   Begin
     TReportCell(FSelectCells[I]).VertAlign := NewVertAlign;
-    InvalidateRect(Handle, @TReportCell(FSelectCells[I]).CellRect, False);
+    doInvalidateRect(FSelectCells[I].CellRect);
   End;
 End;
 
@@ -3086,7 +3085,7 @@ Begin
   For I := 0 To FSelectCells.Count - 1 Do
   Begin
     TReportCell(FSelectCells[I]).BkColor := NewBackColor;
-    InvalidateRect(Handle, @TReportCell(FSelectCells[I]).CellRect, False);
+    doInvalidateRect(FSelectCells[I].CellRect);
   End;
 End;
 

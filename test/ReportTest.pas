@@ -31,6 +31,7 @@ type
     procedure SetUp; override;
     procedure TearDown; override;
   published
+    procedure SetCellAlign;
     procedure RectInflate;
     procedure TFont2;
     procedure VSplitCell_UpdateLines_Associcated;
@@ -1143,6 +1144,28 @@ begin
     checkTrue(os.RectEquals(r,r2));
 end;
 
+procedure TReportTest.SetCellAlign;
+var s,b,Filename : string;
+    ThisCell:TReportCell;
+    R: TReportControl;
+    form : TCreportForm;
+begin
+    form := TCreportForm.InitReport ;
+    try
+      R := form.ReportControl1;
+      r.SetWndSize(1058,748);
+      r.NewTable(2 ,2);
+      // 验证：UpdateLine做的事情，是否都那么必要？
+      // CalcLineHeight 内做的事情有点杂，需要分离职责。
+      r.Cells[0,0].CellText := 'text sth';
+      r.Cells[0,0].Select;
+      r.SetCellAlignHorzAlign(1);
+//      CheckEquals(4,2);
+      form.ShowModal;
+    finally
+      TCreportForm.UninitReport();
+    end;
+end;
 initialization
   RegisterTests('Framework Suites',[TReportTest.Suite,TReportUITest.Suite,TCDSTest.Suite]);
 end.
