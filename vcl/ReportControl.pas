@@ -349,7 +349,6 @@ Type
     FEditFont: HFONT;
     FOnChanged : TOnChanged;
     Os :WindowsOS ;
-    function GetNhassumall: Integer;
     Procedure SetCellSFocus(row1, col1, row2, col2: integer);
     function Get(Index: Integer): TReportLine;
     function GetCells(Row, Col: Integer): TReportCell;
@@ -3829,38 +3828,9 @@ Begin
   Refresh;
 End;
 
-  function TReportControl.GetNhassumall():Integer;
-  var r : integer;
-  Var
-  I, J, n,  TempDataSetCount:Integer;
-  HandLineList, datalinelist, HootLineList, sumAllList: TList;
-  ThisLine, TempLine: TReportLine;
-  ThisCell, NewCell: TReportCell;
-  TempDataSet: TDataset;
-  khbz: boolean;
-  begin
-    r := 0 ;
-    For i := HasDataNo + 1 To FlineList.Count - 1 Do
-    Begin
-      ThisLine := TReportLine(FlineList[i]);
-      For j := 0 To ThisLine.FCells.Count - 1 Do
-      Begin
-        ThisCell := TreportCell(ThisLine.FCells[j]);
-        If (Length(ThisCell.CellText) > 0) And
-          (UpperCase(copy(ThisCell.FCellText, 1, 7)) = '`SUMALL') Then
-        Begin
-          If r = 0 Then
-            r := i;
-          result :=r ;
-          break;
-        End;
-      End;                              //for j
-    End;
-    result  :=  0 ;
-  end;
 // 2014-11-17 张英华 酸菜 3根。好。
 // SetFileCellWidth 根据用户拖动表格线修改模板文件中单元格的宽度
-// 将变化后的单元格宽度存入全局变量数组 lzl
+// 将变化后的单元格宽度存入全局变量数组 
 
 
 Procedure TReportControl.FreeEdit;      //取销编辑状态  lzl 
@@ -3910,7 +3880,7 @@ Procedure TReportControl.SelectLines(row1,row2 : integer);  // add lzl
 Begin
   SetCellsFocus(row1,0,row2,TReportLine(FlineList[row1]).FCells.Count -1);
 End;
-Procedure TReportControl.SetCellsFocus(row1, col1, row2, col2: integer);  // add lzl
+Procedure TReportControl.SetCellsFocus(row1, col1, row2, col2: integer);  
 Var
   thiscell: TreportCell;
   ThisLine: Treportline;
@@ -3929,7 +3899,7 @@ Begin
 End;
 
 
-Procedure TReportControl.SetWndSize(w, h: integer); //add lzl
+Procedure TReportControl.SetWndSize(w, h: integer);  
 Begin
   FPageWidth := w;
   FPageHeight := h;
@@ -3947,10 +3917,7 @@ end;
 
 function TReportControl.GetCells(Row, Col: Integer): TReportCell;
 begin
-//  assert (Row < FLineList.Count );
-//  assert (Col < TReportLine(FLineList[Row ]).Fcells.count);
   result := TReportCell(TReportLine(FLineList[Row ]).FCells[Col]);
-//            TReportCell(TReportLine(FLineList[I]).FCells[J])
 end;
 
 Procedure TReportControl.savebmp(thiscell: Treportcell; filename: String);  // add lzl
@@ -4184,11 +4151,9 @@ begin
 end;
 function TLineList.CombineVert:TReportCell;
 Var
-  I, J, Count: Integer;
+  I: Integer;
   Cells: TCellList;
   OwnerCell: TReportCell;
-  ThisCell, FirstCell: TReportCell;
-  ThisLine: TReportLine;
 begin
   Cells := TCellList.Create(Self.R);
   try
@@ -4214,19 +4179,13 @@ begin
 end;
 
 procedure TLineList.MakeSelectedLines(FLineList:TLineList);
-  Var
-    I, J, Count: Integer;
-    CellsToCombine: TCellList;
-    OwnerCell: TReportCell;
-    ThisCell, FirstCell: TReportCell;
-    ThisLine: TReportLine;
-    SelectedLines : TLineList;
+Var
+    I: Integer;
 begin
     For I := 0 To FLineList.Count - 1 Do
     Begin
-      ThisLine := FLineList[I];
-      if ThisLine.IsSelected then
-        add(ThisLine);
+      if FLineList[I].IsSelected then
+        add(FLineList[I]);
     End;
 end;
 function IsCRTail(s : string):Boolean;
