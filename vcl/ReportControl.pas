@@ -1958,7 +1958,7 @@ Var
   LTempRect: Trect;
 
 Begin
-
+  // 全部鼠标消息的代码的都舒服了，归一了。现在开始WMPaint.... 
   hPaintDC := BeginPaint(Handle, ps);
 
   SetMapMode(hPaintDC, MM_ISOTROPIC);
@@ -2131,7 +2131,6 @@ Var
 Begin
   p := MousePoint(m);
   ThisCell := CellFromPoint(p);
-
   If ThisCell <> Nil Then
   Begin
     If ThisCell.NearRight(p) Then
