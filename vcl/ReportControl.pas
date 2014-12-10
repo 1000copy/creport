@@ -317,6 +317,7 @@ Type
       FLineList: TList; FileName: String;PageNumber, Fpageall: integer);
     procedure DoInvalidateRect(Rect:TRect);
     procedure RecreateEdit(ThisCell: TReportCell);
+    procedure DoPaint(hPaintDC: HDC; Handle: HWND; ps: TPaintStruct);
   protected
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
@@ -1941,10 +1942,8 @@ Begin
   Height := trunc(FPageHeight * FReportScale / 100 + 0.5);
 End;
 
-Procedure TReportControl.WMPaint(Var Message: TMessage);
+procedure TReportControl.DoPaint(hPaintDC:HDC;Handle:HWND;ps:TPaintStruct);
 Var
-  hPaintDC: HDC;
-  ps: TPaintStruct;
   I, J: Integer;
   TempRect: TRect;
   hGrayPen, hPrevPen: HPEN;
@@ -1952,15 +1951,9 @@ Var
   ThisCell: TReportCell;
   WndSize: TSize;
   rectPaint: TRect;
-
   Acanvas: Tcanvas;                     // add lzl
-  //x,y:integer;
   LTempRect: Trect;
-
-Begin
-  // 全部鼠标消息的代码的都舒服了，归一了。现在开始WMPaint.... 
-  hPaintDC := BeginPaint(Handle, ps);
-
+begin
   SetMapMode(hPaintDC, MM_ISOTROPIC);
   WndSize.cx := Width;
   WndSize.cy := Height;
@@ -2080,6 +2073,17 @@ Begin
   // 各个CELL之间表线重叠的部分如何处理，如何存储这些线的设置呢？显然，现在的方法太土了。
 
   // 改乐，如果右面的CELL或下面的CELL的左边线或上边线为0时，不画不就得乐。(1998.9.9)
+end;
+Procedure TReportControl.WMPaint(Var Message: TMessage);
+
+Var
+  hPaintDC: HDC;
+  ps: TPaintStruct; 
+Begin
+  // 全部鼠标消息的代码的都舒服了，归一了。现在开始WMPaint.... 
+  hPaintDC := BeginPaint(Handle, ps);
+
+  DoPaint(hPaintDc,Handle,ps);
 
   EndPaint(Handle, ps);
 
