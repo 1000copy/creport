@@ -456,7 +456,7 @@ Type
     //取销编辑状态
     Procedure FreeEdit;
     Procedure StartMouseDrag(point: TPoint);
-    Procedure StartMouseSelect(point: TPoint; bSelectFlag: Boolean; Shift: Boolean );
+    Procedure StartMouseSelect(point: TPoint; Shift: Boolean );
     Procedure MouseMoveHandler(message: TMSG);
     procedure SelectLine(row: integer);
     // 选中区的操作
@@ -2601,63 +2601,38 @@ Begin
   SetROP2(hClientDc, PrevDrawMode);
   ReleaseDC(Handle, hClientDC);
 End;
+  // bSelectFlag ：是选中还是编辑?
 
-Procedure TReportControl.StartMouseSelect(point: TPoint; bSelectFlag: Boolean;Shift: Boolean );
+Procedure TReportControl.StartMouseSelect(point: TPoint;Shift: Boolean );
 Var
   ThisCell: TReportCell;
-  bFlag: Boolean;
-  TempMsg: TMSG;
+  Msg: TMSG;
   TempPoint: TPoint;
-  dwStyle: DWORD;
 Begin
   If not Shift Then
     ClearSelect;
   ThisCell := CellFromPoint(point);
-  If bSelectFlag Then
-    AddSelectedCell(ThisCell);
-
+  AddSelectedCell(ThisCell);
   SetCapture(Handle);
-
-  // 是选中还是编辑?
-  bFlag := bSelectFlag;
   FMousePoint := point;
-
-  //  Windows.ScreenToClient(Handle, FMousePoint);
-
   While GetCapture = Handle Do
   Begin
-    If Not GetMessage(TempMsg, Handle, 0, 0) Then
+    If Not GetMessage(Msg, Handle, 0, 0) Then
     Begin
       PostQuitMessage(0);
       Break;
-    End;
-
-    Case TempMsg.Message Of
+    End;  
+    Case Msg.Message Of
       WM_LBUTTONUP:
-        ReleaseCapture;
+        ReleaseCapture; // 这里会导致 GetCapture = Handle，不在成立，因此，可以退出While 。
       WM_MOUSEMOVE:
-        If Not bFlag Then
-        Begin
-          TempPoint := TempMsg.pt;
-          Windows.ScreenToClient(Handle, TempPoint);
-          If CellFromPoint(TempPoint) <> ThisCell Then
-            bFlag := True;
-        End
-        Else
-        Begin
-          AddSelectedCell(ThisCell);
-          MouseMoveHandler(TempMsg);
-        End;
+          MouseMoveHandler(Msg);
     Else
-      DispatchMessage(TempMsg);
+      DispatchMessage(Msg);
     End;
-    //inherited;
   End;
   If GetCapture = Handle Then
     ReleaseCapture;
-
-  // inherited;
-
 End;
 
 Procedure TReportControl.MouseMoveHandler(message: TMsg);
@@ -4065,7 +4040,7 @@ begin
   If  (Cell <> Nil) and Cell.NearRightBottom(P) Then
       StartMouseDrag(P)
   else
-    StartMouseSelect(P, True, Shift) ;
+    StartMouseSelect(P, Shift) ;
 end;
 
 function TReportControl.MousePoint(Message: TMessage): TPoint;
