@@ -2610,7 +2610,6 @@ Var
   TempPoint: TPoint;
   dwStyle: DWORD;
 Begin
-  // 清除掉所有选中的CELL 。当拖动时，按下SHIFT键时不取消已选单元格
   If not Shift Then
     ClearSelect;
   ThisCell := CellFromPoint(point);
@@ -2654,55 +2653,55 @@ Begin
     End;
     //inherited;
   End;
-
+// 永不执行的代码 ！DELETED
   // 如果用户的鼠标没有移出最初按下的CELL
-  If Not bFlag Then
-  Begin
-    If (ThisCell <> Nil) And (ThisCell.CellWidth > 10) Then
-    Begin
-      FEditCell := ThisCell;
-
-      If FEditFont <> INVALID_HANDLE_VALUE Then
-        DeleteObject(FEditFont);
-
-      FEditFont := CreateFontIndirect(ThisCell.LogFont);
-
-      // 设置编辑窗的字体
-      If IsWindow(FEditWnd) Then
-      Begin
-        DestroyWindow(FEditWnd);
-      End;
-      //// Edit Window's Position
-      Case ThisCell.HorzAlign Of
-        TEXT_ALIGN_LEFT:
-          dwStyle := WS_VISIBLE Or WS_CHILD Or ES_MULTILINE Or ES_LEFT Or
-            ES_AUTOVSCROLL;
-        TEXT_ALIGN_CENTER:
-          dwStyle := WS_VISIBLE Or WS_CHILD Or ES_MULTILINE Or ES_CENTER Or
-            ES_AUTOVSCROLL;
-        TEXT_ALIGN_RIGHT:
-          dwStyle := WS_VISIBLE Or WS_CHILD Or ES_MULTILINE Or ES_RIGHT Or
-            ES_AUTOVSCROLL;
-      Else
-        dwStyle := WS_VISIBLE Or WS_CHILD Or ES_MULTILINE Or ES_LEFT Or
-          ES_AUTOVSCROLL;
-      End;
-
-      FEditWnd := CreateWindow('EDIT', '', dwStyle, 0, 0, 0, 0, Handle, 1,
-        hInstance, Nil);
-
-      SendMessage(FEditWnd, WM_SETFONT, FEditFont, 1); // 1 means TRUE here.
-      SendMessage(FEditWnd, EM_LIMITTEXT, 3000, 0);
-
-      MoveWindow(FEditWnd, ThisCell.TextRect.left, ThisCell.TextRect.Top,
-        ThisCell.TextRect.Right - ThisCell.TextRect.Left,
-        ThisCell.TextRect.Bottom - ThisCell.TextRect.Top, True);
-      SetWindowText(FEditWnd, PChar(ThisCell.CellText));
-      ShowWindow(FEditWnd, SW_SHOWNORMAL);
-      Windows.SetFocus(FEditWnd);
-
-    End;
-  End;
+//  If Not bFlag Then
+//  Begin
+//    If (ThisCell <> Nil) And (ThisCell.CellWidth > 10) Then
+//    Begin
+//      FEditCell := ThisCell;
+//
+//      If FEditFont <> INVALID_HANDLE_VALUE Then
+//        DeleteObject(FEditFont);
+//
+//      FEditFont := CreateFontIndirect(ThisCell.LogFont);
+//
+//      // 设置编辑窗的字体
+//      If IsWindow(FEditWnd) Then
+//      Begin
+//        DestroyWindow(FEditWnd);
+//      End;
+//      //// Edit Window's Position
+//      Case ThisCell.HorzAlign Of
+//        TEXT_ALIGN_LEFT:
+//          dwStyle := WS_VISIBLE Or WS_CHILD Or ES_MULTILINE Or ES_LEFT Or
+//            ES_AUTOVSCROLL;
+//        TEXT_ALIGN_CENTER:
+//          dwStyle := WS_VISIBLE Or WS_CHILD Or ES_MULTILINE Or ES_CENTER Or
+//            ES_AUTOVSCROLL;
+//        TEXT_ALIGN_RIGHT:
+//          dwStyle := WS_VISIBLE Or WS_CHILD Or ES_MULTILINE Or ES_RIGHT Or
+//            ES_AUTOVSCROLL;
+//      Else
+//        dwStyle := WS_VISIBLE Or WS_CHILD Or ES_MULTILINE Or ES_LEFT Or
+//          ES_AUTOVSCROLL;
+//      End;
+//
+//      FEditWnd := CreateWindow('EDIT', '', dwStyle, 0, 0, 0, 0, Handle, 1,
+//        hInstance, Nil);
+//
+//      SendMessage(FEditWnd, WM_SETFONT, FEditFont, 1); // 1 means TRUE here.
+//      SendMessage(FEditWnd, EM_LIMITTEXT, 3000, 0);
+//
+//      MoveWindow(FEditWnd, ThisCell.TextRect.left, ThisCell.TextRect.Top,
+//        ThisCell.TextRect.Right - ThisCell.TextRect.Left,
+//        ThisCell.TextRect.Bottom - ThisCell.TextRect.Top, True);
+//      SetWindowText(FEditWnd, PChar(ThisCell.CellText));
+//      ShowWindow(FEditWnd, SW_SHOWNORMAL);
+//      Windows.SetFocus(FEditWnd);
+//
+//    End;
+//  End;
 
   If GetCapture = Handle Then
     ReleaseCapture;
