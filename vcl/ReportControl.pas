@@ -443,7 +443,7 @@ Type
     Function GetMargin: TRect;
     Function getcellfont: tfont;
     Procedure UpdateLines;
-    //取销编辑状态  lzl
+    //取销编辑状态
     Procedure FreeEdit;
     Procedure StartMouseDrag(point: TPoint);
     Procedure StartMouseSelect(point: TPoint; bSelectFlag: Boolean; shift_down:
@@ -2135,18 +2135,17 @@ Var
   TempRect: TRect;
   sh_down: byte;
 Begin
+  If freportscale <> 100 Then //按下Mouse键，并缩放率<>100时，恢复为正常
+  Begin                                 //1999.1.23
+    ReportScale :=100
+    exit;
+  End;
   MousePoint.x := LOWORD(Message.lParam);
   MousePoint.y := HIWORD(Message.lParam);
   ThisCell := CellFromPoint(MousePoint);
 
   sh_down := message.wparam;            //当拖动时，按下SHIFT键时不取消已选单元格
-  If freportscale <> 100 Then //按下Mouse键，并缩放率<>100时，恢复为正常
-  Begin                                 //1999.1.23
-    freportscale := 100;
-    CalcWndSize;
-    Update;
-    exit;
-  End;
+
 
   If IsWindowVisible(FEditWnd) Then
   Begin
