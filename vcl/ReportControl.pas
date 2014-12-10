@@ -316,6 +316,7 @@ Type
     procedure InternalSaveToFile(
       FLineList: TList; FileName: String;PageNumber, Fpageall: integer);
     procedure DoInvalidateRect(Rect:TRect);
+    procedure RecreateEdit(ThisCell: TReportCell);
   protected
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
@@ -407,6 +408,7 @@ Type
     property OnChanged : TOnChanged read FOnChanged write FOnChanged;
     procedure ClearPaintMessage;
     function MousePoint(Message: TMessage):TPoint;
+    procedure DoDoubleClick(p:TPoint);
     // Message Handler
     Procedure WMLButtonDown(Var m: TMessage); Message WM_LBUTTONDOWN;
     Procedure WMLButtonDBLClk(Var Message: TMessage); Message WM_LBUTTONDBLCLK;
@@ -864,18 +866,8 @@ begin
     s := FCellText;
   result := GetTextRectInternal(s);
 end;
+
 function TReportCell.GetTextRectInternal(Str:String):TRect;
-  function HAlign2DT(FHorzAlign:UINT):UINT;
-  var dt : Integer ;
-  begin
-    Case FHorzAlign Of
-      0:dt := DT_LEFT;
-      1:dt := DT_CENTER;
-      2:dt := DT_RIGHT;
-      Else dt := DT_LEFT;
-    End;
-    Result := dt;
-  end;        
 var
   R:TRect;
 begin
@@ -883,7 +875,7 @@ begin
   R.left := FCellLeft + FLeftMargin;
   R.top := GetCellTop + 2;
   R.right := FCellLeft + FCellWidth - FLeftMargin;
-  R.bottom := CalcBottom( Str,R, HAlign2DT(FHorzAlign),FLogFont);
+  R.bottom := CalcBottom( Str,R, ReportControl.os.HAlign2DT(FHorzAlign),FLogFont);
   result := R;
 end;
 function TReportCell.DefaultHeight() : integer; begin
@@ -2108,52 +2100,7 @@ Begin
   GetCursorPos(TempPoint);
   Windows.ScreenToClient(Handle, TempPoint);
 
-  ThisCell := CellFromPoint(TempPoint);
-
-  If (ThisCell <> Nil) And (ThisCell.CellWidth > 10) Then
-  Begin
-    FEditCell := ThisCell;
-
-    If FEditFont <> INVALID_HANDLE_VALUE Then
-      DeleteObject(FEditFont);
-
-    FEditFont := CreateFontIndirect(ThisCell.LogFont);
-
-    // …Ë÷√±‡º≠¥∞µƒ◊÷ÃÂ
-    If IsWindow(FEditWnd) Then
-    Begin
-      DestroyWindow(FEditWnd);
-    End;
-
-    //// Edit Window's Position
-    Case ThisCell.HorzAlign Of
-      TEXT_ALIGN_LEFT:
-        dwStyle := WS_VISIBLE Or WS_CHILD Or ES_MULTILINE Or ES_LEFT Or
-          ES_AUTOVSCROLL;
-      TEXT_ALIGN_CENTER:
-        dwStyle := WS_VISIBLE Or WS_CHILD Or ES_MULTILINE Or ES_CENTER Or
-          ES_AUTOVSCROLL;
-      TEXT_ALIGN_RIGHT:
-        dwStyle := WS_VISIBLE Or WS_CHILD Or ES_MULTILINE Or ES_RIGHT Or
-          ES_AUTOVSCROLL;
-    Else
-      dwStyle := WS_VISIBLE Or WS_CHILD Or ES_MULTILINE Or ES_LEFT Or
-        ES_AUTOVSCROLL;
-    End;
-
-    FEditWnd := CreateWindow('EDIT', '', dwStyle, 0, 0, 0, 0, Handle, 1,
-      hInstance, Nil);
-
-    SendMessage(FEditWnd, WM_SETFONT, FEditFont, 1); // 1 means TRUE here.
-    SendMessage(FEditWnd, EM_LIMITTEXT, 3000, 0);
-
-    MoveWindow(FEditWnd, ThisCell.TextRect.left, ThisCell.TextRect.Top,
-      ThisCell.TextRect.Right - ThisCell.TextRect.Left,
-      ThisCell.TextRect.Bottom - ThisCell.TextRect.Top, True);
-    SetWindowText(FEditWnd, PChar(ThisCell.CellText));
-    ShowWindow(FEditWnd, SW_SHOWNORMAL);
-    Windows.SetFocus(FEditWnd);
-  End;
+  DoDoubleClick(TEmpPoint);
   Inherited;
 End;
 
@@ -4009,6 +3956,42 @@ function TReportControl.MousePoint(Message: TMessage): TPoint;
 begin
   Result.x := LOWORD(Message.lParam);
   Result.y := HIWORD(Message.lParam);
+end;
+procedure TReportControl.RecreateEdit(ThisCell:TReportCell);
+var
+  dwStyle: DWORD;
+begin
+  If FEditFont <> INVALID_HANDLE_VALUE Then
+      DeleteObject(FEditFont);
+    FEditFont := CreateFontIndirect(ThisCell.LogFont);
+    // …Ë÷√±‡º≠¥∞µƒ◊÷ÃÂ
+    If IsWindow(FEditWnd) Then
+    Begin
+      DestroyWindow(FEditWnd);
+    End;
+    dwStyle := WS_VISIBLE Or WS_CHILD Or ES_MULTILINE or  ES_AUTOVSCROLL or
+      os.HAlign2DT(ThisCell.FHorzAlign);
+    FEditWnd := CreateWindow('EDIT', '', dwStyle, 0, 0, 0, 0, Handle, 1,
+      hInstance, Nil);  
+    SendMessage(FEditWnd, WM_SETFONT, FEditFont, 1); // 1 means TRUE here.
+    SendMessage(FEditWnd, EM_LIMITTEXT, 3000, 0);
+    MoveWindow(FEditWnd, ThisCell.TextRect.left, ThisCell.TextRect.Top,
+      ThisCell.TextRect.Right - ThisCell.TextRect.Left,
+      ThisCell.TextRect.Bottom - ThisCell.TextRect.Top, True);
+    SetWindowText(FEditWnd, PChar(ThisCell.CellText));
+    ShowWindow(FEditWnd, SW_SHOWNORMAL);
+    Windows.SetFocus(FEditWnd);
+end;
+procedure TReportControl.DoDoubleClick(p: TPoint);   
+Var
+  ThisCell: TReportCell;                             
+begin
+  ThisCell := CellFromPoint(p);
+  If (ThisCell <> Nil) And (ThisCell.CellWidth > 10) Then
+  Begin
+    FEditCell := ThisCell;  
+    RecreateEdit(ThisCell);
+  End;
 end;
 
 { TLineList }

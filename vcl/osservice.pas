@@ -12,6 +12,7 @@ type
     nPixelsPerInch:integer;
     hDesktopDC :THandle;
   public
+    function HAlign2DT(FHorzAlign: UINT): UINT;
     function IsRectEmpty(r: TRect): boolean;
     function MakeRect(FMousePoint, TempPoint: TPoint): TRect;
     function DeleteFiles(FilePath, FileMask: String): Boolean;
@@ -250,5 +251,16 @@ begin
   result := windows.IsRectEmpty(r);
 end;
 
+function WindowsOS.HAlign2DT(FHorzAlign:UINT):UINT;
+var dt : Integer ;
+begin
+  Case FHorzAlign Of
+    0:dt := DT_LEFT;
+    1:dt := DT_CENTER;
+    2:dt := DT_RIGHT;
+    Else dt := DT_LEFT;
+  End;
+  Result := dt;
+end;
 
 end.
