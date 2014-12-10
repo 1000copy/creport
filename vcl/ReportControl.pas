@@ -2647,7 +2647,7 @@ Begin
   TempPoint := message.pt;
   Shift := message.wParam =5;
   Windows.ScreenToClient(Handle, TempPoint);
-  RectSelection := os.MakeSelectRect(FMousePoint,TempPoint); 
+  RectSelection := os.MakeRect(FMousePoint,TempPoint); 
   //清除掉不在选中矩形中的CELL ; 除非Shift 按下
   If not Shift  Then
     For I := FSelectCells.Count - 1 Downto 0 Do
