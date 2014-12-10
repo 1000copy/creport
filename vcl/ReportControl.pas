@@ -2602,12 +2602,11 @@ Begin
   ReleaseDC(Handle, hClientDC);
 End;
   // bSelectFlag ：是选中还是编辑?
-
+// LCJ:以消息循环方式，来处理Mouse事件的持续性，这个做法很有意思。
 Procedure TReportControl.StartMouseSelect(point: TPoint;Shift: Boolean );
 Var
   ThisCell: TReportCell;
   Msg: TMSG;
-  TempPoint: TPoint;
 Begin
   If not Shift Then
     ClearSelect;
@@ -2642,53 +2641,25 @@ Var
   ThisCell: TReportCell;
   I, J: Integer;
   ThisLine: TReportLine;
-  sh_down: byte;
+  Shift:boolean;
+
 Begin
   TempPoint := message.pt;
-  sh_down := message.wParam;
+  Shift := message.wParam =5;
   Windows.ScreenToClient(Handle, TempPoint);
-
-  If FMousePoint.x > TempPoint.x Then
-  Begin
-    RectSelection.Left := TempPoint.x;
-    RectSelection.Right := FMousePoint.x;
-  End
-  Else
-  Begin
-    RectSelection.Left := FMousePoint.x;
-    RectSelection.Right := TempPoint.x;
-  End;
-
-  If FMousePoint.y > TempPoint.y Then
-  Begin
-    RectSelection.Top := TempPoint.y;
-    RectSelection.Bottom := FMousePoint.y;
-  End
-  Else
-  Begin
-    RectSelection.Top := FMousePoint.y;
-    RectSelection.Bottom := TempPoint.y;
-  End;
-
-  If RectSelection.Right = RectSelection.Left Then
-    RectSelection.Right := RectSelection.Right + 1;
-
-  If RectSelection.Bottom = RectSelection.Top Then
-    RectSelection.Bottom := RectSelection.Bottom + 1;
-
-  // 清除掉不在选中矩形中的CELL
-  For I := FSelectCells.Count - 1 Downto 0 Do
-  Begin
-    ThisCell := TReportCell(FSelectCells[I]);
-    IntersectRect(TempRect, ThisCell.CellRect, RectSelection);
-
-    If sh_down <> 5 Then                //当拖动时，按下SHIFT键时不取消已选单元格
+  RectSelection := os.MakeSelectRect(FMousePoint,TempPoint); 
+  //清除掉不在选中矩形中的CELL ; 除非Shift 按下
+  If not Shift  Then
+    For I := FSelectCells.Count - 1 Downto 0 Do
     Begin
-      If Not ((TempRect.right > TempRect.Left) And (TempRect.bottom >
-        TempRect.top)) Then
-        RemoveSelectedCell(ThisCell);
+      ThisCell := TReportCell(FSelectCells[I]);
+      IntersectRect(TempRect, ThisCell.CellRect, RectSelection);
+      Begin
+        If Not ((TempRect.right > TempRect.Left) And (TempRect.bottom >
+          TempRect.top)) Then
+          RemoveSelectedCell(ThisCell);
+      End;
     End;
-  End;
 
   // 查找选中的Cell
   For I := 0 To FLineList.Count - 1 Do

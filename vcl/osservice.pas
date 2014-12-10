@@ -12,6 +12,7 @@ type
     nPixelsPerInch:integer;
     hDesktopDC :THandle;
   public
+    function MakeSelectRect(FMousePoint, TempPoint: TPoint): TRect;
     function DeleteFiles(FilePath, FileMask: String): Boolean;
     function InvalidateRect(hWnd: HWND; lpRect: PRect; bErase: BOOL): BOOL; 
     function RectEquals(r1, r2: TRect): Boolean;
@@ -198,4 +199,37 @@ Begin
     Exit;
   End;
 End;
+function WindowsOS.MakeSelectRect(FMousePoint,TempPoint:TPoint):TRect;
+Var
+  RectSelection: TRect;
+begin
+    If FMousePoint.x > TempPoint.x Then
+    Begin
+      RectSelection.Left := TempPoint.x;
+      RectSelection.Right := FMousePoint.x;
+    End
+    Else
+    Begin
+      RectSelection.Left := FMousePoint.x;
+      RectSelection.Right := TempPoint.x;
+    End;
+
+    If FMousePoint.y > TempPoint.y Then
+    Begin
+      RectSelection.Top := TempPoint.y;
+      RectSelection.Bottom := FMousePoint.y;
+    End
+    Else
+    Begin
+      RectSelection.Top := FMousePoint.y;
+      RectSelection.Bottom := TempPoint.y;
+    End;
+
+    If RectSelection.Right = RectSelection.Left Then
+      RectSelection.Right := RectSelection.Right + 1;
+
+    If RectSelection.Bottom = RectSelection.Top Then
+      RectSelection.Bottom := RectSelection.Bottom + 1;
+    Result := RectSelection;
+end;
 end.
