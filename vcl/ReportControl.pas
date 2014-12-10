@@ -113,6 +113,7 @@ Type
   end;
   TReportCell = Class(TObject)
   private
+    NearResolution : integer;
     ReportControl:TReportControl;
     function GetOwnerCellHeight: Integer;
     function MaxSplitNum :integer;
@@ -124,6 +125,10 @@ Type
     function GetReportControl: TReportControl;
     function GetSelected: Boolean;
     function GetTextRectInternal(Str: String): TRect;
+    function NearBottom(P:TPoint):Boolean ;
+    function NearRight(P:TPoint):Boolean ;
+    function NearRightBottom(P:TPoint):Boolean ;
+
   public
     FLeftMargin: Integer;               // 左边的空格
     FOwnerLine: TReportLine;            // 隶属行
@@ -354,6 +359,7 @@ Type
     function GetCells(Row, Col: Integer): TReportCell;
     procedure InvertCell(Cell: TReportCell);
     procedure DoEdit(str:string);
+    procedure DoMouseDown(P:TPoint;Shift:Boolean);
   Protected
     hasdatano: integer;
     function RenderText(ThisCell: TReportCell; PageNumber,Fpageall: Integer): String;virtual ;
@@ -364,6 +370,8 @@ Type
   Public
     FLastPrintPageWidth, FLastPrintPageHeight: integer;
     PrintPaper:TPrinterPaper;
+    function IsEditing :boolean;
+    procedure CancelEditing;
     procedure EachCell(EachProc: EachCellProc);
     procedure EachLine(EachProc: EachLineProc);
     procedure EachCell_CalcHeight(ThisCell: TReportCell);
@@ -396,10 +404,12 @@ Type
     Procedure SetScale(Const Value: Integer);
     Property cellFont: TlogFont Read Fcellfont Write Fcellfont;
     property OnChanged : TOnChanged read FOnChanged write FOnChanged;
+    procedure ClearPaintMessage;
+    function MousePoint(Message: TMessage):TPoint;
     // Message Handler
-    Procedure WMLButtonDown(Var Message: TMessage); Message WM_LBUTTONDOWN;
+    Procedure WMLButtonDown(Var m: TMessage); Message WM_LBUTTONDOWN;
     Procedure WMLButtonDBLClk(Var Message: TMessage); Message WM_LBUTTONDBLCLK;
-    Procedure WMMouseMove(Var Message: TMessage); Message WM_MOUSEMOVE;
+    Procedure WMMouseMove(Var m: TMessage); Message WM_MOUSEMOVE;
     Procedure WMContextMenu(Var Message: TMessage); Message WM_CONTEXTMENU;
     Procedure WMPaint(Var Message: TMessage); Message WM_PAINT;
     Procedure WMCOMMAND(Var Message: TMessage); Message WM_COMMAND;
@@ -446,8 +456,7 @@ Type
     //取销编辑状态
     Procedure FreeEdit;
     Procedure StartMouseDrag(point: TPoint);
-    Procedure StartMouseSelect(point: TPoint; bSelectFlag: Boolean; shift_down:
-      byte);
+    Procedure StartMouseSelect(point: TPoint; bSelectFlag: Boolean; Shift: Boolean );
     Procedure MouseMoveHandler(message: TMSG);
     procedure SelectLine(row: integer);
     // 选中区的操作
@@ -1188,6 +1197,7 @@ Var
   end;
 Begin
   self.ReportControl := R;
+  NearResolution := 3;
   FSlaveCells := TCellList.Create(R);
   Fbmp := TBitmap.Create;
   FLeftMargin := 5;
@@ -1787,6 +1797,21 @@ begin
   FCells.Insert(FCells.IndexOf(RefCell), c);
 end;
 
+function TReportCell.NearBottom(P: TPoint): Boolean;
+begin
+   result := abs(CellRect.Bottom - P.y) <= NearResolution ;
+end;
+
+function TReportCell.NearRight(P: TPoint): Boolean;
+begin
+   result := abs(CellRect.Right - P.x) <= NearResolution ;
+end;
+
+function TReportCell.NearRightBottom(P: TPoint): Boolean;
+begin
+  Result := NearBottom(P) Or NearRight(p)
+end;
+
 {TReportControl}
 
 Procedure TReportControl.CreateWnd;
@@ -2126,91 +2151,46 @@ Begin
   Inherited;
 End;
 
-Procedure TReportControl.WMLButtonDown(Var Message: TMessage);
+Procedure TReportControl.WMLButtonDown(Var m: TMessage);
 Var
-  ThisCell: TReportCell;
-  MousePoint: TPoint;
-  TempChar: Array[0..3000] Of Char;
-  TempMsg: TMSG;
-  TempRect: TRect;
-  sh_down: byte;
+  p: TPoint;
+  Shift: Boolean;
 Begin
-  If freportscale <> 100 Then //按下Mouse键，并缩放率<>100时，恢复为正常
-  Begin                                 //1999.1.23
-    ReportScale :=100
+  If ReportScale <> 100 Then   //按下Mouse键，并缩放率<>100时，恢复为正常
+  Begin                                     
+    ReportScale :=100 ;
     exit;
   End;
-  MousePoint.x := LOWORD(Message.lParam);
-  MousePoint.y := HIWORD(Message.lParam);
-  ThisCell := CellFromPoint(MousePoint);
-
-  sh_down := message.wparam;            //当拖动时，按下SHIFT键时不取消已选单元格
-
-
-  If IsWindowVisible(FEditWnd) Then
-  Begin
-    If FEditCell <> Nil Then
-    Begin
-      GetWindowText(FEditWnd, TempChar, 3000);
-      FEditCell.CellText := TempChar;
-    End;
-    // 奇怪，ReportControl窗口一旦得到焦点就移动自己
-    Windows.SetFocus(0);
-    DestroyWindow(FEditWnd);
-    FEditCell := Nil;
-  End;
-
-  // 清除消息队列中的WM_PAINT消息，防止画出飞线
-  While PeekMessage(TempMsg, 0, WM_PAINT, WM_PAINT, PM_NOREMOVE) Do
-  Begin
-    If Not GetMessage(TempMsg, 0, WM_PAINT, WM_PAINT) Then
-      Break;
-
-    DispatchMessage(TempMsg);
-  End;
-
-  If ThisCell = Nil Then
-    StartMouseSelect(MousePoint, True, sh_down)
-  Else
-  Begin
-    TempRect := ThisCell.CellRect;
-
-    If (abs(TempRect.Bottom - MousePoint.y) <= 3) Or
-      (abs(TempRect.Right - MousePoint.x) <= 3) Then
-      StartMouseDrag(MousePoint)
-    Else
-      StartMouseSelect(MousePoint, True, sh_down);
-  End;
-  mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0); 
-
-  Inherited;                            //将mouse的消息返回   1999.1.23
-
+  p := MousePoint(m);
+  Shift := m.wparam = 5 ;
+  if IsEditing then CancelEditing;
+  ClearPaintMessage;
+  DoMouseDown(p,Shift );
+  // 这一行要是不写，点击退出的红叉叉就不好使。
+  mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, 0);
+  Inherited;
 End;
 
-Procedure TReportControl.WMMouseMove(Var Message: TMessage);
+Procedure TReportControl.WMMouseMove(Var m: TMessage);
 Var
   ThisCell: TReportCell;
-  MousePoint: TPoint;
-  RectCell: TRect;
+  P: TPoint;
 Begin
-  MousePoint.x := LOWORD(Message.lParam);
-  MousePoint.y := HIWORD(Message.lParam);
-  ThisCell := CellFromPoint(MousePoint);
+  p := MousePoint(m);
+  ThisCell := CellFromPoint(p);
 
   If ThisCell <> Nil Then
   Begin
-    RectCell := ThisCell.CellRect;
-    If (abs(RectCell.Right - MousePoint.x) <= 3) Then
+    If ThisCell.NearRight(p) Then
       SetCursor(LoadCursor(0, IDC_SIZEWE))
-    Else If (abs(RectCell.Bottom - MousePoint.y) <= 3) Then
+    Else If ThisCell.NearBottom(p) Then
       SetCursor(LoadCursor(0, IDC_SIZENS))
     Else
       SetCursor(LoadCursor(0, IDC_IBEAM));
   End
   Else
     SetCursor(LoadCursor(0, IDC_ARROW));
-
-  Inherited;                            //将mouse的消息返回   1999.1.23
+  Inherited;                           
 End;
 
 Procedure TReportControl.WMContextMenu(Var Message: TMessage);
@@ -2622,8 +2602,7 @@ Begin
   ReleaseDC(Handle, hClientDC);
 End;
 
-Procedure TReportControl.StartMouseSelect(point: TPoint; bSelectFlag: Boolean;
-  shift_down: byte);
+Procedure TReportControl.StartMouseSelect(point: TPoint; bSelectFlag: Boolean;Shift: Boolean );
 Var
   ThisCell: TReportCell;
   bFlag: Boolean;
@@ -2632,10 +2611,9 @@ Var
   dwStyle: DWORD;
 Begin
   // 清除掉所有选中的CELL 。当拖动时，按下SHIFT键时不取消已选单元格
-  If shift_down <> 5 Then
+  If not Shift Then
     ClearSelect;
   ThisCell := CellFromPoint(point);
-
   If bSelectFlag Then
     AddSelectedCell(ThisCell);
 
@@ -4095,6 +4073,56 @@ end;
 procedure TReportControl.DoInvalidateRect(Rect: TRect);
 begin
   os.InvalidateRect(Handle, @Rect, False);
+end;
+
+function TReportControl.IsEditing: boolean;
+begin
+  result := IsWindowVisible(FEditWnd) ;
+end;
+
+procedure TReportControl.CancelEditing;
+var
+  str: Array[0..3000] Of Char;
+begin
+    If FEditCell <> Nil Then
+    Begin
+      GetWindowText(FEditWnd, str, 3000);
+      FEditCell.CellText := str;
+    End;
+    Windows.SetFocus(0);// 奇怪，ReportControl窗口一旦得到焦点就移动自己
+    DestroyWindow(FEditWnd);
+    FEditCell := Nil;   
+end;
+
+procedure TReportControl.ClearPaintMessage;
+var   TempMsg: TMSG;
+begin
+  // 清除消息队列中的WM_PAINT消息，防止画出飞线
+  While PeekMessage(TempMsg, 0, WM_PAINT, WM_PAINT, PM_NOREMOVE) Do
+  Begin
+    If Not GetMessage(TempMsg, 0, WM_PAINT, WM_PAINT) Then
+      Break;       
+    DispatchMessage(TempMsg);
+  End;
+
+end;
+
+procedure TReportControl.DoMouseDown(P: TPoint; Shift: Boolean);
+var 
+  Cell: TReportCell;
+begin
+
+  Cell := CellFromPoint(P);
+  If  (Cell <> Nil) and Cell.NearRightBottom(P) Then
+      StartMouseDrag(P)
+  else
+    StartMouseSelect(P, True, Shift) ;
+end;
+
+function TReportControl.MousePoint(Message: TMessage): TPoint;
+begin
+  Result.x := LOWORD(Message.lParam);
+  Result.y := HIWORD(Message.lParam);
 end;
 
 { TLineList }
