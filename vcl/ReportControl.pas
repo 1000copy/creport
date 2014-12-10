@@ -123,7 +123,7 @@ Type
     function Calc_RequiredCellHeight: Integer;
     function GetReportControl: TReportControl;
     function GetSelected: Boolean;
-    function GetTextRectInternal(TempString: String): TRect;
+    function GetTextRectInternal(Str: String): TRect;
   public
     FLeftMargin: Integer;               // 左边的空格
     FOwnerLine: TReportLine;            // 隶属行
@@ -203,7 +203,7 @@ Type
     function IsLastCell():boolean;
     Procedure Own(Cell: TReportCell);overload;
     Procedure Own(Cell: TReportCell;bInsert:Boolean;InsertIndex:Integer);overload;
-    Procedure RemoveAllOwnedCell;
+    Procedure LiberateSlaves;
     Procedure RemoveOwnedCell(Cell: TReportCell);
     Function IsCellOwned(Cell: TReportCell): Boolean;
     Procedure CalcCellTextRect;
@@ -500,7 +500,6 @@ Type
     ThisCell: TReportCell;
   End;
 
-Function DeleteFiles(FilePath, FileMask: String): Boolean;
 
 Procedure Register;
 // 2014-11-13 这两天正在喝。平和，质朴，散发着有钱的感觉...
@@ -583,41 +582,7 @@ begin
   End;
 end;
 
-Function DeleteFiles(FilePath, FileMask: String): Boolean;
-Var
-  Attributes: integer;
-  DeleteFilesSearchRec: TSearchRec;
-Begin
-  Result := true;
-  Try
-    FindFirst(FilePath + '\' + FileMask, faAnyFile, DeleteFilesSearchRec);
 
-    If Not (DeleteFilesSearchRec.Name = '') Then
-    Begin
-      Result := True;
-      {$WARNINGS OFF}
-      Attributes := FileGetAttr(FilePath + '\' + DeleteFilesSearchRec.Name);
-      //Attributes := Attributes And Not (faReadonly Or faHidden Or fasysfile);
-      FileSetAttr(FilePath + '\' + DeleteFilesSearchRec.Name, Attributes);
-      {$WARNINGS ON}
-      DeleteFile(FilePath + '\' + DeleteFilesSearchRec.Name);
-
-      While FindNext(DeleteFilesSearchRec) = 0 Do
-      Begin
-        {$WARNINGS OFF}
-        Attributes := FileGetAttr(FilePath + '\' + DeleteFilesSearchRec.Name);
-        //Attributes := Attributes And Not (faReadOnly Or faHidden Or fasysfile);
-        FileSetAttr(FilePath + '\' + DeleteFilesSearchRec.Name, Attributes);
-        {$WARNINGS ON}
-        DeleteFile(FilePath + '\' + DeleteFilesSearchRec.Name);
-      End;
-    End;                              
-    FindClose(DeleteFilesSearchRec);
-  Except
-    Result := false;
-    Exit;
-  End;
-End;
 
 Procedure Register;
 Begin
@@ -655,7 +620,7 @@ End;
 procedure TReportCell.Own(Cell:TReportCell;bInsert:Boolean;InsertIndex:Integer);
 Var
   I: Integer;
-  TempCellList: TCellList;
+  List: TCellList;
 Begin
   If (Cell = Nil) Or (FSlaveCells.IndexOf(Cell) >= 0) Then
     Exit;
@@ -671,15 +636,26 @@ Begin
   // LCJ : 加个条件，说明只有有SlaveCells才做这些，更清楚些：）
   if Cell.FSlaveCells.Count > 0 then
   begin
-    TempCellList := TCellList.Create(ReportControl);
-    For I := 0 To Cell.FSlaveCells.Count - 1 Do
-      TempCellList.Add(Cell.FSlaveCells[I]);
-    Cell.RemoveAllOwnedCell();
-    For I := 0 To TempCellList.Count - 1 Do
-    Begin
-      FSlaveCells.Add(TempCellList[I]);
-      TempCellList[I].OwnerCell := Self;
-    End;
+    // TODO :LCJ 
+    {
+     List.CopyFrom( Cell.FSlaveCells);
+     Cell.LiberateSlaves();
+     List.OwnerCell := Self;
+     FSlaveCells.CopyFrom(List);
+    }
+    List := TCellList.Create(ReportControl);
+    try
+      For I := 0 To Cell.FSlaveCells.Count - 1 Do
+        List.Add(Cell.FSlaveCells[I]);
+      Cell.LiberateSlaves();
+      For I := 0 To List.Count - 1 Do
+      Begin
+        FSlaveCells.Add(List[I]);
+        List[I].OwnerCell := Self;
+      End;
+    finally
+      List.Free ;
+    end;
   end;
 End;
 
@@ -691,7 +667,7 @@ Begin
   Own(Cell,false,0);
 End;
 
-Procedure TReportCell.RemoveAllOwnedCell;
+Procedure TReportCell.LiberateSlaves;
 Var
   I: Integer;
   Cell: TReportCell;
@@ -723,22 +699,18 @@ Begin
 End;
 
 Procedure TReportCell.SetCellWidth(CellWidth: Integer);
+var MinWidth : integer;
 Begin
+  MinWidth := 2*FLeftMargin;
   If CellWidth = FCellWidth Then
     Exit;
 
-  If CellWidth > 10 Then
-  Begin
-    FCellWidth := CellWidth;
-    CalcHeight;
-    CalcCellTextRect;
-  End
+  If CellWidth > MinWidth Then
+    FCellWidth := CellWidth
   Else
-  Begin
-    FCellWidth := 10;
-    CalcHeight;
-    CalcCellTextRect;
-  End;
+    FCellWidth := MinWidth;
+  CalcHeight;
+  CalcCellTextRect;
 End;
 
 Function TReportCell.GetCellHeight: Integer;
@@ -882,7 +854,7 @@ begin
     s := FCellText;
   result := GetTextRectInternal(s);
 end;
-function TReportCell.GetTextRectInternal(TempString:String):TRect;
+function TReportCell.GetTextRectInternal(Str:String):TRect;
   function HAlign2DT(FHorzAlign:UINT):UINT;
   var dt : Integer ;
   begin
@@ -893,23 +865,16 @@ function TReportCell.GetTextRectInternal(TempString:String):TRect;
       Else dt := DT_LEFT;
     End;
     Result := dt;
-  end;
-
+  end;        
 var
-  TempRect:TRect;
-  hTempDC: HDC;
-  Format: UINT;
-  BottomCell, ThisCell: TReportCell;
-  TotalHeight,Top: Integer;
-  TempSize: TSize;
+  R:TRect;
 begin
-  SetRect(TempRect, 0, 0, 0, 0);
-
-  TempRect.left := FCellLeft + FLeftMargin;
-  TempRect.top := GetCellTop + 2;
-  TempRect.right := FCellLeft + FCellWidth - FLeftMargin;
-  TempRect.bottom := CalcBottom( TempString,TempRect, HAlign2DT(FHorzAlign),FLogFont);
-  result := TempRect;
+  ReportControl.Os.SetRectEmpty(R);   
+  R.left := FCellLeft + FLeftMargin;
+  R.top := GetCellTop + 2;
+  R.right := FCellLeft + FCellWidth - FLeftMargin;
+  R.bottom := CalcBottom( Str,R, HAlign2DT(FHorzAlign),FLogFont);
+  result := R;
 end;
 function TReportCell.DefaultHeight() : integer; begin
   result := 16 + 2 + FTopLineWidth + FBottomLineWidth ;
@@ -928,8 +893,6 @@ begin
   For I := 0 To FSlaveCells.Count - 1 Do
   Begin
     ThisCell := FSlaveCells[i];
-    // LCJ : TODO : 这样行不行？
-//    ThisCell.OwnerLine.CalcLineHeight;
     ThisCell.OwnerLine.UpdateLineHeight ;
     Height := Height + ThisCell.OwnerLineHeight;
   End;
@@ -1212,13 +1175,10 @@ Var
     FLogFont.lfQuality := 0;
     FLogFont.lfPitchAndFamily := 0;
     FLogFont.lfFaceName := '宋体';
-
-    // Hey, I pass a invalid window's handle to you, what you return to me ?
-    // Haha, is a device context of the DESKTOP WINDOW !
-    hTempDC := GetDC(0);
-
+    hTempDC := GetDC(0);          
     pt.y := GetDeviceCaps(hTempDC, LOGPIXELSY) * FLogFont.lfHeight;
-    pt.y := trunc(pt.y / 720 + 0.5);      // 72 points/inch, 10 decipoints/point
+    // 72 points/inch, 10 decipoints/point
+    pt.y := trunc(pt.y / 720 + 0.5);
     DPtoLP(hTempDC, pt, 1);
     ptOrg.x := 0;
     ptOrg.y := 0;
@@ -1274,7 +1234,6 @@ End;
 
 Function TReportCell.GetOwnerLineHeight: Integer;
 Begin
-  // LCJ :assert 
   Assert(FOwnerLine <> Nil );
   Result := FOwnerLine.LineHeight;
 End;
@@ -1335,7 +1294,6 @@ Begin
 End;
 function TReportCell.IsLastCell: boolean;
 begin
-  //result := OwnerLine.FCells.IndexOf(Self) = OwnerLine.FCells.Count - 1;
   result := CellIndex = OwnerLine.FCells.Count - 1;
 end;
 
@@ -2986,7 +2944,7 @@ Begin
           ThisCell.OwnerCell.RemoveOwnedCell(ThisCell);
 
         If ThisCell.OwnedCellCount > 0 Then
-          ThisCell.RemoveAllOwnedCell;
+          ThisCell.LiberateSlaves;
       End;
       TReportLine(FLineList[I]).Free;
       FLineList.Delete(I);
@@ -3049,7 +3007,7 @@ Begin
     // LCJ : 实际操作就是这一行代码
     //so, Why not c.CellRect?
     DoInvalidateRect( c.FSlaveCells.CellRect);
-    c.RemoveAllOwnedCell;
+    c.LiberateSlaves;
     UpdateLines;
     AddSelectedCell(c);
   End;

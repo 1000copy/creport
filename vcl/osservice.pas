@@ -12,6 +12,7 @@ type
     nPixelsPerInch:integer;
     hDesktopDC :THandle;
   public
+    function DeleteFiles(FilePath, FileMask: String): Boolean;
     function InvalidateRect(hWnd: HWND; lpRect: PRect; bErase: BOOL): BOOL; 
     function RectEquals(r1, r2: TRect): Boolean;
     procedure InflateRect(var r: TRect; dx, dy: integer);
@@ -164,5 +165,37 @@ function WindowsOS.InvalidateRect(hWnd: HWND; lpRect: PRect;
 begin
   result := Windows.InvalidateRect(hwnd,lprect,berase);
 end;
+Function WindowsOS.DeleteFiles(FilePath, FileMask: String): Boolean;
+Var
+  Attributes: integer;
+  DeleteFilesSearchRec: TSearchRec;
+Begin
+  Result := true;
+  Try
+    FindFirst(FilePath + '\' + FileMask, faAnyFile, DeleteFilesSearchRec);
 
+    If Not (DeleteFilesSearchRec.Name = '') Then
+    Begin
+      Result := True;
+      {$WARNINGS OFF}
+      Attributes := FileGetAttr(FilePath + '\' + DeleteFilesSearchRec.Name);
+      FileSetAttr(FilePath + '\' + DeleteFilesSearchRec.Name, Attributes);
+      {$WARNINGS ON}
+      DeleteFile(FilePath + '\' + DeleteFilesSearchRec.Name);
+
+      While FindNext(DeleteFilesSearchRec) = 0 Do
+      Begin
+        {$WARNINGS OFF}
+        Attributes := FileGetAttr(FilePath + '\' + DeleteFilesSearchRec.Name);
+        FileSetAttr(FilePath + '\' + DeleteFilesSearchRec.Name, Attributes);
+        {$WARNINGS ON}
+        DeleteFile(FilePath + '\' + DeleteFilesSearchRec.Name);
+      End;
+    End;                              
+    FindClose(DeleteFilesSearchRec);
+  Except
+    Result := false;
+    Exit;
+  End;
+End;
 end.

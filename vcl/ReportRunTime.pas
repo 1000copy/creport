@@ -131,7 +131,7 @@ Begin
 
   If Not DirectoryExists(strFileDir + 'Temp') Then
     Exit;
-  DeleteFiles(strFileDir + 'Temp', '*.tmp');
+  os.DeleteFiles(strFileDir + 'Temp', '*.tmp');
   Try
     RmDir(strFileDir + 'Temp');
   Except
