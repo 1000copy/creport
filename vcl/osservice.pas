@@ -12,13 +12,15 @@ type
     nPixelsPerInch:integer;
     hDesktopDC :THandle;
   public
-    function MakeSelectRect(FMousePoint, TempPoint: TPoint): TRect;
+    function IsRectEmpty(r: TRect): boolean;
+    function MakeRect(FMousePoint, TempPoint: TPoint): TRect;
     function DeleteFiles(FilePath, FileMask: String): Boolean;
-    function InvalidateRect(hWnd: HWND; lpRect: PRect; bErase: BOOL): BOOL; 
+    function InvalidateRect(hWnd: HWND; lpRect: PRect; bErase: BOOL): BOOL;
     function RectEquals(r1, r2: TRect): Boolean;
     procedure InflateRect(var r: TRect; dx, dy: integer);
     function UnionRect(lprcSrc1, lprcSrc2: TRect): TRect;
     function IntersectRect(lprcSrc1, lprcSrc2: TRect): TRect;
+    function IsIntersect(r1, r2: TRect): boolean;
     function Contains(Bigger, smaller: TRect):boolean;
     procedure SetRectEmpty(var r :TRect);
     function MM2Dot(a:integer):integer;
@@ -199,7 +201,7 @@ Begin
     Exit;
   End;
 End;
-function WindowsOS.MakeSelectRect(FMousePoint,TempPoint:TPoint):TRect;
+function WindowsOS.MakeRect(FMousePoint,TempPoint:TPoint):TRect;
 Var
   RectSelection: TRect;
 begin
@@ -232,4 +234,21 @@ begin
       RectSelection.Bottom := RectSelection.Bottom + 1;
     Result := RectSelection;
 end;
+function WindowsOS.IsIntersect(r1, r2: TRect): boolean;
+begin
+  result := not IsRectEmpty(IntersectRect(r1,r2));  
+end;
+
+function WindowsOS.IsRectEmpty(r: TRect): boolean;
+begin
+  {The IsRectEmpty function determines whether the specified rectangle is empty.
+   An empty rectangle is one that has no area; that is, the coordinate of the \
+   right side is less than or equal to the coordinate of the left side,
+    or the coordinate of the bottom side is less than or equal to the coordinate
+     of the top side.
+    }
+  result := windows.IsRectEmpty(r);
+end;
+
+
 end.

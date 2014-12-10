@@ -121,6 +121,7 @@ Type
     function GetTextHeight: Integer;
     procedure ExpandHeight(delta: integer);
   public
+    function IsSlave:Boolean;
     function Calc_RequiredCellHeight: Integer;
     function GetReportControl: TReportControl;
     function GetSelected: Boolean;
@@ -212,7 +213,7 @@ Type
     Procedure RemoveOwnedCell(Cell: TReportCell);
     Function IsCellOwned(Cell: TReportCell): Boolean;
     Procedure CalcCellTextRect;
-    function IsOwnerCell :Boolean ;
+    function IsMaster :Boolean ;
     function IsBottomest():Boolean;
     Procedure CalcHeight;
     Procedure PaintCell(hPaintDC: HDC; bPrint: Boolean);
@@ -457,7 +458,7 @@ Type
     Procedure FreeEdit;
     Procedure StartMouseDrag(point: TPoint);
     Procedure StartMouseSelect(point: TPoint; Shift: Boolean );
-    Procedure MouseMoveHandler(message: TMSG);
+    Procedure DoMouseMove(p: TPoint;Shift:Boolean);
     procedure SelectLine(row: integer);
     // 选中区的操作
     Function AddSelectedCell(Cell: TReportCell): Boolean;
@@ -927,7 +928,7 @@ Begin
     exit;
   if IsNormalCell  then
     FCellHeight := GetTextHeight + Payload ;
-  if IsOwnerCell  then
+  if IsMaster  then
     FSlaveCells.Last.ExpandHeight (Calc_RequiredCellHeight - GetOwnerCellHeight);
 end;
 procedure TReportCell.ExpandHeight(delta:integer);
@@ -948,7 +949,7 @@ Procedure TReportCell.CalcCellTextRect;
     FCellRect.top := CellTop;
     FCellRect.right := FCellRect.left + FCellWidth;
     FCellRect.bottom := FCellRect.top + OwnerLineHeight;
-    if IsOwnerCell then
+    if IsMaster then
       For I := 0 To FSlaveCells.Count - 1 Do
         Inc(FCellRect.Bottom,FSlaveCells[I].OwnerLineHeight);
   end;
@@ -963,7 +964,7 @@ Procedure TReportCell.CalcCellTextRect;
     R.left := R.Left + FLeftMargin + 1;
     R.top := R.top + FTopLineWidth + 1;
     R.right := R.right - FLeftMargin - 1; 
-    If IsOwnerCell Then begin
+    If IsMaster Then begin
       TextHeight := Calc_RequiredCellHeight ;
       RealHeight := FCellRect.Bottom - FCellRect.Top ;
     end
@@ -1366,7 +1367,7 @@ begin
 end;
 
 
-function TReportCell.IsOwnerCell: Boolean;
+function TReportCell.IsMaster: Boolean;
 begin
   Result := FSlaveCells.Count  >0 ;
 end;
@@ -1810,6 +1811,11 @@ end;
 function TReportCell.NearRightBottom(P: TPoint): Boolean;
 begin
   Result := NearBottom(P) Or NearRight(p)
+end;
+
+function TReportCell.IsSlave: Boolean;
+begin
+  result := OwnerCell <> nil;
 end;
 
 {TReportControl}
@@ -2625,7 +2631,7 @@ Begin
       WM_LBUTTONUP:
         ReleaseCapture; // 这里会导致 GetCapture = Handle，不在成立，因此，可以退出While 。
       WM_MOUSEMOVE:
-          MouseMoveHandler(Msg);
+          DoMouseMove(msg.pt,msg.wParam =5);
     Else
       DispatchMessage(Msg);
     End;
@@ -2634,53 +2640,38 @@ Begin
     ReleaseCapture;
 End;
 
-Procedure TReportControl.MouseMoveHandler(message: TMsg);
+Procedure TReportControl.DoMouseMove(p: TPoint;Shift:Boolean);
 Var
-  TempPoint: TPoint;
   RectSelection, TempRect: TRect;
   ThisCell: TReportCell;
   I, J: Integer;
   ThisLine: TReportLine;
-  Shift:boolean;
 
 Begin
-  TempPoint := message.pt;
-  Shift := message.wParam =5;
-  Windows.ScreenToClient(Handle, TempPoint);
-  RectSelection := os.MakeRect(FMousePoint,TempPoint); 
+  Windows.ScreenToClient(Handle, p);
+  RectSelection := os.MakeRect(FMousePoint,p); 
   //清除掉不在选中矩形中的CELL ; 除非Shift 按下
   If not Shift  Then
     For I := FSelectCells.Count - 1 Downto 0 Do
     Begin
       ThisCell := TReportCell(FSelectCells[I]);
-      IntersectRect(TempRect, ThisCell.CellRect, RectSelection);
-      Begin
-        If Not ((TempRect.right > TempRect.Left) And (TempRect.bottom >
-          TempRect.top)) Then
+      if not os.IsIntersect(ThisCell.CellRect, RectSelection) then
           RemoveSelectedCell(ThisCell);
-      End;
     End;
-
   // 查找选中的Cell
   For I := 0 To FLineList.Count - 1 Do
   Begin
     ThisLine := TReportLine(FLineList[I]);
-    IntersectRect(TempRect, RectSelection, ThisLine.LineRect);
-    If (TempRect.right > TempRect.Left) And (TempRect.bottom > TempRect.top)
-      Then
+    If os.IsIntersect(RectSelection, ThisLine.LineRect) Then
     Begin
       For J := 0 To ThisLine.FCells.Count - 1 Do
       Begin
         ThisCell := TReportCell(ThisLine.FCells[J]);
-        IntersectRect(TempRect, RectSelection, ThisCell.CellRect);
-        If (TempRect.right > TempRect.Left) And (TempRect.bottom > TempRect.top)
-          And
-          Not IsCellSelected(ThisCell) Then
+        if os.IsIntersect(ThisCell.CellRect, RectSelection) Then
         Begin
-          If ThisCell.OwnerCell = Nil Then
-            AddSelectedCell(ThisCell)
-          Else If Not IsCellSelected(ThisCell.OwnerCell) Then
-            AddSelectedCell(ThisCell.OwnerCell);
+          If ThisCell.IsSlave Then
+            ThisCell :=  ThisCell.OwnerCell ;
+          AddSelectedCell(ThisCell);
         End;
       End;
     End;
