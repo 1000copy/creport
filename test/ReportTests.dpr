@@ -12,7 +12,8 @@ uses
   ReportTest in 'ReportTest.pas',
   ReportControl in '..\vcl\ReportControl.pas',
   ReportRunTime in '..\vcl\ReportRunTime.pas',
-  osservice in '..\vcl\osservice.pas';
+  osservice in '..\vcl\osservice.pas',
+  uHornCartesian in '..\vcl\uHornCartesian.pas';
 
 {$R *.res}
 

@@ -5,6 +5,7 @@ interface
 
 uses
   // user
+  uHornCartesian,
   osservice,
   ReportControl,
   ReportRunTime,creport,
@@ -1177,6 +1178,9 @@ type
     Procedure WMPaint(Var Message: TMessage); Message WM_PAINT;
     procedure DoPaint;
     procedure DoPaint1;
+    procedure DoPaint2;
+    procedure DoPaint3;
+
   end;
 procedure TReportTest.FormCartesian ;
 var
@@ -1267,8 +1271,7 @@ begin
   SetViewportOrgEx(hPaintDC, 0,ClientHeight ,0);
   Ellipse(hPaintDC,0,0,1000,1000);
 end;
-
-procedure CForm.DoPaint1;
+procedure CForm.DoPaint2;
 VAR
   saved,HornLength ,HornX,HornY :integer;
 procedure DrawHorn ;
@@ -1316,6 +1319,91 @@ begin
 
 end;
 
+procedure CForm.DoPaint1;
+VAR
+  saved,HornLength ,HornX,HornY :integer;
+var c : Cartesian;   p:TPoint ;
+  function MakePoint(x,y:Integer):TPoint;begin
+   result.x := x;
+   result.y := y;
+  end;
+begin
+   HornX := 100;
+   HornY := 100;
+   c := HornCartesian.Create(hPaintDc);
+   try
+     c.Save;
+     c.Origin := MakePoint(HornX,HornY);
+     c.Oriention := orLeftTop;
+     c.Ratio := 200;
+     c.Go;
+     //
+     c.Origin := MakePoint(ClientWidth - HornX,HornY);
+     c.Oriention := orRightTop;
+     c.Ratio := 100;
+     c.Go;
+     //
+     c.Origin := MakePoint(ClientWidth - HornX,ClientHeight - HornY);
+     c.Oriention := orRightBottom;
+     c.Ratio := 50;
+     c.Go;
+     //
+     c.Origin := MakePoint(HornX,ClientHeight - HornY);
+     c.Oriention := orLeftBottom;
+     c.Go;
+   finally
+     c.Restore;
+     c.free;
+   end;
+end;
+procedure CForm.DoPaint3;
+VAR
+  saved,HornLength ,HornX,HornY :integer;
+procedure DrawHorn ;
+  begin
+   HornLength := 50 ;
+      MoveToEx(hPaintDC, 0, 0, Nil);
+    LineTo(hPaintDC, 0, HornLength);
+    MoveToEx(hPaintDC, 0, 0, Nil);
+    LineTo(hPaintDC, HornLength, 0);
+  end;
+
+
+begin
+  // 这样绘制的4个飞燕（鹿角），确实比起一个个的原点不动，绝对坐标调整的方式来的更好。
+  // GOOGLE:GDI Coordinate Systems - FunctionX
+  HornX := 100;
+  HornY := 100;
+
+  saved := saveDC(hPaintDC);
+
+  SetMapMode(hPaintDC,MM_ISOTROPIC);
+  // Left Top
+
+  SetViewportOrgEx(hPaintDC,HornX,HornY,0);
+  SetViewportExtEx(hPaintDC,1,1,0);
+  SetWindowExtEx(hPaintDC,-1,-1,0);
+  DrawHorn ;
+  // Right Top
+  SetViewportExtEx(hPaintDC,1,1,0);
+  SetWindowExtEx(hPaintDC,1,-1,0);
+  SetViewportOrgEx(hPaintDC,ClientWidth - HornX,HornY,0);
+  DrawHorn ;
+  // Left bottom
+  SetViewportExtEx(hPaintDC,1,1,0);
+  SetWindowExtEx(hPaintDC,-1,1,0);
+  SetViewportOrgEx(hPaintDC,HornX,ClientHeight - HornY,0);
+  DrawHorn ;
+  // right bottom
+  SetViewportExtEx(hPaintDC,1,1,0);
+  SetWindowExtEx(hPaintDC,1,1,0);
+  SetViewportOrgEx(hPaintDC,ClientWidth - HornX,ClientHeight - HornY,0);
+  DrawHorn ;
+
+  restoreDC(hPaintDC,saved);
+  DrawHorn ;
+
+end;
 procedure CForm.WMPaint(var Message: TMessage);
 
 Begin
@@ -1324,6 +1412,7 @@ Begin
   DoPaint1 ;
   EndPaint(Handle, ps);
 End;
+
 
 
 initialization
