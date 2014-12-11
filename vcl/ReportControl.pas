@@ -1950,14 +1950,11 @@ Var
   hGrayPen, hPrevPen: HPEN;
   ThisLine: TReportLine;
   ThisCell: TReportCell;
-  WndSize: TSize;
   rectPaint: TRect;
   Acanvas: Tcanvas;                     // add lzl
   LTempRect: Trect;
 begin
   SetMapMode(hPaintDC, MM_ISOTROPIC);
-  WndSize.cx := Width;
-  WndSize.cy := Height;
 //  SetWindowExtEx(hPaintDC, FPageWidth, FPageHeight, @WndSize);
 //  SetViewPortExtEx(hPaintDC, Width, Height, @WndSize);
   os.SetWindowExtent(hPaintDc,FPageWidth, FPageHeight);
@@ -1966,6 +1963,7 @@ begin
 //  os.SetWindowExtent(hPaintDc,1, 1);
 //  os.SetViewportExtent(hPaintDC, 1, 1,);
 // 可是，笛卡尔坐标是windows支持的。缩放也可以用这个东西来做！不需要自己去算。
+// 而且，在编辑状态下，缩放它干啥？没有多大意思。
   rectPaint := ps.rcPaint;
 
   If FReportScale <> 100 Then
