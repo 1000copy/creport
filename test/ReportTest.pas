@@ -1270,20 +1270,48 @@ end;
 
 procedure CForm.DoPaint1;
 VAR
-  HornLength ,HornX,HornY :integer;
+  saved,HornLength ,HornX,HornY :integer;
+procedure DrawHorn ;
+  begin
+   HornLength := 50 ;
+      MoveToEx(hPaintDC, 0, 0, Nil);
+    LineTo(hPaintDC, 0, HornLength);
+    MoveToEx(hPaintDC, 0, 0, Nil);
+    LineTo(hPaintDC, HornLength, 0);
+  end;
+
 
 begin
   // GOOGLE:GDI Coordinate Systems - FunctionX
   HornX := 100;
   HornY := 100;
-  HornLength := 50 ;
+
+  saved := saveDC(hPaintDC);
+
+  SetMapMode(hPaintDC,MM_ISOTROPIC);
+  // Left Top
   SetViewportOrgEx(hPaintDC,HornX,HornY,0);
   SetViewportExtEx(hPaintDC,1,1,0);
   SetWindowExtEx(hPaintDC,-1,-1,0);
-  MoveToEx(hPaintDC, 0, 0, Nil);
-  LineTo(hPaintDC, 0, HornLength);
-  MoveToEx(hPaintDC, 0, 0, Nil);
-  LineTo(hPaintDC, HornLength, 0);
+  DrawHorn ;
+  // Right Top
+  SetViewportExtEx(hPaintDC,1,1,0);
+  SetWindowExtEx(hPaintDC,1,-1,0);
+  SetViewportOrgEx(hPaintDC,ClientWidth - HornX,HornY,0);
+  DrawHorn ;
+  // Left bottom
+  SetViewportExtEx(hPaintDC,1,1,0);
+  SetWindowExtEx(hPaintDC,-1,1,0);
+  SetViewportOrgEx(hPaintDC,HornX,ClientHeight - HornY,0);
+  DrawHorn ;
+  // right bottom
+  SetViewportExtEx(hPaintDC,1,1,0);
+  SetWindowExtEx(hPaintDC,1,1,0);
+  SetViewportOrgEx(hPaintDC,ClientWidth - HornX,ClientHeight - HornY,0);
+  DrawHorn ;
+
+  restoreDC(hPaintDC,saved);
+
 end;
 
 procedure CForm.WMPaint(var Message: TMessage);
