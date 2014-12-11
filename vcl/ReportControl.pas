@@ -1974,7 +1974,7 @@ begin
 
   hGrayPen := CreatePen(PS_SOLID, 1, RGB(128, 128, 128));
   hPrevPen := SelectObject(hPaintDC, hGrayPen);
-  //   cornice ∑…È‹
+  //   cornice ∑…È‹     horn Í˜Ω«
   // ◊Û…œ
   MoveToEx(hPaintDC, FLeftMargin, FTopMargin, Nil);
   LineTo(hPaintDC, FLeftMargin, FTopMargin - 25);

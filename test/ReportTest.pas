@@ -9,6 +9,7 @@ uses
   ReportControl,
   ReportRunTime,creport,
   // sys
+  messages,
   Classes,
    Math,DBClient,  db,  DBTables,  Graphics,  forms,  Windows,  SysUtils,  TestFramework,Printers;
 
@@ -31,6 +32,7 @@ type
     procedure SetUp; override;
     procedure TearDown; override;
   published
+    procedure FormCartesian;
     procedure SetCellAlign;
     procedure RectInflate;
     procedure TFont2;
@@ -1166,6 +1168,134 @@ begin
       TCreportForm.UninitReport();
     end;
 end;
+type
+  CForm = class (TForm)
+  private
+    hPaintDC: HDC;
+    ps: TPaintStruct;
+  public
+    Procedure WMPaint(Var Message: TMessage); Message WM_PAINT;
+    procedure DoPaint;
+    procedure DoPaint1;
+  end;
+procedure TReportTest.FormCartesian ;
+var
+  form : TForm;
+begin
+    form := CForm.CreateNew (nil);
+    //GOOGLe:not able to create a dynamic form in delphi7
+    //form := CForm.Create (nil);
+    form.Height := 500;
+    form.Width := 1000;
+    try
+      form.ShowModal;
+    finally
+      form.Free;
+    end;
+end;
+
+{ CForm }
+
+procedure CForm.DoPaint;
+begin
+  {
+    The viewport sets the origin and extent of the client area in pixels (or based on the size in pixels) and the window is the origin and extent of the client area in logical units (which can be a user defined scale). The window co-ordinates will then be converted to viewport co-ordinates for display.
+
+    The default mapping mode treats window units as viewport units with the origin at the top left, so all painting to the client area is based on the pixels where the painting is to be done.
+    An example -
+
+    Code:
+    SetMapMode(hdc,MM_ANISOTROPIC);
+    SetWindowOrgEx(hdc,0,0,0);
+    SetWindowExtEx(hdc,2000,2000,0);
+    SetViewportOrgEx(hdc,0,0,0);
+    SetViewportExtEx(hdc,100,100,0);
+    TextOut(hdc,2000,2000,"Hello, World!",13);
+
+    First of all I'm setting the logical units to be used to draw to the window to 2000 by 2000, and then making these units relate to 100 by 100 pixels. So my text will be outputted at 100 pixels across and 100 pixels down in my client area. If I changed the TextOut call to paint at 1000,1000 then the text will be drawn at 50,50 and changing it to 4000,4000 will draw at 200,200.
+
+    If I do something like -
+
+    SetMapMode(hdc,MM_ANISOTROPIC);
+    SetWindowOrgEx(hdc,-1000,-1000,0);
+    SetWindowExtEx(hdc,2000,2000,0);
+    SetViewportOrgEx(hdc,0,0,0);
+    SetViewportExtEx(hdc,100,100,0);
+    TextOut(hdc,0,0,"Hello, World!",13);
+    The the origin of the window now starts at -1000,-1000, so now when I paint the text at 0,0 this translates to 50 pixels across and 50 pixels down (as 0,0 is 1000 logical units from the left and 1000 logical units from the top).
+
+    Alternatively I can adjust where the text is painted by altering the viewport origin -
+
+    Code:
+
+    SetMapMode(hdc,MM_ANISOTROPIC);
+    SetWindowOrgEx(hdc,0,0,0);
+    SetWindowExtEx(hdc,2000,2000,0);
+    SetViewportOrgEx(hdc,50,50,0);
+    SetViewportExtEx(hdc,100,100,0);
+    TextOut(hdc,0,0,"Hello, World!",13);
+    The origin 0,0 has been transformed 50 pixels across the top and 50 pixels down.
+
+    There's probably not much point altering the window orgin and the viewport orgin, you'd alter one and stick with it. However you may want to alter the extent of both so that differing amount of pixels represent a differerent amount of logical units. 
+
+    If you're not sure take the code and stick it in a WM_PAINT message and have a play around with it.
+    }
+  SetMapMode(hPaintDC,MM_ANISOTROPIC);
+  SetWindowOrgEx(hPaintDC,0,0,0);
+  SetWindowExtEx(hPaintDC,1000,1000,0);
+  SetViewportOrgEx(hPaintDC,0,0,0);
+  SetViewportExtEx(hPaintDC,100,100,0);
+  TextOut(hPaintDC,2000,1000,'Hello, World!',13);
+  //
+  SetMapMode(hPaintDC,MM_ANISOTROPIC);
+  SetWindowOrgEx(hPaintDC,-1000,-1000,0);
+  SetWindowExtEx(hPaintDC,2000,2000,0);
+  SetViewportOrgEx(hPaintDC,0,0,0);
+  SetViewportExtEx(hPaintDC,100,100,0);
+  TextOut(hPaintDC,0,0,'Hello, World!',13);
+  //
+  SetMapMode(hPaintDC,MM_ANISOTROPIC);
+  SetWindowOrgEx(hPaintDC,0,0,0);
+  SetWindowExtEx(hPaintDC,2000,2000,0);
+  SetViewportOrgEx(hPaintDC,50,50,0);
+  SetViewportExtEx(hPaintDC,100,100,0);
+  TextOut(hPaintDC,0,0,'Hello, World!',13);
+  //
+  SetMapMode(hPaintDC,MM_ANISOTROPIC);
+  SetWindowExtEx(hPaintDC,1000,-1000,0);
+  SetViewportExtEx(hPaintDC,ClientWidth,ClientHeight,0);
+  SetViewportOrgEx(hPaintDC, 0,ClientHeight ,0);
+  Ellipse(hPaintDC,0,0,1000,1000);
+end;
+
+procedure CForm.DoPaint1;
+VAR
+  HornLength ,HornX,HornY :integer;
+
+begin
+  // GOOGLE:GDI Coordinate Systems - FunctionX
+  HornX := 100;
+  HornY := 100;
+  HornLength := 50 ;
+  SetViewportOrgEx(hPaintDC,HornX,HornY,0);
+  SetViewportExtEx(hPaintDC,1,1,0);
+  SetWindowExtEx(hPaintDC,-1,-1,0);
+  MoveToEx(hPaintDC, 0, 0, Nil);
+  LineTo(hPaintDC, 0, HornLength);
+  MoveToEx(hPaintDC, 0, 0, Nil);
+  LineTo(hPaintDC, HornLength, 0);
+end;
+
+procedure CForm.WMPaint(var Message: TMessage);
+
+Begin
+  // 全部鼠标消息的代码的都舒服了，归一了。现在开始WMPaint.... 
+  hPaintDC := BeginPaint(Handle, ps);
+  DoPaint1 ;
+  EndPaint(Handle, ps);
+End;
+
+
 initialization
   RegisterTests('Framework Suites',[TReportTest.Suite,TReportUITest.Suite,TCDSTest.Suite]);
 end.
