@@ -29,7 +29,8 @@ type
     function Height2LogFontHeight(PointSize :Integer):Integer;
     function Height2LogFontHeight1(PointSize :Integer):Integer;
     function MakeLogFont(Name:String;size:integer):TLogFont;
-
+    procedure SetViewportExtent(hPaintDC:HDC;x,y:integer);
+    procedure SetWindowExtent(hPaintDC:HDC;x,y:integer);
     constructor Create;
     destructor Destroy;
   end;
@@ -261,6 +262,18 @@ begin
     Else dt := DT_LEFT;
   End;
   Result := dt;
+end;
+
+procedure WindowsOS.SetViewportExtent(hPaintDC: HDC; x, y: integer);
+begin
+  SetViewportExtEx(hPaintDC,x,y,0);
+
+end;
+
+procedure WindowsOS.SetWindowExtent(hPaintDC: HDC; x, y: integer);
+begin
+  SetWindowExtEx(hPaintDC,x ,y,0);
+
 end;
 
 end.

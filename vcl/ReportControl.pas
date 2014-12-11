@@ -318,6 +318,7 @@ Type
     procedure DoInvalidateRect(Rect:TRect);
     procedure RecreateEdit(ThisCell: TReportCell);
     procedure DoPaint(hPaintDC: HDC; Handle: HWND; ps: TPaintStruct);
+    procedure DoPaint1(hPaintDC: HDC; Handle: HWND; ps: TPaintStruct);
   protected
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
@@ -1957,6 +1958,136 @@ begin
   SetMapMode(hPaintDC, MM_ISOTROPIC);
   WndSize.cx := Width;
   WndSize.cy := Height;
+//  SetWindowExtEx(hPaintDC, FPageWidth, FPageHeight, @WndSize);
+//  SetViewPortExtEx(hPaintDC, Width, Height, @WndSize);
+  os.SetWindowExtent(hPaintDc,FPageWidth, FPageHeight);
+  os.SetViewportExtent(hPaintDC, Width, Height);
+// FPageWidth  和 Width的关联，就是 FReportScale。所以，下面两行代码不行，因为没有考虑到缩放比例
+//  os.SetWindowExtent(hPaintDc,1, 1);
+//  os.SetViewportExtent(hPaintDC, 1, 1,);
+// 可是，笛卡尔坐标是windows支持的。缩放也可以用这个东西来做！不需要自己去算。
+  rectPaint := ps.rcPaint;
+
+  If FReportScale <> 100 Then
+  Begin
+    rectPaint.Left := trunc(rectPaint.Left * 100 / FReportScale + 0.5);
+    rectPaint.Top := trunc(rectPaint.Top * 100 / FReportScale + 0.5);
+    rectPaint.Right := trunc(rectPaint.Right * 100 / FReportScale + 0.5);
+    rectPaint.Bottom := trunc(rectPaint.Bottom * 100 / FReportScale + 0.5);
+  End;
+
+  Rectangle(hPaintDC, 0, 0, FPageWidth, FPageHeight);
+
+  hGrayPen := CreatePen(PS_SOLID, 1, RGB(128, 128, 128));
+  hPrevPen := SelectObject(hPaintDC, hGrayPen);
+  //   cornice 飞檐     horn 犄角
+  // 左上
+  MoveToEx(hPaintDC, FLeftMargin, FTopMargin, Nil);
+  LineTo(hPaintDC, FLeftMargin, FTopMargin - 25);
+
+  MoveToEx(hPaintDC, FLeftMargin, FTopMargin, Nil);
+  LineTo(hPaintDC, FLeftMargin - 25, FTopMargin);
+
+  // 右上
+  MoveToEx(hPaintDC, FPageWidth - FRightMargin, FTopMargin, Nil);
+  LineTo(hPaintDC, FPageWidth - FRightMargin, FTopMargin - 25);
+
+  MoveToEx(hPaintDC, FPageWidth - FRightMargin, FTopMargin, Nil);
+  LineTo(hPaintDC, FPageWidth - FRightMargin + 25, FTopMargin);
+
+  // 左下
+  MoveToEx(hPaintDC, FLeftMargin, FPageHeight - FBottomMargin, Nil);
+  LineTo(hPaintDC, FLeftMargin, FPageHeight - FBottomMargin + 25);
+
+  MoveToEx(hPaintDC, FLeftMargin, FPageHeight - FBottomMargin, Nil);
+  LineTo(hPaintDC, FLeftMargin - 25, FPageHeight - FBottomMargin);
+
+  // 右下
+  MoveToEx(hPaintDC, FPageWidth - FRightMargin, FPageHeight - FBottomMargin,
+    Nil);
+  LineTo(hPaintDC, FPageWidth - FRightMargin, FPageHeight - FBottomMargin + 25);
+
+  MoveToEx(hPaintDC, FPageWidth - FRightMargin, FPageHeight - FBottomMargin,
+    Nil);
+  LineTo(hPaintDC, FPageWidth - FRightMargin + 25, FPageHeight - FBottomMargin);
+
+  SelectObject(hPaintDC, hPrevPen);
+  DeleteObject(hGrayPen);
+
+  ///////////////////////////////////////////////////////////////////////////
+    // 绘制所有与失效区相交的矩形
+  For I := 0 To FLineList.Count - 1 Do
+  Begin
+    ThisLine := TReportLine(FLineList[I]);
+    For J := 0 To TReportLine(FLineList[i]).FCells.Count - 1 Do
+    Begin
+      ThisCell := TReportCell(ThisLine.FCells[J]);
+
+      If ThisCell.CellRect.Left > rectPaint.Right Then
+        Break;
+
+      If ThisCell.CellRect.Right < rectPaint.Left Then
+        Continue;
+
+      If ThisCell.CellRect.Top > rectPaint.Bottom Then
+        Break;
+
+      If ThisCell.CellRect.Bottom < rectPaint.Top Then
+        Continue;
+
+      Acanvas := Tcanvas.Create;
+      Acanvas.Handle := getdc(Handle);
+      //Acanvas.Draw(x,y,loadbmp(thiscell));
+      LTempRect := ThisCell.FCellRect;
+      LTempRect.Left := trunc((Thiscell.FCellRect.Left) * FReportScale / 100 +
+        0.5) + 3;
+      LTempRect.Top := trunc((Thiscell.FCellRect.Top) * FReportScale / 100 + 0.5)
+        + 3;
+      LTempRect.Right := trunc((Thiscell.FCellRect.Right) * FReportScale / 100 +
+        0.5) - 3;
+      LTempRect.Bottom := trunc((Thiscell.FCellRect.Bottom) * FReportScale / 100
+        + 0.5) - 3;
+      acanvas.StretchDraw(LTempRect, loadbmp(thiscell));
+      ReleaseDC(Handle, ACanvas.Handle);
+      ACanvas.Free;
+
+      If ThisCell.OwnerCell = Nil Then
+        ThisCell.PaintCell(hPaintDC, FPreviewStatus);
+    End;
+  End;
+
+  If Not FPreviewStatus Then
+  Begin
+    For I := 0 To FSelectCells.Count - 1 Do
+    Begin
+      IntersectRect(TempRect, ps.rcPaint,
+        TReportCell(FSelectCells[I]).CellRect);
+      If (TempRect.right >= TempRect.Left) And (TempRect.bottom >= TempRect.top)
+        Then
+        InvertRect(hPaintDC, TempRect);
+    End;
+  End;
+
+  // 划线的算法目前还没有想出来
+  // 各个CELL之间表线重叠的部分如何处理，如何存储这些线的设置呢？显然，现在的方法太土了。
+
+  // 改乐，如果右面的CELL或下面的CELL的左边线或上边线为0时，不画不就得乐。(1998.9.9)
+end;
+procedure TReportControl.DoPaint1(hPaintDC:HDC;Handle:HWND;ps:TPaintStruct);
+Var
+  I, J: Integer;
+  TempRect: TRect;
+  hGrayPen, hPrevPen: HPEN;
+  ThisLine: TReportLine;
+  ThisCell: TReportCell;
+  WndSize: TSize;
+  rectPaint: TRect;
+  Acanvas: Tcanvas;                     // add lzl
+  LTempRect: Trect;
+begin
+  SetMapMode(hPaintDC, MM_ISOTROPIC);
+  WndSize.cx := Width;
+  WndSize.cy := Height;
   SetWindowExtEx(hPaintDC, FPageWidth, FPageHeight, @WndSize);
   SetViewPortExtEx(hPaintDC, Width, Height, @WndSize);
 
@@ -2013,13 +2144,6 @@ begin
   For I := 0 To FLineList.Count - 1 Do
   Begin
     ThisLine := TReportLine(FLineList[I]);
-    {
-        if ThisLine.LineRect.Bottom < ps.rcPaint.top then
-          Continue;
-
-        if ThisLine.LineTop > ps.rcPaint.bottom then
-          Break;
-    }
     For J := 0 To TReportLine(FLineList[i]).FCells.Count - 1 Do
     Begin
       ThisCell := TReportCell(ThisLine.FCells[J]);

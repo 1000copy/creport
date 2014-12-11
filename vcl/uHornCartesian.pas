@@ -15,6 +15,7 @@ type
    Oriention = (orLeftTop=1,orRightTop,orLeftBottom,orRightBottom);
    Cartesian = class
    private
+    os : WindowsOS ;
     saved,HornX,HornY :integer;
     hPaintDC: HDC;
     FOrigin: TPoint;
@@ -27,6 +28,7 @@ type
      procedure OnDraw;virtual;abstract;
    public
     constructor Create(hPaintDC: HDC);
+    destructor Destroy ;override;
     property Origin :TPoint  read FOrigin write SetOrigin;
     // 100 = 1倍放大。 200 为2倍放大。
     property Ratio :integer  read FRatio write SetRatio;
@@ -51,6 +53,7 @@ constructor Cartesian.Create(hPaintDC: HDC);
 begin
   self.hPaintDc := hPaintDc ;
   self.FRatio := 100;
+  os := WindowsOS.Create ;
 end;
 
 procedure Cartesian.Go;
@@ -60,6 +63,7 @@ VAR
 begin
   SetMapMode(hPaintDC,MM_ISOTROPIC);
   SetViewportOrgEx(hPaintDC,Origin.X,Origin.Y,0);
+  // 大小不重要，关键是ViewPointExtent和WindowsExtent的比例 ！
   case Oriention of
   orLeftTop : // Left Top
     begin signx := -1;signy:=-1;  end;
@@ -74,8 +78,10 @@ begin
   // 这辈子，也用上了一回 MulDiv 这么高大上的函数。
   BigBase :=MulDiv(BigFace,FRatio,100);
   //SetViewportExtEx(hPaintDC,trunc(BigFace*F),trunc(BigFace*F),0);
-  SetViewportExtEx(hPaintDC,BigBase,BigBase,0);
-  SetWindowExtEx(hPaintDC,BigFace*signx ,BigFace*signy,0);
+//  SetViewportExtEx(hPaintDC,BigBase,BigBase,0);
+  os.SetViewportExtent(hPaintDC,BigBase,BigBase);
+//  SetWindowExtEx(hPaintDC,BigFace*signx ,BigFace*signy,0);
+  os.SetWindowExtent(hPaintDC,BigFace*signx,BigFace*signy);
   OnDraw;
 end;
 
@@ -110,6 +116,12 @@ end;
 procedure Cartesian.SetRatio(const Value: integer);
 begin
   FRatio := Value;
+end;
+
+destructor Cartesian.Destroy;
+begin
+  os.free;
+  inherited;
 end;
 
 end.
