@@ -1282,6 +1282,7 @@ procedure DrawHorn ;
 
 
 begin
+  // 这样绘制的4个飞燕（鹿角），确实比起一个个的原点不动，绝对坐标调整的方式来的更好。
   // GOOGLE:GDI Coordinate Systems - FunctionX
   HornX := 100;
   HornY := 100;
@@ -1311,6 +1312,7 @@ begin
   DrawHorn ;
 
   restoreDC(hPaintDC,saved);
+  DrawHorn ;
 
 end;
 
