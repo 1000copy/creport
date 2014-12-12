@@ -2052,16 +2052,14 @@ begin
         ThisCell.PaintCell(hPaintDC, FPreviewStatus);
     End;
   End;
-
-  If Not FPreviewStatus Then
+  if not FPreviewStatus then
+  For I := 0 To FSelectCells.Count - 1 Do
   Begin
-    For I := 0 To FSelectCells.Count - 1 Do
-    Begin
-      TempRect := os.IntersectRect( ps.rcPaint,FSelectCells[I].CellRect);
-      if not os.IsRectEmpty(TempRect) then
-        InvertRect(hPaintDC, TempRect);
-    End;
+    TempRect := os.IntersectRect( ps.rcPaint,FSelectCells[I].CellRect);
+    if not os.IsRectEmpty(TempRect) then
+      InvertRect(hPaintDC, TempRect);
   End;
+
 end;
 
 Procedure TReportControl.WMPaint(Var Message: TMessage);
