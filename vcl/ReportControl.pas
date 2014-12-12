@@ -320,6 +320,9 @@ Type
     procedure RecreateEdit(ThisCell: TReportCell);
     procedure DoPaint(hPaintDC: HDC; Handle: HWND; ps: TPaintStruct);
     procedure DrawCornice(hPaintDC: HDC);
+    procedure StartMouseDrag_Backup(point: TPoint);
+    procedure StartMouseDrag_Horz(point: TPoint);
+    procedure StartMouseDrag_Verz(point: TPoint);
   protected
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
@@ -2148,13 +2151,21 @@ Begin
     End;
   End;
 End;
-// 拆分大函数的时候，Delphi的子函数特性真是太管用了。
-// 可以快速把大块拆下来，然后再小块内精耕细作。
-// 计算上下左右边界,限定可以拖动的最大范围
-// TODO: 此函数有副作用。其中还对NextCell赋值了。这个变量后面还要用。
-// TODO: 后面的for块，需要把 Left，Right 做职责分离
 
 Procedure TReportControl.StartMouseDrag(point: TPoint);
+Var
+  ThisCell: TReportCell;
+  RectCell: TRect;
+Begin
+  ThisCell := CellFromPoint(point);
+  RectCell := ThisCell.CellRect;
+  // 置横向标志
+  If abs(RectCell.Bottom - point.y) <= 3 Then
+    StartMouseDrag_Horz(Point)
+  Else
+    StartMouseDrag_Verz(Point) ;
+End;
+Procedure TReportControl.StartMouseDrag_Horz(point: TPoint);
 Var
   TempCell, TempNextCell, ThisCell, NextCell: TReportCell;
   ThisCellsList: TCellList;
@@ -2163,7 +2174,7 @@ Var
   hInvertPen, hPrevPen: HPEN;
   PrevDrawMode, PrevCellWidth, Distance: Integer;
   I, J: Integer;
-  bHorz, bSelectFlag: Boolean;
+  bSelectFlag: Boolean;
   ThisLine, TempLine: TReportLine;
   TempMsg: TMSG;
   BottomCell: TReportCell;
@@ -2185,10 +2196,6 @@ Begin
   PrevDrawMode := SetROP2(hClientDC, R2_NOTXORPEN);
 
   // 置横向标志
-  If abs(RectCell.Bottom - point.y) <= 3 Then
-    bHorz := True
-  Else
-    bHorz := False;
   // 计算 RectBorder , ThisCellsList ，bSelectFlag
   ThisLine := ThisCell.OwnerLine;
   RectBorder.Top := ThisLine.LineTop + 5;
@@ -2214,7 +2221,162 @@ Begin
     End;
   End;
 
-  If Not bHorz Then
+
+  // END OF - 计算 RectBorder , ThisCellsList ，bSelectFlag
+  // 画第一条线
+  Begin
+    FMousePoint.y := trunc(FMousePoint.y / 5 * 5 + 0.5);
+
+    If FMousePoint.y < RectBorder.Top Then
+      FMousePoint.y := RectBorder.Top;
+
+    If FMousePoint.y > RectBorder.Bottom Then
+      FMousePoint.y := RectBorder.Bottom;
+
+    MoveToEx(hClientDC, 0, FMousePoint.y, Nil);
+    LineTo(hClientDC, RectClient.Right, FMousePoint.y);
+    SetCursor(LoadCursor(0, IDC_SIZENS));
+  End;
+
+
+  SetCapture(Handle);
+
+  // 取得鼠标输入，进入第二个消息循环
+  While GetCapture = Handle Do
+  Begin
+    If Not GetMessage(TempMsg, Handle, 0, 0) Then
+    Begin
+      PostQuitMessage(TempMsg.wParam);
+      Break;
+    End;
+
+    Case TempMsg.message Of
+      WM_LBUTTONUP:
+        ReleaseCapture;
+      WM_MOUSEMOVE:
+        Begin
+          MoveToEx(hClientDC, 0, FMousePoint.y, Nil);
+          LineTo(hClientDC, RectClient.Right, FMousePoint.y);
+          FMousePoint := TempMsg.pt;
+          Windows.ScreenToClient(Handle, FMousePoint);
+
+          // 边界检查
+          FMousePoint.y := trunc(FMousePoint.y / 5 * 5 + 0.5);
+
+          If FMousePoint.y < RectBorder.Top Then
+            FMousePoint.y := RectBorder.Top;
+
+          If FMousePoint.y > RectBorder.Bottom Then
+            FMousePoint.y := RectBorder.Bottom;
+
+          MoveToEx(hClientDC, 0, FMousePoint.y, Nil);
+          LineTo(hClientDC, RectClient.Right, FMousePoint.y);
+        End;
+      WM_SETCURSOR:
+        ;
+    Else
+      DispatchMessage(TempMsg);
+    End;
+  End;
+
+  If GetCapture = Handle Then
+    ReleaseCapture;
+
+  Begin
+    // 将反显的线去掉
+    MoveToEx(hClientDC, 0, FMousePoint.y, Nil);
+    LineTo(hClientDC, RectClient.Right, FMousePoint.y);
+
+    // 改变行高
+    // 改变行高
+    If ThisCell.FSlaveCells.Count <= 0 Then
+    Begin
+      // 不跨越其他CELL时
+      BottomCell := ThisCell;
+    End
+    Else
+    Begin
+      // 跨越其他CELL时，取得最下一行的CELL
+      BottomCell := Nil;
+      Top := 0;
+      For I := 0 To ThisCell.FSlaveCells.Count - 1 Do
+      Begin
+        If ThisCell.FSlaveCells[I].CellTop > Top Then
+        Begin
+          BottomCell := ThisCell.FSlaveCells[I];
+          Top := BottomCell.CellTop;
+        End;
+      End;
+    End;
+
+    BottomCell.CalcHeight;
+    BottomCell.OwnerLine.LineHeight := FMousePoint.Y -
+      BottomCell.OwnerLine.LineTop;
+    UpdateLines;
+  End;
+
+
+  SelectObject(hClientDC, hPrevPen);
+  DeleteObject(hInvertPen);
+  SetROP2(hClientDc, PrevDrawMode);
+  ReleaseDC(Handle, hClientDC);
+End;
+Procedure TReportControl.StartMouseDrag_Verz(point: TPoint);
+Var
+  TempCell, TempNextCell, ThisCell, NextCell: TReportCell;
+  ThisCellsList: TCellList;
+  TempRect, RectBorder, RectCell, RectClient: TRect;
+  hClientDC: HDC;
+  hInvertPen, hPrevPen: HPEN;
+  PrevDrawMode, PrevCellWidth, Distance: Integer;
+  I, J: Integer;
+  bSelectFlag: Boolean;
+  ThisLine, TempLine: TReportLine;
+  TempMsg: TMSG;
+  BottomCell: TReportCell;
+  Top: Integer;
+  //  CellList : TList;
+  DragBottom: Integer;
+Begin
+  ThisCell := CellFromPoint(point);
+  RectCell := ThisCell.CellRect;
+  FMousePoint := point;
+  Windows.GetClientRect(Handle, RectClient);
+  ThisCellsList := TCellList.Create(self);
+
+  // 设置线形和绘制模式
+  hClientDC := GetDC(Handle);
+  hInvertPen := CreatePen(PS_DOT, 1, RGB(0, 0, 0));
+  hPrevPen := SelectObject(hClientDC, hInvertPen);
+
+  PrevDrawMode := SetROP2(hClientDC, R2_NOTXORPEN);
+
+
+  // 计算 RectBorder , ThisCellsList ，bSelectFlag
+  ThisLine := ThisCell.OwnerLine;
+  RectBorder.Top := ThisLine.LineTop + 5;
+  RectBorder.Bottom := Height - 10;
+  RectBorder.Right := ClientRect.Right; 
+  NextCell := Nil;
+
+  For I := 0 To ThisLine.FCells.Count - 1 Do
+  Begin
+    TempCell := TReportCell(ThisLine.FCells[I]);
+
+    If ThisCell = TempCell Then
+    Begin
+      RectBorder.Left := ThisCell.CellLeft + 10;
+
+      If I < ThisLine.FCells.Count - 1 Then
+      Begin
+        NextCell := TReportCell(ThisLine.FCells[I + 1]);
+        RectBorder.Right := NextCell.CellLeft + NextCell.CellWidth - 10;
+      End
+      Else
+        RectBorder.Right := ClientRect.Right - 10;
+    End;
+  End;
+
   Begin
     // 若无选中的CELL,或者要改变宽度的CELL和NEXTCELL不在选中区中
     bSelectFlag := False;
@@ -2297,21 +2459,6 @@ Begin
   End;
   // END OF - 计算 RectBorder , ThisCellsList ，bSelectFlag
   // 画第一条线
-  If bHorz Then
-  Begin
-    FMousePoint.y := trunc(FMousePoint.y / 5 * 5 + 0.5);
-
-    If FMousePoint.y < RectBorder.Top Then
-      FMousePoint.y := RectBorder.Top;
-
-    If FMousePoint.y > RectBorder.Bottom Then
-      FMousePoint.y := RectBorder.Bottom;
-
-    MoveToEx(hClientDC, 0, FMousePoint.y, Nil);
-    LineTo(hClientDC, RectClient.Right, FMousePoint.y);
-    SetCursor(LoadCursor(0, IDC_SIZENS));
-  End
-  Else
   Begin
     FMousePoint.x := trunc(FMousePoint.x / 5 * 5 + 0.5);
 
@@ -2341,26 +2488,6 @@ Begin
       WM_LBUTTONUP:
         ReleaseCapture;
       WM_MOUSEMOVE:
-        If bHorz Then
-        Begin
-          MoveToEx(hClientDC, 0, FMousePoint.y, Nil);
-          LineTo(hClientDC, RectClient.Right, FMousePoint.y);
-          FMousePoint := TempMsg.pt;
-          Windows.ScreenToClient(Handle, FMousePoint);
-
-          // 边界检查
-          FMousePoint.y := trunc(FMousePoint.y / 5 * 5 + 0.5);
-
-          If FMousePoint.y < RectBorder.Top Then
-            FMousePoint.y := RectBorder.Top;
-
-          If FMousePoint.y > RectBorder.Bottom Then
-            FMousePoint.y := RectBorder.Bottom;
-
-          MoveToEx(hClientDC, 0, FMousePoint.y, Nil);
-          LineTo(hClientDC, RectClient.Right, FMousePoint.y);
-        End
-        Else
         Begin
           MoveToEx(hClientDC, FMousePoint.x, 0, Nil);
           LineTo(hClientDC, FMousePoint.x, RectClient.Bottom);
@@ -2388,40 +2515,7 @@ Begin
   If GetCapture = Handle Then
     ReleaseCapture;
 
-  If bHorz Then
-  Begin
-    // 将反显的线去掉
-    MoveToEx(hClientDC, 0, FMousePoint.y, Nil);
-    LineTo(hClientDC, RectClient.Right, FMousePoint.y);
 
-    // 改变行高
-    // 改变行高
-    If ThisCell.FSlaveCells.Count <= 0 Then
-    Begin
-      // 不跨越其他CELL时
-      BottomCell := ThisCell;
-    End
-    Else
-    Begin
-      // 跨越其他CELL时，取得最下一行的CELL
-      BottomCell := Nil;
-      Top := 0;
-      For I := 0 To ThisCell.FSlaveCells.Count - 1 Do
-      Begin
-        If ThisCell.FSlaveCells[I].CellTop > Top Then
-        Begin
-          BottomCell := ThisCell.FSlaveCells[I];
-          Top := BottomCell.CellTop;
-        End;
-      End;
-    End;
-
-    BottomCell.CalcHeight;
-    BottomCell.OwnerLine.LineHeight := FMousePoint.Y -
-      BottomCell.OwnerLine.LineTop;
-    UpdateLines;
-  End
-  Else
   Begin
     // 将反显的线去掉
     MoveToEx(hClientDC, FMousePoint.x, 0, Nil);
@@ -2542,7 +2636,7 @@ Begin
   SetROP2(hClientDc, PrevDrawMode);
   ReleaseDC(Handle, hClientDC);
 End;
-Procedure TReportControl.StartMouseDrag(point: TPoint);
+Procedure TReportControl.StartMouseDrag_Backup(point: TPoint);
 Var
   TempCell, TempNextCell, ThisCell, NextCell: TReportCell;
   ThisCellsList: TCellList;
