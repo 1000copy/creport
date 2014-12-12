@@ -2202,7 +2202,7 @@ Begin
   RectBorder.Bottom := Height - 10;
   RectBorder.Right := ClientRect.Right; 
   NextCell := Nil;
-
+  // refactring： Left ,Right计算的分离
   For I := 0 To ThisLine.FCells.Count - 1 Do
   Begin
     TempCell := TReportCell(ThisLine.FCells[I]);
@@ -2220,7 +2220,7 @@ Begin
         RectBorder.Right := ClientRect.Right - 10;
     End;
   End;
-
+  // refacting end -Left ,Right计算的分离
 
   // END OF - 计算 RectBorder , ThisCellsList ，bSelectFlag
   // 画第一条线
