@@ -2203,14 +2203,19 @@ Begin
   RectBorder.Right := ClientRect.Right; 
   NextCell := Nil;
   // refactring£∫ Left ,Rightº∆À„µƒ∑÷¿Î
+  // left 
   For I := 0 To ThisLine.FCells.Count - 1 Do
   Begin
     TempCell := TReportCell(ThisLine.FCells[I]);
-
+    If ThisCell = TempCell Then
+      RectBorder.Left := ThisCell.CellLeft + 10;
+  End;
+  // right
+  For I := 0 To ThisLine.FCells.Count - 1 Do
+  Begin
+    TempCell := TReportCell(ThisLine.FCells[I]);
     If ThisCell = TempCell Then
     Begin
-      RectBorder.Left := ThisCell.CellLeft + 10;
-
       If I < ThisLine.FCells.Count - 1 Then
       Begin
         NextCell := TReportCell(ThisLine.FCells[I + 1]);
