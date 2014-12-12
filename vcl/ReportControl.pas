@@ -1031,29 +1031,31 @@ Var
     DrawLine( FCellRect.left, FCellRect.bottom,FCellRect.right, FCellRect.bottom,color,FBottomLineWidth);
   end;
   procedure DrawFrameLine();
-  var cGrey,cBlack: COLORREF ;
+  var cBlack: COLORREF ;
   begin
-    cGrey :=  RGB(192, 192, 192);cBlack := RGB(0, 0, 0);
+    cBlack := RGB(0, 0, 0);
     // 绘制边框
     If FLeftLine Then
-      DrawLeft(cBlack)
-    else if (not bPrint) and (CellIndex = 0) then
-      DrawLeft(cGrey);
-
+      DrawLeft(cBlack);
     If FTopLine Then
-      DrawTop(cBlack)
-    else if (not bPrint) and (OwnerLine.Index = 0) then
-      DrawTop(cGrey);
-
+      DrawTop(cBlack);
     If FRightLine Then
-      DrawRight(cBlack)
-    else if (not bPrint)  then
-      DrawRight(cGrey);
-
+      DrawRight(cBlack); 
     If FBottomLine Then
-      DrawBottom(cBlack)
-    else if (not bPrint)  then
-      DrawBottom(cGrey); 
+      DrawBottom(cBlack);
+  end;
+  procedure DrawAuxiliaryLine ;
+  var cGrey: COLORREF ;
+  begin
+    cGrey :=  RGB(192, 192, 192);
+    if (not FLeftLine) and (not bPrint) and (CellIndex = 0) then
+      DrawLeft(cGrey);
+    if (not FTopLine) and (not bPrint) and (OwnerLine.Index = 0) then
+      DrawTop(cGrey);
+    if (not FRightLine) and (not bPrint)  then
+      DrawRight(cGrey);
+    if (not FBottomLine )and (not bPrint)  then
+      DrawBottom(cGrey);
   end;
   procedure FillBg(FCellRect:TRect;FBackGroundColor:COLORREF);
   var TempRect:TRect;
@@ -1154,6 +1156,7 @@ Begin
     SetBkMode(hPaintDC, TRANSPARENT);
     FillBg ( FCellRect,FBackGroundColor);
     DrawFrameLine();
+    DrawAuxiliaryLine ;
     DrawDragon;
     DrawContentText ;
   finally
@@ -1813,29 +1816,24 @@ function TReportCell.IsSlave: Boolean;
 begin
   result := OwnerCell <> nil;
 end;
-  procedure TReportCell.DrawImage;
-  Var
-    Acanvas: Tcanvas;                 
-    LTempRect: Trect;
-  begin
-      Acanvas := Tcanvas.Create;
-      Acanvas.Handle := getdc(ReportControl.Handle);
-      LTempRect := FCellRect;
-      LTempRect := FCellRect;
-      ReportControl.Os.ScaleRect(LTempRect, ReportControl.FReportScale);
-      ReportControl.Os.InflateRect(LTempRect,-3,-3);
-//      LTempRect.Left := trunc((FCellRect.Left) * ReportControl.FReportScale / 100 +
-//      0.5) + 3;
-//      LTempRect.Top := trunc((FCellRect.Top) * ReportControl.FReportScale / 100 + 0.5)
-//      + 3;
-//      LTempRect.Right := trunc((FCellRect.Right) * ReportControl.FReportScale / 100 +
-//      0.5) - 3;
-//      LTempRect.Bottom := trunc((FCellRect.Bottom) * ReportControl.FReportScale / 100
-//      + 0.5) - 3;
-      acanvas.StretchDraw(LTempRect, ReportControl.loadbmp(self));
+procedure TReportCell.DrawImage;
+Var
+  Acanvas: Tcanvas;
+  R: Trect;
+begin
+    Acanvas := Tcanvas.Create;
+    Acanvas.Handle := getdc(ReportControl.Handle);
+    try
+      R := FCellRect;
+      R := FCellRect;
+      ReportControl.Os.ScaleRect(R, ReportControl.FReportScale);
+      ReportControl.Os.InflateRect(R,-3,-3);
+      acanvas.StretchDraw(R, ReportControl.loadbmp(self));
+      finally
       ReleaseDC(ReportControl.Handle, ACanvas.Handle);
       ACanvas.Free;
-  end;
+    end;
+end;
 {TReportControl}
 
 Procedure TReportControl.CreateWnd;
@@ -2011,8 +2009,6 @@ begin
   end;
 end;
 procedure TReportControl.DoPaint(hPaintDC:HDC;Handle:HWND;ps:TPaintStruct);
-
-
 Var
   I, J: Integer;
   TempRect: TRect;
@@ -2037,8 +2033,6 @@ begin
   os.InverseScaleRect(rectPaint,FReportScale);
   Rectangle(hPaintDC, 0, 0, FPageWidth, FPageHeight);
   DrawCornice(hPaintDC);
-  ///////////////////////////////////////////////////////////////////////////
-    // 绘制所有与失效区相交的矩形
   For I := 0 To FLineList.Count - 1 Do
   Begin
     ThisLine := TReportLine(FLineList[I]);
@@ -2048,18 +2042,14 @@ begin
 
       If ThisCell.CellRect.Left > rectPaint.Right Then
         Break;
-
       If ThisCell.CellRect.Right < rectPaint.Left Then
         Continue;
-
       If ThisCell.CellRect.Top > rectPaint.Bottom Then
-        Break;
-
+        Break;                                        
       If ThisCell.CellRect.Bottom < rectPaint.Top Then
         Continue;
       ThisCell.DrawImage ;
-
-      If ThisCell.OwnerCell = Nil Then
+      If not ThisCell.IsSlave Then
         ThisCell.PaintCell(hPaintDC, FPreviewStatus);
     End;
   End;
@@ -2068,18 +2058,11 @@ begin
   Begin
     For I := 0 To FSelectCells.Count - 1 Do
     Begin
-      IntersectRect(TempRect, ps.rcPaint,
-        TReportCell(FSelectCells[I]).CellRect);
-      If (TempRect.right >= TempRect.Left) And (TempRect.bottom >= TempRect.top)
-        Then
+      TempRect := os.IntersectRect( ps.rcPaint,FSelectCells[I].CellRect);
+      if not os.IsRectEmpty(TempRect) then
         InvertRect(hPaintDC, TempRect);
     End;
   End;
-
-  // 划线的算法目前还没有想出来
-  // 各个CELL之间表线重叠的部分如何处理，如何存储这些线的设置呢？显然，现在的方法太土了。
-
-  // 改乐，如果右面的CELL或下面的CELL的左边线或上边线为0时，不画不就得乐。(1998.9.9)
 end;
 procedure TReportControl.DoPaint1(hPaintDC:HDC;Handle:HWND;ps:TPaintStruct);
 Var
@@ -2207,18 +2190,14 @@ begin
   // 改乐，如果右面的CELL或下面的CELL的左边线或上边线为0时，不画不就得乐。(1998.9.9)
 end;
 Procedure TReportControl.WMPaint(Var Message: TMessage);
-
 Var
   hPaintDC: HDC;
-  ps: TPaintStruct; 
+  ps: TPaintStruct;
 Begin
-  // 全部鼠标消息的代码的都舒服了，归一了。现在开始WMPaint.... 
+  // 全部鼠标消息的代码的都舒服了，归一了。现在开始WMPaint....
   hPaintDC := BeginPaint(Handle, ps);
-
   DoPaint(hPaintDc,Handle,ps);
-
   EndPaint(Handle, ps);
-
 End;
 
 Procedure TReportControl.WMLButtonDBLClk(Var Message: TMessage);
