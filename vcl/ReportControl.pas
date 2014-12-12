@@ -324,6 +324,7 @@ Type
     procedure StartMouseDrag_Backup(point: TPoint);
     procedure StartMouseDrag_Horz(point: TPoint);
     procedure StartMouseDrag_Verz(point: TPoint);
+    procedure MaxDragExtent(ThisCell: TReportCell; var RectBorder: TRect);
   protected
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
@@ -2187,6 +2188,24 @@ Begin
     StartMouseDrag_Verz(Point) ;
 End;
 const DRAGMARGIN =10;
+procedure TReportControl.MaxDragExtent(ThisCell:TReportCell;var RectBorder: TRect);
+var
+  NextCell: TReportCell;
+  ThisLine, TempLine: TReportLine;
+begin
+  ThisLine := ThisCell.OwnerLine;
+  RectBorder.Top := ThisLine.LineTop + 5;
+  RectBorder.Bottom := Height - 10;
+  NextCell := Nil;
+  RectBorder.Left := ThisCell.CellLeft + DRAGMARGIN;
+  If ThisCell.CellIndex < ThisLine.FCells.Count - 1 Then
+  Begin
+    NextCell := ThisLine.FCells[ThisCell.CellIndex + 1];
+    RectBorder.Right := NextCell.CellLeft + NextCell.CellWidth - DRAGMARGIN;
+  End
+  Else
+    RectBorder.Right := ClientRect.Right - DRAGMARGIN;
+end;
 Procedure TReportControl.StartMouseDrag_Horz(point: TPoint);
 Var
   TempCell, TempNextCell, ThisCell: TReportCell;
@@ -2199,32 +2218,8 @@ Var
   TempMsg: TMSG;
   BottomCell: TReportCell;
   Top: Integer;
-  //  CellList : TList;
   DragBottom: Integer;
-  procedure MaxDragExtent(ThisCell:TReportCell;var RectBorder: TRect);
-  var
-    NextCell: TReportCell;
-    ThisLine, TempLine: TReportLine;
-  begin
-    ThisLine := ThisCell.OwnerLine;
-    RectBorder.Top := ThisLine.LineTop + 5;
-    RectBorder.Bottom := Height - 10;
-    NextCell := Nil;
-    // refactring： Left ,Right计算的分离
-    // left
-    RectBorder.Left := ThisCell.CellLeft + DRAGMARGIN;
-    // right
-    Begin
-      If ThisCell.CellIndex < ThisLine.FCells.Count - 1 Then
-      Begin
-        NextCell := ThisLine.FCells[ThisCell.CellIndex + 1];
-        RectBorder.Right := NextCell.CellLeft + NextCell.CellWidth - DRAGMARGIN;
-      End
-      Else
-        RectBorder.Right := ClientRect.Right - DRAGMARGIN;
-    End;
-    // refacting end -Left ,Right计算的分离
-  end;
+
   procedure DrawHorzLine(HClientDC:HDC;y :integer;RectBorder:TRect);
   var  RectClient: TRect;
   begin
@@ -2233,39 +2228,22 @@ Var
 
     If y > RectBorder.Bottom Then
       y := RectBorder.Bottom;
-    MoveToEx(hClientDC, 0, FMousePoint.y, Nil);
+    MoveToEx(hClientDC, 0, Y, Nil);
     Windows.GetClientRect(Handle, RectClient);
-    LineTo(hClientDC, RectClient.Right, FMousePoint.y);
+    LineTo(hClientDC, RectClient.Right, Y);
   end;
   procedure UpdateHeight(Y:Integer);  var i :integer;
   begin
     If ThisCell.FSlaveCells.Count <= 0 Then
-    Begin
-      // 不跨越其他CELL时
-      BottomCell := ThisCell;
-    End
+      BottomCell := ThisCell
     Else
-    Begin
-      // 跨越其他CELL时，取得最下一行的CELL
       BottomCell:= ThisCell.GetBottomest;
-//      BottomCell := Nil;
-//      Top := 0;
-//      For I := 0 To ThisCell.FSlaveCells.Count - 1 Do
-//      Begin
-//        If ThisCell.FSlaveCells[I].CellTop > Top Then
-//        Begin
-//          BottomCell := ThisCell.FSlaveCells[I];
-//          Top := BottomCell.CellTop;
-//        End;
-//      End;
-    End;
     BottomCell.CalcHeight;
     BottomCell.OwnerLine.LineHeight := Y -
       BottomCell.OwnerLine.LineTop;
     UpdateLines;         
   end;
-Begin
-
+Begin      
   // 设置线形和绘制模式
   hClientDC := GetDC(Handle);
   hInvertPen := CreatePen(PS_DOT, 1, RGB(0, 0, 0));
@@ -2276,10 +2254,8 @@ Begin
     RectCell := ThisCell.CellRect;
     FMousePoint := point;
     Windows.GetClientRect(Handle, RectClient);
-    // 计算 RectBorder , ThisCellsList ，bSelectFlag
     MaxDragExtent (ThisCell,RectBorder);
-
-    // 第一个横线（虚线），指示当前拖动位置
+    // 第一个横线 ，指示当前拖动位置
     Begin
       FMousePoint.y := trunc(FMousePoint.y / 5 * 5 + 0.5);
       DrawHorzLine(hClientDC,FMousePoint.y,RectBorder);
@@ -2294,8 +2270,7 @@ Begin
       Begin
         PostQuitMessage(TempMsg.wParam);
         Break;
-      End;
-
+      End;      
       Case TempMsg.message Of
         WM_LBUTTONUP:
           ReleaseCapture;
@@ -2304,8 +2279,7 @@ Begin
             // XOR prev indicator line
             DrawHorzLine(hClientDC,FMousePoint.y,RectBorder);
             FMousePoint := TempMsg.pt;
-            Windows.ScreenToClient(Handle, FMousePoint);        
-            // 边界检查
+            Windows.ScreenToClient(Handle, FMousePoint);
             FMousePoint.y := trunc(FMousePoint.y / 5 * 5 + 0.5);
             DrawHorzLine(hClientDC,FMousePoint.y,RectBorder);
           End;
@@ -2314,8 +2288,7 @@ Begin
       Else
         DispatchMessage(TempMsg);
       End;
-    End;
-
+    End;               
     If GetCapture = Handle Then
       ReleaseCapture; 
     // XOR Last Line
