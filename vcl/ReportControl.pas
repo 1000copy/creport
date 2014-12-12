@@ -2165,6 +2165,7 @@ Begin
   Else
     StartMouseDrag_Verz(Point) ;
 End;
+const DRAGMARGIN =10;
 Procedure TReportControl.StartMouseDrag_Horz(point: TPoint);
 Var
   TempCell, TempNextCell, ThisCell, NextCell: TReportCell;
@@ -2181,6 +2182,7 @@ Var
   Top: Integer;
   //  CellList : TList;
   DragBottom: Integer;
+
 Begin
   ThisCell := CellFromPoint(point);
   RectCell := ThisCell.CellRect;
@@ -2200,30 +2202,19 @@ Begin
   ThisLine := ThisCell.OwnerLine;
   RectBorder.Top := ThisLine.LineTop + 5;
   RectBorder.Bottom := Height - 10;
-  RectBorder.Right := ClientRect.Right; 
   NextCell := Nil;
   // refactring： Left ,Right计算的分离
   // left 
-  For I := 0 To ThisLine.FCells.Count - 1 Do
-  Begin
-    TempCell := TReportCell(ThisLine.FCells[I]);
-    If ThisCell = TempCell Then
-      RectBorder.Left := ThisCell.CellLeft + 10;
-  End;
+  RectBorder.Left := ThisCell.CellLeft + DRAGMARGIN;
   // right
-  For I := 0 To ThisLine.FCells.Count - 1 Do
   Begin
-    TempCell := TReportCell(ThisLine.FCells[I]);
-    If ThisCell = TempCell Then
+    If ThisCell.CellIndex < ThisLine.FCells.Count - 1 Then
     Begin
-      If I < ThisLine.FCells.Count - 1 Then
-      Begin
-        NextCell := TReportCell(ThisLine.FCells[I + 1]);
-        RectBorder.Right := NextCell.CellLeft + NextCell.CellWidth - 10;
-      End
-      Else
-        RectBorder.Right := ClientRect.Right - 10;
-    End;
+      NextCell := ThisLine.FCells[I + 1];
+      RectBorder.Right := NextCell.CellLeft + NextCell.CellWidth - DRAGMARGIN;
+    End
+    Else
+      RectBorder.Right := ClientRect.Right - DRAGMARGIN;
   End;
   // refacting end -Left ,Right计算的分离
 
