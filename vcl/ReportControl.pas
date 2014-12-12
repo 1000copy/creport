@@ -2165,6 +2165,8 @@ Var
   Top: Integer;
   //  CellList : TList;
   DragBottom: Integer;
+  // 拆分大函数的时候，Delphi的子函数特性真是太管用了。
+  // 可以快速把大块拆下来，然后再小块内精耕细作。
   // 计算上下左右边界,限定可以拖动的最大范围
   procedure MaxDragExtent(var RectBorder :TRect);
   var
