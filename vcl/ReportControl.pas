@@ -2007,38 +2007,36 @@ begin
     DeleteObject(hGrayPen);
   end;
 end;
-procedure TReportControl.DoPaint(hPaintDC:HDC;Handle:HWND;ps:TPaintStruct);
-Var
-  I, J: Integer;
-  TempRect: TRect;
-  hGrayPen, hPrevPen: HPEN;
-  ThisLine: TReportLine;
-  ThisCell: TReportCell;
-  rectPaint: TRect;
-  Acanvas: Tcanvas;                     // add lzl
-  LTempRect: Trect;
-begin
-  SetMapMode(hPaintDC, MM_ISOTROPIC);
-//  SetWindowExtEx(hPaintDC, FPageWidth, FPageHeight, @WndSize);
-//  SetViewPortExtEx(hPaintDC, Width, Height, @WndSize);
-  os.SetWindowExtent(hPaintDc,FPageWidth, FPageHeight);
-  os.SetViewportExtent(hPaintDC, Width, Height);
 // FPageWidth  和 Width的关联，就是 FReportScale。所以，下面两行代码不行，因为没有考虑到缩放比例
 //  os.SetWindowExtent(hPaintDc,1, 1);
 //  os.SetViewportExtent(hPaintDC, 1, 1,);
 // 可是，笛卡尔坐标是windows支持的。缩放也可以用这个东西来做！不需要自己去算。
 // 而且，在编辑状态下，缩放它干啥？没有多大意思。
+//  这函数名，读起来，像是卡带。你读下试试？
+//  SetWindowExtEx(hPaintDC, FPageWidth, FPageHeight, @WndSize);
+//  SetViewPortExtEx(hPaintDC, Width, Height, @WndSize);
+procedure TReportControl.DoPaint(hPaintDC:HDC;Handle:HWND;ps:TPaintStruct);
+Var
+  I, J: Integer;
+  TempRect: TRect;
+  ThisLine: TReportLine;
+  ThisCell: TReportCell;
+  rectPaint: TRect;
+begin
+  SetMapMode(hPaintDC, MM_ISOTROPIC);
+
+  os.SetWindowExtent(hPaintDc,FPageWidth, FPageHeight);
+  os.SetViewportExtent(hPaintDC, Width, Height);
   rectPaint := ps.rcPaint;
   os.InverseScaleRect(rectPaint,FReportScale);
   Rectangle(hPaintDC, 0, 0, FPageWidth, FPageHeight);
   DrawCornice(hPaintDC);
   For I := 0 To FLineList.Count - 1 Do
   Begin
-    ThisLine := TReportLine(FLineList[I]);
-    For J := 0 To TReportLine(FLineList[i]).FCells.Count - 1 Do
+    ThisLine := FLineList[I];
+    For J := 0 To FLineList[i].FCells.Count - 1 Do
     Begin
-      ThisCell := TReportCell(ThisLine.FCells[J]);
-
+      ThisCell := ThisLine.FCells[J]; 
       If ThisCell.CellRect.Left > rectPaint.Right Then
         Break;
       If ThisCell.CellRect.Right < rectPaint.Left Then
@@ -2053,13 +2051,12 @@ begin
     End;
   End;
   if not FPreviewStatus then
-  For I := 0 To FSelectCells.Count - 1 Do
-  Begin
-    TempRect := os.IntersectRect( ps.rcPaint,FSelectCells[I].CellRect);
-    if not os.IsRectEmpty(TempRect) then
-      InvertRect(hPaintDC, TempRect);
-  End;
-
+    For I := 0 To FSelectCells.Count - 1 Do
+    Begin
+      TempRect := os.IntersectRect( ps.rcPaint,FSelectCells[I].CellRect);
+      if not os.IsRectEmpty(TempRect) then
+        InvertRect(hPaintDC, TempRect);
+    End;     
 end;
 
 Procedure TReportControl.WMPaint(Var Message: TMessage);
@@ -2151,7 +2148,7 @@ Begin
     End;
   End;
 End;
-
+              、next
 Procedure TReportControl.StartMouseDrag(point: TPoint);
 Var
   TempCell, TempNextCell, ThisCell, NextCell: TReportCell;
@@ -2938,10 +2935,6 @@ Begin
     FSelectCells[I].BottomLineWidth := nBottomLineWidth;
 
     CellRect := FSelectCells[I].CellRect;
-//    CellRect.Left := CellRect.left - 1;
-//    CellRect.Top := CellRect.top - 1;
-//    CellRect.Right := CellRect.Right + 1;
-//    CellRect.Bottom := CellRect.Bottom + 1;
     os.InflateRect(CellRect,1,1);
     InvalidateRect(Handle, @CellRect, false);
   End;
