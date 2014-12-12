@@ -2542,6 +2542,394 @@ Begin
   SetROP2(hClientDc, PrevDrawMode);
   ReleaseDC(Handle, hClientDC);
 End;
+Procedure TReportControl.StartMouseDrag(point: TPoint);
+Var
+  TempCell, TempNextCell, ThisCell, NextCell: TReportCell;
+  ThisCellsList: TCellList;
+  TempRect, RectBorder, RectCell, RectClient: TRect;
+  hClientDC: HDC;
+  hInvertPen, hPrevPen: HPEN;
+  PrevDrawMode, PrevCellWidth, Distance: Integer;
+  I, J: Integer;
+  bHorz, bSelectFlag: Boolean;
+  ThisLine, TempLine: TReportLine;
+  TempMsg: TMSG;
+  BottomCell: TReportCell;
+  Top: Integer;
+  //  CellList : TList;
+  DragBottom: Integer;
+Begin
+  ThisCell := CellFromPoint(point);
+  RectCell := ThisCell.CellRect;
+  FMousePoint := point;
+  Windows.GetClientRect(Handle, RectClient);
+  ThisCellsList := TCellList.Create(self);
+
+  // 设置线形和绘制模式
+  hClientDC := GetDC(Handle);
+  hInvertPen := CreatePen(PS_DOT, 1, RGB(0, 0, 0));
+  hPrevPen := SelectObject(hClientDC, hInvertPen);
+
+  PrevDrawMode := SetROP2(hClientDC, R2_NOTXORPEN);
+
+  // 置横向标志
+  If abs(RectCell.Bottom - point.y) <= 3 Then
+    bHorz := True
+  Else
+    bHorz := False;
+  // 计算 RectBorder , ThisCellsList ，bSelectFlag
+  ThisLine := ThisCell.OwnerLine;
+  RectBorder.Top := ThisLine.LineTop + 5;
+  RectBorder.Bottom := Height - 10;
+  RectBorder.Right := ClientRect.Right; 
+  NextCell := Nil;
+
+  For I := 0 To ThisLine.FCells.Count - 1 Do
+  Begin
+    TempCell := TReportCell(ThisLine.FCells[I]);
+
+    If ThisCell = TempCell Then
+    Begin
+      RectBorder.Left := ThisCell.CellLeft + 10;
+
+      If I < ThisLine.FCells.Count - 1 Then
+      Begin
+        NextCell := TReportCell(ThisLine.FCells[I + 1]);
+        RectBorder.Right := NextCell.CellLeft + NextCell.CellWidth - 10;
+      End
+      Else
+        RectBorder.Right := ClientRect.Right - 10;
+    End;
+  End;
+
+  If Not bHorz Then
+  Begin
+    // 若无选中的CELL,或者要改变宽度的CELL和NEXTCELL不在选中区中
+    bSelectFlag := False;
+
+    If FSelectCells.Count <= 0 Then
+      bSelectFlag := True;
+
+    If NextCell = Nil Then
+    Begin
+      If (Not IsCellSelected(ThisCell)) And (Not IsCellSelected(NextCell)) Then
+        bSelectFlag := True;
+    End
+    Else If (Not IsCellSelected(ThisCell)) And (Not IsCellSelected(NextCell))
+      And
+      (Not IsCellSelected(NextCell.OwnerCell)) Then
+      bSelectFlag := True;
+
+    If bSelectFlag Then
+    Begin
+      For I := 0 To FLineList.Count - 1 Do
+      Begin
+        TempLine := TReportLine(FLineList[I]);
+        For J := 0 To TempLine.FCells.Count - 1 Do
+        Begin
+          TempCell := TReportCell(TempLine.FCells[J]);
+          // 若该CELL的右边等于选中的CELL的右边，将该CELL和NEXTCELL加入到两个LIST中去
+          If TempCell.CellRect.Right = ThisCell.CellRect.Right Then
+          Begin
+            ThisCellsList.Add(TempCell);
+
+            If TempCell.CellLeft + 10 > RectBorder.Left Then
+              RectBorder.Left := TempCell.CellLeft + 10;
+
+            If J < TempLine.FCells.Count - 1 Then
+            Begin
+              TempNextCell := TReportCell(TempLine.FCells[J + 1]);
+              If TempNextCell.CellRect.Right - 10 < RectBorder.Right Then
+                RectBorder.Right := TempNextCell.CellRect.Right - 10;
+            End;
+          End;
+        End;
+      End;
+    End
+    Else
+    Begin
+      For I := 0 To FLineList.Count - 1 Do
+      Begin
+        TempLine := TReportLine(FLineList[I]);
+        TempNextCell := Nil;
+        For J := 0 To TempLine.FCells.Count - 1 Do
+        Begin
+          TempCell := TReportCell(TempLine.FCells[J]);
+          // 若该CELL的右边等于选中的CELL的右边，将该CEL加入到LIST中去
+          // 前提是CELL或NEXTCELL在选中区内
+          If (TempCell.CellRect.Right = ThisCell.CellRect.Right) Then
+          Begin
+            If J < TempLine.FCells.Count - 1 Then
+              TempNextCell := TReportCell(TempLine.FCells[J + 1]);
+
+            If (Not IsCellSelected(TempNextCell)) And (Not
+              IsCellSelected(TempCell)) Then
+              Break;
+
+            If TempNextCell <> Nil Then
+            Begin
+              If TempNextCell.CellRect.Right - 10 < RectBorder.Right Then
+                RectBorder.Right := TempNextCell.CellRect.Right - 10;
+            End;
+
+            ThisCellsList.Add(TempCell);
+
+            If TempCell.CellLeft + 10 > RectBorder.Left Then
+              RectBorder.Left := TempCell.CellLeft + 10;
+
+            Break;
+          End;
+        End;
+      End;
+    End;
+  End;
+  // END OF - 计算 RectBorder , ThisCellsList ，bSelectFlag
+  // 画第一条线
+  If bHorz Then
+  Begin
+    FMousePoint.y := trunc(FMousePoint.y / 5 * 5 + 0.5);
+
+    If FMousePoint.y < RectBorder.Top Then
+      FMousePoint.y := RectBorder.Top;
+
+    If FMousePoint.y > RectBorder.Bottom Then
+      FMousePoint.y := RectBorder.Bottom;
+
+    MoveToEx(hClientDC, 0, FMousePoint.y, Nil);
+    LineTo(hClientDC, RectClient.Right, FMousePoint.y);
+    SetCursor(LoadCursor(0, IDC_SIZENS));
+  End
+  Else
+  Begin
+    FMousePoint.x := trunc(FMousePoint.x / 5 * 5 + 0.5);
+
+    If FMousePoint.x < RectBorder.Left Then
+      FMousePoint.x := RectBorder.Left;
+
+    If FMousePoint.x > RectBorder.Right Then
+      FMousePoint.x := RectBorder.Right;
+
+    MoveToEx(hClientDC, FMousePoint.x, 0, Nil);
+    LineTo(hClientDC, FMousePoint.x, RectClient.Bottom);
+    SetCursor(LoadCursor(0, IDC_SIZEWE));
+  End;
+
+  SetCapture(Handle);
+
+  // 取得鼠标输入，进入第二个消息循环
+  While GetCapture = Handle Do
+  Begin
+    If Not GetMessage(TempMsg, Handle, 0, 0) Then
+    Begin
+      PostQuitMessage(TempMsg.wParam);
+      Break;
+    End;
+
+    Case TempMsg.message Of
+      WM_LBUTTONUP:
+        ReleaseCapture;
+      WM_MOUSEMOVE:
+        If bHorz Then
+        Begin
+          MoveToEx(hClientDC, 0, FMousePoint.y, Nil);
+          LineTo(hClientDC, RectClient.Right, FMousePoint.y);
+          FMousePoint := TempMsg.pt;
+          Windows.ScreenToClient(Handle, FMousePoint);
+
+          // 边界检查
+          FMousePoint.y := trunc(FMousePoint.y / 5 * 5 + 0.5);
+
+          If FMousePoint.y < RectBorder.Top Then
+            FMousePoint.y := RectBorder.Top;
+
+          If FMousePoint.y > RectBorder.Bottom Then
+            FMousePoint.y := RectBorder.Bottom;
+
+          MoveToEx(hClientDC, 0, FMousePoint.y, Nil);
+          LineTo(hClientDC, RectClient.Right, FMousePoint.y);
+        End
+        Else
+        Begin
+          MoveToEx(hClientDC, FMousePoint.x, 0, Nil);
+          LineTo(hClientDC, FMousePoint.x, RectClient.Bottom);
+          FMousePoint := TempMsg.pt;
+          Windows.ScreenToClient(Handle, FMousePoint);
+
+          // 边界检查
+          FMousePoint.x := trunc(FMousePoint.x / 5 * 5 + 0.5);
+
+          If FMousePoint.x < RectBorder.Left Then
+            FMousePoint.x := RectBorder.Left;
+          If FMousePoint.x > RectBorder.Right Then
+            FMousePoint.x := RectBorder.Right;
+
+          MoveToEx(hClientDC, FMousePoint.x, 0, Nil);
+          LineTo(hClientDC, FMousePoint.x, RectClient.Bottom);
+        End;
+      WM_SETCURSOR:
+        ;
+    Else
+      DispatchMessage(TempMsg);
+    End;
+  End;
+
+  If GetCapture = Handle Then
+    ReleaseCapture;
+
+  If bHorz Then
+  Begin
+    // 将反显的线去掉
+    MoveToEx(hClientDC, 0, FMousePoint.y, Nil);
+    LineTo(hClientDC, RectClient.Right, FMousePoint.y);
+
+    // 改变行高
+    // 改变行高
+    If ThisCell.FSlaveCells.Count <= 0 Then
+    Begin
+      // 不跨越其他CELL时
+      BottomCell := ThisCell;
+    End
+    Else
+    Begin
+      // 跨越其他CELL时，取得最下一行的CELL
+      BottomCell := Nil;
+      Top := 0;
+      For I := 0 To ThisCell.FSlaveCells.Count - 1 Do
+      Begin
+        If ThisCell.FSlaveCells[I].CellTop > Top Then
+        Begin
+          BottomCell := ThisCell.FSlaveCells[I];
+          Top := BottomCell.CellTop;
+        End;
+      End;
+    End;
+
+    BottomCell.CalcHeight;
+    BottomCell.OwnerLine.LineHeight := FMousePoint.Y -
+      BottomCell.OwnerLine.LineTop;
+    UpdateLines;
+  End
+  Else
+  Begin
+    // 将反显的线去掉
+    MoveToEx(hClientDC, FMousePoint.x, 0, Nil);
+    LineTo(hClientDc, FMousePoint.x, RectClient.Bottom);
+
+    // 在此处判断对CELL宽度的设定是否有效
+    DragBottom := ThisCellsList.Count;
+
+    For I := 0 To DragBottom - 1 Do
+    Begin
+      For J := 0 To TReportCell(ThisCellsList[I]).FSlaveCells.Count - 1 Do
+      Begin
+        ThisCellsList.Add(TReportCell(ThisCellsList[I]).FSlaveCells[J]);
+      End;
+    End;
+
+    // 取得NEXTCELL
+    If ThisCellsList.Count > 0 Then
+    Begin
+      ThisCell := TReportCell(ThisCellsList[0]);
+      If ThisCell.CellIndex < ThisCell.OwnerLine.FCells.Count - 1 Then
+        NextCell := TReportCell(ThisCell.OwnerLine.FCells[ThisCell.CellIndex +
+          1]);
+
+      // 右边的CELL不为空且隶属与某一CELL
+      If NextCell <> Nil Then
+      Begin
+        If NextCell.OwnerCell <> Nil Then
+        Begin
+          SelectObject(hClientDC, hPrevPen);
+          DeleteObject(hInvertPen);
+          SetROP2(hClientDc, PrevDrawMode);
+          ReleaseDC(Handle, hClientDC);
+          Exit;
+        End;
+      End;
+
+      DragBottom := 0;
+      For I := 0 To ThisCellsList.Count - 1 Do
+      Begin
+        If TReportCell(ThisCellsList[I]).CellRect.Bottom > DragBottom Then
+          DragBottom := TReportCell(ThisCellsList[I]).CellRect.Bottom;
+      End;
+
+      For I := 0 To ThisCellsList.Count - 1 Do
+      Begin
+        ThisCell := TReportCell(ThisCellsList[I]);
+        If ThisCell.CellIndex < ThisCell.OwnerLine.FCells.Count - 1 Then
+          NextCell := TReportCell(ThisCell.OwnerLine.FCells[ThisCell.CellIndex +
+            1]);
+
+        If NextCell <> Nil Then
+        Begin
+          If NextCell.CellRect.Bottom > DragBottom Then
+          Begin
+            SelectObject(hClientDC, hPrevPen);
+            DeleteObject(hInvertPen);
+            SetROP2(hClientDc, PrevDrawMode);
+            ReleaseDC(Handle, hClientDC);
+            Exit;
+          End;
+        End;
+      End;
+    End;
+
+    For I := 0 To ThisCellsList.Count - 1 Do
+    Begin
+      ThisCell := TReportCell(ThisCellsList[I]);
+      NextCell := Nil;
+      If ThisCell.CellIndex < ThisCell.OwnerLine.FCells.Count - 1 Then
+        NextCell := TReportCell(ThisCell.OwnerLine.FCells[ThisCell.CellIndex +
+          1]);
+
+      TempRect := ThisCell.CellRect;
+      TempRect.Right := TempRect.Right + 1;
+      TempRect.Bottom := TempRect.Bottom + 1;
+
+      Distance := FMousePoint.x - ThisCell.CellLeft - ThisCell.CellWidth;
+
+      PrevCellWidth := ThisCell.CellWidth;
+      ThisCell.CellWidth := FMousePoint.x - ThisCell.CellLeft;
+
+      If PrevCellWidth <> ThisCell.CellWidth Then
+      Begin
+        InvalidateRect(Handle, @TempRect, False);
+        TempRect := ThisCell.CellRect;
+        TempRect.Right := TempRect.Right + 1;
+        TempRect.Bottom := TempRect.Bottom + 1;
+        InvalidateRect(Handle, @TempRect, False);
+      End;
+
+      If NextCell <> Nil Then
+      Begin
+        TempRect := NextCell.CellRect;
+        TempRect.Right := TempRect.Right + 1;
+        TempRect.Bottom := TempRect.Bottom + 1;
+
+        PrevCellWidth := NextCell.CellWidth;
+        NextCell.CellLeft := NextCell.CellLeft + Distance;
+        NextCell.CellWidth := NextCell.CellWidth - Distance;
+
+        If PrevCellWidth <> NextCell.CellWidth Then
+        Begin
+          InvalidateRect(Handle, @TempRect, False);
+          TempRect := NextCell.CellRect;
+          TempRect.Right := TempRect.Right + 1;
+          TempRect.Bottom := TempRect.Bottom + 1;
+          InvalidateRect(Handle, @TempRect, False);
+        End;
+      End;
+    End;
+
+    UpdateLines;
+  End;
+
+  SelectObject(hClientDC, hPrevPen);
+  DeleteObject(hInvertPen);
+  SetROP2(hClientDc, PrevDrawMode);
+  ReleaseDC(Handle, hClientDC);
+End;
   // bSelectFlag ：是选中还是编辑?
 // LCJ:以消息循环方式，来处理Mouse事件的持续性，这个做法很有意思。
 Procedure TReportControl.StartMouseSelect(point: TPoint;Shift: Boolean );
