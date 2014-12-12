@@ -33,6 +33,8 @@ type
     procedure SetUp; override;
     procedure TearDown; override;
   published
+    procedure Rita;
+    procedure ScaleRect;
     procedure FormCartesian;
     procedure SetCellAlign;
     procedure RectInflate;
@@ -1414,6 +1416,29 @@ Begin
 End;
 
 
+procedure TReportTest.ScaleRect;
+var r ,rectPaint: trect;os :WIndowsOs; FReportScale:Integer;
+begin
+  os := windowsos.Create;
+  r.left :=100;
+  os.InverseScaleRect(r,50);
+  CheckEquals(200,r.Left);
+  rectPaint.left :=100;
+  FReportScale := 50 ;
+  If FReportScale <> 100 Then
+  Begin
+    rectPaint.Left := trunc(rectPaint.Left * 100 / FReportScale + 0.5);
+    rectPaint.Top := trunc(rectPaint.Top * 100 / FReportScale + 0.5);
+    rectPaint.Right := trunc(rectPaint.Right * 100 / FReportScale + 0.5);
+    rectPaint.Bottom := trunc(rectPaint.Bottom * 100 / FReportScale + 0.5);
+  End;
+  CheckEquals(200,rectPaint.Left);
+end;
+
+procedure TReportTest.Rita;
+begin
+
+end;
 
 initialization
   RegisterTests('Framework Suites',[TReportTest.Suite,TReportUITest.Suite,TCDSTest.Suite]);

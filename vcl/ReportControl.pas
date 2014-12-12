@@ -121,6 +121,7 @@ Type
     function GetTextHeight: Integer;
     procedure ExpandHeight(delta: integer);
   public
+    procedure DrawImage;
     function IsSlave:Boolean;
     function Calc_RequiredCellHeight: Integer;
     function GetReportControl: TReportControl;
@@ -319,6 +320,7 @@ Type
     procedure RecreateEdit(ThisCell: TReportCell);
     procedure DoPaint(hPaintDC: HDC; Handle: HWND; ps: TPaintStruct);
     procedure DoPaint1(hPaintDC: HDC; Handle: HWND; ps: TPaintStruct);
+    procedure DrawCornice(hPaintDC: HDC);
   protected
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
@@ -1811,7 +1813,29 @@ function TReportCell.IsSlave: Boolean;
 begin
   result := OwnerCell <> nil;
 end;
-
+  procedure TReportCell.DrawImage;
+  Var
+    Acanvas: Tcanvas;                 
+    LTempRect: Trect;
+  begin
+      Acanvas := Tcanvas.Create;
+      Acanvas.Handle := getdc(ReportControl.Handle);
+      LTempRect := FCellRect;
+      LTempRect := FCellRect;
+      ReportControl.Os.ScaleRect(LTempRect, ReportControl.FReportScale);
+      ReportControl.Os.InflateRect(LTempRect,-3,-3);
+//      LTempRect.Left := trunc((FCellRect.Left) * ReportControl.FReportScale / 100 +
+//      0.5) + 3;
+//      LTempRect.Top := trunc((FCellRect.Top) * ReportControl.FReportScale / 100 + 0.5)
+//      + 3;
+//      LTempRect.Right := trunc((FCellRect.Right) * ReportControl.FReportScale / 100 +
+//      0.5) - 3;
+//      LTempRect.Bottom := trunc((FCellRect.Bottom) * ReportControl.FReportScale / 100
+//      + 0.5) - 3;
+      acanvas.StretchDraw(LTempRect, ReportControl.loadbmp(self));
+      ReleaseDC(ReportControl.Handle, ACanvas.Handle);
+      ACanvas.Free;
+  end;
 {TReportControl}
 
 Procedure TReportControl.CreateWnd;
@@ -1942,8 +1966,53 @@ Begin
   Width := trunc(FPageWidth * FReportScale / 100 + 0.5);   
   Height := trunc(FPageHeight * FReportScale / 100 + 0.5);
 End;
+//   cornice 飞檐     horn 犄角
+procedure TReportControl.DrawCornice(hPaintDC:HDC);
+Var
+  I, J: Integer;
+  TempRect: TRect;
+  hGrayPen, hPrevPen: HPEN;
+begin
+  hGrayPen := CreatePen(PS_SOLID, 1, RGB(128, 128, 128));
+  try
+    hPrevPen := SelectObject(hPaintDC, hGrayPen);
+    // 左上
+    MoveToEx(hPaintDC, FLeftMargin, FTopMargin, Nil);
+    LineTo(hPaintDC, FLeftMargin, FTopMargin - 25);
 
+    MoveToEx(hPaintDC, FLeftMargin, FTopMargin, Nil);
+    LineTo(hPaintDC, FLeftMargin - 25, FTopMargin);
+
+    // 右上
+    MoveToEx(hPaintDC, FPageWidth - FRightMargin, FTopMargin, Nil);
+    LineTo(hPaintDC, FPageWidth - FRightMargin, FTopMargin - 25);
+
+    MoveToEx(hPaintDC, FPageWidth - FRightMargin, FTopMargin, Nil);
+    LineTo(hPaintDC, FPageWidth - FRightMargin + 25, FTopMargin);
+
+    // 左下
+    MoveToEx(hPaintDC, FLeftMargin, FPageHeight - FBottomMargin, Nil);
+    LineTo(hPaintDC, FLeftMargin, FPageHeight - FBottomMargin + 25);
+
+    MoveToEx(hPaintDC, FLeftMargin, FPageHeight - FBottomMargin, Nil);
+    LineTo(hPaintDC, FLeftMargin - 25, FPageHeight - FBottomMargin);
+
+    // 右下
+    MoveToEx(hPaintDC, FPageWidth - FRightMargin, FPageHeight - FBottomMargin,
+      Nil);
+    LineTo(hPaintDC, FPageWidth - FRightMargin, FPageHeight - FBottomMargin + 25);
+
+    MoveToEx(hPaintDC, FPageWidth - FRightMargin, FPageHeight - FBottomMargin,
+      Nil);
+    LineTo(hPaintDC, FPageWidth - FRightMargin + 25, FPageHeight - FBottomMargin);
+  finally
+    SelectObject(hPaintDC, hPrevPen);
+    DeleteObject(hGrayPen);
+  end;
+end;
 procedure TReportControl.DoPaint(hPaintDC:HDC;Handle:HWND;ps:TPaintStruct);
+
+
 Var
   I, J: Integer;
   TempRect: TRect;
@@ -1965,53 +2034,9 @@ begin
 // 可是，笛卡尔坐标是windows支持的。缩放也可以用这个东西来做！不需要自己去算。
 // 而且，在编辑状态下，缩放它干啥？没有多大意思。
   rectPaint := ps.rcPaint;
-
-  If FReportScale <> 100 Then
-  Begin
-    rectPaint.Left := trunc(rectPaint.Left * 100 / FReportScale + 0.5);
-    rectPaint.Top := trunc(rectPaint.Top * 100 / FReportScale + 0.5);
-    rectPaint.Right := trunc(rectPaint.Right * 100 / FReportScale + 0.5);
-    rectPaint.Bottom := trunc(rectPaint.Bottom * 100 / FReportScale + 0.5);
-  End;
-
+  os.InverseScaleRect(rectPaint,FReportScale);
   Rectangle(hPaintDC, 0, 0, FPageWidth, FPageHeight);
-
-  hGrayPen := CreatePen(PS_SOLID, 1, RGB(128, 128, 128));
-  hPrevPen := SelectObject(hPaintDC, hGrayPen);
-  //   cornice 飞檐     horn 犄角
-  // 左上
-  MoveToEx(hPaintDC, FLeftMargin, FTopMargin, Nil);
-  LineTo(hPaintDC, FLeftMargin, FTopMargin - 25);
-
-  MoveToEx(hPaintDC, FLeftMargin, FTopMargin, Nil);
-  LineTo(hPaintDC, FLeftMargin - 25, FTopMargin);
-
-  // 右上
-  MoveToEx(hPaintDC, FPageWidth - FRightMargin, FTopMargin, Nil);
-  LineTo(hPaintDC, FPageWidth - FRightMargin, FTopMargin - 25);
-
-  MoveToEx(hPaintDC, FPageWidth - FRightMargin, FTopMargin, Nil);
-  LineTo(hPaintDC, FPageWidth - FRightMargin + 25, FTopMargin);
-
-  // 左下
-  MoveToEx(hPaintDC, FLeftMargin, FPageHeight - FBottomMargin, Nil);
-  LineTo(hPaintDC, FLeftMargin, FPageHeight - FBottomMargin + 25);
-
-  MoveToEx(hPaintDC, FLeftMargin, FPageHeight - FBottomMargin, Nil);
-  LineTo(hPaintDC, FLeftMargin - 25, FPageHeight - FBottomMargin);
-
-  // 右下
-  MoveToEx(hPaintDC, FPageWidth - FRightMargin, FPageHeight - FBottomMargin,
-    Nil);
-  LineTo(hPaintDC, FPageWidth - FRightMargin, FPageHeight - FBottomMargin + 25);
-
-  MoveToEx(hPaintDC, FPageWidth - FRightMargin, FPageHeight - FBottomMargin,
-    Nil);
-  LineTo(hPaintDC, FPageWidth - FRightMargin + 25, FPageHeight - FBottomMargin);
-
-  SelectObject(hPaintDC, hPrevPen);
-  DeleteObject(hGrayPen);
-
+  DrawCornice(hPaintDC);
   ///////////////////////////////////////////////////////////////////////////
     // 绘制所有与失效区相交的矩形
   For I := 0 To FLineList.Count - 1 Do
@@ -2032,22 +2057,7 @@ begin
 
       If ThisCell.CellRect.Bottom < rectPaint.Top Then
         Continue;
-
-      Acanvas := Tcanvas.Create;
-      Acanvas.Handle := getdc(Handle);
-      //Acanvas.Draw(x,y,loadbmp(thiscell));
-      LTempRect := ThisCell.FCellRect;
-      LTempRect.Left := trunc((Thiscell.FCellRect.Left) * FReportScale / 100 +
-        0.5) + 3;
-      LTempRect.Top := trunc((Thiscell.FCellRect.Top) * FReportScale / 100 + 0.5)
-        + 3;
-      LTempRect.Right := trunc((Thiscell.FCellRect.Right) * FReportScale / 100 +
-        0.5) - 3;
-      LTempRect.Bottom := trunc((Thiscell.FCellRect.Bottom) * FReportScale / 100
-        + 0.5) - 3;
-      acanvas.StretchDraw(LTempRect, loadbmp(thiscell));
-      ReleaseDC(Handle, ACanvas.Handle);
-      ACanvas.Free;
+      ThisCell.DrawImage ;
 
       If ThisCell.OwnerCell = Nil Then
         ThisCell.PaintCell(hPaintDC, FPreviewStatus);

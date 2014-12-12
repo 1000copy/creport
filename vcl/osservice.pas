@@ -12,6 +12,9 @@ type
     nPixelsPerInch:integer;
     hDesktopDC :THandle;
   public
+    procedure ScaleRect(var rectPaint: TRect; FReportScale: Integer);
+    procedure InverseScaleRect(var rectPaint: TRect;
+      FReportScale: Integer);
     function HAlign2DT(FHorzAlign: UINT): UINT;
     function IsRectEmpty(r: TRect): boolean;
     function MakeRect(FMousePoint, TempPoint: TPoint): TRect;
@@ -274,6 +277,26 @@ procedure WindowsOS.SetWindowExtent(hPaintDC: HDC; x, y: integer);
 begin
   SetWindowExtEx(hPaintDC,x ,y,0);
 
+end;
+procedure WindowsOS.ScaleRect(var rectPaint :TRect ; FReportScale:Integer);
+begin
+  If FReportScale <> 100 Then
+  Begin
+    rectPaint.Left := trunc(rectPaint.Left * FReportScale /100  + 0.5);
+    rectPaint.Top := trunc(rectPaint.Top * FReportScale /100 + 0.5);
+    rectPaint.Right := trunc(rectPaint.Right * FReportScale /100 + 0.5);
+    rectPaint.Bottom := trunc(rectPaint.Bottom * FReportScale /100 + 0.5);
+  End;
+end;
+procedure WindowsOS.InverseScaleRect(var rectPaint :TRect ; FReportScale:Integer);
+begin
+  If FReportScale <> 100 Then
+  Begin
+    rectPaint.Left := trunc(rectPaint.Left * 100 / FReportScale + 0.5);
+    rectPaint.Top := trunc(rectPaint.Top * 100 / FReportScale + 0.5);
+    rectPaint.Right := trunc(rectPaint.Right * 100 / FReportScale + 0.5);
+    rectPaint.Bottom := trunc(rectPaint.Bottom * 100 / FReportScale + 0.5);
+  End;
 end;
 
 end.
