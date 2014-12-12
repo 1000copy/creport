@@ -2168,7 +2168,7 @@ End;
 const DRAGMARGIN =10;
 Procedure TReportControl.StartMouseDrag_Horz(point: TPoint);
 Var
-  TempCell, TempNextCell, ThisCell, NextCell: TReportCell;
+  TempCell, TempNextCell, ThisCell: TReportCell;
   ThisCellsList: TCellList;
   TempRect, RectBorder, RectCell, RectClient: TRect;
   hClientDC: HDC;
@@ -2176,13 +2176,35 @@ Var
   PrevDrawMode, PrevCellWidth, Distance: Integer;
   I, J: Integer;
   bSelectFlag: Boolean;
-  ThisLine, TempLine: TReportLine;
   TempMsg: TMSG;
   BottomCell: TReportCell;
   Top: Integer;
   //  CellList : TList;
   DragBottom: Integer;
-
+  procedure MaxDragExtent(ThisCell:TReportCell;var RectBorder: TRect);
+  var
+    NextCell: TReportCell;
+    ThisLine, TempLine: TReportLine;
+  begin
+    ThisLine := ThisCell.OwnerLine;
+    RectBorder.Top := ThisLine.LineTop + 5;
+    RectBorder.Bottom := Height - 10;
+    NextCell := Nil;
+    // refactring： Left ,Right计算的分离
+    // left
+    RectBorder.Left := ThisCell.CellLeft + DRAGMARGIN;
+    // right
+    Begin
+      If ThisCell.CellIndex < ThisLine.FCells.Count - 1 Then
+      Begin
+        NextCell := ThisLine.FCells[I + 1];
+        RectBorder.Right := NextCell.CellLeft + NextCell.CellWidth - DRAGMARGIN;
+      End
+      Else
+        RectBorder.Right := ClientRect.Right - DRAGMARGIN;
+    End;
+    // refacting end -Left ,Right计算的分离
+  end;
 Begin
   ThisCell := CellFromPoint(point);
   RectCell := ThisCell.CellRect;
@@ -2199,24 +2221,7 @@ Begin
 
   // 置横向标志
   // 计算 RectBorder , ThisCellsList ，bSelectFlag
-  ThisLine := ThisCell.OwnerLine;
-  RectBorder.Top := ThisLine.LineTop + 5;
-  RectBorder.Bottom := Height - 10;
-  NextCell := Nil;
-  // refactring： Left ,Right计算的分离
-  // left 
-  RectBorder.Left := ThisCell.CellLeft + DRAGMARGIN;
-  // right
-  Begin
-    If ThisCell.CellIndex < ThisLine.FCells.Count - 1 Then
-    Begin
-      NextCell := ThisLine.FCells[I + 1];
-      RectBorder.Right := NextCell.CellLeft + NextCell.CellWidth - DRAGMARGIN;
-    End
-    Else
-      RectBorder.Right := ClientRect.Right - DRAGMARGIN;
-  End;
-  // refacting end -Left ,Right计算的分离
+  MaxDragExtent (ThisCell,RectBorder);
 
   // END OF - 计算 RectBorder , ThisCellsList ，bSelectFlag
   // 画第一条线
