@@ -325,6 +325,9 @@ Type
     procedure StartMouseDrag_Horz(point: TPoint);
     procedure StartMouseDrag_Verz(point: TPoint);
     procedure MaxDragExtent(ThisCell: TReportCell; var RectBorder: TRect);
+    procedure UpdateHeight(ThisCell: TReportCell; Y: Integer);
+    procedure DrawHorzLine(HClientDC: HDC; y: integer; RectBorder: TRect);
+    procedure UpdateTwinCell(ThisCell: TReportCell; x: integer);
   protected
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
@@ -2206,44 +2209,41 @@ begin
   Else
     RectBorder.Right := ClientRect.Right - DRAGMARGIN;
 end;
+procedure TReportControl.UpdateHeight(ThisCell:TReportCell;Y:Integer);
+var
+    i :integer;
+    BottomCell: TReportCell;
+begin
+  If ThisCell.FSlaveCells.Count <= 0 Then
+    BottomCell := ThisCell
+  Else
+    BottomCell:= ThisCell.GetBottomest;
+  BottomCell.CalcHeight;
+  BottomCell.OwnerLine.LineHeight := Y -
+    BottomCell.OwnerLine.LineTop;
+  UpdateLines;
+end;
+procedure TReportControl.DrawHorzLine(HClientDC:HDC;y :integer;RectBorder:TRect);
+var  RectClient: TRect;
+begin
+  If y < RectBorder.Top Then
+    y := RectBorder.Top;
+
+  If y > RectBorder.Bottom Then
+    y := RectBorder.Bottom;
+  MoveToEx(hClientDC, 0, Y, Nil);
+  Windows.GetClientRect(Handle, RectClient);
+  LineTo(hClientDC, RectClient.Right, Y);
+end;
 Procedure TReportControl.StartMouseDrag_Horz(point: TPoint);
 Var
-  TempCell, TempNextCell, ThisCell: TReportCell;
-  TempRect, RectBorder, RectCell, RectClient: TRect;
+  ThisCell: TReportCell;
+  RectBorder, RectCell: TRect;
   hClientDC: HDC;
   hInvertPen, hPrevPen: HPEN;
   PrevDrawMode, PrevCellWidth, Distance: Integer;
-  I, J: Integer;
-  bSelectFlag: Boolean;
   TempMsg: TMSG;
-  BottomCell: TReportCell;
-  Top: Integer;
-  DragBottom: Integer;
-
-  procedure DrawHorzLine(HClientDC:HDC;y :integer;RectBorder:TRect);
-  var  RectClient: TRect;
-  begin
-    If y < RectBorder.Top Then
-      y := RectBorder.Top;
-
-    If y > RectBorder.Bottom Then
-      y := RectBorder.Bottom;
-    MoveToEx(hClientDC, 0, Y, Nil);
-    Windows.GetClientRect(Handle, RectClient);
-    LineTo(hClientDC, RectClient.Right, Y);
-  end;
-  procedure UpdateHeight(Y:Integer);  var i :integer;
-  begin
-    If ThisCell.FSlaveCells.Count <= 0 Then
-      BottomCell := ThisCell
-    Else
-      BottomCell:= ThisCell.GetBottomest;
-    BottomCell.CalcHeight;
-    BottomCell.OwnerLine.LineHeight := Y -
-      BottomCell.OwnerLine.LineTop;
-    UpdateLines;         
-  end;
-Begin      
+Begin
   // 设置线形和绘制模式
   hClientDC := GetDC(Handle);
   hInvertPen := CreatePen(PS_DOT, 1, RGB(0, 0, 0));
@@ -2253,7 +2253,6 @@ Begin
     ThisCell := CellFromPoint(point);
     RectCell := ThisCell.CellRect;
     FMousePoint := point;
-    Windows.GetClientRect(Handle, RectClient);
     MaxDragExtent (ThisCell,RectBorder);
     // 第一个横线 ，指示当前拖动位置
     Begin
@@ -2293,7 +2292,7 @@ Begin
       ReleaseCapture; 
     // XOR Last Line
     DrawHorzLine(hClientDC,FMousePoint.y,RectBorder);
-    UpdateHeight(FMousePoint.Y);
+    UpdateHeight(ThisCell,FMousePoint.Y);
   finally
     SelectObject(hClientDC, hPrevPen);
     DeleteObject(hInvertPen);
@@ -2301,9 +2300,65 @@ Begin
     ReleaseDC(Handle, hClientDC);
   end;
 End;
+// 当前选中Cell和它的NextCell修改CellLeft，CellWidth，然后最两个Cell的前后矩形做刷新
+procedure TReportControl.UpdateTwinCell(ThisCell:TReportCell;x:integer);
+  Var
+  TempCell, TempNextCell: TReportCell;
+  ThisCellsList: TCellList;
+  TempRect, RectBorder, RectCell, RectClient: TRect;
+  hClientDC: HDC;
+  hInvertPen, hPrevPen: HPEN;
+  PrevDrawMode, PrevCellWidth, Distance: Integer;
+  I, J: Integer;
+  Top: Integer;
+  var  NextCell: TReportCell;
+  begin
+    NextCell := Nil;
+    If ThisCell.CellIndex < ThisCell.OwnerLine.FCells.Count - 1 Then
+      NextCell := TReportCell(ThisCell.OwnerLine.FCells[ThisCell.CellIndex +
+        1]);
+    TempRect := ThisCell.CellRect;
+    TempRect.Right := TempRect.Right + 1;
+    TempRect.Bottom := TempRect.Bottom + 1;
+
+    Distance := x - ThisCell.CellLeft - ThisCell.CellWidth;
+
+    PrevCellWidth := ThisCell.CellWidth;
+    ThisCell.CellWidth := x - ThisCell.CellLeft;
+
+    If PrevCellWidth <> ThisCell.CellWidth Then
+    Begin
+      InvalidateRect(Handle, @TempRect, False);
+      TempRect := ThisCell.CellRect;
+      TempRect.Right := TempRect.Right + 1;
+      TempRect.Bottom := TempRect.Bottom + 1;
+      InvalidateRect(Handle, @TempRect, False);
+    End;
+
+    If NextCell <> Nil Then
+    Begin
+      TempRect := NextCell.CellRect;
+      TempRect.Right := TempRect.Right + 1;
+      TempRect.Bottom := TempRect.Bottom + 1;
+
+      PrevCellWidth := NextCell.CellWidth;
+      NextCell.CellLeft := NextCell.CellLeft + Distance;
+      NextCell.CellWidth := NextCell.CellWidth - Distance;
+
+      If PrevCellWidth <> NextCell.CellWidth Then
+      Begin
+        InvalidateRect(Handle, @TempRect, False);
+        TempRect := NextCell.CellRect;
+        TempRect.Right := TempRect.Right + 1;
+        TempRect.Bottom := TempRect.Bottom + 1;
+        InvalidateRect(Handle, @TempRect, False);
+      End;
+    End;
+  end;
 Procedure TReportControl.StartMouseDrag_Verz(point: TPoint);
+var  NextCell: TReportCell;
 Var
-  TempCell, TempNextCell, ThisCell, NextCell: TReportCell;
+  TempCell, TempNextCell, ThisCell: TReportCell;
   ThisCellsList: TCellList;
   TempRect, RectBorder, RectCell, RectClient: TRect;
   hClientDC: HDC;
@@ -2317,6 +2372,7 @@ Var
   Top: Integer;
   //  CellList : TList;
   DragBottom: Integer;
+
 Begin
   ThisCell := CellFromPoint(point);
   RectCell := ThisCell.CellRect;
@@ -2331,7 +2387,7 @@ Begin
 
   PrevDrawMode := SetROP2(hClientDC, R2_NOTXORPEN);
 
-
+  现在改修改这一大段了。知道END OF
   // 计算 RectBorder , ThisCellsList ，bSelectFlag
   ThisLine := ThisCell.OwnerLine;
   RectBorder.Top := ThisLine.LineTop + 5;
@@ -2560,54 +2616,8 @@ Begin
         End;
       End;
     End;
-
     For I := 0 To ThisCellsList.Count - 1 Do
-    Begin
-      ThisCell := TReportCell(ThisCellsList[I]);
-      NextCell := Nil;
-      If ThisCell.CellIndex < ThisCell.OwnerLine.FCells.Count - 1 Then
-        NextCell := TReportCell(ThisCell.OwnerLine.FCells[ThisCell.CellIndex +
-          1]);
-
-      TempRect := ThisCell.CellRect;
-      TempRect.Right := TempRect.Right + 1;
-      TempRect.Bottom := TempRect.Bottom + 1;
-
-      Distance := FMousePoint.x - ThisCell.CellLeft - ThisCell.CellWidth;
-
-      PrevCellWidth := ThisCell.CellWidth;
-      ThisCell.CellWidth := FMousePoint.x - ThisCell.CellLeft;
-
-      If PrevCellWidth <> ThisCell.CellWidth Then
-      Begin
-        InvalidateRect(Handle, @TempRect, False);
-        TempRect := ThisCell.CellRect;
-        TempRect.Right := TempRect.Right + 1;
-        TempRect.Bottom := TempRect.Bottom + 1;
-        InvalidateRect(Handle, @TempRect, False);
-      End;
-
-      If NextCell <> Nil Then
-      Begin
-        TempRect := NextCell.CellRect;
-        TempRect.Right := TempRect.Right + 1;
-        TempRect.Bottom := TempRect.Bottom + 1;
-
-        PrevCellWidth := NextCell.CellWidth;
-        NextCell.CellLeft := NextCell.CellLeft + Distance;
-        NextCell.CellWidth := NextCell.CellWidth - Distance;
-
-        If PrevCellWidth <> NextCell.CellWidth Then
-        Begin
-          InvalidateRect(Handle, @TempRect, False);
-          TempRect := NextCell.CellRect;
-          TempRect.Right := TempRect.Right + 1;
-          TempRect.Bottom := TempRect.Bottom + 1;
-          InvalidateRect(Handle, @TempRect, False);
-        End;
-      End;
-    End;
-
+      UpdateTwinCell (ThisCellsList[I],FMousePoint.x);
     UpdateLines;
   End;
 
@@ -2615,6 +2625,7 @@ Begin
   DeleteObject(hInvertPen);
   SetROP2(hClientDc, PrevDrawMode);
   ReleaseDC(Handle, hClientDC);
+
 End;
 Procedure TReportControl.StartMouseDrag_Backup(point: TPoint);
 Var
