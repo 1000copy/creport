@@ -2148,7 +2148,7 @@ Begin
     End;
   End;
 End;
-              、next
+
 Procedure TReportControl.StartMouseDrag(point: TPoint);
 Var
   TempCell, TempNextCell, ThisCell, NextCell: TReportCell;
@@ -2165,6 +2165,34 @@ Var
   Top: Integer;
   //  CellList : TList;
   DragBottom: Integer;
+  // 计算上下左右边界,限定可以拖动的最大范围
+  procedure MaxDragExtent(var RectBorder :TRect);
+  var
+    I, J: Integer;
+  begin
+      RectBorder.Top := ThisLine.LineTop + 5;
+      RectBorder.Bottom := Height - 10;
+      RectBorder.Right := ClientRect.Right; 
+      NextCell := Nil;
+
+      For I := 0 To ThisLine.FCells.Count - 1 Do
+      Begin
+        TempCell := TReportCell(ThisLine.FCells[I]);
+
+        If ThisCell = TempCell Then
+        Begin
+          RectBorder.Left := ThisCell.CellLeft + 10;
+
+          If I < ThisLine.FCells.Count - 1 Then
+          Begin
+            NextCell := TReportCell(ThisLine.FCells[I + 1]);
+            RectBorder.Right := NextCell.CellLeft + NextCell.CellWidth - 10;
+          End
+          Else
+            RectBorder.Right := ClientRect.Right - 10;
+        End;
+      End;    
+  end;
 Begin
   ThisCell := CellFromPoint(point);
   RectCell := ThisCell.CellRect;
@@ -2184,31 +2212,9 @@ Begin
     bHorz := True
   Else
     bHorz := False;
-  // 计算上下左右边界
+
   ThisLine := ThisCell.OwnerLine;
-  RectBorder.Top := ThisLine.LineTop + 5;
-  RectBorder.Bottom := Height - 10;
-  RectBorder.Right := ClientRect.Right;
-
-  NextCell := Nil;
-
-  For I := 0 To ThisLine.FCells.Count - 1 Do
-  Begin
-    TempCell := TReportCell(ThisLine.FCells[I]);
-
-    If ThisCell = TempCell Then
-    Begin
-      RectBorder.Left := ThisCell.CellLeft + 10;
-
-      If I < ThisLine.FCells.Count - 1 Then
-      Begin
-        NextCell := TReportCell(ThisLine.FCells[I + 1]);
-        RectBorder.Right := NextCell.CellLeft + NextCell.CellWidth - 10;
-      End
-      Else
-        RectBorder.Right := ClientRect.Right - 10;
-    End;
-  End;
+  MaxDragExtent(RectBorder);
 
   If Not bHorz Then
   Begin
