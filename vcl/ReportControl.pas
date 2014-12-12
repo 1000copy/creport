@@ -2148,6 +2148,11 @@ Begin
     End;
   End;
 End;
+// 拆分大函数的时候，Delphi的子函数特性真是太管用了。
+// 可以快速把大块拆下来，然后再小块内精耕细作。
+// 计算上下左右边界,限定可以拖动的最大范围
+// TODO: 此函数有副作用。其中还对NextCell赋值了。这个变量后面还要用。
+// TODO: 后面的for块，需要把 Left，Right 做职责分离
 
 Procedure TReportControl.StartMouseDrag(point: TPoint);
 Var
@@ -2165,36 +2170,6 @@ Var
   Top: Integer;
   //  CellList : TList;
   DragBottom: Integer;
-  // 拆分大函数的时候，Delphi的子函数特性真是太管用了。
-  // 可以快速把大块拆下来，然后再小块内精耕细作。
-  // 计算上下左右边界,限定可以拖动的最大范围
-  procedure MaxDragExtent(var RectBorder :TRect);
-  var
-    I, J: Integer;
-  begin
-      RectBorder.Top := ThisLine.LineTop + 5;
-      RectBorder.Bottom := Height - 10;
-      RectBorder.Right := ClientRect.Right; 
-      NextCell := Nil;
-
-      For I := 0 To ThisLine.FCells.Count - 1 Do
-      Begin
-        TempCell := TReportCell(ThisLine.FCells[I]);
-
-        If ThisCell = TempCell Then
-        Begin
-          RectBorder.Left := ThisCell.CellLeft + 10;
-
-          If I < ThisLine.FCells.Count - 1 Then
-          Begin
-            NextCell := TReportCell(ThisLine.FCells[I + 1]);
-            RectBorder.Right := NextCell.CellLeft + NextCell.CellWidth - 10;
-          End
-          Else
-            RectBorder.Right := ClientRect.Right - 10;
-        End;
-      End;    
-  end;
 Begin
   ThisCell := CellFromPoint(point);
   RectCell := ThisCell.CellRect;
@@ -2214,9 +2189,30 @@ Begin
     bHorz := True
   Else
     bHorz := False;
-
+  // 计算 RectBorder , ThisCellsList ，bSelectFlag
   ThisLine := ThisCell.OwnerLine;
-  MaxDragExtent(RectBorder);
+  RectBorder.Top := ThisLine.LineTop + 5;
+  RectBorder.Bottom := Height - 10;
+  RectBorder.Right := ClientRect.Right; 
+  NextCell := Nil;
+
+  For I := 0 To ThisLine.FCells.Count - 1 Do
+  Begin
+    TempCell := TReportCell(ThisLine.FCells[I]);
+
+    If ThisCell = TempCell Then
+    Begin
+      RectBorder.Left := ThisCell.CellLeft + 10;
+
+      If I < ThisLine.FCells.Count - 1 Then
+      Begin
+        NextCell := TReportCell(ThisLine.FCells[I + 1]);
+        RectBorder.Right := NextCell.CellLeft + NextCell.CellWidth - 10;
+      End
+      Else
+        RectBorder.Right := ClientRect.Right - 10;
+    End;
+  End;
 
   If Not bHorz Then
   Begin
@@ -2299,7 +2295,7 @@ Begin
       End;
     End;
   End;
-
+  // END OF - 计算 RectBorder , ThisCellsList ，bSelectFlag
   // 画第一条线
   If bHorz Then
   Begin
