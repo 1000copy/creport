@@ -99,6 +99,8 @@ Type
     procedure Fill(Cells :TCellList);
     function Last : TReportCell ;
     function CellRect:TRect;
+    function MaxCellLeft:integer;
+    function MinNextCellRight:integer;
   end;
   TLineList = class(TList)
   private                     
@@ -2427,37 +2429,13 @@ Begin
         TempLine := TReportLine(FLineList[I]);
         For J := 0 To TempLine.FCells.Count - 1 Do
         Begin
-          TempCell := TReportCell(TempLine.FCells[J]);
-          // 若该CELL的右边等于选中的CELL的右边，将该CELL和NEXTCELL加入到两个LIST中去
-          If TempCell.CellRect.Right = ThisCell.CellRect.Right Then
-          Begin
-            ThisCellsList.Add(TempCell);
-
-            If TempCell.CellLeft + 10 > RectBorder.Left Then
-              RectBorder.Left := TempCell.CellLeft + 10;
-
-            If J < TempLine.FCells.Count - 1 Then
-            Begin
-              TempNextCell := TReportCell(TempLine.FCells[J + 1]);
-              If TempNextCell.CellRect.Right - 10 < RectBorder.Right Then
-                RectBorder.Right := TempNextCell.CellRect.Right - 10;
-            End;
-          End;
-        End;
-      End;
-      // responsibilty split :  ThisCellsList
-      For I := 0 To FLineList.Count - 1 Do
-      Begin
-        TempLine := TReportLine(FLineList[I]);
-        For J := 0 To TempLine.FCells.Count - 1 Do
-        Begin
           TempCell := TempLine.FCells[J];
           If TempCell.CellRect.Right = ThisCell.CellRect.Right Then
             ThisCellsList.Add(TempCell);
         End;
       End;
-      RectBorder.Left := Max(ThisCellsList.MaxCellLeft + DRAGENMARGIN,RectBorder.Left);
-      RectBorder.Right := Min(TempNextCell.CellRect.Right - DRAGENMARGIN,RectBorder.Right);
+      RectBorder.Left := Max(ThisCellsList.MaxCellLeft + DRAGMARGIN,RectBorder.Left);
+      RectBorder.Right := Min(ThisCellsList.MinNextCellRight - DRAGMARGIN,RectBorder.Right);
     End
     Else
     Begin
@@ -4337,6 +4315,32 @@ begin
         Add(ThisCell);
   End;
 end;
+function TCellList.MaxCellLeft: integer;
+var J ,R:integer;ThisCell :TReportCell;
+begin
+  R := 0 ;
+  For J := 0 To Count - 1 Do
+  Begin
+    ThisCell := Items[J];
+    If ThisCell.CellRect.Left > R Then
+      R := ThisCell.CellRect.Left ;
+  End;
+  result := R;
+end;
+
+function TCellList.MinNextCellRight: integer;
+var J ,R:integer;ThisCell :TReportCell;
+begin
+  R := 65535 ;
+  For J := 0 To Count - 1 Do
+  Begin
+    ThisCell := Items[J].NextCell;
+    If (ThisCell <> nil) and (ThisCell.CellRect.Right < R) Then
+      R := ThisCell.CellRect.Right ;
+  End;
+  result := R;
+end;
+
 function TCellList.TotalWidth: Integer;
 var J :integer;
 begin
