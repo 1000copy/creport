@@ -2395,11 +2395,9 @@ Begin
   PrevDrawMode := SetROP2(hClientDC, R2_NOTXORPEN);
 
   //现在改修改这一大段了。知道END OF
-  // 计算 RectBorder , ThisCellsList ，bSelectFlag
+  // 计算  ThisCellsList ，bSelectFlag
   ThisLine := ThisCell.OwnerLine;
-  //MakeRectBorder(RectBorder);
   MaxDragExtent(ThisCell,RectBorder) ;
-
   Begin
     // 若无选中的CELL,或者要改变宽度的CELL和NEXTCELL不在选中区中
     bSelectFlag := False;
