@@ -2417,6 +2417,33 @@ Var
     MoveToEx(hClientDC,x, 0, Nil);
     LineTo(hClientDC, x, RectClient.Bottom);
   End;
+  procedure MsgLoop;
+  begin
+    While GetCapture = Handle Do
+    Begin
+      If Not GetMessage(TempMsg, Handle, 0, 0) Then
+      Begin
+        PostQuitMessage(TempMsg.wParam);
+        Break;
+      End;
+
+      Case TempMsg.message Of
+        WM_LBUTTONUP:
+          ReleaseCapture;
+        WM_MOUSEMOVE:
+          Begin
+            DrawIndicatorLine(FMousePoint.x,RectBorder);
+            FMousePoint := TempMsg.pt;
+            Windows.ScreenToClient(Handle, FMousePoint);
+            DrawIndicatorLine(FMousePoint.x,RectBorder);
+          End;
+        WM_SETCURSOR:
+          ;
+      Else
+        DispatchMessage(TempMsg);
+      End;
+    End; 
+  end;
 
 Begin
   ThisCell := CellFromPoint(point);
@@ -2447,30 +2474,7 @@ Begin
   SetCapture(Handle);
 
   // 取得鼠标输入，进入第二个消息循环
-  While GetCapture = Handle Do
-  Begin
-    If Not GetMessage(TempMsg, Handle, 0, 0) Then
-    Begin
-      PostQuitMessage(TempMsg.wParam);
-      Break;
-    End;
-
-    Case TempMsg.message Of
-      WM_LBUTTONUP:
-        ReleaseCapture;
-      WM_MOUSEMOVE:
-        Begin
-          DrawIndicatorLine(FMousePoint.x,RectBorder);
-          FMousePoint := TempMsg.pt;
-          Windows.ScreenToClient(Handle, FMousePoint);
-          DrawIndicatorLine(FMousePoint.x,RectBorder);
-        End;
-      WM_SETCURSOR:
-        ;
-    Else
-      DispatchMessage(TempMsg);
-    End;
-  End;
+  MsgLoop ;
 
   If GetCapture = Handle Then
     ReleaseCapture;
