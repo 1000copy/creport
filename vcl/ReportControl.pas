@@ -2419,25 +2419,17 @@ Begin
 
   PrevDrawMode := SetROP2(hClientDC, R2_NOTXORPEN);
 
-  //现在改修改这一大段了。直到 END OF
   // 计算  ThisCellsList ，bSelectFlag
   ThisLine := ThisCell.OwnerLine;
   MaxDragExtent(ThisCell,RectBorder) ;
   ThisCellsList := TCellList.Create(self);
-  Begin
+  If not Interference Then
+    ThisCellsList.MakeFromSameRight(ThisCell);
+  Else
+    ThisCellsList.MakeFromSameRightAndInterference(ThisCell);
+  RectBorder.Left := Max(ThisCellsList.MaxCellLeft + DRAGMARGIN,RectBorder.Left);
+  RectBorder.Right := Min(ThisCellsList.MinNextCellRight - DRAGMARGIN,RectBorder.Right);
 
-    If not Interference Then
-    Begin   
-      ThisCellsList.MakeFromSameRight(ThisCell);
-    End
-    Else
-    Begin
-      ThisCellsList.MakeFromSameRightAndInterference(ThisCell);
-    End;
-    RectBorder.Left := Max(ThisCellsList.MaxCellLeft + DRAGMARGIN,RectBorder.Left);
-    RectBorder.Right := Min(ThisCellsList.MinNextCellRight - DRAGMARGIN,RectBorder.Right);
-  End;
-  // END OF - 计算 RectBorder , ThisCellsList ，bSelectFlag
   // 画第一条线
   Begin
     FMousePoint.x := trunc(FMousePoint.x / 5 * 5 + 0.5);
