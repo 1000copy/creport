@@ -2406,6 +2406,15 @@ Var
       r := True;
     result := not r;
   end;
+  procedure DrawIndicatorLine(var x:Integer;RectBorder:TRect );
+  Begin
+    x:= trunc(x / 5 * 5 + 0.5);
+    x  := Max (x , RectBorder.Left);
+    x := Min (x , RectBorder.Right);
+    MoveToEx(hClientDC,x, 0, Nil);
+    LineTo(hClientDC, x, RectClient.Bottom);
+  End;
+
 Begin
   ThisCell := CellFromPoint(point);
   RectCell := ThisCell.CellRect;
@@ -2419,32 +2428,19 @@ Begin
 
   PrevDrawMode := SetROP2(hClientDC, R2_NOTXORPEN);
 
-  // 计算  ThisCellsList ，bSelectFlag
   ThisLine := ThisCell.OwnerLine;
-  MaxDragExtent(ThisCell,RectBorder) ;
   ThisCellsList := TCellList.Create(self);
   If not Interference Then
-    ThisCellsList.MakeFromSameRight(ThisCell);
+    ThisCellsList.MakeFromSameRight(ThisCell)
   Else
     ThisCellsList.MakeFromSameRightAndInterference(ThisCell);
+  MaxDragExtent(ThisCell,RectBorder) ;
   RectBorder.Left := Max(ThisCellsList.MaxCellLeft + DRAGMARGIN,RectBorder.Left);
   RectBorder.Right := Min(ThisCellsList.MinNextCellRight - DRAGMARGIN,RectBorder.Right);
 
   // 画第一条线
-  Begin
-    FMousePoint.x := trunc(FMousePoint.x / 5 * 5 + 0.5);
-
-    If FMousePoint.x < RectBorder.Left Then
-      FMousePoint.x := RectBorder.Left;
-
-    If FMousePoint.x > RectBorder.Right Then
-      FMousePoint.x := RectBorder.Right;
-
-    MoveToEx(hClientDC, FMousePoint.x, 0, Nil);
-    LineTo(hClientDC, FMousePoint.x, RectClient.Bottom);
-    SetCursor(LoadCursor(0, IDC_SIZEWE));
-  End;
-
+  DrawIndicatorLine(FMousePoint.x,RectBorder);
+  SetCursor(LoadCursor(0, IDC_SIZEWE));
   SetCapture(Handle);
 
   // 取得鼠标输入，进入第二个消息循环
@@ -2461,21 +2457,10 @@ Begin
         ReleaseCapture;
       WM_MOUSEMOVE:
         Begin
-          MoveToEx(hClientDC, FMousePoint.x, 0, Nil);
-          LineTo(hClientDC, FMousePoint.x, RectClient.Bottom);
+          DrawIndicatorLine(FMousePoint.x,RectBorder);
           FMousePoint := TempMsg.pt;
           Windows.ScreenToClient(Handle, FMousePoint);
-
-          // 边界检查
-          FMousePoint.x := trunc(FMousePoint.x / 5 * 5 + 0.5);
-
-          If FMousePoint.x < RectBorder.Left Then
-            FMousePoint.x := RectBorder.Left;
-          If FMousePoint.x > RectBorder.Right Then
-            FMousePoint.x := RectBorder.Right;
-
-          MoveToEx(hClientDC, FMousePoint.x, 0, Nil);
-          LineTo(hClientDC, FMousePoint.x, RectClient.Bottom);
+          DrawIndicatorLine(FMousePoint.x,RectBorder);
         End;
       WM_SETCURSOR:
         ;
@@ -2487,11 +2472,8 @@ Begin
   If GetCapture = Handle Then
     ReleaseCapture;
 
-
-  Begin
-    // 将反显的线去掉
-    MoveToEx(hClientDC, FMousePoint.x, 0, Nil);
-    LineTo(hClientDc, FMousePoint.x, RectClient.Bottom);
+  try
+    DrawIndicatorLine(FMousePoint.x,RectBorder);
 
     // 在此处判断对CELL宽度的设定是否有效
     DragBottom := ThisCellsList.Count;
@@ -2504,30 +2486,16 @@ Begin
       End;
     End;
 
-    // 取得NEXTCELL
+
     If ThisCellsList.Count > 0 Then
     Begin
       ThisCell := TReportCell(ThisCellsList[0]);
-
-      // 右边的CELL不为空且隶属与某一CELL
-      If ThisCell.NextCell <> Nil Then
-      Begin
-        If ThisCell.NextCell.OwnerCell <> Nil Then
-        Begin
-          SelectObject(hClientDC, hPrevPen);
-          DeleteObject(hInvertPen);
-          SetROP2(hClientDc, PrevDrawMode);
-          ReleaseDC(Handle, hClientDC);
-          Exit;
-        End;
-      End;
-
+      // 右边的CELL不为空且隶属于某一CELL，就清理资源，并退出
+      If (ThisCell.NextCell <> Nil) and (ThisCell.NextCell.OwnerCell <> Nil )Then
+          raise ;
       DragBottom := 0;
       For I := 0 To ThisCellsList.Count - 1 Do
-      Begin
-        If TReportCell(ThisCellsList[I]).CellRect.Bottom > DragBottom Then
-          DragBottom := TReportCell(ThisCellsList[I]).CellRect.Bottom;
-      End;
+        DragBottom := Max (DragBottom,TReportCell(ThisCellsList[I]).CellRect.Bottom);
 
       For I := 0 To ThisCellsList.Count - 1 Do
       Begin
@@ -2536,26 +2504,19 @@ Begin
         If ThisCell.NextCell <> Nil Then
         Begin
           If ThisCell.NextCell.CellRect.Bottom > DragBottom Then
-          Begin
-            SelectObject(hClientDC, hPrevPen);
-            DeleteObject(hInvertPen);
-            SetROP2(hClientDc, PrevDrawMode);
-            ReleaseDC(Handle, hClientDC);
-            Exit;
-          End;
+            raise ;
         End;
       End;
     End;
     For I := 0 To ThisCellsList.Count - 1 Do
       UpdateTwinCell (ThisCellsList[I],FMousePoint.x);
     UpdateLines;
-  End;
-
-  SelectObject(hClientDC, hPrevPen);
-  DeleteObject(hInvertPen);
-  SetROP2(hClientDc, PrevDrawMode);
-  ReleaseDC(Handle, hClientDC);
-
+  finally
+    SelectObject(hClientDC, hPrevPen);
+    DeleteObject(hInvertPen);
+    SetROP2(hClientDc, PrevDrawMode);
+    ReleaseDC(Handle, hClientDC);
+  end;
 End;
 Procedure TReportControl.StartMouseDrag_Backup(point: TPoint);
 Var
