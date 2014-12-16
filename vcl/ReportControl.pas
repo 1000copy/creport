@@ -2380,6 +2380,25 @@ Var
   Top: Integer;
   //  CellList : TList;
   DragBottom: Integer;
+  // 选区和拖放区互相干涉否
+  // 若无选中的CELL,或者要改变宽度的CELL和NEXTCELL不在选中区中
+  function Interference :boolean;
+  var r:boolean ;
+  begin
+    r := False;
+    If FSelectCells.Count <= 0 Then
+      r := True;
+    If ThisCell.NextCell = Nil Then
+    Begin
+      If not IsCellSelected(ThisCell) Then
+        r := True;
+    End
+    Else If (Not IsCellSelected(ThisCell)) And (Not IsCellSelected(ThisCell.NextCell))
+      And
+      (Not IsCellSelected(ThisCell.NextCell.OwnerCell)) Then
+      r := True;
+    result := not r;
+  end;
 Begin
   ThisCell := CellFromPoint(point);
   RectCell := ThisCell.CellRect;
@@ -2394,28 +2413,14 @@ Begin
 
   PrevDrawMode := SetROP2(hClientDC, R2_NOTXORPEN);
 
-  //现在改修改这一大段了。知道END OF
+  //现在改修改这一大段了。直到 END OF
   // 计算  ThisCellsList ，bSelectFlag
   ThisLine := ThisCell.OwnerLine;
   MaxDragExtent(ThisCell,RectBorder) ;
   Begin
-    // 若无选中的CELL,或者要改变宽度的CELL和NEXTCELL不在选中区中
-    bSelectFlag := False;
 
-    If FSelectCells.Count <= 0 Then
-      bSelectFlag := True;
 
-    If ThisCell.NextCell = Nil Then
-    Begin
-      If (Not IsCellSelected(ThisCell)) And (Not IsCellSelected(ThisCell.NextCell)) Then
-        bSelectFlag := True;
-    End
-    Else If (Not IsCellSelected(ThisCell)) And (Not IsCellSelected(ThisCell.NextCell))
-      And
-      (Not IsCellSelected(ThisCell.NextCell.OwnerCell)) Then
-      bSelectFlag := True;
-
-    If bSelectFlag Then
+    If not Interference Then
     Begin
       For I := 0 To FLineList.Count - 1 Do
       Begin
@@ -2440,6 +2445,19 @@ Begin
           End;
         End;
       End;
+      // responsibilty split :  ThisCellsList
+      For I := 0 To FLineList.Count - 1 Do
+      Begin
+        TempLine := TReportLine(FLineList[I]);
+        For J := 0 To TempLine.FCells.Count - 1 Do
+        Begin
+          TempCell := TempLine.FCells[J];
+          If TempCell.CellRect.Right = ThisCell.CellRect.Right Then
+            ThisCellsList.Add(TempCell);
+        End;
+      End;
+      RectBorder.Left := Max(ThisCellsList.MaxCellLeft + DRAGENMARGIN,RectBorder.Left);
+      RectBorder.Right := Min(TempNextCell.CellRect.Right - DRAGENMARGIN,RectBorder.Right);
     End
     Else
     Begin
