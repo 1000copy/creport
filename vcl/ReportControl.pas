@@ -86,6 +86,8 @@ Type
   private
     ReportControl:TReportControl;
     function Get(Index: Integer): TReportCell;
+    procedure CheckAllNextCellIsBiggerBottom;
+    procedure CheckAllNextCellIsSlave;
   public
     constructor Create(ReportControl:TReportControl);
     function IsRegularForCombine():Boolean;
@@ -105,6 +107,8 @@ Type
     function CellRect:TRect;
     function MaxCellLeft:integer;
     function MinNextCellRight:integer;
+    function MaxCellBottom:Integer;
+
 
   end;
   TLineList = class(TList)
@@ -2415,6 +2419,38 @@ Var
     LineTo(hClientDC, x, RectClient.Bottom);
   End;
 
+  procedure CheckAllNextCellIsSlave;
+  var i,j:Integer;
+  begin
+    For I := 0 To ThisCellsList.Count - 1 Do
+      For J := 0 To ThisCellsList[I].FSlaveCells.Count - 1 Do
+        ThisCellsList.Add(ThisCellsList[I].FSlaveCells[J]);
+    If ThisCellsList.Count > 0 Then
+    Begin
+      ThisCell := TReportCell(ThisCellsList[0]);
+      If (ThisCell.NextCell <> Nil) and (ThisCell.NextCell.OwnerCell <> Nil )Then
+          raise TBlueException.Create('');
+    End;
+  end;
+  // 右边的Cell的Bottom比选择的Cell的最大Bottom还大，也不玩了。人家后台硬：）
+  procedure CheckAllNextCellIsBiggerBottom ;
+  var i,j:Integer;
+  begin
+    For I := 0 To ThisCellsList.Count - 1 Do
+      For J := 0 To ThisCellsList[I].FSlaveCells.Count - 1 Do
+        ThisCellsList.Add(ThisCellsList[I].FSlaveCells[J]);
+    If ThisCellsList.Count > 0 Then
+    Begin
+      ThisCell := ThisCellsList[0];
+      DragBottom := Max(0,ThisCellsList.MaxCellBottom);
+      For I := 0 To ThisCellsList.Count - 1 Do
+      Begin
+        ThisCell := ThisCellsList[I];
+        If (ThisCell.NextCell <> Nil) and( ThisCell.NextCell.CellRect.Bottom > DragBottom) Then
+            raise TBlueException.Create('');
+      End;
+    End;
+  end;
 Begin
   ThisCell := CellFromPoint(point);
   RectCell := ThisCell.CellRect;
@@ -2476,41 +2512,14 @@ Begin
     DrawIndicatorLine(FMousePoint.x,RectBorder);
 
     // 在此处判断对CELL宽度的设定是否有效
-    DragBottom := ThisCellsList.Count;
-
-    For I := 0 To DragBottom - 1 Do
-    Begin
-      For J := 0 To TReportCell(ThisCellsList[I]).FSlaveCells.Count - 1 Do
-      Begin
-        ThisCellsList.Add(TReportCell(ThisCellsList[I]).FSlaveCells[J]);
-      End;
-    End;
-
-
-    If ThisCellsList.Count > 0 Then
-    Begin
-      ThisCell := TReportCell(ThisCellsList[0]);
-      // 右边的CELL不为空且隶属于某一CELL，就清理资源，并退出
-      If (ThisCell.NextCell <> Nil) and (ThisCell.NextCell.OwnerCell <> Nil )Then
-          raise ;
-      DragBottom := 0;
+    try
+      ThisCellsList.CheckAllNextCellIsSlave;
+      ThisCellsList.CheckAllNextCellIsBiggerBottom;
       For I := 0 To ThisCellsList.Count - 1 Do
-        DragBottom := Max (DragBottom,TReportCell(ThisCellsList[I]).CellRect.Bottom);
-
-      For I := 0 To ThisCellsList.Count - 1 Do
-      Begin
-        ThisCell := TReportCell(ThisCellsList[I]);
-
-        If ThisCell.NextCell <> Nil Then
-        Begin
-          If ThisCell.NextCell.CellRect.Bottom > DragBottom Then
-            raise ;
-        End;
-      End;
-    End;
-    For I := 0 To ThisCellsList.Count - 1 Do
-      UpdateTwinCell (ThisCellsList[I],FMousePoint.x);
-    UpdateLines;
+        UpdateTwinCell (ThisCellsList[I],FMousePoint.x);
+      UpdateLines;
+    except
+    end;
   finally
     SelectObject(hClientDC, hPrevPen);
     DeleteObject(hInvertPen);
@@ -4271,6 +4280,15 @@ begin
         Add(ThisCell);
   End;
 end;
+function TCellList.MaxCellBottom: Integer;
+var R ,I: Integer ;
+begin
+  R := 0;
+  For I := 0 To Count - 1 Do
+    R := Max (R,Items[I].CellRect.Bottom);
+  Result := R;
+end;
+
 function TCellList.MaxCellLeft: integer;
 var J ,R:integer;ThisCell :TReportCell;
 begin
@@ -4304,6 +4322,40 @@ begin
   For J := 0 To Count - 1 Do
     Result := Result + TReportCell(Items[J]).CellWidth;
 end;
+// 右边的CELL不为空且隶属于某一CELL，就别闹了，人家有女朋友了：）
+procedure TCellList.CheckAllNextCellIsSlave;
+var i,j:Integer; ThisCell :TReportCell;
+begin
+  For I := 0 To Count - 1 Do
+    For J := 0 To Items[I].FSlaveCells.Count - 1 Do
+      Add(Items[I].FSlaveCells[J]);
+  If Count > 0 Then
+  Begin
+    ThisCell := Items[0];
+    If (ThisCell.NextCell <> Nil) and (ThisCell.NextCell.OwnerCell <> Nil )Then
+        raise TBlueException.Create('');
+  End;
+end;
+// 右边的Cell的Bottom比选择的Cell的最大Bottom还大，也不玩了。人家后台硬：）
+procedure TCellList.CheckAllNextCellIsBiggerBottom ;
+var i,j,DragBottom:Integer; ThisCell :TReportCell;
+begin
+  For I := 0 To Count - 1 Do
+    For J := 0 To Items[I].FSlaveCells.Count - 1 Do
+      Add(Items[I].FSlaveCells[J]);
+  If Count > 0 Then
+  Begin
+    ThisCell := Items[0];
+    DragBottom := Max(0,MaxCellBottom);
+    For I := 0 To Count - 1 Do
+    Begin
+      ThisCell := Items[I];
+      If (ThisCell.NextCell <> Nil) and( ThisCell.NextCell.CellRect.Bottom > DragBottom) Then
+          raise TBlueException.Create('');
+    End;
+  End;
+end;
+
 procedure TReportControl.DoEdit(str: string);
 begin
   FEditCell.CellText := str;
