@@ -2370,7 +2370,7 @@ end;
 Procedure TReportControl.StartMouseDrag_Verz(point: TPoint);
 
 Var
-  TempCell, TempNextCell, ThisCell: TReportCell;
+  TempCell, ThisCell: TReportCell;
   ThisCellsList: TCellList;
   TempRect, RectBorder, RectCell, RectClient: TRect;
   hClientDC: HDC;
@@ -2434,35 +2434,33 @@ Begin
       For I := 0 To FLineList.Count - 1 Do
       Begin
         TempLine := TReportLine(FLineList[I]);
-        TempNextCell := Nil;
         For J := 0 To TempLine.FCells.Count - 1 Do
         Begin
           TempCell := TReportCell(TempLine.FCells[J]);
-          // 若该CELL的右边等于选中的CELL的右边，将该CEL加入到LIST中去
-          // 前提是CELL或NEXTCELL在选中区内
-          If (TempCell.CellRect.Right = ThisCell.CellRect.Right) Then
-          Begin
-            If J < TempLine.FCells.Count - 1 Then
-              TempNextCell := TReportCell(TempLine.FCells[J + 1]);
-
-            If (Not IsCellSelected(TempNextCell)) And (Not
-              IsCellSelected(TempCell)) Then
-              Break;
-
-            If TempNextCell <> Nil Then
-            Begin
-              If TempNextCell.CellRect.Right - 10 < RectBorder.Right Then
-                RectBorder.Right := TempNextCell.CellRect.Right - 10;
-            End;
-
-            ThisCellsList.Add(TempCell);
-
-            If TempCell.CellLeft + 10 > RectBorder.Left Then
-              RectBorder.Left := TempCell.CellLeft + 10;
-
-            Break;
+          If (TempCell.CellRect.Right = ThisCell.CellRect.Right)
+             and (IsCellSelected(TempCell.NextCell)
+             or IsCellSelected(TempCell)) Then
+              Begin
+                ThisCellsList.Add(TempCell);
+                Break;
+              End;
           End;
-        End;
+//        For J := 0 To TempLine.FCells.Count - 1 Do
+//        Begin
+//          TempCell := TReportCell(TempLine.FCells[J]);
+//          If (TempCell.CellRect.Right = ThisCell.CellRect.Right) Then
+//          Begin
+//            If (Not IsCellSelected(TempCell.NextCell)) And
+//               (Not IsCellSelected(TempCell)) Then
+//              Break;
+//            If TempCell.NextCell <> Nil Then
+//              RectBorder.Right := min(RectBorder.Right,TempCell.NextCell.CellRect.Right - DRAGMARGIN);
+//            RectBorder.Left := Max(TempCell.CellLeft + DRAGMARGIN ,RectBorder.Left);
+//            Break;
+//          End;
+//        End;
+        RectBorder.Left := Max(ThisCellsList.MaxCellLeft + DRAGMARGIN ,RectBorder.Left);
+        RectBorder.Left := Max(ThisCellsList.MinNextCellRight - DRAGMARGIN ,RectBorder.Left);
       End;
     End;
   End;
