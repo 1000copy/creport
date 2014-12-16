@@ -2373,39 +2373,6 @@ Var
   Top: Integer;
   //  CellList : TList;
   DragBottom: Integer;
-  // 子过程，可以很好的搬移代码，只要少许修改，比如I循环变量必须是本地的。
-  // 然而，此处的MakeRectBorder是有副作用的，不仅仅做了 RectBorder计算，
-  // 还计算了NextCell,后面还会用到这个变量。因此，还需要分离。
-  // MakeRectBorder 创建最大的拖放范围。因为做了职责分离，这里只做垂直拖动，因此，
-  // 这里只有Left，right才有用。后面的代码也说明确实如此。
-  // 好了，上面有的 MaxDragExtent，这个MakeRectBorder就不必了。
-  procedure MakeRectBorder(RectBorder:TRect);
-  Var
-  I: Integer;
-  begin
-    RectBorder.Top := ThisLine.LineTop + 5;
-    RectBorder.Bottom := Height - 10;
-    RectBorder.Right := ClientRect.Right; 
-    NextCell := Nil;
-
-    For I := 0 To ThisLine.FCells.Count - 1 Do
-    Begin
-      TempCell := TReportCell(ThisLine.FCells[I]);
-
-      If ThisCell = TempCell Then
-      Begin
-        RectBorder.Left := ThisCell.CellLeft + 10;
-
-        If I < ThisLine.FCells.Count - 1 Then
-        Begin
-          NextCell := TReportCell(ThisLine.FCells[I + 1]);
-          RectBorder.Right := NextCell.CellLeft + NextCell.CellWidth - 10;
-        End
-        Else
-          RectBorder.Right := ClientRect.Right - 10;
-      End;
-    End;
-  end;
 Begin
   ThisCell := CellFromPoint(point);
   RectCell := ThisCell.CellRect;
