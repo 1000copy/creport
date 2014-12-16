@@ -2417,6 +2417,13 @@ Var
     MoveToEx(hClientDC,x, 0, Nil);
     LineTo(hClientDC, x, RectClient.Bottom);
   End;
+  procedure DoMove;
+  begin
+    DrawIndicatorLine(FMousePoint.x,RectBorder);
+    FMousePoint := TempMsg.pt;
+    Windows.ScreenToClient(Handle, FMousePoint);
+    DrawIndicatorLine(FMousePoint.x,RectBorder);
+  end;
   procedure MsgLoop;
   begin
     While GetCapture = Handle Do
@@ -2426,16 +2433,12 @@ Var
         PostQuitMessage(TempMsg.wParam);
         Break;
       End;
-
       Case TempMsg.message Of
         WM_LBUTTONUP:
           ReleaseCapture;
         WM_MOUSEMOVE:
           Begin
-            DrawIndicatorLine(FMousePoint.x,RectBorder);
-            FMousePoint := TempMsg.pt;
-            Windows.ScreenToClient(Handle, FMousePoint);
-            DrawIndicatorLine(FMousePoint.x,RectBorder);
+            DoMove;
           End;
         WM_SETCURSOR:
           ;
