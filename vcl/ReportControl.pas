@@ -121,6 +121,7 @@ Type
     function GetBottomest(): TReportCell;overload;
     function GetTextHeight: Integer;
     procedure ExpandHeight(delta: integer);
+    function GetNextCell: TReportCell;
   public
     procedure DrawImage;
     function IsSlave:Boolean;
@@ -131,7 +132,7 @@ Type
     function NearBottom(P:TPoint):Boolean ;
     function NearRight(P:TPoint):Boolean ;
     function NearRightBottom(P:TPoint):Boolean ;
-
+    property NextCell:TReportCell read GetNextCell;
   public
     FLeftMargin: Integer;               // 左边的空格
     FOwnerLine: TReportLine;            // 隶属行
@@ -1861,6 +1862,14 @@ begin
       ACanvas.Free;
     end;
 end;
+function TReportCell.GetNextCell: TReportCell;
+begin
+  if CellIndex  < self.OwnerLine.FCells.Count -1 then
+    Result := self.OwnerLine.FCells[CellIndex+1]
+  else
+    Result := nil;
+end;
+
 {TReportControl}
 
 Procedure TReportControl.CreateWnd;
@@ -2295,10 +2304,8 @@ procedure TReportControl.UpdateTwinCell(ThisCell:TReportCell;x:integer);
   Top: Integer;
   var  NextCell: TReportCell;
   begin
-    NextCell := Nil;
-    If ThisCell.CellIndex < ThisCell.OwnerLine.FCells.Count - 1 Then
-      NextCell := TReportCell(ThisCell.OwnerLine.FCells[ThisCell.CellIndex +
-        1]);
+    NextCell := ThisCell.NextCell;
+
     TempRect := ThisCell.CellRect;
     TempRect.Right := TempRect.Right + 1;
     TempRect.Bottom := TempRect.Bottom + 1;
@@ -2357,7 +2364,7 @@ begin
     RectBorder.Right := ClientRect.Right - DRAGMARGIN;
 end;  
 Procedure TReportControl.StartMouseDrag_Verz(point: TPoint);
-var  NextCell: TReportCell;
+
 Var
   TempCell, TempNextCell, ThisCell: TReportCell;
   ThisCellsList: TCellList;
@@ -2400,14 +2407,14 @@ Begin
     If FSelectCells.Count <= 0 Then
       bSelectFlag := True;
 
-    If NextCell = Nil Then
+    If ThisCell.NextCell = Nil Then
     Begin
-      If (Not IsCellSelected(ThisCell)) And (Not IsCellSelected(NextCell)) Then
+      If (Not IsCellSelected(ThisCell)) And (Not IsCellSelected(ThisCell.NextCell)) Then
         bSelectFlag := True;
     End
-    Else If (Not IsCellSelected(ThisCell)) And (Not IsCellSelected(NextCell))
+    Else If (Not IsCellSelected(ThisCell)) And (Not IsCellSelected(ThisCell.NextCell))
       And
-      (Not IsCellSelected(NextCell.OwnerCell)) Then
+      (Not IsCellSelected(ThisCell.NextCell.OwnerCell)) Then
       bSelectFlag := True;
 
     If bSelectFlag Then
@@ -2552,14 +2559,11 @@ Begin
     If ThisCellsList.Count > 0 Then
     Begin
       ThisCell := TReportCell(ThisCellsList[0]);
-      If ThisCell.CellIndex < ThisCell.OwnerLine.FCells.Count - 1 Then
-        NextCell := TReportCell(ThisCell.OwnerLine.FCells[ThisCell.CellIndex +
-          1]);
 
       // 右边的CELL不为空且隶属与某一CELL
-      If NextCell <> Nil Then
+      If ThisCell.NextCell <> Nil Then
       Begin
-        If NextCell.OwnerCell <> Nil Then
+        If ThisCell.NextCell.OwnerCell <> Nil Then
         Begin
           SelectObject(hClientDC, hPrevPen);
           DeleteObject(hInvertPen);
@@ -2579,13 +2583,10 @@ Begin
       For I := 0 To ThisCellsList.Count - 1 Do
       Begin
         ThisCell := TReportCell(ThisCellsList[I]);
-        If ThisCell.CellIndex < ThisCell.OwnerLine.FCells.Count - 1 Then
-          NextCell := TReportCell(ThisCell.OwnerLine.FCells[ThisCell.CellIndex +
-            1]);
 
-        If NextCell <> Nil Then
+        If ThisCell.NextCell <> Nil Then
         Begin
-          If NextCell.CellRect.Bottom > DragBottom Then
+          If ThisCell.NextCell.CellRect.Bottom > DragBottom Then
           Begin
             SelectObject(hClientDC, hPrevPen);
             DeleteObject(hInvertPen);
