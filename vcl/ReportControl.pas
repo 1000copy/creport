@@ -91,6 +91,9 @@ Type
     function IsRegularForCombine():Boolean;
     procedure MakeSelectedCellsFromLine(ThisLine:TReportLine);
     procedure MakeFromSameRight(ThisCell:TReportCell);
+    procedure MakeFromSameRightAndInterference(ThisCell:TReportCell);
+
+
     function TotalWidth:Integer;
     // How to implement indexed [] default property
     // http://stackoverflow.com/questions/10796417/how-to-implement-indexed-default-property
@@ -2431,6 +2434,8 @@ Begin
     End
     Else
     Begin
+      ThisCellsList.MakeFromSameRightAndInterference(ThisCell);
+      //
       For I := 0 To FLineList.Count - 1 Do
       Begin
         TempLine := TReportLine(FLineList[I]);
@@ -2445,23 +2450,9 @@ Begin
                 Break;
               End;
           End;
-//        For J := 0 To TempLine.FCells.Count - 1 Do
-//        Begin
-//          TempCell := TReportCell(TempLine.FCells[J]);
-//          If (TempCell.CellRect.Right = ThisCell.CellRect.Right) Then
-//          Begin
-//            If (Not IsCellSelected(TempCell.NextCell)) And
-//               (Not IsCellSelected(TempCell)) Then
-//              Break;
-//            If TempCell.NextCell <> Nil Then
-//              RectBorder.Right := min(RectBorder.Right,TempCell.NextCell.CellRect.Right - DRAGMARGIN);
-//            RectBorder.Left := Max(TempCell.CellLeft + DRAGMARGIN ,RectBorder.Left);
-//            Break;
-//          End;
-//        End;
-        RectBorder.Left := Max(ThisCellsList.MaxCellLeft + DRAGMARGIN ,RectBorder.Left);
-        RectBorder.Left := Max(ThisCellsList.MinNextCellRight - DRAGMARGIN ,RectBorder.Left);
       End;
+      RectBorder.Left := Max(ThisCellsList.MaxCellLeft + DRAGMARGIN ,RectBorder.Left);
+      RectBorder.Right := Max(ThisCellsList.MinNextCellRight - DRAGMARGIN ,RectBorder.Right);
     End;
   End;
   // END OF - º∆À„ RectBorder , ThisCellsList £¨bSelectFlag
@@ -4311,6 +4302,29 @@ begin
             Add(TempCell);
         End;
       End;
+end;
+
+procedure TCellList.MakeFromSameRightAndInterference(ThisCell: TReportCell);
+var i ,J:integer;
+Var
+  TempCell: TReportCell;
+  TempLine: TReportLine;
+begin
+  For I := 0 To ReportControl.FLineList.Count - 1 Do
+  Begin
+    TempLine := TReportLine(ReportControl.FLineList[I]);
+    For J := 0 To TempLine.FCells.Count - 1 Do
+    Begin
+      TempCell := TReportCell(TempLine.FCells[J]);
+      If (  (TempCell.CellRect.Right = ThisCell.CellRect.Right)
+            and (TempCell.NextCell.IsSelected
+            or TempCell.IsSelected)) Then
+          Begin
+            Add(TempCell);
+            Break;
+          End;
+      End;
+  End;     
 end;
 
 procedure TCellList.MakeSelectedCellsFromLine(ThisLine: TReportLine);
