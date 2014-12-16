@@ -2419,38 +2419,6 @@ Var
     LineTo(hClientDC, x, RectClient.Bottom);
   End;
 
-  procedure CheckAllNextCellIsSlave;
-  var i,j:Integer;
-  begin
-    For I := 0 To ThisCellsList.Count - 1 Do
-      For J := 0 To ThisCellsList[I].FSlaveCells.Count - 1 Do
-        ThisCellsList.Add(ThisCellsList[I].FSlaveCells[J]);
-    If ThisCellsList.Count > 0 Then
-    Begin
-      ThisCell := TReportCell(ThisCellsList[0]);
-      If (ThisCell.NextCell <> Nil) and (ThisCell.NextCell.OwnerCell <> Nil )Then
-          raise TBlueException.Create('');
-    End;
-  end;
-  // 右边的Cell的Bottom比选择的Cell的最大Bottom还大，也不玩了。人家后台硬：）
-  procedure CheckAllNextCellIsBiggerBottom ;
-  var i,j:Integer;
-  begin
-    For I := 0 To ThisCellsList.Count - 1 Do
-      For J := 0 To ThisCellsList[I].FSlaveCells.Count - 1 Do
-        ThisCellsList.Add(ThisCellsList[I].FSlaveCells[J]);
-    If ThisCellsList.Count > 0 Then
-    Begin
-      ThisCell := ThisCellsList[0];
-      DragBottom := Max(0,ThisCellsList.MaxCellBottom);
-      For I := 0 To ThisCellsList.Count - 1 Do
-      Begin
-        ThisCell := ThisCellsList[I];
-        If (ThisCell.NextCell <> Nil) and( ThisCell.NextCell.CellRect.Bottom > DragBottom) Then
-            raise TBlueException.Create('');
-      End;
-    End;
-  end;
 Begin
   ThisCell := CellFromPoint(point);
   RectCell := ThisCell.CellRect;
