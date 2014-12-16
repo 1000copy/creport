@@ -2376,7 +2376,7 @@ end;
 Procedure TReportControl.StartMouseDrag_Verz(point: TPoint);
 
 Var
-  TempCell, ThisCell: TReportCell;
+  ThisCell: TReportCell;
   ThisCellsList: TCellList;
   TempRect, RectBorder, RectCell, RectClient: TRect;
   hClientDC: HDC;
