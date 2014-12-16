@@ -2417,7 +2417,7 @@ Var
     MoveToEx(hClientDC,x, 0, Nil);
     LineTo(hClientDC, x, RectClient.Bottom);
   End;
-  procedure DoMove;
+  procedure OnMove;
   begin
     DrawIndicatorLine(FMousePoint.x,RectBorder);
     FMousePoint := TempMsg.pt;
@@ -2438,7 +2438,7 @@ Var
           ReleaseCapture;
         WM_MOUSEMOVE:
           Begin
-            DoMove;
+            OnMove;
           End;
         WM_SETCURSOR:
           ;
