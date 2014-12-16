@@ -2429,31 +2429,13 @@ Begin
     If not Interference Then
     Begin   
       ThisCellsList.MakeFromSameRight(ThisCell);
-      RectBorder.Left := Max(ThisCellsList.MaxCellLeft + DRAGMARGIN,RectBorder.Left);
-      RectBorder.Right := Min(ThisCellsList.MinNextCellRight - DRAGMARGIN,RectBorder.Right);
     End
     Else
     Begin
       ThisCellsList.MakeFromSameRightAndInterference(ThisCell);
-      //
-      For I := 0 To FLineList.Count - 1 Do
-      Begin
-        TempLine := TReportLine(FLineList[I]);
-        For J := 0 To TempLine.FCells.Count - 1 Do
-        Begin
-          TempCell := TReportCell(TempLine.FCells[J]);
-          If (TempCell.CellRect.Right = ThisCell.CellRect.Right)
-             and (IsCellSelected(TempCell.NextCell)
-             or IsCellSelected(TempCell)) Then
-              Begin
-                ThisCellsList.Add(TempCell);
-                Break;
-              End;
-          End;
-      End;
-      RectBorder.Left := Max(ThisCellsList.MaxCellLeft + DRAGMARGIN ,RectBorder.Left);
-      RectBorder.Right := Max(ThisCellsList.MinNextCellRight - DRAGMARGIN ,RectBorder.Right);
     End;
+    RectBorder.Left := Max(ThisCellsList.MaxCellLeft + DRAGMARGIN,RectBorder.Left);
+    RectBorder.Right := Min(ThisCellsList.MinNextCellRight - DRAGMARGIN,RectBorder.Right);
   End;
   // END OF - 计算 RectBorder , ThisCellsList ，bSelectFlag
   // 画第一条线
@@ -4316,14 +4298,13 @@ begin
     For J := 0 To TempLine.FCells.Count - 1 Do
     Begin
       TempCell := TReportCell(TempLine.FCells[J]);
-      If (  (TempCell.CellRect.Right = ThisCell.CellRect.Right)
-            and (TempCell.NextCell.IsSelected
-            or TempCell.IsSelected)) Then
+      If   (TempCell.CellRect.Right = ThisCell.CellRect.Right) then
+        if  ((ReportControl.IsCellSelected( TempCell.NextCell)) or TempCell.IsSelected) Then
           Begin
             Add(TempCell);
             Break;
           End;
-      End;
+    End;
   End;     
 end;
 
