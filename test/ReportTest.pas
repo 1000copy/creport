@@ -1544,7 +1544,7 @@ begin
       with  R do
       begin
         SetWndSize(PAGEWIDTH,PAGEHEIGHT);
-        NewTable(6 ,3);
+        NewTable(6 ,4);
         Lines[0].Select;  
         CombineCell;
         Lines[0].LineHeight := HEADERHEIGHT;
@@ -1562,6 +1562,7 @@ begin
            Cells[1,j].CellText := t1.FieldDefs[j].Name;
            Cells[2,j].CellText := '#T1.'+t1.FieldDefs[j].Name;
         end;
+        Cells[3,0].CellText := 'Footer..';
         SaveToFile(strFileDir+'\'+'xxx.ept');
         ResetContent;
         cf.Free;
