@@ -146,6 +146,7 @@ Type
     function NearRightBottom(P:TPoint):Boolean ;
     property NextCell:TReportCell read GetNextCell;
     function IsDetailField:Boolean;
+    function IsSumAllField:Boolean;
   public
     FLeftMargin: Integer;               // ×ó±ßµÄ¿Õ¸ñ
     FOwnerLine: TReportLine;            // Á¥ÊôÐÐ
@@ -323,6 +324,7 @@ Type
     procedure CombineCells(Cells:TCellList);
     procedure Load (s:TSimpleFileStream);
     procedure Save(s:TSimpleFileStream);
+    function IsSumAllLine:Boolean;
   End;
   EachCellProc =  procedure (ThisCell:TReportCell) of object;
   EachLineProc =  procedure (ThisLine:TReportLine)of object;
@@ -1891,6 +1893,11 @@ end;
 function TReportCell.IsDetailField: Boolean;
 begin
   result := (Length(CellText) > 0) And (FCellText[1] = '#') 
+end;
+
+function TReportCell.IsSumAllField: Boolean;
+begin
+  result := (Length(CellText) > 0) And (UpperCase(copy(FCellText, 1, 7)) = '`SUMALL');
 end;
 
 {TReportControl}
@@ -4305,6 +4312,18 @@ begin
       Result := true;
       exit;
     End;
+end;
+
+function TReportLine.IsSumAllLine: Boolean;
+var j :Integer;
+begin
+  result:= false;
+  For j := 0 To FCells.Count - 1 Do
+    if TReportCell(FCells[j]).IsSumAllField then
+    begin
+      result:= true;
+      exit;
+    end;
 end;
 
 End.

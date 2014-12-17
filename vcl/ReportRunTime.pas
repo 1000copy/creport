@@ -780,26 +780,19 @@ function TReportRunTime.FooterHeight:integer;
       TempLine := TReportLine.Create;
       TempLine.FMinHeight := ThisLine.FMinHeight;
       TempLine.FDragHeight := ThisLine.FDragHeight;
-      HootLineList.Add(TempLine);
-      For j := 0 To ThisLine.FCells.Count - 1 Do
-      Begin
-        ThisCell := TreportCell(ThisLine.FCells[j]);
-        If (Length(ThisCell.CellText) > 0) And
-          (UpperCase(copy(ThisCell.FCellText, 1, 7)) = '`SUMALL') Then
+      if ThisLine.IsSumAllLine then begin
+        HootLineList.Add(TempLine);
+        For j := 0 To ThisLine.FCells.Count - 1 Do
         Begin
-          HootLineList.Delete(HootLineList.count - 1);
-          break;
+          ThisCell := TreportCell(ThisLine.FCells[j]);
+          NewCell := TReportCell.Create(Self);
+          TempLine.FCells.Add(NewCell);
+          NewCell.FOwnerLine := TempLine;
+          setnewcell(false, newcell, thiscell);
         End;
-        NewCell := TReportCell.Create(Self);
-        TempLine.FCells.Add(NewCell);
-        NewCell.FOwnerLine := TempLine;
-        setnewcell(false, newcell, thiscell);
-      End;
-      If (UpperCase(copy(ThisCell.FCellText, 1, 7)) <> '`SUMALL') Then
-      Begin
         TempLine.UpdateLineHeight;
         nHootHeight := nHootHeight + TempLine.GetLineHeight;
-      End;
+      end;
     End;
     result := nHootHeight;
   end;

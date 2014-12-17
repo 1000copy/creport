@@ -1544,7 +1544,7 @@ begin
       with  R do
       begin
         SetWndSize(PAGEWIDTH,PAGEHEIGHT);
-        NewTable(6 ,4);
+        NewTable(2 ,5);
         Lines[0].Select;  
         CombineCell;
         Lines[0].LineHeight := HEADERHEIGHT;
@@ -1563,13 +1563,14 @@ begin
            Cells[2,j].CellText := '#T1.'+t1.FieldDefs[j].Name;
         end;
         Cells[3,0].CellText := 'Footer..';
+        Cells[4,0].CellText := '`SUMALL(1)';
         SaveToFile(strFileDir+'\'+'xxx.ept');
         ResetContent;
         cf.Free;
       end;
       R.ReportFile:=strFileDir+'\'+'xxx.ept';
       //R.PrintPreview(true);    // Ready for  Test Page_count
-      //r.EditReport(R.ReportFile);
+      r.EditReport(R.ReportFile);
       //CheckEquals(0 ,
       //  PAGEHEIGHT- (HEADERHEIGHT+r.TopMargin + 24* LINEHEIGHT + LINEHEIGHT  +r.BottomMargin));
       CheckEquals(5,R.DoPageCount);
