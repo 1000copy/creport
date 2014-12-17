@@ -1513,13 +1513,14 @@ begin
     end;
 end;
 procedure TReportRunTimeTest.HeightHowtoConsumed;
-var i,j:integer;
+var i,j,height:integer;
     strFileDir:string;
     CellFont: TLogFont;
     cf: TFont;
     R:TReportRunTime;
     t1 ,t2: TClientDataset;
     F : TStringField;
+    list:TList;
 begin
   try
       R:=TReportRunTime.Create(Application.MainForm);
@@ -1571,6 +1572,12 @@ begin
       //CheckEquals(0 ,
       //  PAGEHEIGHT- (HEADERHEIGHT+r.TopMargin + 24* LINEHEIGHT + LINEHEIGHT  +r.BottomMargin));
       CheckEquals(R.DoPageCount(),5);
+      height := 0;
+      list := r.FillHeadList(height);
+      CheckEquals(HEADERHEIGHT+LINEHEIGHT*1,height);
+      CheckEquals(2,list.count);
+      CheckEquals(HEADERHEIGHT,TReportLine(list[0]).Lineheight);
+      CheckEquals(LineHEIGHT,TReportLine(list[1]).Lineheight);
     finally
       T1.free;
       T2.Free;
