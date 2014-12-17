@@ -9,13 +9,19 @@ uses ReportControl,  Windows, Messages, SysUtils,
 Procedure Register;
 
 type
+  RenderException =class(Exception)
+  public
+    constructor Create;
+  end;
   TReportRunTime = Class(TReportControl)
   private
     function GetHeaderHeight: Integer;
     procedure CloneLine(ThisLine, Line: TReportLine);
+
+    function PageMinHeight: Integer;
   public
     //小计和合计用,最多40列单元格,否则统计汇总时要出错.
-    SumPage, SumAll: Array[0..40] Of real;             
+    SumPage, SumAll: Array[0..40] Of real;
     FFileName: Tfilename;
     FAddSpace: boolean;
     FSetData: TstringList;
@@ -33,6 +39,7 @@ type
     FPageCount: Integer;
     nDataHeight, nHandHeight, nHootHeight, nSumAllHeight: Integer;
     TempDataSet: TDataset;
+    function DoPageCount1: integer;
     Procedure UpdateLines;
     Procedure UpdatePrintLines;
     Procedure PrintOnePage;
@@ -575,6 +582,10 @@ End;
   begin
     result := (FtopMargin + nHandHeight + nDataHeight + nHootHeight + FBottomMargin >height);
   end;
+  function TReportRunTime.PageMinHeight:Integer;
+  begin
+    result := FtopMargin + nHandHeight + nHootHeight + FBottomMargin ;
+  end;
   function TReportRunTime.HasEmptyRoomLastPage:Boolean;
   begin
     result := FtopMargin + nHandHeight +
@@ -1012,57 +1023,83 @@ begin
 end;
 Function TReportRunTime.DoPageCount():integer;
 Var
-  CellIndex,I, J, n,  TempDataSetCount:Integer;
-  ThisLine, TempLine: TReportLine;
-  ThisCell, NewCell: TReportCell;
-  SaveYn: boolean;
-  khbz: boolean;
-Begin
-
+  CellIndex,I, J, n:Integer;
+Begin   
   try
-  TempDataSet := Nil;
-  FhootNo := 0;
-  nHandHeight := 0;                     //该页数据库行之前每行累加高度
-  FpageCount := 1;                      //正处理的页数
-  HasDataNo := 0;
-  nHootHeight := 0;
-  TempDataSetCount := 0;
-  khbz := false;
-
-  FillHeadList(nHandHeight);
-  GetHasDataPosition(HasDataNo,CellIndex) ;
-  If HasDataNo <> -1 Then
-  Begin
-    TempDataSet := GetDataSetFromCell(HasDataNo,CellIndex);
-    TempDataSetCount := TempDataSet.RecordCount;
-    TempDataSet.First;
-    FillFootList(nHootHeight);
-    FillSumList(nSumAllHeight);
-
-    ndataHeight := 0;
-    i := 0;
-    While (i <= TempDataSetCount)  Do
+    nHandHeight := 0;
+    FpageCount := 1;
+    HasDataNo := 0;
+    nHootHeight := 0;
+    FillHeadList(nHandHeight);
+    GetHasDataPosition(HasDataNo,CellIndex) ;
+    If HasDataNo <> -1 Then
     Begin
-      If (Faddspace) And ((i = TempDataSetCount) And (HasEmptyRoomLastPage)) Then begin
-        PaddingEmptyLine(hasdatano,ndataHeight,khbz );
-      end;
-      TempLine := ExpandLine_Height(HasDataNo,ndataHeight);
-      If isPageFull or (i = TempDataSetCount) Then
+      TempDataSet := GetDataSetFromCell(HasDataNo,CellIndex);
+      TempDataSet.First;
+      FillFootList(nHootHeight);
+      FillSumList(nSumAllHeight);
+      ndataHeight := 0;
+      i := 0;
+      if PageMinHeight >= Height then
+        raise RenderException.create;
+      TempDataSet.First;
+      While not TempDataSet.eof Do
       Begin
-        If ndataHeight  = 0 Then
-          raise Exception.create('表格未能完全处理,请调整单元格宽度或页边距等设置');
-        fpagecount := fpagecount + 1;
-
-        ndataHeight := 0;
-        if (i = TempDataSetCount) then break;
-      End else begin
-        TempDataSet.Next;
-        i := i + 1;
-      end;
-    End; 
-    fpagecount := fpagecount - 1;       //总页数
-  End ;
-  result := fpagecount;
+        ExpandLine_Height(HasDataNo,ndataHeight);
+        If isPageFull Then
+        Begin
+          fpagecount := fpagecount + 1;
+          ndataHeight := 0;
+          TempDataSet.Prior;
+        end else
+          TempDataSet.Next;
+      End;
+    End ;
+    result := fpagecount;
+  except
+    on E:Exception do
+         MessageDlg(e.Message,mtInformation,[mbOk], 0);
+  end;
+End;
+Function TReportRunTime.DoPageCount1():integer;
+Var
+  CellIndex,I, J, n,  TempDataSetCount:Integer;
+Begin   
+  try
+    TempDataSet := Nil;
+    FhootNo := 0;
+    nHandHeight := 0;
+    FpageCount := 1;                   
+    HasDataNo := 0;
+    nHootHeight := 0;
+    TempDataSetCount := 0;
+    FillHeadList(nHandHeight);
+    GetHasDataPosition(HasDataNo,CellIndex) ;
+    If HasDataNo <> -1 Then
+    Begin
+      TempDataSet := GetDataSetFromCell(HasDataNo,CellIndex);
+      TempDataSetCount := TempDataSet.RecordCount;
+      TempDataSet.First;
+      FillFootList(nHootHeight);
+      FillSumList(nSumAllHeight);
+      ndataHeight := 0;
+      i := 0;
+      While (i <= TempDataSetCount)  Do
+      Begin
+        ExpandLine_Height(HasDataNo,ndataHeight);
+        If isPageFull or (i = TempDataSetCount) Then
+        Begin
+          fpagecount := fpagecount + 1;   
+          ndataHeight := 0;
+          if (i = TempDataSetCount) then break;
+        End else begin
+          TempDataSet.Next;
+          i := i + 1;
+        end;
+      End;
+      fpagecount := fpagecount - 1;       //总页数
+    End ;
+    result := fpagecount;
   except
     on E:Exception do
          MessageDlg(e.Message,mtInformation,[mbOk], 0);
@@ -1736,4 +1773,11 @@ Begin
   RegisterComponents('CReport', [TReportRunTime]);
 
 End;
+{ RenderException }
+
+constructor RenderException.Create;
+begin
+  self.message := '表格未能完全处理,请调整单元格宽度或页边距等设置';
+end;
+
 end.

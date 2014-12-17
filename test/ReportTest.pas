@@ -1571,7 +1571,7 @@ begin
       //r.EditReport(R.ReportFile);
       //CheckEquals(0 ,
       //  PAGEHEIGHT- (HEADERHEIGHT+r.TopMargin + 24* LINEHEIGHT + LINEHEIGHT  +r.BottomMargin));
-      CheckEquals(R.DoPageCount(),5);
+      CheckEquals(5,R.DoPageCount);
       height := 0;
       list := r.FillHeadList(height);
       CheckEquals(HEADERHEIGHT+LINEHEIGHT*1,height);
