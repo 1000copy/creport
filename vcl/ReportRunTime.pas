@@ -12,6 +12,7 @@ type
   TReportRunTime = Class(TReportControl)
   private
     function GetHeaderHeight: Integer;
+    procedure CloneLine(ThisLine, Line: TReportLine);
   public
     //小计和合计用,最多40列单元格,否则统计汇总时要出错.
     SumPage, SumAll: Array[0..40] Of real;             
@@ -59,7 +60,7 @@ type
     function IsLastPageFull: Boolean;
     function isPageFull: boolean;
     function CloneEmptyLine(thisLine: TReportLine): TReportLine;
-    function FillHeadList(var nHandHeight: integer): TList;
+    function FillHeadList(var H: integer): TList;
     function GetHasDataPosition(var HasDataNo,
       cellIndex: integer): Boolean;
     function AppendList(l1, l2: TList): Boolean;
@@ -601,44 +602,57 @@ End;
 
     result := templine;
   end;
-function TReportRunTime.FillHeadList(var nHandHeight:integer):TList;
-    var HandLineList:TList;        i,j:integer;
-    Var
-    ThisLine, TempLine: TReportLine;
-    ThisCell, NewCell: TReportCell;
+// clone from ThisLine to Line
+procedure TReportRunTime.CloneLine(ThisLine,Line:TReportLine);
+var
+  LineList:TLineList;
+  i,j:integer;
+  ThisCell, NewCell: TReportCell;
+begin
+  Line.FMinHeight := ThisLine.FMinHeight;
+  Line.FDragHeight := ThisLine.FDragHeight;
+  For j := 0 To ThisLine.FCells.Count - 1 Do
+  Begin
+    ThisCell := TreportCell(ThisLine.FCells[j]);
+    NewCell := TReportCell.Create(Self);
+    Line.FCells.Add(NewCell);
+    NewCell.FOwnerLine := Line;
+    SetNewCell(false, newcell, thiscell);
+  End;
+  Line.UpdateLineHeight;  
+end;
+function TReportRunTime.FillHeadList(var H:integer):TList;
+var
+  LineList:TLineList;
+  i,j:integer;
+  ThisLine, Line: TReportLine;
+  ThisCell, NewCell: TReportCell;
+  function Fill:TLineList;
+  var i,j:Integer;
   begin
-   HandLineList := TList.Create;
-   For i := 0 To FlineList.Count - 1 Do
-   Begin
-    ThisLine := TReportLine(FlineList[i]);
-    TempLine := TReportLine.Create;
-    TempLine.FMinHeight := ThisLine.FMinHeight;
-    TempLine.FDragHeight := ThisLine.FDragHeight;
-    HandLineList.Add(TempLine);
-    For j := 0 To ThisLine.FCells.Count - 1 Do
-    Begin
-      ThisCell := TreportCell(ThisLine.FCells[j]);
-      NewCell := TReportCell.Create(Self);
-      TempLine.FCells.Add(NewCell);
-      NewCell.FOwnerLine := TempLine;
-      //能得到FDragHeight(代表线段拖动的高度)的值 Fminheight代表字高,二者取其高者为行高
-      With NewCell Do
-      Begin
-        If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] = '#')
-          Then
-        Begin
-          HandLineList.Delete(HandLineList.count - 1);
-          result :=   HandLineList;
-          exit ;
-        End;
-        setnewcell(false, newcell, thiscell);
-      End;                              //with  NewCell do
-    End;                                //for j
-    TempLine.UpdateLineHeight;
-    nHandHeight := nHandHeight + TempLine.GetLineHeight;
-   End;
-   result :=   HandLineList ;
+     LineList := TLineList.Create(self);
+     try
+       For i := 0 To FlineList.Count - 1 Do
+       Begin
+        ThisLine := TReportLine(FlineList[i]);
+        if Not ThisLine.IsDetailLine then
+        begin
+          Line := TReportLine.Create;
+          LineList.Add(Line);
+          CloneLine(ThisLine,Line);
+        end;
+       End;
+     finally
+       result :=   LineList ;
+     end;
   end;
+begin
+   LineList := Fill;
+   H := H + LineList.TotalHeight;
+   Result := LineList;
+end;
+
+
 function TReportRunTime.GetHasDataPosition(var HasDataNo,cellIndex:integer):Boolean;
 Var
   I, J, n,  TempDataSetCount:Integer;

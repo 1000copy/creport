@@ -121,6 +121,7 @@ Type
     property Items[Index: Integer]: TReportLine read Get ;default;
     procedure MakeSelectedLines(FLineList:TLineList);
     function CombineVert:TReportCell;
+    function TotalHeight:Integer;
   end;
   TReportCell = Class(TObject)
   private
@@ -144,6 +145,7 @@ Type
     function NearRight(P:TPoint):Boolean ;
     function NearRightBottom(P:TPoint):Boolean ;
     property NextCell:TReportCell read GetNextCell;
+    function IsDetailField:Boolean;
   public
     FLeftMargin: Integer;               // ×ó±ßµÄ¿Õ¸ñ
     FOwnerLine: TReportLine;            // Á¥ÊôÐÐ
@@ -299,6 +301,7 @@ Type
     procedure calcLineTop;
 
   Public
+    function IsDetailLine:Boolean;
     procedure UpdateCellIndex;
     procedure UpdateCellLeft;
     procedure UpdateLineHeight;
@@ -1883,6 +1886,11 @@ begin
     Result := self.OwnerLine.FCells[CellIndex+1]
   else
     Result := nil;
+end;
+
+function TReportCell.IsDetailField: Boolean;
+begin
+  result := (Length(CellText) > 0) And (FCellText[1] = '#') 
 end;
 
 {TReportControl}
@@ -4278,6 +4286,25 @@ end;
 procedure TSimpleFileStream.ReadTLOGFONT(var a: TLOGFONT);
 begin
       Read(a,SizeOf(TLOGFONT))
+end;
+
+function TLineList.TotalHeight: Integer;var i :Integer;
+begin
+  Result := 0;
+  for i := 0 to Count -1 do
+    Result := Result + Items[i].GetLineHeight;
+end;
+
+function TReportLine.IsDetailLine: Boolean;
+var i : integer;
+begin
+  Result := False;
+  for i:= 0 to FCells.Count -1 do
+    If  TReportCell(FCells[i]).IsDetailField Then
+    Begin
+      Result := true;
+      exit;
+    End;
 end;
 
 End.

@@ -1586,8 +1586,8 @@ end;
 
 initialization
   RegisterTests('Report',[
-  TReportTest.Suite,
   TReportRuntimeTest.Suite,
+  TReportTest.Suite,
   TReportUITest.Suite,
   TCDSTest.Suite]);
 end.
