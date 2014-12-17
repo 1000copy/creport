@@ -1518,7 +1518,7 @@ var i,j,height:integer;
     CellFont: TLogFont;
     cf: TFont;
     R:TReportRunTime;
-    t1 ,t2: TClientDataset;
+    t1 : TClientDataset;
     F : TStringField;
     list:TList;
 begin
@@ -1529,22 +1529,16 @@ begin
       t1 := TClientDataset.Create(nil);
       t1.FieldDefs.Add('f1',ftString,20,true);
       t1.FieldDefs.Add('f2',ftString,20,true);
-      t2 := TClientDataset.Create(nil);
-      t2.FieldDefs.Add('f1',ftString,20,true);
       t1.CreateDataSet;
-      t2.CreateDataSet;
       R.SetDataSet('t1',t1);
-      R.SetDataSet('t2',t2);
       t1.Open;
-      t2.Open;
       for I:= 0 to 100 do
         t1.AppendRecord([I,(cos(I)*1000)]);
-      t2.AppendRecord([2]);
       strFileDir := ExtractFileDir(Application.ExeName);
       with  R do
       begin
         SetWndSize(PAGEWIDTH,PAGEHEIGHT);
-        NewTable(2 ,5);
+        NewTable(2 ,4);
         Lines[0].Select;  
         CombineCell;
         Lines[0].LineHeight := HEADERHEIGHT;
@@ -1563,17 +1557,19 @@ begin
            Cells[2,j].CellText := '#T1.'+t1.FieldDefs[j].Name;
         end;
         Cells[3,0].CellText := 'Footer..';
-        Cells[4,0].CellText := '`SUMALL(1)';
+//        Cells[4,0].CellText := '`SumAll(1)';
         SaveToFile(strFileDir+'\'+'xxx.ept');
         ResetContent;
         cf.Free;
       end;
       R.ReportFile:=strFileDir+'\'+'xxx.ept';
-      //R.PrintPreview(true);    // Ready for  Test Page_count
-      r.EditReport(R.ReportFile);
+//      R.PrintPreview(true);    
+      //r.EditReport(R.ReportFile);
       //CheckEquals(0 ,
       //  PAGEHEIGHT- (HEADERHEIGHT+r.TopMargin + 24* LINEHEIGHT + LINEHEIGHT  +r.BottomMargin));
+      R.SetDataSet('t1',t1);
       CheckEquals(5,R.DoPageCount);
+      CheckEquals(5,R.DoPageCount1);
       height := 0;
       list := r.FillHeadList(height);
       CheckEquals(HEADERHEIGHT+LINEHEIGHT*1,height);
@@ -1582,7 +1578,6 @@ begin
       CheckEquals(LineHEIGHT,TReportLine(list[1]).Lineheight);
     finally
       T1.free;
-      T2.Free;
     end;
 end;
 

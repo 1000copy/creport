@@ -21,6 +21,9 @@ type
     function PageMinHeight: Integer;
     function HeaderHeight: integer;
     function FooterHeight: integer;
+    function SumHeight:integer;
+    function ExpandLine(var HasDataNo, ndataHeight: integer): TReportLine;
+
   public
     //小计和合计用,最多40列单元格,否则统计汇总时要出错.
     SumPage, SumAll: Array[0..40] Of real;
@@ -40,7 +43,7 @@ type
     // 总页数
     FPageCount: Integer;
     nDataHeight, nHandHeight, nHootHeight, nSumAllHeight: Integer;
-    TempDataSet: TDataset;
+    Dataset: TDataset;
     function DoPageCount1: integer;
     Procedure UpdateLines;
     Procedure UpdatePrintLines;
@@ -73,7 +76,6 @@ type
     function GetHasDataPosition(var HasDataNo,
       cellIndex: integer): Boolean;
     function AppendList(l1, l2: TList): Boolean;
-    function ExpandLine(var HasDataNo, ndataHeight: integer): TReportLine;
     function FillFootList(var nHootHeight: integer): TList;
     function FillSumList(var nSumAllHeight: integer): TList;
     procedure JoinAllList(FPrintLineList, HandLineList, dataLineList,
@@ -85,8 +87,7 @@ type
     function SumCell(ThisCell: TReportCell; j: Integer): Boolean;
     procedure SumLine(var HasDataNo: integer);
     function DoPageCount(): integer;
-    function ExpandLine_Height(var HasDataNo,
-      ndataHeight: integer): TReportLine;
+    function RenderLineHeight(HasDataNo:integer):Integer;
     function GetDataSetFromCell(HasDataNo,CellIndex:Integer):TDataset;
     function GetPrintRange(var A, Z: Integer): boolean;
     procedure LoadPage(I: integer);
@@ -490,30 +491,30 @@ Begin
       Else If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] = '#')
         Then
       Begin
-        If TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)) Is
+        If Dataset.fieldbyname(GetFieldName(ThisCell.CellText)) Is
           tnumericField Then
         Begin
           If thiscell.CellDispformat <> '' Then
           Begin
             If Not
-              TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).isnull
+              Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).isnull
                 Then
               cellText := formatfloat(thiscell.FCellDispformat,
-                TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).value);
+                Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).value);
           End
           Else
             CellText :=
-              TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).displaytext;
+              Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).displaytext;
         End
-        Else If TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)) Is
+        Else If Dataset.fieldbyname(GetFieldName(ThisCell.CellText)) Is
           Tblobfield Then
         Begin
-          If Not TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).isnull
+          If Not Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).isnull
             Then
           Begin
             //if fbmp = nil then
             fbmp := TBitmap.create;
-            FBmp.Assign(TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)));
+            FBmp.Assign(Dataset.fieldbyname(GetFieldName(ThisCell.CellText)));
             FbmpYn := true;
           End
           Else
@@ -522,7 +523,7 @@ Begin
         Else
 
           CellText :=
-            TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).displaytext
+            Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).displaytext
 
       End
       Else If (Length(ThisCell.CellText) > 0) Then
@@ -609,7 +610,7 @@ End;
           NewCell := TReportCell.Create(Self);
           TempLine.FCells.Add(NewCell);
           NewCell.FOwnerLine := TempLine;
-          //setnewcell(true, newcell, thiscell, TempDataSet);
+          //setnewcell(true, newcell, thiscell, Dataset);
           SetEmptyCell(newcell, thiscell);
         End;
 
@@ -705,7 +706,7 @@ Var
   HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisLine, TempLine: TReportLine;
   ThisCell, NewCell: TReportCell;
-  TempDataSet: TDataset;
+  Dataset: TDataset;
   khbz: boolean;
  begin
  
@@ -764,38 +765,32 @@ function TReportRunTime.FillFootList(var nHootHeight:integer ):TList;
     result := HootLineList;
   end;
 function TReportRunTime.FooterHeight:integer;
-  Var
+Var
   I, J, n,  TempDataSetCount:Integer;
-  HandLineList, datalinelist, HootLineList, sumAllList: TList;
+  HootLineList: TLineList;
   ThisLine, TempLine: TReportLine;
   ThisCell, NewCell: TReportCell;
   khbz: boolean;
-  var nHootHeight:integer;
-  begin
-    nHootHeight := 0 ;
-    HootLineList := TList.Create;
+  nHootHeight:integer;
+begin
+  nHootHeight := 0 ;
+  HootLineList := TLineList.Create(Self);
+  try
     For i := HasDataNo + 1 To FlineList.Count - 1 Do
     Begin
       ThisLine := TReportLine(FlineList[i]);
-      TempLine := TReportLine.Create;
-      TempLine.FMinHeight := ThisLine.FMinHeight;
-      TempLine.FDragHeight := ThisLine.FDragHeight;
-      if ThisLine.IsSumAllLine then begin
+      if not ThisLine.IsSumAllLine then
+      begin
+        TempLine := TReportLine.Create;
+        CloneLine(ThisLine,TempLine);
         HootLineList.Add(TempLine);
-        For j := 0 To ThisLine.FCells.Count - 1 Do
-        Begin
-          ThisCell := TreportCell(ThisLine.FCells[j]);
-          NewCell := TReportCell.Create(Self);
-          TempLine.FCells.Add(NewCell);
-          NewCell.FOwnerLine := TempLine;
-          setnewcell(false, newcell, thiscell);
-        End;
-        TempLine.UpdateLineHeight;
-        nHootHeight := nHootHeight + TempLine.GetLineHeight;
       end;
     End;
-    result := nHootHeight;
+    result := HootLineList.TotalHeight;
+  except
+    HootLineList.Free;
   end;
+end;
 
   //将有合计的行(`SumAll)存入一个列表中
   function TReportRunTime.FillSumList(var nSumAllHeight:integer ):TList;
@@ -804,7 +799,7 @@ function TReportRunTime.FooterHeight:integer;
   HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisLine, TempLine: TReportLine;
   ThisCell, NewCell: TReportCell;
-  TempDataSet: TDataset;
+  Dataset: TDataset;
   khbz: boolean;
   begin
     nSumAllHeight := 0;
@@ -829,6 +824,29 @@ function TReportRunTime.FooterHeight:integer;
     End;
     result :=  sumAllList;
   end ;
+function TReportRunTime.SumHeight:Integer;
+Var
+  I, J, n,  TempDataSetCount:Integer;
+  HandLineList, datalinelist, HootLineList, sumAllList: TLineList;
+  ThisLine, TempLine: TReportLine;
+  ThisCell, NewCell: TReportCell;
+  Dataset: TDataset;
+  khbz: boolean;
+  nSumAllHeight:integer;
+begin
+  nSumAllHeight := 0;
+  sumAllList := TLineList.Create(Self);
+  For i := HasDataNo + 1 To FlineList.Count - 1 Do
+  Begin
+    ThisLine := TReportLine(FlineList[i]);
+    TempLine := TReportLine.Create;
+    sumAllList.Add(TempLine);
+    CloneLine(ThisLine,TempLine);
+    TempLine.UpdateLineHeight;
+  End;            
+  result := sumAllList.TotalHeight;
+  sumAllList.Free;
+end ;
   procedure TReportRunTime.PaddingEmptyLine(hasdatano:integer; var dataLineList:TList;var ndataHeight:integer;var khbz :boolean);
   var
     thisline,templine : Treportline ;
@@ -881,16 +899,16 @@ function TReportRunTime.FooterHeight:integer;
           If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] = '#')
             Then
           Begin
-            If TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)) Is
+            If Dataset.fieldbyname(GetFieldName(ThisCell.CellText)) Is
               tnumericField Then
               If Not
-                (TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).IsNull)
+                (Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).IsNull)
                   Then
               Begin
                 SumPage[j] := SumPage[j] +
-                  TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).Value;
+                  Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).Value;
                 SumAll[j] := SumAll[j] +
-                  TempDataSet.fieldbyname(GetFieldName(ThisCell.CellText)).Value;
+                  Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).Value;
               End;
           End;
         Except
@@ -905,80 +923,71 @@ function TReportRunTime.FooterHeight:integer;
         result := true;
     end;
 function TReportRunTime.ExpandLine(var HasDataNo,ndataHeight:integer):TReportLine;
-var thisLine ,TempLine: TReportLine;
-    Var
+var
+  thisLine ,TempLine: TReportLine;
   I, J, n,  TempDataSetCount:Integer;
   HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisCell, NewCell: TReportCell;
 
   khbz: boolean;
-    begin
-      ThisLine := TReportLine(FlineList[HasDataNo]);
-      TempLine := TReportLine.Create;
-      TempLine.FMinHeight := ThisLine.FMinHeight;
-      TempLine.FDragHeight := ThisLine.FDragHeight;
-      For j := 0 To ThisLine.FCells.Count - 1 Do
-      Begin
-        ThisCell := TreportCell(ThisLine.FCells[j]);
-        NewCell := TReportCell.Create(Self);
-        TempLine.FCells.Add(NewCell);
-        NewCell.FOwnerLine := TempLine;
-        setnewcell(false, newcell, thiscell);
-        //SumCell(ThisCell,j) ;
-      End; //for j
-      TempLine.UpdateLineHeight;
-      ndataHeight := ndataHeight + TempLine.GetLineHeight;
-      result := TempLine;
-    end;
-function TReportRunTime.ExpandLine_Height(var HasDataNo,ndataHeight:integer):TReportLine;
-var thisLine ,TempLine: TReportLine;
-    Var
-  I, J, n,  TempDataSetCount:Integer;
+begin
+  ThisLine := TReportLine(FlineList[HasDataNo]);
+  TempLine := TReportLine.Create;
+  TempLine.FMinHeight := ThisLine.FMinHeight;
+  TempLine.FDragHeight := ThisLine.FDragHeight;
+  For j := 0 To ThisLine.FCells.Count - 1 Do
+  Begin
+    ThisCell := TreportCell(ThisLine.FCells[j]);
+    NewCell := TReportCell.Create(Self);
+    TempLine.FCells.Add(NewCell);
+    NewCell.FOwnerLine := TempLine;
+    setnewcell(false, newcell, thiscell);
+    //SumCell(ThisCell,j) ;
+  End; //for j
+  TempLine.UpdateLineHeight;
+  ndataHeight := ndataHeight + TempLine.GetLineHeight;
+  result := TempLine;
+end;
+function TReportRunTime.RenderLineHeight(HasDataNo:integer):Integer;
+var
+  thisLine ,TempLine: TReportLine;
   HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisCell, NewCell: TReportCell;
-
   khbz: boolean;
-    begin
-      ThisLine := TReportLine(FlineList[HasDataNo]);
-      TempLine := TReportLine.Create;
-      TempLine.FMinHeight := ThisLine.FMinHeight;
-      TempLine.FDragHeight := ThisLine.FDragHeight;
-      For j := 0 To ThisLine.FCells.Count - 1 Do
-      Begin
-        ThisCell := TreportCell(ThisLine.FCells[j]);
-        NewCell := TReportCell.Create(Self);
-        TempLine.FCells.Add(NewCell);
-        NewCell.FOwnerLine := TempLine;
-      End; //for j
-      TempLine.UpdateLineHeight;
-      ndataHeight := ndataHeight + TempLine.GetLineHeight;
-      result := TempLine;
-    end;
-    procedure TReportRunTime.SumLine(var HasDataNo:integer);
-    var j:integer;var thisLine ,TempLine: TReportLine;
-    Var
+  ndataHeight:integer;
+begin
+  ThisLine := TReportLine(FlineList[HasDataNo]);
+  TempLine := TReportLine.Create;
+  CloneLine(ThisLine,TempLine);
+  ndataHeight := 0;
+  inc(ndataHeight ,TempLine.GetLineHeight);
+  result := ndataHeight;
+end;
+procedure TReportRunTime.SumLine(var HasDataNo:integer);
+var j:integer;var thisLine ,TempLine: TReportLine;
+Var
   I,  n,  TempDataSetCount:Integer;
   HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisCell, NewCell: TReportCell;
   khbz: boolean;
-    begin
-      ThisLine := TReportLine(FlineList[HasDataNo]);
-      For j := 0 To ThisLine.FCells.Count - 1 Do
-      Begin
-        ThisCell := TreportCell(ThisLine.FCells[j]);
-        SumCell(ThisCell,j) ;
-      End; //for j
-    end;
-    procedure    TReportRunTime.JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList:TList;IsLastPage:Boolean);
+begin
+  ThisLine := TReportLine(FlineList[HasDataNo]);
+  For j := 0 To ThisLine.FCells.Count - 1 Do
+  Begin
+    ThisCell := TreportCell(ThisLine.FCells[j]);
+    SumCell(ThisCell,j) ;
+  End; //for j
+end;
+procedure    TReportRunTime.JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList:TList;IsLastPage:Boolean);
 
-    begin
-        AppendList(  FPrintLineList, HandLineList);
-        AppendList(  FPrintLineList, dataLineList);
-        If (IsLastPage) Then
-          AppendList(  FPrintLineList, SumAllList)
-        Else
-          AppendList(  FPrintLineList, HootLineList);
-    end;
+begin
+    AppendList(  FPrintLineList, HandLineList);
+    AppendList(  FPrintLineList, dataLineList);
+    If (IsLastPage) Then
+      AppendList(  FPrintLineList, SumAllList)
+    Else
+      AppendList(  FPrintLineList, HootLineList);
+end;
 
 Function TReportRunTime.PreparePrintk(SaveYn: boolean; FpageAll: integer):
   integer;
@@ -998,7 +1007,7 @@ Begin
     SumPage[n] := 0;
     SumAll[n] := 0;
   End;
-  TempDataSet := Nil;
+  Dataset := Nil;
   FhootNo := 0;
   nHandHeight := 0;                     //该页数据库行之前每行累加高度
   FpageCount := 1;                      //正处理的页数
@@ -1018,9 +1027,9 @@ Begin
       SaveTempFile( ReadyFileName(fpagecount, Fpageall),fpagecount, FpageAll);
   End else
   Begin
-    TempDataSet := GetDataSet(TReportCell(TReportLine(FlineList[HasDataNo]).FCells[CellIndex]).FCellText);
-    TempDataSetCount := TempDataSet.RecordCount;
-    TempDataSet.First;
+    Dataset := GetDataSet(TReportCell(TReportLine(FlineList[HasDataNo]).FCells[CellIndex]).FCellText);
+    TempDataSetCount := Dataset.RecordCount;
+    Dataset.First;
     HootLineList := FillFootList(nHootHeight);
 //    GetNhasSumALl();//
     sumAllList := FillSumList(nSumAllHeight);
@@ -1030,7 +1039,7 @@ Begin
     dataLineList := TList.Create;
     i := 0;
 
-    While (i <= TempDataSetCount) Or (Not tempdataset.eof) Do
+    While (i <= TempDataSetCount) Or (Not Dataset.eof) Do
     Begin
       If (Faddspace) And ((i = TempDataSetCount) And (HasEmptyRoomLastPage)) Then begin
         PaddingEmptyLine(hasdatano,dataLineList,ndataHeight,khbz );
@@ -1057,7 +1066,7 @@ Begin
       End else begin
         DataLineList.add(tempLine);
         SumLine(HasDataNo);
-        TempDataSet.Next;
+        Dataset.Next;
         i := i + 1;
       end;         
     End; // end while
@@ -1089,39 +1098,36 @@ function TReportRunTime.GetDataSetFromCell(HasDataNo,CellIndex:Integer):TDataset
 begin
   result := GetDataSet(TReportCell(TReportLine(FlineList[HasDataNo]).FCells[CellIndex]).FCellText);
 end;
-Function TReportRunTime.DoPageCount():integer;
+Function TReportRunTime.DoPageCount:integer;
 Var
-  CellIndex,I, J, n:Integer;
-Begin   
+  FpageCount,CellIndex,I, J, n,FixHeight:Integer;
+  H, nHandHeight,  nSumAllHeight: Integer;
+Begin
   try
     nHandHeight := 0;
     FpageCount := 1;
     HasDataNo := 0;
-    nHootHeight := 0;
-    nHandHeight := HeaderHeight ;
     GetHasDataPosition(HasDataNo,CellIndex) ;
     If HasDataNo <> -1 Then
     Begin
-      TempDataSet := GetDataSetFromCell(HasDataNo,CellIndex);
-      TempDataSet.First;
-      //FillFootList(nHootHeight);
-      nHootHeight := FooterHeight ;
-      FillSumList(nSumAllHeight);
-      ndataHeight := 0;
+      FixHeight := FtopMargin + HeaderHeight + FooterHeight + FBottomMargin;
+      Dataset := GetDataSetFromCell(HasDataNo,CellIndex);
+      Dataset.First;
       i := 0;
-      if PageMinHeight >= Height then
+      if FixHeight >= Height then
         raise RenderException.create;
-      TempDataSet.First;
-      While not TempDataSet.eof Do
+      Dataset.First;
+      H := 0;
+      While not Dataset.eof Do
       Begin
-        ExpandLine_Height(HasDataNo,ndataHeight);
-        If isPageFull Then
+        inc(H ,RenderLineHeight(HasDataNo));
+        If FixHeight+H > height Then
         Begin
-          fpagecount := fpagecount + 1;
-          ndataHeight := 0;
-          TempDataSet.Prior;
+          inc(fpagecount);
+          h :=0 ;
+          Dataset.Prior;
         end else
-          TempDataSet.Next;
+          Dataset.Next;
       End;
     End ;
     result := fpagecount;
@@ -1135,7 +1141,7 @@ Var
   CellIndex,I, J, n,  TempDataSetCount:Integer;
 Begin   
   try
-    TempDataSet := Nil;
+    Dataset := Nil;
     FhootNo := 0;
     nHandHeight := 0;
     FpageCount := 1;                   
@@ -1146,23 +1152,23 @@ Begin
     GetHasDataPosition(HasDataNo,CellIndex) ;
     If HasDataNo <> -1 Then
     Begin
-      TempDataSet := GetDataSetFromCell(HasDataNo,CellIndex);
-      TempDataSetCount := TempDataSet.RecordCount;
-      TempDataSet.First;
+      Dataset := GetDataSetFromCell(HasDataNo,CellIndex);
+      TempDataSetCount := Dataset.RecordCount;
+      Dataset.First;
       FillFootList(nHootHeight);
       FillSumList(nSumAllHeight);
       ndataHeight := 0;
       i := 0;
       While (i <= TempDataSetCount)  Do
       Begin
-        ExpandLine_Height(HasDataNo,ndataHeight);
+        ExpandLine(HasDataNo,ndataHeight);
         If isPageFull or (i = TempDataSetCount) Then
         Begin
           fpagecount := fpagecount + 1;   
           ndataHeight := 0;
           if (i = TempDataSetCount) then break;
         End else begin
-          TempDataSet.Next;
+          Dataset.Next;
           i := i + 1;
         end;
       End;
