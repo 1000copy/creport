@@ -394,6 +394,11 @@ Type
   Public
     FLastPrintPageWidth, FLastPrintPageHeight: integer;
     PrintPaper:TPrinterPaper;
+    property     LeftMargin: Integer read FLeftMargin ;
+    property     RightMargin: Integer read FRightMargin ;
+    property     TopMargin: Integer read FTopMargin ;
+    property     BottomMargin: Integer read FBottomMargin ;
+
     function IsEditing :boolean;
     procedure CancelEditing;
     procedure EachCell(EachProc: EachCellProc);
