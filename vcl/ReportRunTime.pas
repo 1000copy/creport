@@ -1042,7 +1042,7 @@ Begin
         If dataLineList.Count = 0 Then
           raise Exception.create('表格未能完全处理,请调整单元格宽度或页边距等设置');
         FhootNo := HandLineList.Count+dataLineList.Count ;
-        JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList,i = TempDataSetCount);
+        JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList,false);
         UpdatePrintLines;
           SaveTempFile(ReadyFileName(fpagecount, Fpageall),fpagecount, FpageAll);
           application.ProcessMessages;
@@ -1065,7 +1065,7 @@ Begin
       If (Faddspace) And (HasEmptyRoomLastPage) Then begin
         PaddingEmptyLine(hasdatano,dataLineList,ndataHeight,khbz );
       end;
-      JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList,i = TempDataSetCount);
+      JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList,True);
       UpdatePrintLines;
         SaveTempFile(ReadyFileName(fpagecount, Fpageall),fpagecount, FpageAll);
         application.ProcessMessages;
