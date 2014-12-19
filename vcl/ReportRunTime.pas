@@ -1138,10 +1138,7 @@ Begin
           inc(fpagecount);
           ndataHeight := 0;
           if (i = TempDataSetCount) then break;
-        End else begin
-          Dataset.Next;
-          i := i + 1;
-        end;
+        End 
       End;
       fpagecount := fpagecount - 1;       //×ÜÒ³Êı
     End ;
