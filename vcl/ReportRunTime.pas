@@ -1070,28 +1070,28 @@ Var
   end;
 Begin
   try
-  For n := 0 To 40 Do //最多40列单元格,否则统计汇总时要出错. 拟换为动态的
-  Begin
-    SumPage[n] := 0;
-    SumAll[n] := 0;
-  End;
-  Dataset := Nil;
-  FhootNo := 0;
-  nHandHeight := 0;                     //该页数据库行之前每行累加高度
-  FpageCount := 1;                      //正处理的页数
-  HasDataNo := 0;
-  nHootHeight := 0;
-  TempDataSetCount := 0;
-  khbz := false;
+    For n := 0 To 40 Do //最多40列单元格,否则统计汇总时要出错. 拟换为动态的
+    Begin
+      SumPage[n] := 0;
+      SumAll[n] := 0;
+    End;
+    Dataset := Nil;
+    FhootNo := 0;
+    nHandHeight := 0;                     //该页数据库行之前每行累加高度
+    FpageCount := 1;                      //正处理的页数
+    HasDataNo := 0;
+    nHootHeight := 0;
+    TempDataSetCount := 0;
+    khbz := false;
 
-  //将每页的表头存入一个列表中
-  HandLineList := FillHeadList(nHandHeight);
-  GetHasDataPosition(HasDataNo,CellIndex) ;
-  If HasDataNo = -1 Then
-    noDataPage
-   else
-   DataPage;        
-  FreeList;
+    //将每页的表头存入一个列表中
+    HandLineList := FillHeadList(nHandHeight);
+    GetHasDataPosition(HasDataNo,CellIndex) ;
+    If HasDataNo = -1 Then
+      noDataPage
+     else
+     DataPage;        
+    FreeList;
   except
     on E:Exception do
          MessageDlg(e.Message,mtInformation,[mbOk], 0);
