@@ -1098,37 +1098,43 @@ function TReportRunTime.GetDataSetFromCell(HasDataNo,CellIndex:Integer):TDataset
 begin
   result := GetDataSet(TReportCell(TReportLine(FlineList[HasDataNo]).FCells[CellIndex]).FCellText);
 end;
-Function TReportRunTime.DoPageCount1:integer;
+Function TReportRunTime.DoPageCount():integer;
 Var
-  FpageCount,CellIndex,I, J, n,FixHeight:Integer;
-  H, nHandHeight,  nSumAllHeight: Integer;
-Begin
+  CellIndex,I, J, n,  TempDataSetCount:Integer;
+Begin   
   try
+    Dataset := Nil;
+    FhootNo := 0;
     nHandHeight := 0;
-    FpageCount := 1;
+    FpageCount := 1;                   
     HasDataNo := 0;
+    nHootHeight := 0;
+    TempDataSetCount := 0;
+    FillHeadList(nHandHeight);
     GetHasDataPosition(HasDataNo,CellIndex) ;
     If HasDataNo <> -1 Then
     Begin
-      FixHeight := FtopMargin + HeaderHeight + FooterHeight + FBottomMargin;
       Dataset := GetDataSetFromCell(HasDataNo,CellIndex);
+      TempDataSetCount := Dataset.RecordCount;
       Dataset.First;
+      FillFootList(nHootHeight);
+      FillSumList(nSumAllHeight);
+      ndataHeight := 0;
       i := 0;
-      if FixHeight >= Height then
-        raise RenderException.create;
-      Dataset.First;
-      H := 0;
-      While not Dataset.eof Do
+      While (i <= TempDataSetCount)  Do
       Begin
-        inc(H ,RenderLineHeight(HasDataNo));
-        If FixHeight+H > height Then
+        ExpandLine(HasDataNo,ndataHeight);
+        If isPageFull or (i = TempDataSetCount) Then
         Begin
-          inc(fpagecount);
-          h :=0 ;
-          Dataset.Prior;
-        end else
+          fpagecount := fpagecount + 1;   
+          ndataHeight := 0;
+          if (i = TempDataSetCount) then break;
+        End else begin
           Dataset.Next;
+          i := i + 1;
+        end;
       End;
+      fpagecount := fpagecount - 1;       //×ÜÒ³Êý
     End ;
     result := fpagecount;
   except
@@ -1136,7 +1142,7 @@ Begin
          MessageDlg(e.Message,mtInformation,[mbOk], 0);
   end;
 End;
-Function TReportRunTime.DoPageCount():integer;
+Function TReportRunTime.DoPageCount1():integer;
 Var
   CellIndex,I, J, n,  TempDataSetCount:Integer;
 Begin   
