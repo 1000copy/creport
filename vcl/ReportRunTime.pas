@@ -1121,11 +1121,10 @@ Begin
       While (i < TempDataSetCount)  Do
       Begin
         ExpandLine(HasDataNo,ndataHeight);
-        If isPageFull or (i = TempDataSetCount) Then
+        If isPageFull  Then
         Begin
           inc(fpagecount);
           ndataHeight := 0;
-          if (i = TempDataSetCount) then break;
         End else begin
           Dataset.Next;
           i := i + 1;
