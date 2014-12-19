@@ -107,7 +107,7 @@ type
     Function shpreview: boolean;        //重新生成预览有关文件
     Function PrintSET(prfile: String): boolean; //纸张及边距设置，lzl
     Procedure updatepage;               //
-    Function PreparePrintk(SaveYn: boolean; FpageAll: integer): integer;  
+    Function PreparePrintk(FpageAll: integer): integer;
     Procedure loadfile(value: tfilename);
     Procedure Print(IsDirectPrint: Boolean);
     Procedure Resetself;
@@ -988,7 +988,7 @@ begin
       AppendList(  FPrintLineList, HootLineList);
 end;
 
-Function TReportRunTime.PreparePrintk(SaveYn: boolean; FpageAll: integer):
+Function TReportRunTime.PreparePrintk(FpageAll: integer):
   integer;
 Var
   CellIndex,I, J, n,  TempDataSetCount:Integer;
@@ -1022,7 +1022,6 @@ Begin
   Begin
     AppendList(  FPrintLineList, HandLineList);
     UpdatePrintLines;
-    If saveyn Then
       SaveTempFile( ReadyFileName(fpagecount, Fpageall),fpagecount, FpageAll);
   End else
   Begin
@@ -1051,10 +1050,8 @@ Begin
         FhootNo := HandLineList.Count+dataLineList.Count ;
         JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList,i = TempDataSetCount);
         UpdatePrintLines;
-        If saveyn Then  begin
           SaveTempFile(ReadyFileName(fpagecount, Fpageall),fpagecount, FpageAll);
           application.ProcessMessages;
-        end;
         For n := 0 To 40 Do
           SumPage[n] := 0;
         fpagecount := fpagecount + 1;
@@ -1084,10 +1081,7 @@ Begin
   FOwnerCellList.Clear;
 
   HandLineList.free;
-  If saveyn Then
     result := HasDataNo
-  Else
-    result := fpagecount;
   except
     on E:Exception do
          MessageDlg(e.Message,mtInformation,[mbOk], 0);
@@ -1197,7 +1191,7 @@ Begin
 			Begin
 			  REPmessform.show;
 			  i := DoPageCount;
-			  PreparePrintk(TRUE, i);
+			  PreparePrintk( i);
         REPmessform.Close;
 			End;
 			FromPage := 1;
@@ -1303,7 +1297,7 @@ Begin
     Begin
       i := DoPageCount;
       REPmessform.show;
-      HasDataNo := PreparePrintk(TRUE, i);
+      HasDataNo := PreparePrintk( i);
       REPmessform.Close;
       PreviewForm := TPreviewForm.Create(Self);
       PreviewForm.SetPreviewMode(bPreviewMode);
@@ -1346,7 +1340,7 @@ Begin
     ReportFile := reportfile; 
     i := DoPageCount;
     REPmessform.show;                     
-    PreparePrintk(TRUE, i);
+    PreparePrintk( i);
     REPmessform.Close;
     PreviewForm.PageCount := FPageCount;
     PreviewForm.StatusBar1.Panels[0].Text := '第' +
@@ -1789,7 +1783,7 @@ Begin
   ReportFile := reportfile;             //从新装入修改后的模版文件
   i := DoPageCount;
   REPmessform.show;                     //lzla2001.4.27
-  PreparePrintk(TRUE, i);
+  PreparePrintk( i);
   REPmessform.Close;
   PreviewForm.PageCount := FPageCount;
   PreviewForm.StatusBar1.Panels[0].Text := '第' +
