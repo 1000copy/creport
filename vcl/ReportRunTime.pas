@@ -1093,12 +1093,7 @@ Begin
         datalinelist.clear;
         ndataHeight := 0;
         if (i = TempDataSetCount) then break;
-      End else begin
-        DataLineList.add(tempLine);
-        SumLine(HasDataNo);
-        Dataset.Next;
-        i := i + 1;
-      end;         
+      End
     End;  
     fpagecount := fpagecount - 1;       //×ÜÒ³Êý
     HootLineList.Free;
