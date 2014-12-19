@@ -1097,9 +1097,9 @@ function TReportRunTime.GetDataSetFromCell(HasDataNo,CellIndex:Integer):TDataset
 begin
   result := GetDataSet(TReportCell(TReportLine(FlineList[HasDataNo]).FCells[CellIndex]).FCellText);
 end;
-Function TReportRunTime.DoPageCount():integer;
+Function TReportRunTime.DoPageCount:integer;
 Var
-  CellIndex,I , TempDataSetCount:Integer;
+  CellIndex,I , RowCount:Integer;
 Begin   
   try
     nHandHeight := 0;
@@ -1113,16 +1113,16 @@ Begin
       FillFootList(nHootHeight);
       FillSumList(nSumAllHeight);
       Dataset := GetDataSetFromCell(HasDataNo,CellIndex);
-      TempDataSetCount := Dataset.RecordCount;
+      RowCount := Dataset.RecordCount;
       Dataset.First;
       ndataHeight := 0;
       i := 0;
-      While (i < TempDataSetCount)  Do
+      While (i < RowCount)  Do
       Begin
         ExpandLine(HasDataNo,ndataHeight);
         If isPageFull  Then
         Begin
-          inc(fpagecount);
+          inc(FPagecount);
           ndataHeight := 0;
         End else begin
           Dataset.Next;
@@ -1130,7 +1130,7 @@ Begin
         end;
       End;
     End ;
-    result := fpagecount;
+    result := FPagecount;
   except
     on E:Exception do
          MessageDlg(e.Message,mtInformation,[mbOk], 0);
@@ -1301,7 +1301,6 @@ Begin
     End
     Else
     Begin
-      //i := PreparePrintk(FALSE, 0);
       i := DoPageCount;
       REPmessform.show;
       HasDataNo := PreparePrintk(TRUE, i);
@@ -1788,7 +1787,6 @@ Var
   i: integer;
 Begin
   ReportFile := reportfile;             //从新装入修改后的模版文件
-  //i := PreparePrintk(FALSE, 0);
   i := DoPageCount;
   REPmessform.show;                     //lzla2001.4.27
   PreparePrintk(TRUE, i);
