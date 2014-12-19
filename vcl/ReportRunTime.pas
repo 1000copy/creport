@@ -1039,13 +1039,7 @@ Begin
     i := 0;
 
 
-//        While (i <= TempDataSetCount) Or (Not Dataset.eof) Do
-//        =====
-//        While (i <= TempDataSetCount) Do
-//        so "(Not Dataset.eof)" is nonsense
-    //While (i <= TempDataSetCount) Or (Not Dataset.eof) Do
-//  是否可以故伎重演：
-//     i <= TempDataSetCount 拆分两块，一块 i < TempDataSetCount ,一块 i = TempDataSetCount
+
     While (i < TempDataSetCount) Do
     Begin
       TempLine := ExpandLine(HasDataNo,ndataHeight);
