@@ -1073,7 +1073,7 @@ Begin
     End;
     While (i = TempDataSetCount) Do
     Begin
-      If (Faddspace) And ((i = TempDataSetCount) And (HasEmptyRoomLastPage)) Then begin
+      If (Faddspace) And (HasEmptyRoomLastPage) Then begin
         PaddingEmptyLine(hasdatano,dataLineList,ndataHeight,khbz );
       end;
       TempLine := ExpandLine(HasDataNo,ndataHeight);
