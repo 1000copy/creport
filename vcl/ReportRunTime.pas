@@ -1060,10 +1060,6 @@ Var
   begin
     HootLineList.Free;
     dataLineList.free;
-//    for N := FPrintLineList.Count - 1 downto 0 do
-//        TReportLine(FPrintLineList[N]).Free;
-    for N := FPrintLineList.Count - 1 downto 0 do
-        TReportLine(FPrintLineList[N]).Free;
     FPrintLineList.Clear;
     For N := FOwnerCellList.Count - 1 Downto 0 Do
       TCellTable(FOwnerCellList[N]).Free;
