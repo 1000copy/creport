@@ -1090,7 +1090,6 @@ Begin
         fpagecount := fpagecount + 1;
         FPrintLineList.Clear;
         datalinelist.clear;
-        ndataHeight := 0;  
       End
     End;  
     fpagecount := fpagecount - 1;       //×ÜÒ³Êı
