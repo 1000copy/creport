@@ -1049,7 +1049,7 @@ Begin
     While (i < TempDataSetCount) Do
     Begin
       TempLine := ExpandLine(HasDataNo,ndataHeight);
-      If isPageFull or (i = TempDataSetCount) Then
+      If isPageFull Then
       Begin
         If dataLineList.Count = 0 Then
           raise Exception.create('表格未能完全处理,请调整单元格宽度或页边距等设置');
