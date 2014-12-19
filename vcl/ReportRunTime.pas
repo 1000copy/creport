@@ -1130,13 +1130,9 @@ Begin
           i := i + 1;
         end;
       End;
-      if  (i = TempDataSetCount)  then
-      Begin
-        ExpandLine(HasDataNo,ndataHeight);
-        inc(fpagecount);
-        ndataHeight := 0;
-      End;
-      fpagecount := fpagecount - 1;       //×ÜÒ³Êý
+//      if  (i = TempDataSetCount)  then
+//        inc(fpagecount);
+//      fpagecount := fpagecount - 1;
     End ;
     result := fpagecount;
   except
