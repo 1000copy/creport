@@ -1064,7 +1064,6 @@ Begin
         FPrintLineList.Clear;
         datalinelist.clear;
         ndataHeight := 0;
-        if (i = TempDataSetCount) then break;
       End else begin
         DataLineList.add(tempLine);
         SumLine(HasDataNo);
