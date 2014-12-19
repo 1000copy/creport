@@ -23,6 +23,7 @@ type
     function FooterHeight: integer;
     function SumHeight:integer;
     function ExpandLine(var HasDataNo, ndataHeight: integer): TReportLine;
+    function PreparePrintk1(FpageAll: integer): integer;
 
   public
     //小计和合计用,最多40列单元格,否则统计汇总时要出错.
@@ -1022,7 +1023,7 @@ Begin
   Begin
     AppendList(  FPrintLineList, HandLineList);
     UpdatePrintLines;
-      SaveTempFile( ReadyFileName(fpagecount, Fpageall),fpagecount, FpageAll);
+    SaveTempFile( ReadyFileName(fpagecount, Fpageall),fpagecount, FpageAll);
   End else
   Begin
     Dataset := GetDataSet(TReportCell(TReportLine(FlineList[HasDataNo]).FCells[CellIndex]).FCellText);
@@ -1037,7 +1038,15 @@ Begin
     dataLineList := TList.Create;
     i := 0;
 
-    While (i <= TempDataSetCount) Or (Not Dataset.eof) Do
+
+//        While (i <= TempDataSetCount) Or (Not Dataset.eof) Do
+//        =====
+//        While (i <= TempDataSetCount) Do
+//        so "(Not Dataset.eof)" is nonsense
+    //While (i <= TempDataSetCount) Or (Not Dataset.eof) Do
+//  是否可以故伎重演：
+//     i <= TempDataSetCount 拆分两块，一块 i < TempDataSetCount ,一块 i = TempDataSetCount
+    While (i <= TempDataSetCount) Do
     Begin
       If (Faddspace) And ((i = TempDataSetCount) And (HasEmptyRoomLastPage)) Then begin
         PaddingEmptyLine(hasdatano,dataLineList,ndataHeight,khbz );
@@ -1065,7 +1074,114 @@ Begin
         Dataset.Next;
         i := i + 1;
       end;         
-    End; // end while
+    End;  
+    fpagecount := fpagecount - 1;       //总页数
+    HootLineList.Free;
+    dataLineList.free;
+  End ;
+
+
+  //for N := FPrintLineList.Count - 1 downto 0 do
+  //    TReportLine(FPrintLineList[N]).Free;
+  FPrintLineList.Clear;
+
+  For N := FOwnerCellList.Count - 1 Downto 0 Do
+    TCellTable(FOwnerCellList[N]).Free;
+  FOwnerCellList.Clear;
+
+  HandLineList.free;
+    result := HasDataNo
+  except
+    on E:Exception do
+         MessageDlg(e.Message,mtInformation,[mbOk], 0);
+  end;
+End;
+Function TReportRunTime.PreparePrintk1(FpageAll: integer):
+  integer;
+Var
+  CellIndex,I, J, n,  TempDataSetCount:Integer;
+  HandLineList, datalinelist, HootLineList, sumAllList: TList;
+  ThisLine, TempLine: TReportLine;
+  ThisCell, NewCell: TReportCell;
+  
+  khbz: boolean;
+  //khbz - 空行标志 - 是否曾经补齐空行并且因为页面溢出而回删过行。我真是天才，猜出了他的意思 ：）
+  // 作为一种信息的有损压缩，从空行标记到khbz容易，反过来真难。我用百度拼音，翻5页也看不明白，考核？客户？考号？
+Begin
+  try
+  For n := 0 To 40 Do //最多40列单元格,否则统计汇总时要出错. 拟换为动态的
+  Begin
+    SumPage[n] := 0;
+    SumAll[n] := 0;
+  End;
+  Dataset := Nil;
+  FhootNo := 0;
+  nHandHeight := 0;                     //该页数据库行之前每行累加高度
+  FpageCount := 1;                      //正处理的页数
+  HasDataNo := 0;
+  nHootHeight := 0;
+  TempDataSetCount := 0;
+  khbz := false;
+
+  //将每页的表头存入一个列表中
+  HandLineList := FillHeadList(nHandHeight);
+  GetHasDataPosition(HasDataNo,CellIndex) ;
+  If HasDataNo = -1 Then
+  Begin
+    AppendList(  FPrintLineList, HandLineList);
+    UpdatePrintLines;
+    SaveTempFile( ReadyFileName(fpagecount, Fpageall),fpagecount, FpageAll);
+  End else
+  Begin
+    Dataset := GetDataSet(TReportCell(TReportLine(FlineList[HasDataNo]).FCells[CellIndex]).FCellText);
+    TempDataSetCount := Dataset.RecordCount;
+    Dataset.First;
+    HootLineList := FillFootList(nHootHeight);
+//    GetNhasSumALl();//
+    sumAllList := FillSumList(nSumAllHeight);
+    //dataLineList := FillDataList(ndataHeight,khbz);
+
+    ndataHeight := 0;
+    dataLineList := TList.Create;
+    i := 0;
+
+
+//        While (i <= TempDataSetCount) Or (Not Dataset.eof) Do
+//        =====
+//        While (i <= TempDataSetCount) Do
+//        so "(Not Dataset.eof)" is nonsense
+    //While (i <= TempDataSetCount) Or (Not Dataset.eof) Do
+//  是否可以故伎重演：
+//     i <= TempDataSetCount 拆分两块，一块 i < TempDataSetCount ,一块 i = TempDataSetCount
+    While (i <= TempDataSetCount) Do
+    Begin
+      If (Faddspace) And ((i = TempDataSetCount) And (HasEmptyRoomLastPage)) Then begin
+        PaddingEmptyLine(hasdatano,dataLineList,ndataHeight,khbz );
+      end;
+      TempLine := ExpandLine(HasDataNo,ndataHeight);
+      If isPageFull or (i = TempDataSetCount) Then
+      Begin
+        If dataLineList.Count = 0 Then
+          raise Exception.create('表格未能完全处理,请调整单元格宽度或页边距等设置');
+        FhootNo := HandLineList.Count+dataLineList.Count ;
+        JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList,i = TempDataSetCount);
+        UpdatePrintLines;
+          SaveTempFile(ReadyFileName(fpagecount, Fpageall),fpagecount, FpageAll);
+          application.ProcessMessages;
+        For n := 0 To 40 Do
+          SumPage[n] := 0;
+        fpagecount := fpagecount + 1;
+        FPrintLineList.Clear;
+        datalinelist.clear;
+        ndataHeight := 0;
+        if (i = TempDataSetCount) then break;
+      End else begin
+        DataLineList.add(tempLine);
+        SumLine(HasDataNo);
+        Dataset.Next;
+        i := i + 1;
+      end;         
+    End;  
     fpagecount := fpagecount - 1;       //总页数
     HootLineList.Free;
     dataLineList.free;
