@@ -1133,7 +1133,7 @@ Begin
       While (i = TempDataSetCount)  Do
       Begin
         ExpandLine(HasDataNo,ndataHeight);
-        If isPageFull or (i = TempDataSetCount) Then
+        If true Then
         Begin
           inc(fpagecount);
           ndataHeight := 0;
