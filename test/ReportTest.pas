@@ -1563,7 +1563,7 @@ begin
         cf.Free;
       end;
       R.ReportFile:=strFileDir+'\'+'xxx.ept';
-//      R.PrintPreview(true);    
+      R.PrintPreview(true);    
       //r.EditReport(R.ReportFile);
       //CheckEquals(0 ,
       //  PAGEHEIGHT- (HEADERHEIGHT+r.TopMargin + 24* LINEHEIGHT + LINEHEIGHT  +r.BottomMargin));

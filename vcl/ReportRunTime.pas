@@ -1085,9 +1085,6 @@ Begin
       application.ProcessMessages;
     For n := 0 To 40 Do
       SumPage[n] := 0;
-    fpagecount := fpagecount + 1;
-
-    fpagecount := fpagecount - 1;       //×ÜÒ³Êý
     HootLineList.Free;
     dataLineList.free;
   End ;
