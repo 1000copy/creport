@@ -1048,9 +1048,6 @@ Begin
 //     i <= TempDataSetCount 拆分两块，一块 i < TempDataSetCount ,一块 i = TempDataSetCount
     While (i < TempDataSetCount) Do
     Begin
-      If (Faddspace) And ((i = TempDataSetCount) And (HasEmptyRoomLastPage)) Then begin
-        PaddingEmptyLine(hasdatano,dataLineList,ndataHeight,khbz );
-      end;
       TempLine := ExpandLine(HasDataNo,ndataHeight);
       If isPageFull or (i = TempDataSetCount) Then
       Begin
