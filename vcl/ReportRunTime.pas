@@ -108,7 +108,7 @@ type
     Function shpreview: boolean;        //重新生成预览有关文件
     Function PrintSET(prfile: String): boolean; //纸张及边距设置，lzl
     Procedure updatepage;               //
-    Function PreparePrintk(FpageAll: integer): integer;
+    procedure PreparePrintk(FpageAll: integer);
     Procedure loadfile(value: tfilename);
     Procedure Print(IsDirectPrint: Boolean);
     Procedure Resetself;
@@ -917,11 +917,11 @@ end ;
         End;
   end;
  
-    function TReportRunTime.AppendList( l1, l2:TList):Boolean;var n :integer; begin
-        For n := 0 To l2.Count - 1 Do
-          l1.Add(l2[n]);
-        result := true;
-    end;
+function TReportRunTime.AppendList( l1, l2:TList):Boolean;var n :integer; begin
+    For n := 0 To l2.Count - 1 Do
+      l1.Add(l2[n]);
+    result := true;
+end;
 function TReportRunTime.ExpandLine(var HasDataNo,ndataHeight:integer):TReportLine;
 var
   thisLine ,TempLine: TReportLine;
@@ -988,9 +988,8 @@ begin
     Else
       AppendList(  FPrintLineList, HootLineList);
 end;
-// todo:NextStep --> Iam tired ,have a rest 
-Function TReportRunTime.PreparePrintk(FpageAll: integer):
-  integer;
+// todo:NextStep --> Iam tired ,have a rest
+procedure TReportRunTime.PreparePrintk(FpageAll: integer);
 Var
   CellIndex,I, J, n,  TempDataSetCount:Integer;
   HandLineList, datalinelist, HootLineList, sumAllList: TList;
@@ -1000,31 +999,15 @@ Var
   khbz: boolean;
   //khbz - 空行标志 - 是否曾经补齐空行并且因为页面溢出而回删过行。我真是天才，猜出了他的意思 ：）
   // 作为一种信息的有损压缩，从空行标记到khbz容易，反过来真难。我用百度拼音，翻5页也看不明白，考核？客户？考号？
-Begin
-  try
-  For n := 0 To 40 Do //最多40列单元格,否则统计汇总时要出错. 拟换为动态的
-  Begin
-    SumPage[n] := 0;
-    SumAll[n] := 0;
-  End;
-  Dataset := Nil;
-  FhootNo := 0;
-  nHandHeight := 0;                     //该页数据库行之前每行累加高度
-  FpageCount := 1;                      //正处理的页数
-  HasDataNo := 0;
-  nHootHeight := 0;
-  TempDataSetCount := 0;
-  khbz := false;
-
-  //将每页的表头存入一个列表中
-  HandLineList := FillHeadList(nHandHeight);
-  GetHasDataPosition(HasDataNo,CellIndex) ;
-  If HasDataNo = -1 Then
-  Begin
+  procedure NoDataPage;
+  begin
     AppendList(  FPrintLineList, HandLineList);
     UpdatePrintLines;
     SaveTempFile( ReadyFileName(fpagecount, Fpageall),fpagecount, FpageAll);
-  End else
+  end;
+  procedure DataPage;
+  Var
+    n :Integer;
   Begin
     Dataset := GetDataSet(TReportCell(TReportLine(FlineList[HasDataNo]).FCells[CellIndex]).FCellText);
     TempDataSetCount := Dataset.RecordCount;
@@ -1069,21 +1052,50 @@ Begin
       UpdatePrintLines;
       SaveTempFile(ReadyFileName(fpagecount, Fpageall),fpagecount, FpageAll);
     end;
+
+  End ;
+  procedure FreeList;
+  Var
+    n :Integer;
+  begin
     HootLineList.Free;
     dataLineList.free;
-  End ;
+//    for N := FPrintLineList.Count - 1 downto 0 do
+//        TReportLine(FPrintLineList[N]).Free;
+    for N := FPrintLineList.Count - 1 downto 0 do
+        TReportLine(FPrintLineList[N]).Free;
+    FPrintLineList.Clear;
+    For N := FOwnerCellList.Count - 1 Downto 0 Do
+      TCellTable(FOwnerCellList[N]).Free;
+    FOwnerCellList.Clear;
 
+    HandLineList.free;
 
-  //for N := FPrintLineList.Count - 1 downto 0 do
-  //    TReportLine(FPrintLineList[N]).Free;
-  FPrintLineList.Clear;
+  end;
+Begin
+  try
+  For n := 0 To 40 Do //最多40列单元格,否则统计汇总时要出错. 拟换为动态的
+  Begin
+    SumPage[n] := 0;
+    SumAll[n] := 0;
+  End;
+  Dataset := Nil;
+  FhootNo := 0;
+  nHandHeight := 0;                     //该页数据库行之前每行累加高度
+  FpageCount := 1;                      //正处理的页数
+  HasDataNo := 0;
+  nHootHeight := 0;
+  TempDataSetCount := 0;
+  khbz := false;
 
-  For N := FOwnerCellList.Count - 1 Downto 0 Do
-    TCellTable(FOwnerCellList[N]).Free;
-  FOwnerCellList.Clear;
-
-  HandLineList.free;
-    result := HasDataNo
+  //将每页的表头存入一个列表中
+  HandLineList := FillHeadList(nHandHeight);
+  GetHasDataPosition(HasDataNo,CellIndex) ;
+  If HasDataNo = -1 Then
+    noDataPage
+   else
+   DataPage;        
+  FreeList;
   except
     on E:Exception do
          MessageDlg(e.Message,mtInformation,[mbOk], 0);
@@ -1406,7 +1418,7 @@ Begin
     Begin
       i := DoPageCount;
       REPmessform.show;
-      HasDataNo := PreparePrintk( i);
+      PreparePrintk( i);
       REPmessform.Close;
       PreviewForm := TPreviewForm.Create(Self);
       PreviewForm.SetPreviewMode(bPreviewMode);
