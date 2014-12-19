@@ -1569,7 +1569,6 @@ begin
       //  PAGEHEIGHT- (HEADERHEIGHT+r.TopMargin + 24* LINEHEIGHT + LINEHEIGHT  +r.BottomMargin));
       R.SetDataSet('t1',t1);
       CheckEquals(5,R.DoPageCount);
-      CheckEquals(5,R.DoPageCount1);
       height := 0;
       list := r.FillHeadList(height);
       CheckEquals(HEADERHEIGHT+LINEHEIGHT*1,height);
