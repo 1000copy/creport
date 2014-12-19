@@ -1092,7 +1092,7 @@ Begin
         FPrintLineList.Clear;
         datalinelist.clear;
         ndataHeight := 0;
-        if (i = TempDataSetCount) then break;
+
       End
     End;  
     fpagecount := fpagecount - 1;       //×ÜÒ³Êı
