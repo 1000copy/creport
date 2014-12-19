@@ -1133,12 +1133,9 @@ Begin
       While (i = TempDataSetCount)  Do
       Begin
         ExpandLine(HasDataNo,ndataHeight);
-        If true Then
-        Begin
           inc(fpagecount);
           ndataHeight := 0;
           if (i = TempDataSetCount) then break;
-        End 
       End;
       fpagecount := fpagecount - 1;       //×ÜÒ³Êý
     End ;
