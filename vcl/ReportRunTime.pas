@@ -1046,7 +1046,36 @@ Begin
     //While (i <= TempDataSetCount) Or (Not Dataset.eof) Do
 //  是否可以故伎重演：
 //     i <= TempDataSetCount 拆分两块，一块 i < TempDataSetCount ,一块 i = TempDataSetCount
-    While (i <= TempDataSetCount) Do
+    While (i < TempDataSetCount) Do
+    Begin
+      If (Faddspace) And ((i = TempDataSetCount) And (HasEmptyRoomLastPage)) Then begin
+        PaddingEmptyLine(hasdatano,dataLineList,ndataHeight,khbz );
+      end;
+      TempLine := ExpandLine(HasDataNo,ndataHeight);
+      If isPageFull or (i = TempDataSetCount) Then
+      Begin
+        If dataLineList.Count = 0 Then
+          raise Exception.create('表格未能完全处理,请调整单元格宽度或页边距等设置');
+        FhootNo := HandLineList.Count+dataLineList.Count ;
+        JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList,i = TempDataSetCount);
+        UpdatePrintLines;
+          SaveTempFile(ReadyFileName(fpagecount, Fpageall),fpagecount, FpageAll);
+          application.ProcessMessages;
+        For n := 0 To 40 Do
+          SumPage[n] := 0;
+        fpagecount := fpagecount + 1;
+        FPrintLineList.Clear;
+        datalinelist.clear;
+        ndataHeight := 0;
+        if (i = TempDataSetCount) then break;
+      End else begin
+        DataLineList.add(tempLine);
+        SumLine(HasDataNo);
+        Dataset.Next;
+        i := i + 1;
+      end;         
+    End;
+    While (i = TempDataSetCount) Do
     Begin
       If (Faddspace) And ((i = TempDataSetCount) And (HasEmptyRoomLastPage)) Then begin
         PaddingEmptyLine(hasdatano,dataLineList,ndataHeight,khbz );
