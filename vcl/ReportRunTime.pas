@@ -1103,13 +1103,10 @@ Var
   CellIndex,I, J, n,  TempDataSetCount:Integer;
 Begin   
   try
-    Dataset := Nil;
-    FhootNo := 0;
     nHandHeight := 0;
-    FpageCount := 1;                   
-    HasDataNo := 0;
     nHootHeight := 0;
-    TempDataSetCount := 0;
+    FpageCount := 1;
+    HasDataNo := 0;
     GetHasDataPosition(HasDataNo,CellIndex) ;
     If HasDataNo <> -1 Then
     Begin
@@ -1121,12 +1118,25 @@ Begin
       Dataset.First;
       ndataHeight := 0;
       i := 0;
-      While (i <= TempDataSetCount)  Do
+      While (i < TempDataSetCount)  Do
       Begin
         ExpandLine(HasDataNo,ndataHeight);
         If isPageFull or (i = TempDataSetCount) Then
         Begin
-          fpagecount := fpagecount + 1;   
+          inc(fpagecount);
+          ndataHeight := 0;
+          if (i = TempDataSetCount) then break;
+        End else begin
+          Dataset.Next;
+          i := i + 1;
+        end;
+      End;
+      While (i = TempDataSetCount)  Do
+      Begin
+        ExpandLine(HasDataNo,ndataHeight);
+        If isPageFull or (i = TempDataSetCount) Then
+        Begin
+          inc(fpagecount);
           ndataHeight := 0;
           if (i = TempDataSetCount) then break;
         End else begin
