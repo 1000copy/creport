@@ -1067,10 +1067,7 @@ Begin
       end;
       JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList,True);
       UpdatePrintLines;
-        SaveTempFile(ReadyFileName(fpagecount, Fpageall),fpagecount, FpageAll);
-        application.ProcessMessages;
-      For n := 0 To 40 Do
-        SumPage[n] := 0;
+      SaveTempFile(ReadyFileName(fpagecount, Fpageall),fpagecount, FpageAll);
     end;
     HootLineList.Free;
     dataLineList.free;
