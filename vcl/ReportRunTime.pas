@@ -1071,13 +1071,12 @@ Begin
         i := i + 1;
       end;         
     End;
-    While (i = TempDataSetCount) Do
+    if (i = TempDataSetCount) then
     Begin
       If (Faddspace) And (HasEmptyRoomLastPage) Then begin
         PaddingEmptyLine(hasdatano,dataLineList,ndataHeight,khbz );
       end;
-      TempLine := ExpandLine(HasDataNo,ndataHeight);
-      
+      TempLine := ExpandLine(HasDataNo,ndataHeight);      
       Begin
         If dataLineList.Count = 0 Then
           raise Exception.create('表格未能完全处理,请调整单元格宽度或页边距等设置');
@@ -1091,8 +1090,7 @@ Begin
         fpagecount := fpagecount + 1;
         FPrintLineList.Clear;
         datalinelist.clear;
-        ndataHeight := 0;
-
+        ndataHeight := 0;  
       End
     End;  
     fpagecount := fpagecount - 1;       //总页数
