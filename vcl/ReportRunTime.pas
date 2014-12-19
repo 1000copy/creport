@@ -1110,15 +1110,15 @@ Begin
     HasDataNo := 0;
     nHootHeight := 0;
     TempDataSetCount := 0;
-    FillHeadList(nHandHeight);
     GetHasDataPosition(HasDataNo,CellIndex) ;
     If HasDataNo <> -1 Then
     Begin
+      FillHeadList(nHandHeight);
+      FillFootList(nHootHeight);
+      FillSumList(nSumAllHeight);
       Dataset := GetDataSetFromCell(HasDataNo,CellIndex);
       TempDataSetCount := Dataset.RecordCount;
       Dataset.First;
-      FillFootList(nHootHeight);
-      FillSumList(nSumAllHeight);
       ndataHeight := 0;
       i := 0;
       While (i <= TempDataSetCount)  Do
