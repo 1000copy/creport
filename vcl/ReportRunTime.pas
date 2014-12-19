@@ -1098,7 +1098,7 @@ function TReportRunTime.GetDataSetFromCell(HasDataNo,CellIndex:Integer):TDataset
 begin
   result := GetDataSet(TReportCell(TReportLine(FlineList[HasDataNo]).FCells[CellIndex]).FCellText);
 end;
-Function TReportRunTime.DoPageCount:integer;
+Function TReportRunTime.DoPageCount1:integer;
 Var
   FpageCount,CellIndex,I, J, n,FixHeight:Integer;
   H, nHandHeight,  nSumAllHeight: Integer;
@@ -1136,7 +1136,7 @@ Begin
          MessageDlg(e.Message,mtInformation,[mbOk], 0);
   end;
 End;
-Function TReportRunTime.DoPageCount1():integer;
+Function TReportRunTime.DoPageCount():integer;
 Var
   CellIndex,I, J, n,  TempDataSetCount:Integer;
 Begin   
