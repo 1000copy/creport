@@ -1130,9 +1130,6 @@ Begin
           i := i + 1;
         end;
       End;
-//      if  (i = TempDataSetCount)  then
-//        inc(fpagecount);
-//      fpagecount := fpagecount - 1;
     End ;
     result := fpagecount;
   except
