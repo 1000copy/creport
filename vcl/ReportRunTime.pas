@@ -80,7 +80,7 @@ type
     procedure JoinAllList(FPrintLineList, HandLineList, dataLineList,
       SumAllList, HootLineList: TList;IsLastPage:Boolean);
     procedure PaddingEmptyLine(hasdatano: integer; var dataLineList: TList;
-      var ndataHeight: integer; var khbz: boolean);overload;
+      var ndataHeight: integer);overload;
     function SumCell(ThisCell: TReportCell; j: Integer): Boolean;
     procedure SumLine(var HasDataNo: integer);
     function DoPageCount(): integer;
@@ -704,7 +704,6 @@ Var
   ThisLine, TempLine: TReportLine;
   ThisCell, NewCell: TReportCell;
   Dataset: TDataset;
-  khbz: boolean;
  begin
  
     HasDataNo := -1 ;
@@ -729,7 +728,6 @@ function TReportRunTime.FillFootList(var nHootHeight:integer ):TList;
   HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisLine, TempLine: TReportLine;
   ThisCell, NewCell: TReportCell;
-  khbz: boolean;
   begin
     HootLineList := TList.Create;
     For i := HasDataNo + 1 To FlineList.Count - 1 Do
@@ -767,7 +765,6 @@ Var
   HootLineList: TLineList;
   ThisLine, TempLine: TReportLine;
   ThisCell, NewCell: TReportCell;
-  khbz: boolean;
   nHootHeight:integer;
 begin
   nHootHeight := 0 ;
@@ -797,7 +794,6 @@ end;
   ThisLine, TempLine: TReportLine;
   ThisCell, NewCell: TReportCell;
   Dataset: TDataset;
-  khbz: boolean;
   begin
     nSumAllHeight := 0;
     sumAllList := TList.Create;
@@ -828,7 +824,6 @@ Var
   ThisLine, TempLine: TReportLine;
   ThisCell, NewCell: TReportCell;
   Dataset: TDataset;
-  khbz: boolean;
   nSumAllHeight:integer;
 begin
   nSumAllHeight := 0;
@@ -844,7 +839,7 @@ begin
   result := sumAllList.TotalHeight;
   sumAllList.Free;
 end ;
-procedure TReportRunTime.PaddingEmptyLine(hasdatano:integer; var dataLineList:TList;var ndataHeight:integer;var khbz :boolean);
+procedure TReportRunTime.PaddingEmptyLine(hasdatano:integer; var dataLineList:TList;var ndataHeight:integer);
 var
   thisline,templine : Treportline ;
 begin
@@ -858,7 +853,6 @@ begin
         If IsLastPageFull Then
         Begin
           dataLineList.Delete(dataLineList.Count - 1);
-          khbz := true;
           break;
         End;
       End;
@@ -870,7 +864,6 @@ HandLineList, datalinelist, HootLineList, sumAllList: TList;
 ThisLine, TempLine: TReportLine;
 NewCell: TReportCell;
   
-khbz: boolean;
 begin
       result := true ;
       Try
@@ -907,7 +900,6 @@ var
   HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisCell, NewCell: TReportCell;
 
-  khbz: boolean;
 begin
   ThisLine := TReportLine(FlineList[HasDataNo]);
   TempLine := TReportLine.Create;
@@ -931,7 +923,6 @@ var
   thisLine ,TempLine: TReportLine;
   HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisCell, NewCell: TReportCell;
-  khbz: boolean;
   ndataHeight:integer;
 begin
   ThisLine := TReportLine(FlineList[HasDataNo]);
@@ -947,7 +938,6 @@ Var
   I,  n,  TempDataSetCount:Integer;
   HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisCell, NewCell: TReportCell;
-  khbz: boolean;
 begin
   ThisLine := TReportLine(FlineList[HasDataNo]);
   For j := 0 To ThisLine.FCells.Count - 1 Do
@@ -974,9 +964,6 @@ Var
   ThisLine, TempLine: TReportLine;
   ThisCell, NewCell: TReportCell;
   
-  khbz: boolean;
-  //khbz - 空行标志 - 是否曾经补齐空行并且因为页面溢出而回删过行。我真是天才，猜出了他的意思 ：）
-  // 作为一种信息的有损压缩，从空行标记到khbz容易，反过来真难。我用百度拼音，翻5页也看不明白，考核？客户？考号？
   procedure NoDataPage;
   begin
     AppendList(  FPrintLineList, HandLineList);
@@ -1024,7 +1011,7 @@ Var
     if not IsPageFull then
     begin
       If (Faddspace) And (HasEmptyRoomLastPage) Then begin
-        PaddingEmptyLine(hasdatano,dataLineList,ndataHeight,khbz );
+        PaddingEmptyLine(hasdatano,dataLineList,ndataHeight );
       end;
       JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList,True);
       UpdatePrintLines;
@@ -1060,7 +1047,6 @@ Begin
     HasDataNo := 0;
     nHootHeight := 0;
     TempDataSetCount := 0;
-    khbz := false;
 
     //将每页的表头存入一个列表中
     HandLineList := FillHeadList(nHandHeight);
