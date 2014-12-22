@@ -81,7 +81,7 @@ type
       SumAllList, HootLineList: TList;IsLastPage:Boolean);
     procedure PaddingEmptyLine(hasdatano: integer; var dataLineList: TList;
       var ndataHeight: integer);overload;
-    function SumCell(ThisCell: TReportCell; j: Integer): Boolean;
+    procedure SumCell(ThisCell: TReportCell; j: Integer);
     procedure SumLine(var HasDataNo: integer);
     function DoPageCount(): integer;
     function RenderLineHeight(HasDataNo:integer):Integer;
@@ -857,35 +857,28 @@ begin
         End;
       End;
 end;
-function TReportRunTime.SumCell(ThisCell:TReportCell;j:Integer):Boolean;
+procedure TReportRunTime.SumCell(ThisCell:TReportCell;j:Integer);
+  function IsFieldNumric(FieldName:String):Boolean;
+  begin
+    result :=
+      (Not Dataset.fieldbyname(FieldName).IsNull)
+       and (Dataset.fieldbyname(FieldName) Is TNumericField) ;
+  end;
 Var
-I,  n, hasdatano, TempDataSetCount:Integer;
-HandLineList, datalinelist, HootLineList, sumAllList: TList;
-ThisLine, TempLine: TReportLine;
-NewCell: TReportCell;
-  
+  FieldName : string;
+  value : real;
 begin
-      result := true ;
-      Try
-        If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] = '#')
-          Then
-        Begin
-          If Dataset.fieldbyname(GetFieldName(ThisCell.CellText)) Is
-            tnumericField Then
-            If Not
-              (Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).IsNull)
-                Then
-            Begin
-              SumPage[j] := SumPage[j] +
-                Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).Value;
-              SumAll[j] := SumAll[j] +
-                Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).Value;
-            End;
-        End;
-      Except
-        raise Exception.create('统计时发生错误，请检查模板设置是否正确');
-        result := false ;
-      End;
+  Try
+    FieldName := GetFieldName(ThisCell.CellText) ;
+    if ThisCell.IsDetailField and IsFieldNumric(FieldName) then
+    Begin
+      value := Dataset.fieldbyname(FieldName).Value ;
+      SumPage[j] := SumPage[j] + value;
+      SumAll[j] :=   SumAll[j] + value;
+    End;
+  Except
+    raise Exception.create('统计时发生错误，请检查模板设置是否正确');
+  End;
 end;
  
 function TReportRunTime.AppendList( l1, l2:TList):Boolean;var n :integer; begin
@@ -912,7 +905,6 @@ begin
     TempLine.FCells.Add(NewCell);
     NewCell.FOwnerLine := TempLine;
     setnewcell(false, newcell, thiscell);
-    //SumCell(ThisCell,j) ;
   End; //for j
   TempLine.UpdateLineHeight;
   ndataHeight := ndataHeight + TempLine.GetLineHeight;
