@@ -7,7 +7,16 @@ uses ReportControl,  Windows, Messages, SysUtils,
   Forms, Dialogs, Printers, Menus, Db,
   DesignEditors, ExtCtrls,osservice,margin;
 Procedure Register;
-
+type
+   TSummer = class
+     SumPage, SumAll: Array[0..40] Of real;
+   public
+     procedure Acc(j:integer;value:real);
+     procedure ResetSumPage;
+     procedure ResetAll;
+     function GetSumAll(i:integer):Real;
+     function GetSumPage(i:integer):Real;
+   end;
 type
   RenderException =class(Exception)
   public
@@ -15,6 +24,7 @@ type
   end;
   TReportRunTime = Class(TReportControl)
   private
+    FSummer:TSummer;
     function GetHeaderHeight: Integer;
     procedure CloneLine(ThisLine, Line: TReportLine);
 
@@ -26,7 +36,7 @@ type
 
   public
     //小计和合计用,最多40列单元格,否则统计汇总时要出错.
-    SumPage, SumAll: Array[0..40] Of real;
+
     FFileName: Tfilename;
     FAddSpace: boolean;
     FSetData: TstringList;
@@ -218,6 +228,7 @@ End;
 Constructor TReportRunTime.Create(AOwner: TComponent);
 Begin
   Inherited create(AOwner);
+  FSummer:=TSummer.Create;
   FAddspace := false;
   FReportScale := 100;
   Width := 0;
@@ -257,7 +268,7 @@ Begin
   FPrintLineList.Free;
 
   FOwnerCellList.Free;
-
+  FSummer.Free;
   Inherited Destroy;
 End;
 
@@ -870,8 +881,7 @@ begin
     if ThisCell.IsDetailField and IsFieldNumric(FieldName) then
     Begin
       value := Dataset.fieldbyname(FieldName).Value ;
-      SumPage[j] := SumPage[j] + value;
-      SumAll[j] :=   SumAll[j] + value;
+      FSummer.Acc(j,Value);
     End;
   Except
     raise Exception.create('统计时发生错误，请检查模板设置是否正确');
@@ -983,8 +993,7 @@ Var
         UpdatePrintLines;
         SaveTempFile(ReadyFileName(fpagecount, Fpageall),fpagecount, FpageAll);
         application.ProcessMessages;
-        For n := 0 To 40 Do
-          SumPage[n] := 0;
+        FSummer.ResetSumPage;
         fpagecount := fpagecount + 1;
         FPrintLineList.Clear;
         datalinelist.clear;
@@ -1024,11 +1033,7 @@ Var
   end;
 Begin
   try
-    For n := 0 To 40 Do //最多40列单元格,否则统计汇总时要出错. 拟换为动态的
-    Begin
-      SumPage[n] := 0;
-      SumAll[n] := 0;
-    End;
+    FSummer.ResetAll;
     Dataset := Nil;
     FhootNo := 0;
     nHandHeight := 0;                     //该页数据库行之前每行累加高度
@@ -1555,7 +1560,8 @@ Begin
       MessageDlg('模板文件中`SumAll()括号内参数不应为零', mtInformation, [mbOk],
         0);
 
-    yg := SumALL[strtoint(ss3) - 1];
+    //yg := SumALL[strtoint(ss3) - 1];
+    yg := FSummer.GetSumAll (strtoint(ss3) - 1);
     If k > j Then
     Begin
       If yg <> 0 Then
@@ -1582,9 +1588,9 @@ Begin
             MessageDlg('模板文件中`SumAll()括号内参数不应为零', mtInformation,
               [mbOk], 0);
           If gjfh = '-' Then
-            yg := yg - SumALL[strtoint(ss3) - 1];
+            yg := yg - FSummer.GetSumALL(strtoint(ss3) - 1);
           If gjfh = '+' Then
-            yg := yg + SumALL[strtoint(ss3) - 1];
+            yg := yg + FSummer.GetSumALL(strtoint(ss3) - 1);
           gjfh := ss2;
           ss3 := '';
         End;
@@ -1594,9 +1600,9 @@ Begin
       MessageDlg('模板文件中`SumAll()括号内参数不应为零', mtInformation, [mbOk],
         0);
     If gjfh = '-' Then
-      yg := yg - SumALL[strtoint(ss3) - 1];
+      yg := yg - FSummer.GetSumALL(strtoint(ss3) - 1);
     If gjfh = '+' Then
-      yg := yg + SumALL[strtoint(ss3) - 1];
+      yg := yg + FSummer.GetSumALL(strtoint(ss3) - 1);
 
   Except
     MessageDlg('统计时发生错误，请检查`SumAll()设置是否正确', mtInformation,
@@ -1641,17 +1647,12 @@ Function TReportRunTime.setSumpageYg(fm, ss: String): String;
 Var
   i, j, k, L: integer;
   ss1, ss2, ss3, gjfh: String;
-  yg: real;
+  sumValue,yg: real;
 Begin
   Try
     i := pos(')', ss);
     If i = 0 Then
-    Begin
-      MessageDlg('统计时发生错误，请检查`Sumpage()设置是否正确', mtInformation,
-        [mbOk], 0);
-      Result := '';
-      exit;
-    End;
+      raise Exception.Create('统计时发生错误，请检查`Sumpage()设置是否正确');
     ss1 := copy(ss, 10, i - 10);
     j := length(ss1);
     ss2 := '';
@@ -1669,11 +1670,9 @@ Begin
       End;
     End;
     gjfh := ss2;
-    If strtoint(ss3) = 0 Then
-      MessageDlg('模板文件中`Sumpage()括号内参数不应为零', mtInformation,
-        [mbOk], 0);
 
-    yg := Sumpage[strtoint(ss3) - 1];
+
+    yg := FSummer.GetSumpage(strtoint(ss3) - 1);
     If k > j Then
     Begin
       If yg <> 0 Then
@@ -1696,30 +1695,28 @@ Begin
       Begin
         If (ss2 = '-') Or (ss2 = '+') Then
         Begin
-          If strtoint(ss3) = 0 Then
-            MessageDlg('模板文件中`Sumpage()括号内参数不应为零', mtInformation,
-              [mbOk], 0);
+          sumValue :=  FSummer.GetSumpage(strtoint(ss3) - 1);
           If gjfh = '-' Then
-            yg := yg - Sumpage[strtoint(ss3) - 1];
+            yg := yg - sumValue;
           If gjfh = '+' Then
-            yg := yg + Sumpage[strtoint(ss3) - 1];
+            yg := yg + sumValue;
           gjfh := ss2;
           ss3 := '';
         End;
       End;
-    End;                                // for k:=1 to j do
-    If strtoint(ss3) = 0 Then
-      MessageDlg('模板文件中`Sumpage()括号内参数不应为零', mtInformation,
-        [mbOk], 0);
+    End;
+    sumValue :=  FSummer.GetSumpage(strtoint(ss3) - 1);
     If gjfh = '-' Then
-      yg := yg - Sumpage[strtoint(ss3) - 1];
+      yg := yg - sumValue;
     If gjfh = '+' Then
-      yg := yg + Sumpage[strtoint(ss3) - 1];
+      yg := yg + sumValue;
 
   Except
-    MessageDlg('统计时发生错误，请检查`Sumpage()设置是否正确', mtInformation,
-      [mbOk], 0);
-    yg := 0;
+    on E:Exception do
+    begin
+      MessageDlg('统计时发生错误:'+e.Message, mtInformation, [mbOk], 0);
+      yg := 0;
+    end;
   End;
   If yg <> 0 Then
     Result := FormatFloat(fm, yg)
@@ -1766,6 +1763,43 @@ End;
 constructor RenderException.Create;
 begin
   self.message := '表格未能完全处理,请调整单元格宽度或页边距等设置';
+end;
+
+{ TSummer }
+
+procedure TSummer.Acc(j: integer; value: real);
+begin
+   SumPage[j] := SumPage[j] + value;
+   SumAll[j] :=   SumAll[j] + value;
+end;
+
+function TSummer.GetSumAll(i: integer): Real;
+begin
+    result := SumALL[i];
+end;
+
+function TSummer.GetSumPage(i: integer): Real;
+begin
+  If i < 0 Then
+   raise Exception.Create('模板文件中`Sumpage()括号内参数不应为零');
+  result := SumPage[i];
+end;
+
+procedure TSummer.ResetAll;
+var n :integer;
+begin
+  For n := 0 To 40 Do //最多40列单元格,否则统计汇总时要出错. 拟换为动态的
+  Begin
+    SumPage[n] := 0;
+    SumAll[n] := 0;
+  End;
+end;
+
+procedure TSummer.ResetSumPage;
+var n :integer;
+begin
+    For n := 0 To 40 Do
+          SumPage[n] := 0;
 end;
 
 end.
