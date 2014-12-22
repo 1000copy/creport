@@ -59,8 +59,8 @@ type
 
     Procedure SaveTempFile(FileName:string;PageNumber, Fpageall: Integer);
 
-    Function setSumAllYg(fm, ss: String): String; //add lzl
-    Function setSumpageYg(fm, ss: String): String; //add lzl
+    Function setSumAllYg(fm, ss: String): String;
+    Function setSumpageYg(fm, ss: String): String; 
 
     Procedure LoadTempFile(strFileName: String);
     Procedure DeleteAllTempFiles;
@@ -170,24 +170,21 @@ end;
 function TReportRunTime.RenderText(ThisCell:TReportCell;PageNumber, Fpageall: Integer):String;
 var
   celltext : String;
+
 begin
-    If (UpperCase(ThisCell.FCellText) = '`PAGENUM') Then //lzl 增
-      celltext := '第 ' + inttostr(PageNumber) + ' 页'
-    Else If (UpperCase(ThisCell.FCellText) = '`PAGENUM/') Then //lzl 增
-      celltext := '第 ' + inttostr(PageNumber) + '/' + inttostr(FPageAll) +
-        ' 页'
-    Else If (UpperCase(ThisCell.FCellText) = '`PAGENUM-') Then //lzl 增
-      celltext := '第 ' + inttostr(Fpageall) + '-' + inttostr(PageNumber) +
-        ' 页'
-    Else If copy(UpperCase(ThisCell.FCellText), 1, 9) = '`SUMPAGE(' Then  //lzl 增
+    If  ThisCell.IsPageNumFormula Then 
+      celltext :=Format('第%d页',[PageNumber])
+    Else If ThisCell.IsPageNumFormula1  Then
+      celltext :=Format('第%d/%d页',[PageNumber,FPageAll])
+    Else If ThisCell.IsPageNumFormula2 Then 
+      celltext :=Format('第%d-%d页',[PageNumber,FPageAll])
+    Else If ThisCell.IsSumPageFormula Then  
     Begin
-      celltext := trim(setSumpageYg(thiscell.FCellDispformat,
-        ThisCell.FCellText));
+      celltext := trim(setSumpageYg(thiscell.FCellDispformat,ThisCell.FCellText));
     End
-    Else If copy(UpperCase(ThisCell.FCellText), 1, 8) = '`SUMALL(' Then  //lzl 增
+    Else If ThisCell.IsSumAllFormula  Then  //lzl 增
     Begin
-        celltext := setSumAllYg(thiscell.FCellDispformat,
-          ThisCell.FCellText);
+        celltext := setSumAllYg(thiscell.FCellDispformat,ThisCell.FCellText);
     End Else
         celltext := ThisCell.FCellText;
     Result := celltext;
@@ -1640,7 +1637,7 @@ Begin
 End;
 
 
-Function TReportRunTime.setSumpageYg(fm, ss: String): String; // add lzl
+Function TReportRunTime.setSumpageYg(fm, ss: String): String; 
 Var
   i, j, k, L: integer;
   ss1, ss2, ss3, gjfh: String;

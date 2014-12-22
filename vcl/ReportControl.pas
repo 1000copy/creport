@@ -147,6 +147,11 @@ Type
     property NextCell:TReportCell read GetNextCell;
     function IsDetailField:Boolean;
     function IsSumAllField:Boolean;
+    function IsPageNumFormula:Boolean;
+    function IsPageNumFormula1: Boolean;
+    function IsPageNumFormula2: Boolean;
+    function IsSumPageFormula:Boolean;
+    function IsSumAllFormula: Boolean;
   public
     FLeftMargin: Integer;               // ×ó±ßµÄ¿Õ¸ñ
     FOwnerLine: TReportLine;            // Á¥ÊôÐÐ
@@ -1899,6 +1904,31 @@ function TReportCell.IsSumAllField: Boolean;
 begin
   result := (Length(CellText) > 0) And (UpperCase(copy(FCellText, 1, 7)) = '`SUMALL');
 end;
+
+function TReportCell.IsPageNumFormula: Boolean;
+begin
+  result := UpperCase(FCellText) = '`PAGENUM';
+end;
+function TReportCell.IsPageNumFormula1: Boolean;
+begin
+  result := UpperCase(FCellText) = '`PAGENUM/';
+end;
+
+function TReportCell.IsPageNumFormula2: Boolean;
+begin
+  result := UpperCase(FCellText) = '`PAGENUM-';
+end;
+
+function TReportCell.IsSumPageFormula: Boolean;
+begin
+  result := copy(UpperCase(FCellText), 1, 9) = '`SUMPAGE('
+end;
+
+function TReportCell.IsSumAllFormula: Boolean;
+begin
+  result := copy(UpperCase(FCellText), 1, 8) = '`SUMALL('
+end;
+
 
 {TReportControl}
 
