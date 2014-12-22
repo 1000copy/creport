@@ -81,8 +81,6 @@ type
       SumAllList, HootLineList: TList;IsLastPage:Boolean);
     procedure PaddingEmptyLine(hasdatano: integer; var dataLineList: TList;
       var ndataHeight: integer; var khbz: boolean);overload;
-    procedure PaddingEmptyLine(hasdatano: integer;
-      var ndataHeight: integer; var khbz: boolean);overload;
     function SumCell(ThisCell: TReportCell; j: Integer): Boolean;
     procedure SumLine(var HasDataNo: integer);
     function DoPageCount(): integer;
@@ -860,25 +858,6 @@ begin
         If IsLastPageFull Then
         Begin
           dataLineList.Delete(dataLineList.Count - 1);
-          khbz := true;
-          break;
-        End;
-      End;
-end;
-  procedure TReportRunTime.PaddingEmptyLine(hasdatano:integer; var ndataHeight:integer;var khbz :boolean);
-var
-  thisline,templine : Treportline ;nPrevdataHeight :integer;
-begin
-      thisline := Treportline(FLineList[hasdatano]);
-      templine := CloneEmptyLine(thisLine);
-      While true Do
-      Begin
-        TempLine.UpdateLineHeight;
-        nPrevdataHeight := ndataHeight ;
-        ndataHeight := ndataHeight + templine.GetLineHeight;
-        If IsLastPageFull Then
-        Begin
-          ndataHeight := nPrevdataHeight ;
           khbz := true;
           break;
         End;
