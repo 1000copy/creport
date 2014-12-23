@@ -162,7 +162,7 @@ Var
   FileName: String;
 
 begin
-  REPmessform.Label1.Caption := inttostr(PageNumber); //lzl  2001.4.27
+  REPmessform.Label1.Caption := inttostr(PageNumber); //   2001.4.27
   strFileDir := ExtractFileDir(Application.ExeName); // + '\';
 
   If copy(strfiledir, length(strfiledir), 1) <> '\' Then
@@ -170,7 +170,7 @@ begin
 
   If Not DirectoryExists(strFileDir + 'Temp') Then
     //MkDir('Temp');
-    MkDir(strFileDir + 'Temp');         //re lzl
+    MkDir(strFileDir + 'Temp');         //re  
 
   FileName := strFileDir + 'Temp\' + IntToStr(PageNumber) + '.Tmp';
 
@@ -193,7 +193,7 @@ begin
     Begin
       celltext := trim(setSumpageYg(thiscell.FCellDispformat,ThisCell.FCellText));
     End
-    Else If ThisCell.IsSumAllFormula  Then  //lzl 增
+    Else If ThisCell.IsSumAllFormula  Then  //  增
     Begin
         celltext := setSumAllYg(thiscell.FCellDispformat,ThisCell.FCellText);
     End Else
@@ -241,7 +241,7 @@ Begin
   FPrintLineList := TList.Create;
   FDRMap := TDRMappings.Create;
 
-  repmessForm := TrepmessForm.Create(Self); //  lzl 
+  repmessForm := TrepmessForm.Create(Self); //    
 
   FHeaderHeight := 0;
 
@@ -533,7 +533,7 @@ Begin
     CalcHeight;
   End;
 End;
-//lzl 增加 ,完全重写的 PreparePrint,并增加了用空行补满一页 统计等功能
+//  增加 ,完全重写的 PreparePrint,并增加了用空行补满一页 统计等功能
 //返回数用于在预览中确定代＃字头数据库是在模板的第几行
   function TReportRunTime.IsLastPageFull:Boolean ;
   begin
@@ -1207,7 +1207,7 @@ Begin
     Begin
       DeleteAllTempFiles;
       Application.Messagebox('未安装打印机', '警告', MB_OK + MB_iconwarning);
-      For I := FNamedDatasets.Count - 1 Downto 0 Do // add lzl
+      For I := FNamedDatasets.Count - 1 Downto 0 Do // add  
         TDataSetItem(FNamedDatasets[I]).Free;
       FNamedDatasets.clear;
       Exit;
@@ -1233,7 +1233,7 @@ Begin
       PreviewForm.Free;
       DeleteAllTempFiles;
     End;
-    //  for i:=0 to setdata.Count -1 do  // add lzl
+    //  for i:=0 to setdata.Count -1 do  // add  
     //      setpar(fase,setdata[i]); //参数设置
       //finally
   Except
@@ -1283,7 +1283,7 @@ Begin
   FNamedDatasets.Add(TempItem);
   //注:如果TReportRunTime不灭，而又不断调用SetDataset
   //列表便会重复增加,无穷尽,错误将会出现..目前是在预览和打印完后清空　　　　
-  //有无更好办法?待处理. lzl .
+  //有无更好办法?待处理.   .
   // LCJ:调用前先清除不就可以了。傻逼。
   // 这个人加入的代码，10成倒要删掉9.9成。成事不足败事有余
 End;
@@ -1353,7 +1353,6 @@ End;
 
 Procedure treportruntime.resetself;
 Begin
-  //   add by wang han song 1999.03.05
   FNamedDatasets.clear;
   fvarlist.clear;
   flinelist.clear;
@@ -1472,7 +1471,7 @@ End;
 
 
 
-Function TReportRunTime.SetSumAllYg(fm, ss: String): String; //add lzl
+Function TReportRunTime.SetSumAllYg(fm, ss: String): String; //add  
 Var
   i, j, k, L: integer;
   ss1, ss2, ss3, gjfh: String;
@@ -1568,7 +1567,7 @@ End;
 
 
 Function TReportRunTime.LFindComponent(Owner: TComponent; Name: String):
-  TComponent;                           // add lzl
+  TComponent;                           // add  
 Var
   n: Integer;
   s1, s2: String;
