@@ -46,7 +46,7 @@ type
     //保存要打印的某一页的行信息
     FPrintLineList: TList;
     // 保存每一页中合并后单元格前后的指针
-    FOwnerCellList: TList;
+    FDRMap: TDRMappings;
     FNamedDatasets: TList;
     FHeaderHeight: Integer;
     //是否打印全部记录，默认为全部
@@ -239,7 +239,7 @@ Begin
   FNamedDatasets := TList.Create;
   FVarList := TList.Create;
   FPrintLineList := TList.Create;
-  FOwnerCellList := TList.Create;
+  FDRMap := TDRMappings.Create;
 
   repmessForm := TrepmessForm.Create(Self); //  lzl 
 
@@ -268,7 +268,7 @@ Begin
     TReportLine(FPrintLineList[I]).Free;
   FPrintLineList.Free;
 
-  FOwnerCellList.Free;
+  FDRMap.Free;
   FSummer.Free;
   Inherited Destroy;
 End;
@@ -494,7 +494,7 @@ function TReportRunTime.RenderCellText(NewCell,ThisCell:TReportCell):String;
 Procedure TReportRunTime.SetNewCell(spyn: boolean; NewCell, ThisCell:
   TReportCell);
 Var
-  TempCellTable: TCellTable;
+  TempCellTable: TDRMapping;
   L: integer;
   TempOwnerCell: TReportCell;
 
@@ -516,36 +516,20 @@ Begin
     Begin
       // 若隶属的CELL不为空则判断是否在同一页，若不在同一页则将自己加入到CELL对照表中去
       TempOwnerCell := Nil;
-
       // 若找到隶属的CELL则将自己加入到该CELL中去
-      For L := 0 To FOwnerCellList.Count - 1 Do
+      For L := 0 To FDRMap.Count - 1 Do
       Begin
-        If ThisCell.OwnerCell = TCellTable(FOwnerCellList[L]).PrevCell Then
-          TempOwnerCell := TCellTable(FOwnerCellList[L]).ThisCell);
+        If ThisCell.OwnerCell = TDRMapping(FDRMap[L]).DesignMasterCell Then
+          TempOwnerCell := TDRMapping(FDRMap[L]).RuntimeMasterCell;
       End;
-
+      TempOwnerCell := FDRMap.FindRuntimeMasterCell(ThisCell);
       If TempOwnerCell = Nil Then
-      Begin
-        TempCellTable := TCellTable.Create;
-        TempCellTable.PrevCell := ThisCell.OwnerCell;
-        TempCellTable.ThisCell := NewCell;
-        FOwnerCellList.Add(TempCellTable);
-      End
+        FDRMap.NewMapping(ThisCell.OwnerCell,NewCell)
       Else
         TempOwnerCell.Own(NewCell);
     End;
-    // LCJ 
-    // ThisCell 设计态的Master Cell
-    // NewCell  运行态的Master Cell
     If ThisCell.FSlaveCells.Count > 0 Then
-    Begin
-      // 将自己加入到对照表中去
-      TempCellTable := TCellTable.Create;
-      TempCellTable.PrevCell := ThisCell;
-      TempCellTable.ThisCell := NewCell;
-      FOwnerCellList.Add(TempCellTable);
-    End;
-
+      FDRMap.NewMapping(ThisCell,NewCell);
     CalcHeight;
   End;
 End;
@@ -994,9 +978,9 @@ Var
     HootLineList.Free;
     dataLineList.free;
     FPrintLineList.Clear;
-    For N := FOwnerCellList.Count - 1 Downto 0 Do
-      TCellTable(FOwnerCellList[N]).Free;
-    FOwnerCellList.Clear;
+    For N := FDRMap.Count - 1 Downto 0 Do
+      TDRMapping(FDRMap[N]).Free;
+    FDRMap.Clear;
 
     HandLineList.free;
 
@@ -1196,10 +1180,10 @@ Begin
 
   FPrintLineList.Clear;
 
-  For I := FOwnerCellList.Count - 1 Downto 0 Do
-    TCellTable(FOwnerCellList[I]).Free;
+  For I := FDRMap.Count - 1 Downto 0 Do
+    TDRMapping(FDRMap[I]).Free;
 
-  FOwnerCellList.Clear;
+  FDRMap.Clear;
 End;
  //LCJ: 可直接或在预览中调用设置打印参数
 Function TReportRunTime.PrintSET(prfile: String): boolean;
@@ -1374,7 +1358,7 @@ Begin
   fvarlist.clear;
   flinelist.clear;
   fprintlinelist.clear;
-  fownercelllist.clear;
+  FDRMap.clear;
 End;
 
 Function TReportRunTime.GetVarValue(strVarName: String): String;

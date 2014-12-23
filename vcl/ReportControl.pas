@@ -546,9 +546,16 @@ Type
     Right: Integer;
     Bottom: Integer;
   End;
-  TCellTable = Class(TObject)
-    PrevCell: TReportCell;
-    ThisCell: TReportCell;
+  // ThisCell 设计态的Master Cell
+  // NewCell  运行态的Master Cell
+  TDRMappings = class(TList)
+  public
+    procedure NewMapping (ThisCell,NewCell:TReportCell);
+    function FindRuntimeMasterCell(ThisCell:TReportCell):TReportCell;
+  end;
+  TDRMapping = Class(TObject)
+    DesignMasterCell: TReportCell;
+    RuntimeMasterCell: TReportCell;
   End;
 
 
@@ -4402,6 +4409,31 @@ begin
       result:= true;
       exit;
     end;
+end;
+
+{ TDRMappings }
+
+function TDRMappings.FindRuntimeMasterCell(ThisCell: TReportCell): TReportCell;
+var r : TReportCell;L:Integer;
+begin
+  R := Nil;
+  // 若找到隶属的CELL则将自己加入到该CELL中去
+  For L := 0 To Count - 1 Do
+  Begin
+    If ThisCell.OwnerCell = TDRMapping(Self[L]).DesignMasterCell Then
+      R := TDRMapping(Self[L]).RuntimeMasterCell;
+  End;
+  result:= R;
+end;
+
+procedure TDRMappings.NewMapping(ThisCell, NewCell: TReportCell);
+var
+  m : TDRMapping ;
+begin
+  m := TDRMapping.Create;
+  m.DesignMasterCell := ThisCell;
+  m.RuntimeMasterCell := NewCell;
+  Add(m);
 end;
 
 End.
