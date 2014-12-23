@@ -33,6 +33,7 @@ type
     function FooterHeight: integer;
     function SumHeight:integer;
     function ExpandLine(var HasDataNo, ndataHeight: integer): TReportLine;
+    function RenderCellText(NewCell,ThisCell:TReportCell):String;
 
   public
     //小计和合计用,最多40列单元格,否则统计汇总时要出错.
@@ -404,60 +405,10 @@ Procedure TReportRunTime.SetEmptyCell(NewCell, ThisCell:TReportCell);
 Begin
   setNewCell(true,NewCell,ThisCell);
 End;
-Procedure TReportRunTime.SetNewCell(spyn: boolean; NewCell, ThisCell:
-  TReportCell);
-Var
-  TempCellTable: TCellTable;
-  L: integer;
-  TempOwnerCell: TReportCell;
-Begin
-
-  With NewCell Do
-  Begin
-    FLeftMargin := ThisCell.FLeftMargin;
-    // Index
-    FCellIndex := ThisCell.FCellIndex;
-    // size & position
-    FCellLeft := ThisCell.FCellLeft;
-    FCellWidth := ThisCell.FCellWidth;
-    FCellRect.Left := 0;
-    FCellRect.Top := 0;
-    FCellRect.Right := 0;
-    FCellRect.Bottom := 0;
-    FTextRect.Left := 0;
-    FTextRect.Top := 0;
-    FTextRect.Right := 0;
-    FTextRect.Bottom := 0;
-//    FDragCellHeight := ThisCell.FDragCellHeight;
-//    FDragCellHeight := 0;
-    FCellHeight := ThisCell.FCellHeight;
-//    FCellHeight := 0;
-    // border
-    FLeftLine := ThisCell.FLeftLine;
-    FLeftLineWidth := ThisCell.FLeftLineWidth;
-    FTopLine := ThisCell.FTopLine;
-    FTopLineWidth := ThisCell.FTopLineWidth;
-    FRightLine := ThisCell.FRightLine;
-    FRightLineWidth := ThisCell.FRightLineWidth;
-    FBottomLine := ThisCell.FBottomLine;
-    FBottomLineWidth := ThisCell.FBottomLineWidth;
-    // 斜线
-    Diagonal := ThisCell.FDiagonal;
-    // color
-
-    FTextColor := ThisCell.FTextColor;
-    FBackGroundColor := ThisCell.FBackGroundColor;
-    // align
-    FHorzAlign := ThisCell.FHorzAlign;
-    FVertAlign := ThisCell.FVertAlign;
-    Fcelldispformat := thiscell.fCellDispformat;
-
-    Fbmp := Thiscell.FBmp;
-    FbmpYn := Thiscell.FbmpYn;
-
-    If Not spyn Then                    //spyn代表有数据库字段的处理
-    Begin
-      If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] = '@') Then
+function TReportRunTime.RenderCellText(NewCell,ThisCell:TReportCell):String;
+  var cellText :string;
+  begin
+     If ThisCell.IsHeadField Then
       Begin
         If
           GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)) Is tnumericField Then
@@ -481,9 +432,9 @@ Begin
               GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).isnull Then
             Begin
               //if fbmp = nil then
-              fbmp := TBitmap.create;
-              FBmp.Assign(GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)));
-              FbmpYn := true;
+              NewCell.fbmp := TBitmap.create;
+              NewCell.FBmp.Assign(GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)));
+              NewCell.FbmpYn := true;
             End
             Else
               CellText := '';
@@ -518,9 +469,9 @@ Begin
             Then
           Begin
             //if fbmp = nil then
-            fbmp := TBitmap.create;
-            FBmp.Assign(Dataset.fieldbyname(GetFieldName(ThisCell.CellText)));
-            FbmpYn := true;
+            NewCell.fbmp := TBitmap.create;
+            NewCell.FBmp.Assign(Dataset.fieldbyname(GetFieldName(ThisCell.CellText)));
+            NewCell.FbmpYn := true;
           End
           Else
             CellText := '';
@@ -538,12 +489,29 @@ Begin
           CellText := GetVarValue(thiscell.FCellText)
         Else
           CellText := ThisCell.FCellText;
-    End
+      result := CellText;
+  end;
+Procedure TReportRunTime.SetNewCell(spyn: boolean; NewCell, ThisCell:
+  TReportCell);
+Var
+  TempCellTable: TCellTable;
+  L: integer;
+  TempOwnerCell: TReportCell;
+
+Begin
+
+  With NewCell Do
+  Begin
+    NewCell.CloneFrom(ThisCell);
+    If Not spyn Then                    //spyn代表有数据库字段的处理
+      CellText:= RenderCellText(newCell,ThisCell)
     Else
       CellText := '';
 
     flogfont := thiscell.FLogFont;
-
+    // TODO:LCJ :看了一遍， 没有看懂。
+    // DONE : 基本懂了。
+    // 运行逻辑：如果设计态是Slave，在runtime时也得是奴隶，通过这个FOwnerCellList找到自己的新主人
     If ThisCell.OwnerCell <> Nil Then
     Begin
       // 若隶属的CELL不为空则判断是否在同一页，若不在同一页则将自己加入到CELL对照表中去
@@ -553,7 +521,7 @@ Begin
       For L := 0 To FOwnerCellList.Count - 1 Do
       Begin
         If ThisCell.OwnerCell = TCellTable(FOwnerCellList[L]).PrevCell Then
-          TempOwnerCell := TReportCell(TCellTable(FOwnerCellList[L]).ThisCell);
+          TempOwnerCell := TCellTable(FOwnerCellList[L]).ThisCell);
       End;
 
       If TempOwnerCell = Nil Then
@@ -566,7 +534,9 @@ Begin
       Else
         TempOwnerCell.Own(NewCell);
     End;
-
+    // LCJ 
+    // ThisCell 设计态的Master Cell
+    // NewCell  运行态的Master Cell
     If ThisCell.FSlaveCells.Count > 0 Then
     Begin
       // 将自己加入到对照表中去
@@ -1003,7 +973,7 @@ Var
         SumLine(HasDataNo);
         Dataset.Next;
         i := i + 1;
-      end;         
+      end;
     End;
     // 都是  i =  TempDataSetCount，也看从那个分支出来的。
     if not IsPageFull then
@@ -1213,10 +1183,6 @@ Begin
         LTempRect.Right := ThisCell.FCellRect.Right - 3;
         LTempRect.Bottom := ThisCell.FCellRect.Bottom - 3;
         printer.Canvas.stretchdraw(LTempRect, ThisCell.fbmp);
-        //y:=CellTop+ ((OwnerLineHeight-fbmp.Height) div 2);
-        //x:=CellLeft+((CellWidth- fbmp.Width) div 2);
-        //printer.Canvas.Draw(x,y,fbmp);
-
         ThisCell.PaintCell(hPrinterDC, True);
       End;
     End;
@@ -1425,9 +1391,7 @@ Begin
   If strVarName[1] <> '`' Then
     Exit;
 
-  //  if strVarName = '`PAGENUM' then
-// If UpperCase(strVarName) = '`PAGENUM' Then
-//    Result := '第' + IntToStr(FPageCount) + '页';
+
 
   shortdateformat := 'yyy-mm-dd';
   shorttimeformat := 'HH:MM:SS';
@@ -1646,6 +1610,7 @@ End;
 Function TReportRunTime.setSumpageYg(fm, ss: String): String; 
 Var
   i, j, k, L: integer;
+  // ss3 字段次序
   ss1, ss2, ss3, gjfh: String;
   sumValue,yg: real;
 Begin

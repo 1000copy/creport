@@ -145,6 +145,7 @@ Type
     function NearRight(P:TPoint):Boolean ;
     function NearRightBottom(P:TPoint):Boolean ;
     property NextCell:TReportCell read GetNextCell;
+    function IsHeadField:Boolean;
     function IsDetailField:Boolean;
     function IsSumAllField:Boolean;
     function IsPageNumFormula:Boolean;
@@ -152,6 +153,7 @@ Type
     function IsPageNumFormula2: Boolean;
     function IsSumPageFormula:Boolean;
     function IsSumAllFormula: Boolean;
+    procedure CloneFrom(ThisCell:TReportCell);
   public
     FLeftMargin: Integer;               // 左边的空格
     FOwnerLine: TReportLine;            // 隶属行
@@ -1929,6 +1931,52 @@ begin
   result := copy(UpperCase(FCellText), 1, 8) = '`SUMALL('
 end;
 
+
+procedure TReportCell.CloneFrom(ThisCell: TReportCell);
+begin
+    FLeftMargin := ThisCell.FLeftMargin;
+    // Index
+    FCellIndex := ThisCell.FCellIndex;
+    // size & position
+    FCellLeft := ThisCell.FCellLeft;
+    FCellWidth := ThisCell.FCellWidth;
+    FCellRect.Left := 0;
+    FCellRect.Top := 0;
+    FCellRect.Right := 0;
+    FCellRect.Bottom := 0;
+    FTextRect.Left := 0;
+    FTextRect.Top := 0;
+    FTextRect.Right := 0;
+    FTextRect.Bottom := 0;
+    FCellHeight := ThisCell.FCellHeight;
+    // border
+    FLeftLine := ThisCell.FLeftLine;
+    FLeftLineWidth := ThisCell.FLeftLineWidth;
+    FTopLine := ThisCell.FTopLine;
+    FTopLineWidth := ThisCell.FTopLineWidth;
+    FRightLine := ThisCell.FRightLine;
+    FRightLineWidth := ThisCell.FRightLineWidth;
+    FBottomLine := ThisCell.FBottomLine;
+    FBottomLineWidth := ThisCell.FBottomLineWidth;
+    // 斜线
+    Diagonal := ThisCell.FDiagonal;
+    // color
+
+    FTextColor := ThisCell.FTextColor;
+    FBackGroundColor := ThisCell.FBackGroundColor;
+    // align
+    FHorzAlign := ThisCell.FHorzAlign;
+    FVertAlign := ThisCell.FVertAlign;
+    Fcelldispformat := thiscell.fCellDispformat;
+
+    Fbmp := Thiscell.FBmp;
+    FbmpYn := Thiscell.FbmpYn;
+end;
+
+function TReportCell.IsHeadField: Boolean;
+begin
+  result := (Length(CellText) > 0) And (FCellText[1] = '@')
+end;
 
 {TReportControl}
 
