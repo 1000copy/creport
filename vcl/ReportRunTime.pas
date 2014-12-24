@@ -294,23 +294,33 @@ Function TReportRunTime.GetDataset(strCellText: String): TDataset;
 Begin
   Result := DatasetByName(GetDatasetName(strCellText));
 End;
-//testcase  t1.lb ->  t1 
+type
+  StrSlice=class
+    FStr :string;
+  public
+    constructor Create(str:String);
+    function GoUntil(c:char):integer;
+    function Slice(b,e:integer):string;
+  end;
+
+//testcase  t1.lb ->  t1
 Function TReportRunTime.GetDatasetName(strCellText: String): String;
 Var
   I: Integer;
-Begin
-  Result := '';
-  If Length(strCellText) <= 0 Then
-    Exit;
-  If (strCellText[1] <> '@') And (strCellText[1] <> '#') Then
-    Exit;
-  i := 2;
-  while  (i < Length(strCellText)) and  ( strCellText[I] <> '.') do
+  s:StrSlice;
+  function IsDataField(s:String):Boolean;
   begin
-    Result := Result + strCellText[I];
-    inc(i);
+    result :=  (Length(s) < 2) or
+     ((s[1] <> '@') And (s[1] <> '#'));
+     result := not result ;
   end;
-  Result := UpperCase(Result);
+Begin
+  If isDataField(strCellText) Then begin
+    s:=StrSlice.Create(strCellText);
+    Result := UpperCase(s.Slice(2,s.GoUntil('.')-1));
+    s.Free ;
+  end else
+    Result := '';
 End;
 
 Function TReportRunTime.GetFieldName(strCellText: String): String;
@@ -1566,6 +1576,33 @@ var n :integer;
 begin
     For n := 0 To 40 Do
           SumPage[n] := 0;
+end;
+
+{ StrUtil }
+
+constructor StrSlice.Create(str: String);
+begin
+  FStr := str;
+end;
+
+function StrSlice.GoUntil(c: char): integer;
+var i : integer;
+begin
+  i := 2;
+  while  (i < Length(FStr)) and  ( FStr[I] <> c ) do
+    inc(i);
+  result := i ;
+end;
+
+function StrSlice.Slice(b, e: integer): string;
+var i : integer;
+begin
+   result := '';
+   i := b ;
+   while i <=e do begin
+    result := result + FStr[i];
+    inc(i);
+   end;
 end;
 
 end.
