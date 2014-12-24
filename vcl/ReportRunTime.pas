@@ -294,34 +294,22 @@ Function TReportRunTime.GetDataset(strCellText: String): TDataset;
 Begin
   Result := DatasetByName(GetDatasetName(strCellText));
 End;
-
+//testcase  t1.lb ->  t1 
 Function TReportRunTime.GetDatasetName(strCellText: String): String;
 Var
   I: Integer;
 Begin
+  Result := '';
   If Length(strCellText) <= 0 Then
-  Begin
-    Result := '';
     Exit;
-  End;
-
   If (strCellText[1] <> '@') And (strCellText[1] <> '#') Then
-  Begin
-    Result := '';
     Exit;
-  End;
-
-  For I := 2 To Length(strCellText) Do
-  Begin
-    If (strCellText[I] = ' ') Or (strCellText[I] = #09) Then
-      Continue;
-
-    If strCellText[I] = '.' Then
-      Break;
-
+  i := 2;
+  while  (i < Length(strCellText)) and  ( strCellText[I] <> '.') do
+  begin
     Result := Result + strCellText[I];
-  End;
-
+    inc(i);
+  end;
   Result := UpperCase(Result);
 End;
 
@@ -406,71 +394,34 @@ Begin
   setNewCell(true,NewCell,ThisCell);
 End;
 function TReportRunTime.RenderCellText(NewCell,ThisCell:TReportCell):String;
-  var cellText :string;
-  begin
-     If ThisCell.IsHeadField Then
+var cellText :string;
+begin
+   If ThisCell.IsHeadField Then
+    Begin
+      If
+        GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)) Is tnumericField Then
       Begin
-        If
-          GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)) Is tnumericField Then
+        If thiscell.CellDispformat <> '' Then
         Begin
-          If thiscell.CellDispformat <> '' Then
-          Begin
-            If Not
-              GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).isnull Then
-              cellText := formatfloat(thiscell.FCellDispformat,
-                GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).value);
-          End
-          Else
-            CellText :=
-              GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).displaytext;
+          If Not
+            GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).isnull Then
+            cellText := formatfloat(thiscell.FCellDispformat,
+              GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).value);
         End
         Else
-          If
-          GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)) Is Tblobfield Then
-          Begin
-            If Not
-              GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).isnull Then
-            Begin
-              //if fbmp = nil then
-              NewCell.fbmp := TBitmap.create;
-              NewCell.FBmp.Assign(GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)));
-              NewCell.FbmpYn := true;
-            End
-            Else
-              CellText := '';
-          End
-          Else
-
-            CellText :=
-              GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).displaytext
+          CellText :=
+            GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).displaytext;
       End
-      Else If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] = '#')
-        Then
-      Begin
-        If Dataset.fieldbyname(GetFieldName(ThisCell.CellText)) Is
-          tnumericField Then
+      Else
+        If
+        GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)) Is Tblobfield Then
         Begin
-          If thiscell.CellDispformat <> '' Then
-          Begin
-            If Not
-              Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).isnull
-                Then
-              cellText := formatfloat(thiscell.FCellDispformat,
-                Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).value);
-          End
-          Else
-            CellText :=
-              Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).displaytext;
-        End
-        Else If Dataset.fieldbyname(GetFieldName(ThisCell.CellText)) Is
-          Tblobfield Then
-        Begin
-          If Not Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).isnull
-            Then
+          If Not
+            GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).isnull Then
           Begin
             //if fbmp = nil then
             NewCell.fbmp := TBitmap.create;
-            NewCell.FBmp.Assign(Dataset.fieldbyname(GetFieldName(ThisCell.CellText)));
+            NewCell.FBmp.Assign(GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)));
             NewCell.FbmpYn := true;
           End
           Else
@@ -479,18 +430,55 @@ function TReportRunTime.RenderCellText(NewCell,ThisCell:TReportCell):String;
         Else
 
           CellText :=
-            Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).displaytext
-
-      End
-      Else If (Length(ThisCell.CellText) > 0) Then
-        If (UpperCase(copy(ThisCell.FCellText, 1, 8)) <> '`PAGENUM') And
-          (UpperCase(copy(ThisCell.FCellText, 1, 4)) <> '`SUM') And
-          (ThisCell.FCellText[1] = '`') Then
-          CellText := GetVarValue(thiscell.FCellText)
+            GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).displaytext
+    End
+    Else If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] = '#')
+      Then
+    Begin
+      If Dataset.fieldbyname(GetFieldName(ThisCell.CellText)) Is
+        tnumericField Then
+      Begin
+        If thiscell.CellDispformat <> '' Then
+        Begin
+          If Not
+            Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).isnull
+              Then
+            cellText := formatfloat(thiscell.FCellDispformat,
+              Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).value);
+        End
         Else
-          CellText := ThisCell.FCellText;
-      result := CellText;
-  end;
+          CellText :=
+            Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).displaytext;
+      End
+      Else If Dataset.fieldbyname(GetFieldName(ThisCell.CellText)) Is
+        Tblobfield Then
+      Begin
+        If Not Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).isnull
+          Then
+        Begin
+          //if fbmp = nil then
+          NewCell.fbmp := TBitmap.create;
+          NewCell.FBmp.Assign(Dataset.fieldbyname(GetFieldName(ThisCell.CellText)));
+          NewCell.FbmpYn := true;
+        End
+        Else
+          CellText := '';
+      End
+      Else
+
+        CellText :=
+          Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).displaytext
+
+    End
+    Else If (Length(ThisCell.CellText) > 0) Then
+      If (UpperCase(copy(ThisCell.FCellText, 1, 8)) <> '`PAGENUM') And
+        (UpperCase(copy(ThisCell.FCellText, 1, 4)) <> '`SUM') And
+        (ThisCell.FCellText[1] = '`') Then
+        CellText := GetVarValue(thiscell.FCellText)
+      Else
+        CellText := ThisCell.FCellText;
+    result := CellText;
+end;
 Procedure TReportRunTime.SetNewCell(spyn: boolean; NewCell, ThisCell:
   TReportCell);
 Var
@@ -498,8 +486,7 @@ Var
   L: integer;
   TempOwnerCell: TReportCell;
 
-Begin
-
+Begin 
   With NewCell Do
   Begin
     NewCell.CloneFrom(ThisCell);
@@ -535,46 +522,46 @@ Begin
 End;
 //  增加 ,完全重写的 PreparePrint,并增加了用空行补满一页 统计等功能
 //返回数用于在预览中确定代＃字头数据库是在模板的第几行
-  function TReportRunTime.IsLastPageFull:Boolean ;
-  begin
-    result := (FtopMargin + nHandHeight + nDataHeight + nSumAllHeight +
-            FBottomMargin) > height;
-  end;
-  function TReportRunTime.isPageFull:boolean;
-  begin
-    result := (FtopMargin + nHandHeight + nDataHeight + nHootHeight + FBottomMargin >height);
-  end;
-  function TReportRunTime.PageMinHeight:Integer;
-  begin
-    result := FtopMargin + nHandHeight + nHootHeight + FBottomMargin ;
-  end;
-  function TReportRunTime.HasEmptyRoomLastPage:Boolean;
-  begin
-    result := FtopMargin + nHandHeight +
-        nDataHeight +
-        nSumAllHeight + FBottomMargin < height;
-  end;
-  function TReportRunTime.CloneEmptyLine(thisLine:TReportLine):TReportLine;
-  var j:integer; templine:treportline;
-  Var
-    HandLineList, datalinelist, HootLineList, sumAllList: TList;
-    ThisCell, NewCell: TReportCell;
-  begin
-        templine := Treportline.Create;
-        TempLine.FMinHeight := ThisLine.FMinHeight;
-        TempLine.FDragHeight := ThisLine.FDragHeight;
-        For j := 0 To ThisLine.FCells.Count - 1 Do
-        Begin
-          ThisCell := TreportCell(ThisLine.FCells[j]);
-          NewCell := TReportCell.Create(Self);
-          TempLine.FCells.Add(NewCell);
-          NewCell.FOwnerLine := TempLine;
-          //setnewcell(true, newcell, thiscell, Dataset);
-          SetEmptyCell(newcell, thiscell);
-        End;
+function TReportRunTime.IsLastPageFull:Boolean ;
+begin
+  result := (FtopMargin + nHandHeight + nDataHeight + nSumAllHeight +
+          FBottomMargin) > height;
+end;
+function TReportRunTime.isPageFull:boolean;
+begin
+  result := (FtopMargin + nHandHeight + nDataHeight + nHootHeight + FBottomMargin >height);
+end;
+function TReportRunTime.PageMinHeight:Integer;
+begin
+  result := FtopMargin + nHandHeight + nHootHeight + FBottomMargin ;
+end;
+function TReportRunTime.HasEmptyRoomLastPage:Boolean;
+begin
+  result := FtopMargin + nHandHeight +
+      nDataHeight +
+      nSumAllHeight + FBottomMargin < height;
+end;
+function TReportRunTime.CloneEmptyLine(thisLine:TReportLine):TReportLine;
+var j:integer; templine:treportline;
+Var
+  HandLineList, datalinelist, HootLineList, sumAllList: TList;
+  ThisCell, NewCell: TReportCell;
+begin
+      templine := Treportline.Create;
+      TempLine.FMinHeight := ThisLine.FMinHeight;
+      TempLine.FDragHeight := ThisLine.FDragHeight;
+      For j := 0 To ThisLine.FCells.Count - 1 Do
+      Begin
+        ThisCell := TreportCell(ThisLine.FCells[j]);
+        NewCell := TReportCell.Create(Self);
+        TempLine.FCells.Add(NewCell);
+        NewCell.FOwnerLine := TempLine;
+        //setnewcell(true, newcell, thiscell, Dataset);
+        SetEmptyCell(newcell, thiscell);
+      End;
 
-    result := templine;
-  end;
+  result := templine;
+end;
 // clone from ThisLine to Line
 procedure TReportRunTime.CloneLine(ThisLine,Line:TReportLine);
 var
@@ -666,23 +653,22 @@ Var
   ThisLine, TempLine: TReportLine;
   ThisCell, NewCell: TReportCell;
   Dataset: TDataset;
- begin
- 
-    HasDataNo := -1 ;
-    For i := 0 To FlineList.Count - 1 Do
+begin
+  HasDataNo := -1 ;
+  For i := 0 To FlineList.Count - 1 Do
+  Begin
+    ThisLine := TReportLine(FlineList[i]);
+    For j := 0 To ThisLine.FCells.Count - 1 Do
     Begin
-      ThisLine := TReportLine(FlineList[i]);
-      For j := 0 To ThisLine.FCells.Count - 1 Do
-      Begin
-          ThisCell := TreportCell(ThisLine.FCells[j]);
-          If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] = '#') Then
-          Begin
-            HasDataNo := i;
-            cellIndex := j ;
-            exit;
-          End;
-      End;                                //for j
-    End;
+        ThisCell := TreportCell(ThisLine.FCells[j]);
+        If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] = '#') Then
+        Begin
+          HasDataNo := i;
+          cellIndex := j ;
+          exit;
+        End;
+    End;                                //for j
+  End;
 end;
 function TReportRunTime.FillFootList(var nHootHeight:integer ):TList;
   Var
@@ -690,37 +676,37 @@ function TReportRunTime.FillFootList(var nHootHeight:integer ):TList;
   HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisLine, TempLine: TReportLine;
   ThisCell, NewCell: TReportCell;
-  begin
-    HootLineList := TList.Create;
-    For i := HasDataNo + 1 To FlineList.Count - 1 Do
+begin
+  HootLineList := TList.Create;
+  For i := HasDataNo + 1 To FlineList.Count - 1 Do
+  Begin
+    ThisLine := TReportLine(FlineList[i]);
+    TempLine := TReportLine.Create;
+    TempLine.FMinHeight := ThisLine.FMinHeight;
+    TempLine.FDragHeight := ThisLine.FDragHeight;
+    HootLineList.Add(TempLine);
+    For j := 0 To ThisLine.FCells.Count - 1 Do
     Begin
-      ThisLine := TReportLine(FlineList[i]);
-      TempLine := TReportLine.Create;
-      TempLine.FMinHeight := ThisLine.FMinHeight;
-      TempLine.FDragHeight := ThisLine.FDragHeight;
-      HootLineList.Add(TempLine);
-      For j := 0 To ThisLine.FCells.Count - 1 Do
+      ThisCell := TreportCell(ThisLine.FCells[j]);
+      If (Length(ThisCell.CellText) > 0) And
+        (UpperCase(copy(ThisCell.FCellText, 1, 7)) = '`SUMALL') Then
       Begin
-        ThisCell := TreportCell(ThisLine.FCells[j]);
-        If (Length(ThisCell.CellText) > 0) And
-          (UpperCase(copy(ThisCell.FCellText, 1, 7)) = '`SUMALL') Then
-        Begin
-          HootLineList.Delete(HootLineList.count - 1);
-          break;
-        End;
-        NewCell := TReportCell.Create(Self);
-        TempLine.FCells.Add(NewCell);
-        NewCell.FOwnerLine := TempLine;
-        setnewcell(false, newcell, thiscell);
+        HootLineList.Delete(HootLineList.count - 1);
+        break;
       End;
-      If (UpperCase(copy(ThisCell.FCellText, 1, 7)) <> '`SUMALL') Then
-      Begin
-        TempLine.UpdateLineHeight;
-        nHootHeight := nHootHeight + TempLine.GetLineHeight;
-      End;
+      NewCell := TReportCell.Create(Self);
+      TempLine.FCells.Add(NewCell);
+      NewCell.FOwnerLine := TempLine;
+      setnewcell(false, newcell, thiscell);
     End;
-    result := HootLineList;
-  end;
+    If (UpperCase(copy(ThisCell.FCellText, 1, 7)) <> '`SUMALL') Then
+    Begin
+      TempLine.UpdateLineHeight;
+      nHootHeight := nHootHeight + TempLine.GetLineHeight;
+    End;
+  End;
+  result := HootLineList;
+end;
 function TReportRunTime.FooterHeight:integer;
 Var
   I, J, n,  TempDataSetCount:Integer;
@@ -748,37 +734,37 @@ begin
   end;
 end;
 
-  //将有合计的行(`SumAll)存入一个列表中
-  function TReportRunTime.FillSumList(var nSumAllHeight:integer ):TList;
-  Var
+//将有合计的行(`SumAll)存入一个列表中
+function TReportRunTime.FillSumList(var nSumAllHeight:integer ):TList;
+Var
   I, J, n,  TempDataSetCount:Integer;
   HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisLine, TempLine: TReportLine;
   ThisCell, NewCell: TReportCell;
   Dataset: TDataset;
-  begin
-    nSumAllHeight := 0;
-    sumAllList := TList.Create;
-    For i := HasDataNo + 1 To FlineList.Count - 1 Do
+begin
+  nSumAllHeight := 0;
+  sumAllList := TList.Create;
+  For i := HasDataNo + 1 To FlineList.Count - 1 Do
+  Begin
+    ThisLine := TReportLine(FlineList[i]);
+    TempLine := TReportLine.Create;
+    TempLine.FMinHeight := ThisLine.FMinHeight;
+    TempLine.FDragHeight := ThisLine.FDragHeight;
+    sumAllList.Add(TempLine);
+    For j := 0 To ThisLine.FCells.Count - 1 Do
     Begin
-      ThisLine := TReportLine(FlineList[i]);
-      TempLine := TReportLine.Create;
-      TempLine.FMinHeight := ThisLine.FMinHeight;
-      TempLine.FDragHeight := ThisLine.FDragHeight;
-      sumAllList.Add(TempLine);
-      For j := 0 To ThisLine.FCells.Count - 1 Do
-      Begin
-        ThisCell := TreportCell(ThisLine.FCells[j]);
-        NewCell := TReportCell.Create(Self);
-        TempLine.FCells.Add(NewCell);
-        NewCell.FOwnerLine := TempLine;
-        setnewcell(false, newcell, thiscell);
-      End;                              //for j
-      TempLine.UpdateLineHeight;
-      nSumAllHeight := nSumAllHeight + TempLine.GetLineHeight;
-    End;
-    result :=  sumAllList;
-  end ;
+      ThisCell := TreportCell(ThisLine.FCells[j]);
+      NewCell := TReportCell.Create(Self);
+      TempLine.FCells.Add(NewCell);
+      NewCell.FOwnerLine := TempLine;
+      setnewcell(false, newcell, thiscell);
+    End;                              //for j
+    TempLine.UpdateLineHeight;
+    nSumAllHeight := nSumAllHeight + TempLine.GetLineHeight;
+  End;
+  result :=  sumAllList;
+end ;
 function TReportRunTime.SumHeight:Integer;
 Var
   I, J, n,  TempDataSetCount:Integer;
@@ -1281,11 +1267,6 @@ Begin
   TempItem.pDataset := pDataSet;
   TempItem.strName := UpperCase(strDataSetName);
   FNamedDatasets.Add(TempItem);
-  //注:如果TReportRunTime不灭，而又不断调用SetDataset
-  //列表便会重复增加,无穷尽,错误将会出现..目前是在预览和打印完后清空　　　　
-  //有无更好办法?待处理.   .
-  // LCJ:调用前先清除不就可以了。傻逼。
-  // 这个人加入的代码，10成倒要删掉9.9成。成事不足败事有余
 End;
 
 Procedure TReportRunTime.SetRptFileName(Const Value: TFilename);
