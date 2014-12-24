@@ -71,7 +71,7 @@ type
     Procedure SaveTempFile(FileName:string;PageNumber, Fpageall: Integer);
 
     Function setSumAllYg(fm, ss: String): String;
-    Function setSumpageYg(fm, ss: String): String; 
+    Function setSumpageYg(fm, ss: String): String;
 
     Procedure LoadTempFile(strFileName: String);
     Procedure DeleteAllTempFiles;
@@ -189,7 +189,7 @@ begin
       celltext :=Format('第%d/%d页',[PageNumber,FPageAll])
     Else If ThisCell.IsPageNumFormula2 Then 
       celltext :=Format('第%d-%d页',[PageNumber,FPageAll])
-    Else If ThisCell.IsSumPageFormula Then  
+    Else If ThisCell.IsSumPageFormula Then
     Begin
       celltext := trim(setSumpageYg(thiscell.FCellDispformat,ThisCell.FCellText));
     End
@@ -1472,102 +1472,20 @@ End;
 
 
 Function TReportRunTime.SetSumAllYg(fm, ss: String): String; //add  
-Var
-  i, j, k, L: integer;
-  ss1, ss2, ss3, gjfh: String;
-  yg: real;
 Begin
-  Try
-    i := pos(')', ss);
-    If i = 0 Then
-    Begin
-      MessageDlg('统计时发生错误，请检查`SumAll()设置是否正确', mtInformation,
-        [mbOk], 0);
-      Result := '';
-      exit;
-    End;
-    ss1 := copy(ss, 9, i - 9);
-    j := length(ss1);
-    ss2 := '';
-    ss3 := '';
-    yg := 0;
-    For k := 1 To j Do
-    Begin
-      ss2 := copy(ss1, k, 1);
-      If (ss2 <> '-') And (ss2 <> '+') Then
-        ss3 := ss3 + ss2
-      Else If (ss2 = '-') Or (ss2 = '+') Then
-      Begin
-        L := k;
-        break;
-      End;
-    End;
-    gjfh := ss2;
-    If strtoint(ss3) = 0 Then
-      MessageDlg('模板文件中`SumAll()括号内参数不应为零', mtInformation, [mbOk],
-        0);
-
-    //yg := SumALL[strtoint(ss3) - 1];
-    yg := FSummer.GetSumAll (strtoint(ss3) - 1);
-    If k > j Then
-    Begin
-      If yg <> 0 Then
-        Result := FormatFloat(fm, yg)
-      Else
-        Result := '';
-      exit;
-    End;
-
-    ss3 := '';
-    ss1 := copy(ss1, L + 1, j - L);
-    j := length(ss1);
-
-    For k := 1 To j Do
-    Begin
-      ss2 := copy(ss1, k, 1);
-      If (ss2 <> '-') And (ss2 <> '+') Then
-        ss3 := ss3 + ss2
-      Else
-      Begin
-        If (ss2 = '-') Or (ss2 = '+') Then
-        Begin
-          If strtoint(ss3) = 0 Then
-            MessageDlg('模板文件中`SumAll()括号内参数不应为零', mtInformation,
-              [mbOk], 0);
-          If gjfh = '-' Then
-            yg := yg - FSummer.GetSumALL(strtoint(ss3) - 1);
-          If gjfh = '+' Then
-            yg := yg + FSummer.GetSumALL(strtoint(ss3) - 1);
-          gjfh := ss2;
-          ss3 := '';
-        End;
-      End;
-    End;                                // for k:=1 to j do
-    If strtoint(ss3) = 0 Then
-      MessageDlg('模板文件中`SumAll()括号内参数不应为零', mtInformation, [mbOk],
-        0);
-    If gjfh = '-' Then
-      yg := yg - FSummer.GetSumALL(strtoint(ss3) - 1);
-    If gjfh = '+' Then
-      yg := yg + FSummer.GetSumALL(strtoint(ss3) - 1);
-
-  Except
-    MessageDlg('统计时发生错误，请检查`SumAll()设置是否正确', mtInformation,
-      [mbOk], 0);
-    yg := 0;
-  End;
-  If yg <> 0 Then
-    Result := FormatFloat(fm, yg)
-  Else
-    Result := '';
-
+   Result := 'N/A';
 End;
+
+Function TReportRunTime.setSumpageYg(fm, ss: String): String;
+Begin
+   Result := 'N/A';
+ end;
 
 
 
 
 Function TReportRunTime.LFindComponent(Owner: TComponent; Name: String):
-  TComponent;                           // add  
+  TComponent;                           // add
 Var
   n: Integer;
   s1, s2: String;
@@ -1590,87 +1508,6 @@ Begin
 End;
 
 
-Function TReportRunTime.setSumpageYg(fm, ss: String): String; 
-Var
-  i, j, k, L: integer;
-  // ss3 字段次序
-  ss1, ss2, ss3, gjfh: String;
-  sumValue,yg: real;
-Begin
-  Try
-    i := pos(')', ss);
-    If i = 0 Then
-      raise Exception.Create('统计时发生错误，请检查`Sumpage()设置是否正确');
-    ss1 := copy(ss, 10, i - 10);
-    j := length(ss1);
-    ss2 := '';
-    ss3 := '';
-    yg := 0;
-    For k := 1 To j Do
-    Begin
-      ss2 := copy(ss1, k, 1);
-      If (ss2 <> '-') And (ss2 <> '+') Then
-        ss3 := ss3 + ss2
-      Else If (ss2 = '-') Or (ss2 = '+') Then
-      Begin
-        L := k;
-        break;
-      End;
-    End;
-    gjfh := ss2;
-
-
-    yg := FSummer.GetSumpage(strtoint(ss3) - 1);
-    If k > j Then
-    Begin
-      If yg <> 0 Then
-        Result := FormatFloat(fm, yg)
-      Else
-        Result := '';
-      exit;
-    End;
-
-    ss3 := '';
-    ss1 := copy(ss1, L + 1, j - L);
-    j := length(ss1);
-
-    For k := 1 To j Do
-    Begin
-      ss2 := copy(ss1, k, 1);
-      If (ss2 <> '-') And (ss2 <> '+') Then
-        ss3 := ss3 + ss2
-      Else
-      Begin
-        If (ss2 = '-') Or (ss2 = '+') Then
-        Begin
-          sumValue :=  FSummer.GetSumpage(strtoint(ss3) - 1);
-          If gjfh = '-' Then
-            yg := yg - sumValue;
-          If gjfh = '+' Then
-            yg := yg + sumValue;
-          gjfh := ss2;
-          ss3 := '';
-        End;
-      End;
-    End;
-    sumValue :=  FSummer.GetSumpage(strtoint(ss3) - 1);
-    If gjfh = '-' Then
-      yg := yg - sumValue;
-    If gjfh = '+' Then
-      yg := yg + sumValue;
-
-  Except
-    on E:Exception do
-    begin
-      MessageDlg('统计时发生错误:'+e.Message, mtInformation, [mbOk], 0);
-      yg := 0;
-    end;
-  End;
-  If yg <> 0 Then
-    Result := FormatFloat(fm, yg)
-  Else
-    Result := '';
-End;
 
 
 
