@@ -272,7 +272,7 @@ end;
 
 procedure TPreviewForm.SpeedButton4Click(Sender: TObject);
 begin
-  //add  
+
   ReportControl1.FreeEdit;
   zoomxxx:=zoomxxx+10;
   ShowWindow(ReportControl1.Handle, SW_HIDE);

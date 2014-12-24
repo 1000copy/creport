@@ -3,7 +3,7 @@ unit osservice;
 interface
 
 uses
-   Graphics,windows ,classes,SysUtils,Math;
+   Graphics,windows ,classes,SysUtils,Math,Forms;
 
 type
   TBlueException = class(Exception);
@@ -12,6 +12,8 @@ type
     nPixelsPerInch:integer;
     hDesktopDC :THandle;
   public
+      function ExeDir:String;
+
     procedure ScaleRect(var rectPaint: TRect; FReportScale: Integer);
     procedure InverseScaleRect(var rectPaint: TRect;
       FReportScale: Integer);
@@ -297,6 +299,11 @@ begin
     rectPaint.Right := trunc(rectPaint.Right * 100 / FReportScale + 0.5);
     rectPaint.Bottom := trunc(rectPaint.Bottom * 100 / FReportScale + 0.5);
   End;
+end;
+
+function WindowsOS.ExeDir: String;
+begin
+   Result := ExtractFileDir(Application.ExeName);
 end;
 
 end.

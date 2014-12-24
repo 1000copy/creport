@@ -132,28 +132,22 @@ implementation
 Uses Preview, REPmess, Creport;
 Procedure TReportRunTime.LoadPage(I:integer);
 Var
-  strFileDir: String;
+  FileName: String;
 Begin
-     strFileDir := ExtractFileDir(Application.ExeName); //+ '\';
-     If copy(strfiledir, length(strfiledir), 1) <> '\' Then
-          strFileDir := strFileDir + '\';
-     If FileExists(strFileDir + 'Temp\' + IntToStr(I) + '.tmp') Then
-          LoadTempFile(strFileDir + 'Temp\' + IntToStr(I) + '.tmp');
+   If FileExists(FileName) Then
+        LoadTempFile(FileName);
 End;
 
 Procedure TReportRunTime.DeleteAllTempFiles;
 Var
-  strFileDir: String;
-Begin
-  strFileDir := ExtractFileDir(Application.ExeName);
-  If copy(strfiledir, length(strfiledir), 1) <> '\' Then
-    strFileDir := strFileDir + '\';
-
-  If Not DirectoryExists(strFileDir + 'Temp') Then
-    Exit;
-  os.DeleteFiles(strFileDir + 'Temp', '*.tmp');
+  tempDir: String;
+Begin                             
   Try
-    RmDir(strFileDir + 'Temp');
+    tempDir := Format('%s\temp\',[os.ExeDir]);
+    If Not DirectoryExists(tempDir) Then
+      Exit;
+    os.DeleteFiles(tempDir, '*.tmp');
+    RmDir(tempDir);
   Except
   End;
 End;
@@ -161,20 +155,14 @@ function TReportRunTime.ReadyFileName(PageNumber, Fpageall: Integer):String;
 Var
   strFileDir: String;
   FileName: String;
-
+Var
+  tempDir: String;
 begin
-  REPmessform.Label1.Caption := inttostr(PageNumber); //   2001.4.27
-  strFileDir := ExtractFileDir(Application.ExeName); // + '\';
-
-  If copy(strfiledir, length(strfiledir), 1) <> '\' Then
-    strFileDir := strFileDir + '\';
-
-  If Not DirectoryExists(strFileDir + 'Temp') Then
-    //MkDir('Temp');
-    MkDir(strFileDir + 'Temp');         //re  
-
-  FileName := strFileDir + 'Temp\' + IntToStr(PageNumber) + '.Tmp';
-
+  REPmessform.Label1.Caption := inttostr(PageNumber);
+  tempDir := Format('%s\temp',[os.ExeDir]);
+  If Not DirectoryExists(tempDir) Then
+    MkDir(tempDir);
+  FileName := Format('%s\%d.tmp',[tempDir ,PageNumber]);
   If FileExists(FileName) Then
     DeleteFile(FileName);
   result := FileName;
@@ -235,22 +223,17 @@ Begin
   FReportScale := 100;
   Width := 0;
   Height := 0;             
-  fallprint := true;                    //默认为全部打印
+  fallprint := true;                   
   FSetData := Tstringlist.Create;
   FNamedDatasets := TList.Create;
   FVarList := TList.Create;
   FPrintLineList := TList.Create;
-  FDRMap := TDRMappings.Create;
-
-  repmessForm := TrepmessForm.Create(Self); //    
-
-  FHeaderHeight := 0;
-
+  FDRMap := TDRMappings.Create;              
+  repmessForm := TrepmessForm.Create(Self);
+  FHeaderHeight := 0;            
   If FFileName <> '' Then
     LoadReport;
 End;
-
-{毁灭过程}
 
 Destructor TReportRunTime.Destroy;
 Var
@@ -273,8 +256,6 @@ Begin
   FSummer.Free;
   Inherited Destroy;
 End;
-
-{数据集赋值}
 
 Function TReportRunTime.DatasetByName(strDatasetName: String): TDataset;
 Var
@@ -379,7 +360,6 @@ begin
       End;
     End;
     If Not bHasDataSet Then
-      //如果没有数据集，则表头高度等于表头高度加当前行高度
       FHeaderHeight := FHeaderHeight + ThisLine.LineHeight;
   End;
   result := FHeaderHeight;
@@ -391,69 +371,32 @@ End;
 function TReportRunTime.RenderCellText(NewCell,ThisCell:TReportCell):String;
 var cellText :string;
 begin
-   If ThisCell.IsHeadField Then
+ If ThisCell.IsHeadField Then
+  Begin
+    If
+      GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)) Is tnumericField Then
     Begin
-      If
-        GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)) Is tnumericField Then
+      If thiscell.CellDispformat <> '' Then
       Begin
-        If thiscell.CellDispformat <> '' Then
-        Begin
-          If Not
-            GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).isnull Then
-            cellText := formatfloat(thiscell.FCellDispformat,
-              GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).value);
-        End
-        Else
-          CellText :=
-            GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).displaytext;
+        If Not
+          GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).isnull Then
+          cellText := formatfloat(thiscell.FCellDispformat,
+            GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).value);
       End
       Else
-        If
-        GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)) Is Tblobfield Then
-        Begin
-          If Not
-            GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).isnull Then
-          Begin
-            //if fbmp = nil then
-            NewCell.fbmp := TBitmap.create;
-            NewCell.FBmp.Assign(GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)));
-            NewCell.FbmpYn := true;
-          End
-          Else
-            CellText := '';
-        End
-        Else
-
-          CellText :=
-            GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).displaytext
+        CellText :=
+          GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).displaytext;
     End
-    Else If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] = '#')
-      Then
-    Begin
-      If Dataset.fieldbyname(GetFieldName(ThisCell.CellText)) Is
-        tnumericField Then
+    Else
+      If
+      GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)) Is Tblobfield Then
       Begin
-        If thiscell.CellDispformat <> '' Then
-        Begin
-          If Not
-            Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).isnull
-              Then
-            cellText := formatfloat(thiscell.FCellDispformat,
-              Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).value);
-        End
-        Else
-          CellText :=
-            Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).displaytext;
-      End
-      Else If Dataset.fieldbyname(GetFieldName(ThisCell.CellText)) Is
-        Tblobfield Then
-      Begin
-        If Not Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).isnull
-          Then
+        If Not
+          GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).isnull Then
         Begin
           //if fbmp = nil then
           NewCell.fbmp := TBitmap.create;
-          NewCell.FBmp.Assign(Dataset.fieldbyname(GetFieldName(ThisCell.CellText)));
+          NewCell.FBmp.Assign(GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)));
           NewCell.FbmpYn := true;
         End
         Else
@@ -462,17 +405,54 @@ begin
       Else
 
         CellText :=
-          Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).displaytext
-
-    End
-    Else If (Length(ThisCell.CellText) > 0) Then
-      If (UpperCase(copy(ThisCell.FCellText, 1, 8)) <> '`PAGENUM') And
-        (UpperCase(copy(ThisCell.FCellText, 1, 4)) <> '`SUM') And
-        (ThisCell.FCellText[1] = '`') Then
-        CellText := GetVarValue(thiscell.FCellText)
+          GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).displaytext
+  End
+  Else If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] = '#')
+    Then
+  Begin
+    If Dataset.fieldbyname(GetFieldName(ThisCell.CellText)) Is
+      tnumericField Then
+    Begin
+      If thiscell.CellDispformat <> '' Then
+      Begin
+        If Not
+          Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).isnull
+            Then
+          cellText := formatfloat(thiscell.FCellDispformat,
+            Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).value);
+      End
       Else
-        CellText := ThisCell.FCellText;
-    result := CellText;
+        CellText :=
+          Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).displaytext;
+    End
+    Else If Dataset.fieldbyname(GetFieldName(ThisCell.CellText)) Is
+      Tblobfield Then
+    Begin
+      If Not Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).isnull
+        Then
+      Begin
+        //if fbmp = nil then
+        NewCell.fbmp := TBitmap.create;
+        NewCell.FBmp.Assign(Dataset.fieldbyname(GetFieldName(ThisCell.CellText)));
+        NewCell.FbmpYn := true;
+      End
+      Else
+        CellText := '';
+    End
+    Else
+
+      CellText :=
+        Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).displaytext
+
+  End
+  Else If (Length(ThisCell.CellText) > 0) Then
+    If (UpperCase(copy(ThisCell.FCellText, 1, 8)) <> '`PAGENUM') And
+      (UpperCase(copy(ThisCell.FCellText, 1, 4)) <> '`SUM') And
+      (ThisCell.FCellText[1] = '`') Then
+      CellText := GetVarValue(thiscell.FCellText)
+    Else
+      CellText := ThisCell.FCellText;
+  result := CellText;
 end;
 Procedure TReportRunTime.SetNewCell(spyn: boolean; NewCell, ThisCell:
   TReportCell);
