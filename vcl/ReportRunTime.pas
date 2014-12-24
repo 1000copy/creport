@@ -9,6 +9,7 @@ uses ReportControl,  Windows, Messages, SysUtils,
 Procedure Register;
 type
    TSummer = class
+     //最多40列单元格,否则统计汇总时要出错. 拟换为动态的
      SumPage, SumAll: Array[0..40] Of real;
    public
      procedure Acc(j:integer;value:real);
@@ -67,7 +68,6 @@ type
     Function GetFieldName(strCellText: String): String;
     Procedure SetRptFileName(Const Value: TFilename);
 
-    Function LFindComponent(Owner: TComponent; Name: String): TComponent;
 
     Procedure SaveTempFile(FileName:string;PageNumber, Fpageall: Integer);
 
@@ -1456,38 +1456,7 @@ Function TReportRunTime.setSumpageYg(fm, ss: String): String;
 Begin
    Result := 'N/A';
  end;
-
-
-
-
-Function TReportRunTime.LFindComponent(Owner: TComponent; Name: String):
-  TComponent;                           // add
-Var
-  n: Integer;
-  s1, s2: String;
-Begin
-  Result := Nil;
-  n := Pos('.', Name);
-  Try
-    If n = 0 Then
-      Result := Owner.FindComponent(Name)
-    Else
-    Begin
-      s1 := Copy(Name, 1, n - 1);       // module name
-      s2 := Copy(Name, n + 1, 255);     // component name
-      Owner := FindGlobalComponent(s1);
-      If Owner <> Nil Then
-        Result := Owner.FindComponent(s2);
-    End;
-  Except
-  End;
-End;
-
-
-
-
-
-
+ 
 Procedure TReportRunTime.SetAddSpace(Const Value: boolean);
 Begin
   FAddSpace := Value;
@@ -1549,7 +1518,7 @@ end;
 procedure TSummer.ResetAll;
 var n :integer;
 begin
-  For n := 0 To 40 Do //最多40列单元格,否则统计汇总时要出错. 拟换为动态的
+  For n := 0 To 40 Do 
   Begin
     SumPage[n] := 0;
     SumAll[n] := 0;

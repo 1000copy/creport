@@ -1,4 +1,3 @@
-// update ÀîÔóÂ×
 
 unit Border;
 

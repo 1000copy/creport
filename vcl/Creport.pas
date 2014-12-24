@@ -205,7 +205,7 @@ const
   ver = '【eReport 票据式报表软件】V3.0E';
   copyright = ver ;
   prname='创作：郭家骏、王寒松';
-  updates = '修改日期:2003.4.26 成都，李泽伦';
+  updates = '修改日期:2003.4.26 成都， ';
 
 var
   CreportForm: TCreportForm;
@@ -528,7 +528,7 @@ begin
   end;
 end;
 
-procedure TCreportForm.PrintItClick(Sender: TObject);  // update 李泽伦
+procedure TCreportForm.PrintItClick(Sender: TObject);  // update  
 begin
   if printer.Printers.Count > 0 then ReportControl1.PrintIt
   else Application.Messagebox('未安装打印机', '警告', MB_OK + MB_iconwarning);
@@ -568,7 +568,7 @@ begin
   end;
 end;
 
-procedure TCreportForm.FileCloseClick(Sender: TObject); // update 李泽伦
+procedure TCreportForm.FileCloseClick(Sender: TObject); // update  
 begin
   if Application.Messagebox('确实要关闭文件吗？', '警告', MB_OKCANCEL) = MrOK then
   begin
@@ -873,7 +873,7 @@ begin
   end;
 end;
 // LCJ : 最佳缩放比例
-procedure TCreportForm.SpeedButton8Click(Sender: TObject); // add 李泽伦
+procedure TCreportForm.SpeedButton8Click(Sender: TObject); // add  
 begin
   zoomxxx:=ReportControl1.ZoomRate (Height,Width,160,171);
   ReportControl1.FreeEdit;
@@ -906,7 +906,7 @@ begin
 end;
 
 procedure TCreportForm.ReportControl1MouseDown(Sender: TObject;
-  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);// update 李泽伦
+  Button: TMouseButton; Shift: TShiftState; X, Y: Integer);// update  
 var
   hTempDC: HDC;
   pt, ptOrg: TPoint;
@@ -1021,7 +1021,7 @@ begin
 
 end;
 
-function TCreportForm.LFindComponent(Owner: TComponent; Name: String): TComponent; // lzl
+function TCreportForm.LFindComponent(Owner: TComponent; Name: String): TComponent;  
 var
   n: Integer;
   s1, s2: String;
@@ -1033,8 +1033,8 @@ begin
       Result := Owner.FindComponent(Name)
     else
     begin
-      s1 := Copy(Name, 1, n - 1);        // module name
-      s2 := Copy(Name, n + 1, 255);      // component name
+      s1 := Copy(Name, 1, n - 1);
+      s2 := Copy(Name, n + 1, 255);
       Owner := FindGlobalComponent(s1);
       if Owner <> nil then
         Result := Owner.FindComponent(s2);
@@ -1044,7 +1044,7 @@ begin
 end;
 
 
-procedure TCreportForm.SpeedButton10Click(Sender: TObject); // add 李泽伦
+procedure TCreportForm.SpeedButton10Click(Sender: TObject);
 var celldisp : TReportCell;
 begin
 if ReportControl1.SelectedCells.Count >0  then
@@ -1064,7 +1064,7 @@ else
   MessageDlg('请先选择单元格', mtInformation,[mbOk], 0);
 
 end;
-procedure TCreportForm.SpeedButton16Click(Sender: TObject);// add 李泽伦
+procedure TCreportForm.SpeedButton16Click(Sender: TObject);//  
 var Acanvas:Tcanvas;
     LTempRect:Trect;
 var celldisp : TReportCell;
@@ -1082,7 +1082,7 @@ end
 else
   MessageDlg('请先选择单元格', mtInformation,[mbOk], 0);
 end;
-procedure TCreportForm.ComboBox1Change(Sender: TObject); // add 李泽伦
+procedure TCreportForm.ComboBox1Change(Sender: TObject); // add  
 var ss:string;
     Dbar:TToolWindow97;
     Dlist:tlistbox;

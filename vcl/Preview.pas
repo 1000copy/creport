@@ -69,14 +69,14 @@ var
 implementation
 
 uses margin, REPmess
-     , Creport,About,Border,vsplit,Color,diagonal,NewDialog; // add 李泽伦
+     , Creport,About,Border,vsplit,Color,diagonal,NewDialog; // add  
 
 {$R *.DFM}
 
 procedure TPreviewForm.ScrollBox1Resize(Sender: TObject);
 begin
 
-///////////////////////////// add 李泽伦
+///////////////////////////// add  
   if ClientRect.Right > ReportControl1.Width + 20 then
     ReportControl1.Left := (ClientRect.Right - ReportControl1.Width-20) div 2
   else
@@ -239,7 +239,7 @@ end;
 
 procedure TPreviewForm.SpeedButton5Click(Sender: TObject);
 begin
-  //add 李泽伦
+  //add  
   ReportControl1.FreeEdit;
   zoomxxx:=zoomxxx-10;
   ShowWindow(ReportControl1.Handle, SW_HIDE);
@@ -272,7 +272,7 @@ end;
 
 procedure TPreviewForm.SpeedButton4Click(Sender: TObject);
 begin
-  //add 李泽伦
+  //add  
   ReportControl1.FreeEdit;
   zoomxxx:=zoomxxx+10;
   ShowWindow(ReportControl1.Handle, SW_HIDE);
