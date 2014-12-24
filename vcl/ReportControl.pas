@@ -153,7 +153,9 @@ Type
     function IsPageNumFormula2: Boolean;
     function IsSumPageFormula:Boolean;
     function IsSumAllFormula: Boolean;
+    function IsFormula:Boolean;
     procedure CloneFrom(ThisCell:TReportCell);
+    function FormatValue(DataValue:Extended):string;
   public
     FLeftMargin: Integer;               // ×ó±ßµÄ¿Õ¸ñ
     FOwnerLine: TReportLine;            // Á¥ÊôÐÐ
@@ -1983,6 +1985,19 @@ end;
 function TReportCell.IsHeadField: Boolean;
 begin
   result := (Length(CellText) > 0) And (FCellText[1] = '@')
+end;
+
+function TReportCell.FormatValue(DataValue: Extended): string;
+begin
+  result := formatfloat(FCellDispformat, DataValue);
+end;
+
+function TReportCell.IsFormula: Boolean;
+begin
+  result := (Length(CellText) > 0) and
+    (UpperCase(copy(FCellText, 1, 8)) <> '`PAGENUM') And
+      (UpperCase(copy(FCellText, 1, 4)) <> '`SUM') and
+      (FCellText[1] = '`') ;
 end;
 
 {TReportControl}

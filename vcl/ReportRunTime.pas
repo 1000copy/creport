@@ -368,91 +368,77 @@ Procedure TReportRunTime.SetEmptyCell(NewCell, ThisCell:TReportCell);
 Begin
   setNewCell(true,NewCell,ThisCell);
 End;
-function TReportRunTime.RenderCellText(NewCell,ThisCell:TReportCell):String;
-var cellText :string;
-begin
- If ThisCell.IsHeadField Then
-  Begin
-    If
-      GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)) Is tnumericField Then
-    Begin
-      If thiscell.CellDispformat <> '' Then
-      Begin
-        If Not
-          GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).isnull Then
-          cellText := formatfloat(thiscell.FCellDispformat,
-            GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).value);
-      End
-      Else
-        CellText :=
-          GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).displaytext;
-    End
-    Else
-      If
-      GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)) Is Tblobfield Then
-      Begin
-        If Not
-          GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).isnull Then
-        Begin
-          //if fbmp = nil then
-          NewCell.fbmp := TBitmap.create;
-          NewCell.FBmp.Assign(GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)));
-          NewCell.FbmpYn := true;
-        End
-        Else
-          CellText := '';
-      End
-      Else
+// Mappings From CellText to Data end :TDataset ,TField,Value 
+type
+   CellField = class
+     FCellText : string;
+     Fds:TDataset;
+  private
+    function GetFieldName: String;
+    function IsDataField(s: String): Boolean;
+   public
+    constructor Create(CellText:String;ds:TDataset);
+    function DataValue(): Extended;
+    function ds: TDataset;
+    function GetField(): TField;
+    function IsNullField(): Boolean;
+    function IsNumberField(): Boolean;
+    function IsBlobField:Boolean;
 
-        CellText :=
-          GetDataSet(ThisCell.CellText).fieldbyname(GetFieldName(ThisCell.CellText)).displaytext
-  End
-  Else If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] = '#')
-    Then
-  Begin
-    If Dataset.fieldbyname(GetFieldName(ThisCell.CellText)) Is
-      tnumericField Then
+   end;
+function TReportRunTime.RenderCellText(NewCell,ThisCell:TReportCell):String;
+var
+   cellText :string;
+   cf: CellField ;
+begin
+  CellText := ThisCell.FCellText;
+  cf:= CellField.Create(ThisCell.CellText,GetDataset(thisCell.CellText)) ;
+  try
+    If ThisCell.IsHeadField and (not cf.IsNullField) Then
     Begin
-      If thiscell.CellDispformat <> '' Then
+      CellText := cf.GetField().displaytext ;
+      If cf.isNumberField  Then
       Begin
-        If Not
-          Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).isnull
-            Then
-          cellText := formatfloat(thiscell.FCellDispformat,
-            Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).value);
+        If ThisCell.CellDispformat <> '' Then
+            cellText := ThisCell.FormatValue(cf.DataValue());
       End
-      Else
-        CellText :=
-          Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).displaytext;
-    End
-    Else If Dataset.fieldbyname(GetFieldName(ThisCell.CellText)) Is
-      Tblobfield Then
-    Begin
-      If Not Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).isnull
-        Then
+      Else If cf.IsBlobField Then
       Begin
-        //if fbmp = nil then
         NewCell.fbmp := TBitmap.create;
-        NewCell.FBmp.Assign(Dataset.fieldbyname(GetFieldName(ThisCell.CellText)));
+        NewCell.FBmp.Assign(cf.GetField);
         NewCell.FbmpYn := true;
       End
-      Else
-        CellText := '';
     End
-    Else
-
-      CellText :=
-        Dataset.fieldbyname(GetFieldName(ThisCell.CellText)).displaytext
-
-  End
-  Else If (Length(ThisCell.CellText) > 0) Then
-    If (UpperCase(copy(ThisCell.FCellText, 1, 8)) <> '`PAGENUM') And
-      (UpperCase(copy(ThisCell.FCellText, 1, 4)) <> '`SUM') And
-      (ThisCell.FCellText[1] = '`') Then
-      CellText := GetVarValue(thiscell.FCellText)
-    Else
-      CellText := ThisCell.FCellText;
-  result := CellText;
+    Else If  thisCell.IsDetailField Then
+    Begin
+      If cf.IsNumberField Then
+      Begin
+        CellText := cf.GetField.displaytext;
+        If thiscell.CellDispformat <> '' Then
+        Begin
+          If Not cf.IsNullField  Then
+            cellText := Thiscell.FormatValue(cf.DataValue);
+        End
+      End
+      Else If cf.IsBlobField then
+      Begin
+        CellText := '';
+        If Not cf.IsNullField Then
+        Begin
+          NewCell.fbmp := TBitmap.create;
+          NewCell.FBmp.Assign(cf.GetField);
+          NewCell.FbmpYn := true;
+        End
+      End
+      Else
+        CellText := cf.GetField.displaytext;
+    End
+    Else If ThisCell.IsFormula Then
+        CellText := GetVarValue(thiscell.FCellText) ;
+    result := CellText;
+  finally
+    cf.Free;
+  end;
 end;
 Procedure TReportRunTime.SetNewCell(spyn: boolean; NewCell, ThisCell:
   TReportCell);
@@ -1550,6 +1536,55 @@ begin
     s:=StrSlice.Create(str);
     Result := s.Slice(s.GoUntil(FromChar)+1);
     s.Free ;
+end;
+function CellField.ds : TDataset ;
+begin
+ result := FDs;
+end;
+function CellField.GetField() : TField ;
+begin
+ result := ds.fieldbyname(GetFieldName())
+end;
+function CellField.IsDataField(s:String):Boolean;
+begin
+  result :=  (Length(s) < 2) or
+   ((s[1] <> '@') And (s[1] <> '#'));
+   result := not result ;
+end;
+
+Function CellField.GetFieldName(): String;
+Var
+  I: Integer;
+  bFlag: Boolean;
+  s:StrSlice;
+Begin
+  If isDataField(FCellText) Then
+    Result := StrSlice.DoSlice(FCellText,'.')
+  else
+    Result := '';
+End;
+
+function CellField.IsNumberField():Boolean;
+begin
+  result := ds.fieldbyname(GetFieldName()) Is tnumericField
+end;
+function CellField.IsNullField( ):Boolean;
+begin
+  result := ds.fieldbyname(GetFieldName()).isnull;
+end;
+function CellField.DataValue():Extended;
+begin
+    result := ds.fieldbyname(GetFieldName()).value ;
+end;
+constructor CellField.Create(CellText:String;ds:TDataset);
+begin
+  FCellText:= CellText;
+  FDs :=ds
+end;
+
+function CellField.IsBlobField: Boolean;
+begin
+   result := ds.fieldbyname(GetFieldName()) Is Tblobfield
 end;
 
 end.
