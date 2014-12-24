@@ -390,51 +390,26 @@ function TReportRunTime.RenderCellText(NewCell,ThisCell:TReportCell):String;
 var
    cellText :string;
    cf: CellField ;
+   procedure RenderFieldText;
+   begin
+      if (not cf.IsNullField )then begin
+        CellText := cf.GetField().displaytext ;
+        If cf.isNumberField  and (ThisCell.CellDispformat <> '') Then
+          cellText := ThisCell.FormatValue(cf.DataValue())
+        Else If cf.IsBlobField Then
+          CellText := NewCell.BmpLoad(cf.GetField);
+      end;
+   end;
 begin
-  CellText := ThisCell.FCellText;
+  CellText := thisCell.CellText;
   cf:= CellField.Create(ThisCell.CellText,GetDataset(thisCell.CellText)) ;
   try
-    If ThisCell.IsHeadField and (not cf.IsNullField) Then
-    Begin
-      CellText := cf.GetField().displaytext ;
-      If cf.isNumberField  Then
-      Begin
-        If ThisCell.CellDispformat <> '' Then
-            cellText := ThisCell.FormatValue(cf.DataValue());
-      End
-      Else If cf.IsBlobField Then
-      Begin
-        NewCell.fbmp := TBitmap.create;
-        NewCell.FBmp.Assign(cf.GetField);
-        NewCell.FbmpYn := true;
-      End
-    End
-    Else If  thisCell.IsDetailField Then
-    Begin
-      If cf.IsNumberField Then
-      Begin
-        CellText := cf.GetField.displaytext;
-        If thiscell.CellDispformat <> '' Then
-        Begin
-          If Not cf.IsNullField  Then
-            cellText := Thiscell.FormatValue(cf.DataValue);
-        End
-      End
-      Else If cf.IsBlobField then
-      Begin
-        CellText := '';
-        If Not cf.IsNullField Then
-        Begin
-          NewCell.fbmp := TBitmap.create;
-          NewCell.FBmp.Assign(cf.GetField);
-          NewCell.FbmpYn := true;
-        End
-      End
-      Else
-        CellText := cf.GetField.displaytext;
-    End
+    If ThisCell.IsHeadField  or thisCell.IsDetailField Then
+      RenderFieldText
     Else If ThisCell.IsFormula Then
-        CellText := GetVarValue(thiscell.FCellText) ;
+      CellText := GetVarValue(thiscell.FCellText) ;
+    if (CellText = ThisCell.CellText) then
+      CellText:= '';
     result := CellText;
   finally
     cf.Free;
@@ -1412,7 +1387,7 @@ Begin
 End;
 
 
-
+/ todo : 需要一个好的express parser，以便把关闭的功能加上去
 Function TReportRunTime.SetSumAllYg(fm, ss: String): String; //add  
 Begin
    Result := 'N/A';

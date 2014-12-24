@@ -156,6 +156,7 @@ Type
     function IsFormula:Boolean;
     procedure CloneFrom(ThisCell:TReportCell);
     function FormatValue(DataValue:Extended):string;
+    function BmpLoad(F:TField):string;
   public
     FLeftMargin: Integer;               // ×ó±ßµÄ¿Õ¸ñ
     FOwnerLine: TReportLine;            // Á¥ÊôÐÐ
@@ -1998,6 +1999,13 @@ begin
     (UpperCase(copy(FCellText, 1, 8)) <> '`PAGENUM') And
       (UpperCase(copy(FCellText, 1, 4)) <> '`SUM') and
       (FCellText[1] = '`') ;
+end;
+function TReportCell.BmpLoad(F:TField):string;
+begin
+  result := '';
+  fbmp := TBitmap.create;
+  FBmp.Assign(F);
+  FbmpYn := true;
 end;
 
 {TReportControl}
