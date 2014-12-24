@@ -34,6 +34,7 @@ type
     function SumHeight:integer;
     function ExpandLine(var HasDataNo, ndataHeight: integer): TReportLine;
     function RenderCellText(NewCell,ThisCell:TReportCell):String;
+    function IsDataField(s: String): Boolean;
 
   public
     //小计和合计用,最多40列单元格,否则统计汇总时要出错.
@@ -300,20 +301,22 @@ type
   public
     constructor Create(str:String);
     function GoUntil(c:char):integer;
-    function Slice(b,e:integer):string;
+    function Slice(b,e:integer):string;overload;
+    function Slice(b:integer):string;overload;
+    class function DoSlice(str: String; FromChar:char): string;
   end;
+function TReportRunTime.IsDataField(s:String):Boolean;
+begin
+  result :=  (Length(s) < 2) or
+   ((s[1] <> '@') And (s[1] <> '#'));
+   result := not result ;
+end;
 
 //testcase  t1.lb ->  t1
 Function TReportRunTime.GetDatasetName(strCellText: String): String;
 Var
   I: Integer;
   s:StrSlice;
-  function IsDataField(s:String):Boolean;
-  begin
-    result :=  (Length(s) < 2) or
-     ((s[1] <> '@') And (s[1] <> '#'));
-     result := not result ;
-  end;
 Begin
   If isDataField(strCellText) Then begin
     s:=StrSlice.Create(strCellText);
@@ -327,30 +330,12 @@ Function TReportRunTime.GetFieldName(strCellText: String): String;
 Var
   I: Integer;
   bFlag: Boolean;
+  s:StrSlice;
 Begin
-  Result := '';
-
-  If Length(strCellText) <= 0 Then
-    Exit;
-
-  If (strCellText[1] <> '@') And (strCellText[1] <> '#') Then
-    Exit;
-
-  bFlag := False;
-  For I := 2 To Length(strCellText) Do
-  Begin
-    If (strCellText[I] = ' ') Or (strCellText[I] = #09) Then
-      Continue;
-
-    If strCellText[I] = '.' Then
-    Begin
-      bFlag := True;
-      Continue;
-    End;
-
-    If bFlag Then
-      Result := Result + strCellText[I];
-  End;
+    If isDataField(strCellText) Then
+      Result := StrSlice.DoSlice(StrCellText,'.')
+    else
+      Result := '';
 End;
 
 Procedure TReportRunTime.LoadReport;
@@ -1603,6 +1588,19 @@ begin
     result := result + FStr[i];
     inc(i);
    end;
+end;
+
+function StrSlice.Slice(b: integer): string;
+begin
+  result := Slice(b,Length(FStr));
+end;
+
+class function StrSlice.DoSlice(str: String; FromChar:char): string;
+var   s:StrSlice;
+begin
+    s:=StrSlice.Create(str);
+    Result := s.Slice(s.GoUntil(FromChar)+1);
+    s.Free ;
 end;
 
 end.
