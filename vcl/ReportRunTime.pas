@@ -1414,15 +1414,38 @@ End;
 
 
 Function TReportRunTime.SetSumAllYg(fm, ss: String): String; //add  
+var
+  Value,iCode :Integer;
+  slice :StrSlice;
+  s : string;
 Begin
-   Result := 'N/A';
-End;
-
-Function TReportRunTime.setSumpageYg(fm, ss: String): String;
-Begin
+  slice := StrSlice.Create(ss);
+  s := slice.Slice(slice.GoUntil('(')+1,slice.GoUntil(')')-1);
+  val(s, Value, iCode);
+  if iCode = 0 then begin
+   Value := strtoint(s) ;
+    Result := FormatFloat(fm,FSummer.GetSumAll(Value));
+  end else
    Result := 'N/A';
  end;
- 
+
+Function TReportRunTime.setSumpageYg(fm, ss: String): String;
+var
+  Value ,iCode:Integer;
+  slice :StrSlice;
+  s : string;
+Begin
+  slice := StrSlice.Create(ss);
+  s := slice.Slice(slice.GoUntil('(')+1,slice.GoUntil(')')-1);
+  val(s, Value, iCode);
+  if iCode = 0 then begin
+   Value := strtoint(s) ;
+   Result := FormatFloat(fm,FSummer.GetSumPage(Value));
+  end else
+   Result := 'N/A';
+ end;
+
+
 Procedure TReportRunTime.SetAddSpace(Const Value: boolean);
 Begin
   FAddSpace := Value;
