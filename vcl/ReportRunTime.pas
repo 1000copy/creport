@@ -42,7 +42,6 @@ type
 
   public
     //小计和合计用,最多40列单元格,否则统计汇总时要出错.
-
     FFileName: Tfilename;
     FAddSpace: boolean;
     FSetData: TstringList;
@@ -70,13 +69,9 @@ type
     Function GetVarValue(strVarName: String): String;
     Function GetFieldName(strCellText: String): String;
     Procedure SetRptFileName(Const Value: TFilename);
-
-
     Procedure SaveTempFile(FileName:string;PageNumber, Fpageall: Integer);
-
     Function setSumAllYg(fm, ss: String): String;
     Function setSumpageYg(fm, ss: String): String;
-
     Procedure LoadTempFile(strFileName: String);
     Procedure DeleteAllTempFiles;
     Procedure SetNewCell(spyn: boolean; NewCell, ThisCell: TReportCell);
@@ -539,15 +534,15 @@ var
   LineList:TLineList;
   i,j:integer;
   ThisLine, Line: TReportLine;
-  ThisCell, NewCell: TReportCell;
   function Fill:TLineList;
-  var i,j:Integer;
+  var
+    i:Integer;
   begin
      LineList := TLineList.Create(self);
      try
-       For i := 0 To FlineList.Count - 1 Do
+       For i := 0 To FLineList.Count - 1 Do
        Begin
-        ThisLine := TReportLine(FlineList[i]);
+        ThisLine := FlineList[i];
         if Not ThisLine.IsDetailLine then
         begin
           Line := TReportLine.Create;
