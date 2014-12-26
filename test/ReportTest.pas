@@ -24,6 +24,7 @@ type
   TReportRunTimeTest = class(TTestCase)
   private
   published
+    procedure ToString;
     procedure HeightHowtoConsumed;
     procedure Rita;
   end;
@@ -1532,7 +1533,7 @@ begin
       t1.CreateDataSet;
       R.SetDataSet('t1',t1);
       t1.Open;
-      for I:= 0 to 100 do
+      for I:= 0 to 2 do
         t1.AppendRecord([I,(cos(I)*1000)]);
       strFileDir := ExtractFileDir(Application.ExeName);
       with  R do
@@ -1557,7 +1558,7 @@ begin
            Cells[2,j].CellText := '#T1.'+t1.FieldDefs[j].Name;
         end;
         Cells[3,0].CellText := 'Footer..';
-//        Cells[4,0].CellText := '`SumAll(1)';
+        Cells[3,1].CellText := '`SumPage(1)';
         SaveToFile(strFileDir+'\'+'xxx.ept');
         ResetContent;
         cf.Free;
@@ -1579,7 +1580,41 @@ begin
       T1.free;
     end;
 end;
+procedure TReportRunTimeTest.ToString;
+var i,j,height:integer;
+    strFileDir:string;
+    CellFont: TLogFont;
+    cf: TFont;
+    R:TReportRunTime;
+    t1 : TClientDataset;
+    F : TStringField;
+    list:TList;
+begin
+  try
+      R:=TReportRunTime.Create(Application.MainForm);
+      R.Visible := False;
+      R.ClearDataSet;
+      t1 := TClientDataset.Create(nil);
+      t1.FieldDefs.Add('f1',ftString,20,true);
+      t1.FieldDefs.Add('f2',ftString,20,true);
+      t1.CreateDataSet;
+      R.SetDataSet('t1',t1);
+      t1.Open;
+      for I:= 0 to 100 do
+        t1.AppendRecord([I,(cos(I)*1000)]);
+      strFileDir := ExtractFileDir(Application.ExeName);
+      with  R do
+      begin
+        SetWndSize(PAGEWIDTH,PAGEHEIGHT);
+        NewTable(2 ,4);
+        Cells[0,0].CellText := 'bill';
 
+      CheckEquals('bill',R.LineList.ToString);
+      end;
+    finally
+      T1.free;
+    end;
+end;
 initialization
   RegisterTests('Report',[
   TReportRuntimeTest.Suite,

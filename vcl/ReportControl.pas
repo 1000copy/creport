@@ -108,7 +108,7 @@ Type
     function MaxCellLeft:integer;
     function MinNextCellRight:integer;
     function MaxCellBottom:Integer;
-
+    function ToString:String;
 
   end;
   TLineList = class(TList)
@@ -122,6 +122,20 @@ Type
     procedure MakeSelectedLines(FLineList:TLineList);
     function CombineVert:TReportCell;
     function TotalHeight:Integer;
+  published
+    {
+    G:How do I force the linker to include a function I need during debugging?
+
+    You can make function published.
+
+      TMyClass = class
+        F : integer;
+      published
+        function AsString : string;
+      end;
+      And switch on in 'Watch Properties' 'Allow function calls'
+    }
+    function ToString:String ;
   end;
   TReportCell = Class(TObject)
   private
@@ -335,6 +349,7 @@ Type
     procedure Load (s:TSimpleFileStream);
     procedure Save(s:TSimpleFileStream);
     function IsSumAllLine:Boolean;
+    function ToString:String;
   End;
   EachCellProc =  procedure (ThisCell:TReportCell) of object;
   EachLineProc =  procedure (ThisLine:TReportLine)of object;
@@ -4177,6 +4192,20 @@ end;
 
 { TLineList }
 
+function TLineList.ToString: String;
+  var i : integer;
+  line:TReportLine;r:string;
+begin
+  R := '';
+  for i := 0 to Count -1 do
+  begin
+    line := Items[i];
+    if '' <> line.ToString then
+      R := R +' '+ line.ToString ;
+  end;
+  Result := R;
+end;
+
 procedure TLineList.CombineHorz;
 Var
   I: Integer;
@@ -4403,6 +4432,7 @@ begin
       Read(a,SizeOf(TLOGFONT))
 end;
 
+
 function TLineList.TotalHeight: Integer;var i :Integer;
 begin
   Result := 0;
@@ -4457,6 +4487,19 @@ begin
   m.DesignMasterCell := ThisCell;
   m.RuntimeMasterCell := NewCell;
   Add(m);
+end;
+
+function TCellList.ToString: String;   var i :Integer;
+begin
+   For i := 0 To Count - 1 Do
+     Result := Result + Items[i].CellText;
+end;
+
+function TReportLine.ToString: String;
+ var i :Integer;
+begin
+   For i := 0 To FCells.Count - 1 Do
+     Result := Result + TReportCell(FCells[i]).CellText;
 end;
 
 End.
