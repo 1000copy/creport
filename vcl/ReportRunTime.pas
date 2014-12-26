@@ -94,7 +94,7 @@ type
     procedure SumCell(ThisCell: TReportCell; j: Integer);
     procedure SumLine(var HasDataNo: integer);
     function DoPageCount(): integer;
-    function RenderLineHeight(HasDataNo:integer):Integer;
+    function RenderLineHeight(HasDataNo:integer):Integer;//
     function GetDataSetFromCell(HasDataNo,CellIndex:Integer):TDataset;
     function GetPrintRange(var A, Z: Integer): boolean;
     procedure LoadPage(I: integer);
@@ -126,8 +126,10 @@ type
 
   End;
 implementation
-{ TReportRunTime }
-Uses Preview, REPmess, Creport;
+
+Uses
+  Preview, REPmess, Creport;
+  
 Procedure TReportRunTime.LoadPage(I:integer);
 Var
   FileName: String;
@@ -172,25 +174,25 @@ var
   celltext : String;
 
 begin
-    If  ThisCell.IsPageNumFormula Then 
-      celltext :=Format('第%d页',[PageNumber])
-    Else If ThisCell.IsPageNumFormula1  Then
-      celltext :=Format('第%d/%d页',[PageNumber,FPageAll])
-    Else If ThisCell.IsPageNumFormula2 Then 
-      celltext :=Format('第%d-%d页',[PageNumber,FPageAll])
-    Else If ThisCell.IsSumPageFormula Then
-    Begin
-      celltext := trim(setSumpageYg(thiscell.FCellDispformat,ThisCell.FCellText));
-    End
-    Else If ThisCell.IsSumAllFormula  Then
-    Begin
-        celltext := setSumAllYg(thiscell.FCellDispformat,ThisCell.FCellText);
-    End else If ThisCell.IsHeadField or thiscell.isDetailField  Then
-    Begin
-        celltext := GetValue(ThisCell);
-    End else
-        celltext := ThisCell.FCellText;
-    Result := celltext;
+  If  ThisCell.IsPageNumFormula Then 
+    celltext :=Format('第%d页',[PageNumber])
+  Else If ThisCell.IsPageNumFormula1  Then
+    celltext :=Format('第%d/%d页',[PageNumber,FPageAll])
+  Else If ThisCell.IsPageNumFormula2 Then 
+    celltext :=Format('第%d-%d页',[PageNumber,FPageAll])
+  Else If ThisCell.IsSumPageFormula Then
+  Begin
+    celltext := trim(setSumpageYg(thiscell.FCellDispformat,ThisCell.FCellText));
+  End
+  Else If ThisCell.IsSumAllFormula  Then
+  Begin
+      celltext := setSumAllYg(thiscell.FCellDispformat,ThisCell.FCellText);
+  End else If ThisCell.IsHeadField or thiscell.isDetailField  Then
+  Begin
+      celltext := GetValue(ThisCell);
+  End else
+      celltext := ThisCell.FCellText;
+  Result := celltext;
 end;
 
 function TReportRunTime.GetValue(ThisCell:TReportCell):String;
