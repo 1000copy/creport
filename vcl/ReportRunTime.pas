@@ -436,6 +436,7 @@ begin
     cf.Free;
   end;
 end;
+  //spyn代表有数据库字段的处理
 Procedure TReportRunTime.SetNewCell(spyn: boolean; NewCell, ThisCell:
   TReportCell);
 Var
@@ -443,9 +444,9 @@ Var
   L: integer;
   TempOwnerCell: TReportCell;
 
-Begin 
+Begin
     NewCell.CloneFrom(ThisCell);
-    If Not spyn Then                    //spyn代表有数据库字段的处理
+    If Not spyn Then
       NewCell.CellText:= RenderCellText(newCell,ThisCell)
     Else
       NewCell.CellText := '';
@@ -510,7 +511,6 @@ begin
     NewCell := TReportCell.Create(Self);
     TempLine.FCells.Add(NewCell);
     NewCell.FOwnerLine := TempLine;
-    //setnewcell(true, newcell, thiscell, Dataset);
     SetEmptyCell(newcell, thiscell);
   End;  
   result := templine;
