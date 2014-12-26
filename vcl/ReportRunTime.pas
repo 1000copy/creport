@@ -76,22 +76,22 @@ type
 
     Procedure LoadTempFile(strFileName: String);
     Procedure DeleteAllTempFiles;
-    Procedure SetNewCell(NewCell, ThisCell: TReportCell);
+    Procedure SetNewCell(spyn: boolean; NewCell, ThisCell: TReportCell);
     Procedure SetAddSpace(Const Value: boolean);
     procedure SetEmptyCell(NewCell, ThisCell: TReportCell);
     function HasEmptyRoomLastPage: Boolean;
     function IsLastPageFull: Boolean;
     function isPageFull: boolean;
     function CloneEmptyLine(thisLine: TReportLine): TReportLine;
-    function FillHeadList(var H: integer): TLineList;
+    function FillHeadList(var H: integer): TList;
     function GetHasDataPosition(var HasDataNo,
       cellIndex: integer): Boolean;
     function AppendList(l1, l2: TList): Boolean;
-    function FillFootList(var nHootHeight: integer): TLineList;
-    function FillSumList(var nSumAllHeight: integer): TLineList;
+    function FillFootList(var nHootHeight: integer): TList;
+    function FillSumList(var nSumAllHeight: integer): TList;
     procedure JoinAllList(FPrintLineList, HandLineList, dataLineList,
       SumAllList, HootLineList: TList;IsLastPage:Boolean);
-    procedure PaddingEmptyLine(hasdatano: integer; var dataLineList: TLineList;
+    procedure PaddingEmptyLine(hasdatano: integer; var dataLineList: TList;
       var ndataHeight: integer);overload;
     procedure SumCell(ThisCell: TReportCell; j: Integer);
     procedure SumLine(var HasDataNo: integer);
@@ -103,7 +103,7 @@ type
     procedure PrintRange(Title: String; FromPage, ToPage: Integer);
     function ReadyFileName(PageNumber, Fpageall: Integer): String;
   Protected
-    //function RenderText(ThisCell: TReportCell;PageNumber, Fpageall: Integer): String;override;
+    function RenderText(ThisCell: TReportCell;PageNumber, Fpageall: Integer): String;override;
   Public
     procedure ClearDataset;
     Constructor Create(AOwner: TComponent); Override;
@@ -167,30 +167,28 @@ begin
     DeleteFile(FileName);
   result := FileName;
 end;
-//function TReportRunTime.RenderText(ThisCell:TReportCell;PageNumber, Fpageall: Integer):String;
-//var
-//  celltext : String;
-//
-//begin
-//  result := inherited(ThisCell,PageNumber, Fpageall);
-//  exit;
-//    If  ThisCell.IsPageNumFormula Then
-//      celltext :=Format('第%d页',[PageNumber])
-//    Else If ThisCell.IsPageNumFormula1  Then
-//      celltext :=Format('第%d/%d页',[PageNumber,FPageAll])
-//    Else If ThisCell.IsPageNumFormula2 Then 
-//      celltext :=Format('第%d-%d页',[PageNumber,FPageAll])
-//    Else If ThisCell.IsSumPageFormula Then
-//    Begin
-//      celltext := trim(setSumpageYg(thiscell.FCellDispformat,ThisCell.FCellText));
-//    End
-//    Else If ThisCell.IsSumAllFormula  Then  //  增
-//    Begin
-//        celltext := setSumAllYg(thiscell.FCellDispformat,ThisCell.FCellText);
-//    End Else
-//        celltext := ThisCell.FCellText;
-//    Result := celltext;
-//end;
+function TReportRunTime.RenderText(ThisCell:TReportCell;PageNumber, Fpageall: Integer):String;
+var
+  celltext : String;
+
+begin
+    If  ThisCell.IsPageNumFormula Then 
+      celltext :=Format('第%d页',[PageNumber])
+    Else If ThisCell.IsPageNumFormula1  Then
+      celltext :=Format('第%d/%d页',[PageNumber,FPageAll])
+    Else If ThisCell.IsPageNumFormula2 Then 
+      celltext :=Format('第%d-%d页',[PageNumber,FPageAll])
+    Else If ThisCell.IsSumPageFormula Then
+    Begin
+      celltext := trim(setSumpageYg(thiscell.FCellDispformat,ThisCell.FCellText));
+    End
+    Else If ThisCell.IsSumAllFormula  Then  //  增
+    Begin
+        celltext := setSumAllYg(thiscell.FCellDispformat,ThisCell.FCellText);
+    End Else
+        celltext := ThisCell.FCellText;
+    Result := celltext;
+end;
 
 Procedure TReportRunTime.SaveTempFile(FileName: String;PageNumber, Fpageall: Integer);
 begin
@@ -368,7 +366,7 @@ begin
 end;
 Procedure TReportRunTime.SetEmptyCell(NewCell, ThisCell:TReportCell);
 Begin
-  setNewCell(NewCell,ThisCell);
+  setNewCell(true,NewCell,ThisCell);
 End;
 // Mappings From CellText to Data end :TDataset ,TField,Value 
 type
@@ -436,21 +434,13 @@ begin
         CellText := cf.GetField.displaytext;
     End
     Else If ThisCell.IsFormula Then
-<<<<<<< HEAD
-      CellText := GetVarValue(thiscell.FCellText)
-    Else If ThisCell.IsSumAllFormula Then
-      CellText := self.setSumAllYg('',ThisCell.CellText)
-    Else If ThisCell.IsSumPageFormula Then
-      CellText := self.setSumpageYg('',ThisCell.CellText);
-=======
         CellText := GetVarValue(thiscell.FCellText) ;
->>>>>>> parent of e1dec3e... todo : 闇�瑕佷竴涓ソ鐨別xpress parser锛屼互渚挎妸鍏抽棴鐨勫姛鑳藉姞涓婂幓
     result := CellText;
   finally
     cf.Free;
   end;
 end;
-Procedure TReportRunTime.SetNewCell(NewCell, ThisCell:
+Procedure TReportRunTime.SetNewCell(spyn: boolean; NewCell, ThisCell:
   TReportCell);
 Var
   TempCellTable: TDRMapping;
@@ -461,10 +451,11 @@ Begin
   With NewCell Do
   Begin
     NewCell.CloneFrom(ThisCell);
-    If ThisCell.IsSimpleText Then
-      CellText := ThisCell.FCellText
+    If Not spyn Then                    //spyn代表有数据库字段的处理
+      CellText:= RenderCellText(newCell,ThisCell)
     Else
-      CellText:= RenderCellText(newCell,ThisCell);
+      CellText := '';
+
     flogfont := thiscell.FLogFont;
     // TODO:LCJ :看了一遍， 没有看懂。
     // DONE : 基本懂了。
@@ -547,11 +538,11 @@ begin
     NewCell := TReportCell.Create(Self);
     Line.FCells.Add(NewCell);
     NewCell.FOwnerLine := Line;
-    SetNewCell( newcell, thiscell);
+    SetNewCell(false, newcell, thiscell);
   End;
   Line.UpdateLineHeight;  
 end;
-function TReportRunTime.FillHeadList(var H:integer):TLineList;
+function TReportRunTime.FillHeadList(var H:integer):TList;
 var
   LineList:TLineList;
   i,j:integer;
@@ -640,14 +631,14 @@ begin
     End;                                //for j
   End;
 end;
-function TReportRunTime.FillFootList(var nHootHeight:integer ):TLineList;
+function TReportRunTime.FillFootList(var nHootHeight:integer ):TList;
   Var
   I, J, n,  TempDataSetCount:Integer;
-  HandLineList, datalinelist, HootLineList, sumAllList: TLineList;
+  HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisLine, TempLine: TReportLine;
   ThisCell, NewCell: TReportCell;
 begin
-  HootLineList := TLineList.Create(self);
+  HootLineList := TList.Create;
   For i := HasDataNo + 1 To FlineList.Count - 1 Do
   Begin
     ThisLine := TReportLine(FlineList[i]);
@@ -667,7 +658,7 @@ begin
       NewCell := TReportCell.Create(Self);
       TempLine.FCells.Add(NewCell);
       NewCell.FOwnerLine := TempLine;
-      setnewcell( newcell, thiscell);
+      setnewcell(false, newcell, thiscell);
     End;
     If (UpperCase(copy(ThisCell.FCellText, 1, 7)) <> '`SUMALL') Then
     Begin
@@ -705,16 +696,16 @@ begin
 end;
 
 //将有合计的行(`SumAll)存入一个列表中
-function TReportRunTime.FillSumList(var nSumAllHeight:integer ):TLineList;
+function TReportRunTime.FillSumList(var nSumAllHeight:integer ):TList;
 Var
   I, J, n,  TempDataSetCount:Integer;
-  HandLineList, datalinelist, HootLineList, sumAllList: TLineList;
+  HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisLine, TempLine: TReportLine;
   ThisCell, NewCell: TReportCell;
   Dataset: TDataset;
 begin
   nSumAllHeight := 0;
-  sumAllList := TLineList.Create(Self);
+  sumAllList := TList.Create;
   For i := HasDataNo + 1 To FlineList.Count - 1 Do
   Begin
     ThisLine := TReportLine(FlineList[i]);
@@ -728,7 +719,7 @@ begin
       NewCell := TReportCell.Create(Self);
       TempLine.FCells.Add(NewCell);
       NewCell.FOwnerLine := TempLine;
-      setnewcell( newcell, thiscell);
+      setnewcell(false, newcell, thiscell);
     End;                              //for j
     TempLine.UpdateLineHeight;
     nSumAllHeight := nSumAllHeight + TempLine.GetLineHeight;
@@ -757,7 +748,7 @@ begin
   result := sumAllList.TotalHeight;
   sumAllList.Free;
 end ;
-procedure TReportRunTime.PaddingEmptyLine(hasdatano:integer; var dataLineList:TLineList;var ndataHeight:integer);
+procedure TReportRunTime.PaddingEmptyLine(hasdatano:integer; var dataLineList:TList;var ndataHeight:integer);
 var
   thisline,templine : Treportline ;
 begin
@@ -821,7 +812,7 @@ begin
     NewCell := TReportCell.Create(Self);
     TempLine.FCells.Add(NewCell);
     NewCell.FOwnerLine := TempLine;
-    setnewcell( newcell, thiscell);
+    setnewcell(false, newcell, thiscell);
   End; //for j
   TempLine.UpdateLineHeight;
   ndataHeight := ndataHeight + TempLine.GetLineHeight;
@@ -869,7 +860,7 @@ end;
 procedure TReportRunTime.PreparePrintk(FpageAll: integer);
 Var
   CellIndex,I, J, n,  TempDataSetCount:Integer;
-  HandLineList, datalinelist, HootLineList, sumAllList: TLineList;
+  HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisLine, TempLine: TReportLine;
   ThisCell, NewCell: TReportCell;
   
@@ -889,7 +880,7 @@ Var
     HootLineList := FillFootList(nHootHeight);
     sumAllList := FillSumList(nSumAllHeight);
     ndataHeight := 0;
-    dataLineList := TLineList.Create(Self);
+    dataLineList := TList.Create;
     i := 0;                                      
     While (i < TempDataSetCount) Do
     Begin
@@ -925,6 +916,7 @@ Var
       UpdatePrintLines;
       SaveTempFile(ReadyFileName(fpagecount, Fpageall),fpagecount, FpageAll);
     end;
+
   End ;
   procedure FreeList;
   Var
@@ -936,7 +928,9 @@ Var
     For N := FDRMap.Count - 1 Downto 0 Do
       TDRMapping(FDRMap[N]).Free;
     FDRMap.Clear;
+
     HandLineList.free;
+
   end;
 Begin
   try
@@ -1418,44 +1412,17 @@ Begin
 End;
 
 
-<<<<<<< HEAD
-// todo : 需要一个好的express parser，以便把关闭的功能加上去
-Function TReportRunTime.SetSumAllYg(fm, ss: String): String; //add
-var
-  Value :Integer;
-  slice :StrSlice;
-  s : string;
-=======
 
 Function TReportRunTime.SetSumAllYg(fm, ss: String): String; //add  
->>>>>>> parent of e1dec3e... todo : 闇�瑕佷竴涓ソ鐨別xpress parser锛屼互渚挎妸鍏抽棴鐨勫姛鑳藉姞涓婂幓
 Begin
-  slice := StrSlice.Create(ss);
-  s := slice.Slice(slice.GoUntil('(')+1,slice.GoUntil(')')-1);
-  try
-   Value := strtoint(s) ;
-   Result := FormatFloat(fm,FSummer.GetSumAll(Value));
-  except
-     Result := 'N/A';
-  end;
+   Result := 'N/A';
 End;
 
 Function TReportRunTime.setSumpageYg(fm, ss: String): String;
-var
-  Value :Integer;
-  slice :StrSlice;
-  s : string;
 Begin
-  slice := StrSlice.Create(ss);
-  s := slice.Slice(slice.GoUntil('(')+1,slice.GoUntil(')')-1);
-  try
-     Value := strtoint(s) ;
-   Result := FormatFloat(fm,FSummer.GetSumPage(Value));
-  except
-     Result := 'N/A';
-  end;
-
-End;
+   Result := 'N/A';
+ end;
+ 
 Procedure TReportRunTime.SetAddSpace(Const Value: boolean);
 Begin
   FAddSpace := Value;
@@ -1619,4 +1586,5 @@ function CellField.IsBlobField: Boolean;
 begin
    result := ds.fieldbyname(GetFieldName()) Is Tblobfield
 end;
+
 end.

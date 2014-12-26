@@ -108,7 +108,7 @@ Type
     function MaxCellLeft:integer;
     function MinNextCellRight:integer;
     function MaxCellBottom:Integer;
-    function ToString:String;
+
 
   end;
   TLineList = class(TList)
@@ -122,20 +122,6 @@ Type
     procedure MakeSelectedLines(FLineList:TLineList);
     function CombineVert:TReportCell;
     function TotalHeight:Integer;
-  published
-    {
-    G:How do I force the linker to include a function I need during debugging?
-
-    You can make function published.
-
-      TMyClass = class
-        F : integer;
-      published
-        function AsString : string;
-      end;
-      And switch on in 'Watch Properties' 'Allow function calls'
-    }
-    function ToString:String ;
   end;
   TReportCell = Class(TObject)
   private
@@ -148,7 +134,6 @@ Type
     function GetTextHeight: Integer;
     procedure ExpandHeight(delta: integer);
     function GetNextCell: TReportCell;
-    function IsSum: Boolean;
   public
     procedure DrawImage;
     function IsSlave:Boolean;
@@ -171,11 +156,6 @@ Type
     function IsFormula:Boolean;
     procedure CloneFrom(ThisCell:TReportCell);
     function FormatValue(DataValue:Extended):string;
-<<<<<<< HEAD
-    function BmpLoad(F:TField):string;
-    function IsSimpleText:Boolean;
-=======
->>>>>>> parent of e1dec3e... todo : 需要一个好的express parser，以便把关闭的功能加上去
   public
     FLeftMargin: Integer;               // ��ߵĿո�
     FOwnerLine: TReportLine;            // ������
@@ -354,7 +334,6 @@ Type
     procedure Load (s:TSimpleFileStream);
     procedure Save(s:TSimpleFileStream);
     function IsSumAllLine:Boolean;
-    function ToString:String;
   End;
   EachCellProc =  procedure (ThisCell:TReportCell) of object;
   EachLineProc =  procedure (ThisLine:TReportLine)of object;
@@ -2019,28 +1998,6 @@ begin
     (UpperCase(copy(FCellText, 1, 8)) <> '`PAGENUM') And
       (UpperCase(copy(FCellText, 1, 4)) <> '`SUM') and
       (FCellText[1] = '`') ;
-end;
-<<<<<<< HEAD
-function TReportCell.IsSum: Boolean;
-begin
-  result := (Length(CellText) > 0) and
-    (UpperCase(copy(FCellText, 1, 7)) =  '`SUMALL') OR
-      (UpperCase(copy(FCellText, 1, 8)) = '`SUMPAGE')  ;
-end;
-function TReportCell.BmpLoad(F:TField):string;
-begin
-  result := '';
-  fbmp := TBitmap.create;
-  FBmp.Assign(F);
-  FbmpYn := true;
-end;
-=======
->>>>>>> parent of e1dec3e... todo : 需要一个好的express parser，以便把关闭的功能加上去
-
-function TReportCell.IsSimpleText: Boolean;
-begin
-  result :=  (IsHeadField or IsDetailField or IsFormula or IsSum);
-  result := not result;
 end;
 
 {TReportControl}
@@ -4212,20 +4169,6 @@ end;
 
 { TLineList }
 
-function TLineList.ToString: String;
-  var i : integer;
-  line:TReportLine;r:string;
-begin
-  R := '';
-  for i := 0 to Count -1 do
-  begin
-    line := Items[i];
-    if '' <> line.ToString then
-      R := R +' '+ line.ToString ;
-  end;
-  Result := R;
-end;
-
 procedure TLineList.CombineHorz;
 Var
   I: Integer;
@@ -4452,7 +4395,6 @@ begin
       Read(a,SizeOf(TLOGFONT))
 end;
 
-
 function TLineList.TotalHeight: Integer;var i :Integer;
 begin
   Result := 0;
@@ -4507,19 +4449,6 @@ begin
   m.DesignMasterCell := ThisCell;
   m.RuntimeMasterCell := NewCell;
   Add(m);
-end;
-
-function TCellList.ToString: String;   var i :Integer;
-begin
-   For i := 0 To Count - 1 Do
-     Result := Result + Items[i].CellText;
-end;
-
-function TReportLine.ToString: String;
- var i :Integer;
-begin
-   For i := 0 To FCells.Count - 1 Do
-     Result := Result + TReportCell(FCells[i]).CellText;
 end;
 
 End.
