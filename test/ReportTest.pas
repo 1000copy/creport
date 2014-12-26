@@ -24,6 +24,7 @@ type
   TReportRunTimeTest = class(TTestCase)
   private
   published
+    procedure FillHead;
     procedure ToString;
     procedure HeightHowtoConsumed;
     procedure Rita;
@@ -1513,6 +1514,73 @@ begin
       T2.Free;
     end;
 end;
+procedure TReportRunTimeTest.FillHead;
+var i,j,height:integer;
+    strFileDir:string;
+    CellFont: TLogFont;
+    cf: TFont;
+    R:TReportRunTime;
+    t1 : TClientDataset;
+    F : TStringField;
+    list:TList;
+begin
+  try
+      R:=TReportRunTime.Create(Application.MainForm);
+      R.Visible := False;
+      R.ClearDataSet;
+      t1 := TClientDataset.Create(nil);
+      t1.FieldDefs.Add('f1',ftString,20,true);
+      t1.FieldDefs.Add('f2',ftString,20,true);
+      t1.CreateDataSet;
+      R.SetDataSet('t1',t1);
+      t1.Open;
+      for I:= 0 to 2 do
+        t1.AppendRecord([I,(cos(I)*1000)]);
+      strFileDir := ExtractFileDir(Application.ExeName);
+      with  R do
+      begin
+        SetWndSize(PAGEWIDTH,PAGEHEIGHT);
+        NewTable(2 ,4);
+        Lines[0].Select;  
+        CombineCell;
+        Lines[0].LineHeight := HEADERHEIGHT;
+        SetCellLines(false,false,false,false,1,1,1,1);
+        Cells[0,0].CellText := 'bill';
+        SetCellAlign(TEXT_ALIGN_CENTER, TEXT_ALIGN_VCENTER);
+
+        cf := Tfont.Create;
+        cf.Name := '¿¬Ìå_GB2312';
+        cf.Size := 22;
+        cf.style :=cf.style+ [fsBold];
+        SetSelectedCellFont(cf);
+        for j:=0 to t1.FieldDefs.Count -1  do
+        begin
+           Cells[1,j].CellText := t1.FieldDefs[j].Name;
+           Cells[2,j].CellText := '#T1.'+t1.FieldDefs[j].Name;
+        end;
+        Cells[3,0].CellText := 'Footer..';
+        Cells[3,1].CellText := '`SumPage(1)';
+        SaveToFile(strFileDir+'\'+'xxx.ept');
+        ResetContent;
+        cf.Free;
+      end;
+      R.ReportFile:=strFileDir+'\'+'xxx.ept';
+      R.PrintPreview(true);    
+      //r.EditReport(R.ReportFile);
+      //CheckEquals(0 ,
+      //  PAGEHEIGHT- (HEADERHEIGHT+r.TopMargin + 24* LINEHEIGHT + LINEHEIGHT  +r.BottomMargin));
+      R.SetDataSet('t1',t1);
+      CheckEquals(5,R.DoPageCount);
+      height := 0;
+      list := r.FillHeadList(height);
+      CheckEquals(HEADERHEIGHT+LINEHEIGHT*1,height);
+      CheckEquals(2,list.count);
+      CheckEquals(HEADERHEIGHT,TReportLine(list[0]).Lineheight);
+      CheckEquals(LineHEIGHT,TReportLine(list[1]).Lineheight);
+    finally
+      T1.free;
+    end;
+end;
 procedure TReportRunTimeTest.HeightHowtoConsumed;
 var i,j,height:integer;
     strFileDir:string;
@@ -1584,7 +1652,6 @@ procedure TReportRunTimeTest.ToString;
 var i,j,height:integer;
     strFileDir:string;
     CellFont: TLogFont;
-    cf: TFont;
     R:TReportRunTime;
     t1 : TClientDataset;
     F : TStringField;
@@ -1592,6 +1659,7 @@ var i,j,height:integer;
 begin
   try
       R:=TReportRunTime.Create(Application.MainForm);
+      R.Setvarvalue('name','Bill');
       R.Visible := False;
       R.ClearDataSet;
       t1 := TClientDataset.Create(nil);
@@ -1607,10 +1675,13 @@ begin
       begin
         SetWndSize(PAGEWIDTH,PAGEHEIGHT);
         NewTable(2 ,4);
-        Cells[0,0].CellText := 'bill';
-
-      CheckEquals('bill',R.LineList.ToString);
+        Cells[0,0].CellText := '`HEAD';
+        SaveToFile(strFileDir+'\'+'xxx.ept');
+        ResetContent;
+//      CheckEquals('bill',R.LineList.ToString);
       end;
+      R.ReportFile:=strFileDir+'\'+'xxx.ept';
+      R.PrintPreview(true);
     finally
       T1.free;
     end;
