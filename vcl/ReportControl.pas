@@ -1,3 +1,49 @@
+//#
+//#                       _oo0oo_
+//#                      o8888888o
+//#                      88" . "88
+//#                      (| -_- |)
+//#                      0\  =  /0
+//#                    ___/`---'\___
+//#                  .' \\|     |# '.
+//#                 / \\|||  :  |||# \
+//#                / _||||| -:- |||||- \
+//#               |   | \\\  -  #/ |   |
+//#               | \_|  ''\---/''  |_/ |
+//#               \  .-\__  '-'  ___/-. /
+//#             ___'. .'  /--.--\  `. .'___
+//#          ."" '<  `.___\_<|>_/___.' >' "".
+//#         | | :  `- \`.;`\ _ /`;.`/ - ` : | |
+//#         \  \ `_.   \_ __\ /__ _/   .-` /  /
+//#     =====`-.____`.___ \_____/___.-`___.-'=====
+//#                       `=---='
+//#
+//#
+//#     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+//#
+//#               佛祖保佑         永无BUG
+//#               Siddhāttha Gotama
+//#
+///*code is far away from bug with the animal protecting
+//    *  ┏┓　　　┏┓
+//    *┏┛┻━━━┛┻┓
+//    *┃　　　　　　　┃ 　
+//    *┃　　　━　　　┃
+//    *┃　┳┛　┗┳　┃
+//    *┃　　　　　　　┃
+//    *┃　　　┻　　　┃
+//    *┃　　　　　　　┃
+//    *┗━┓　　　┏━┛
+//    *　　┃　　　┃神兽保佑
+//    *　　┃　　　┃代码无BUG！
+//    *　　┃　　　┗━━━┓
+//    *　　┃　　　　　　　┣┓
+//    *　　┃　　　　　　　┏┛
+//    *　　┗┓┓┏━┳┓┏┛
+//    *　　　┃┫┫　┃┫┫
+//    *　　　┗┻┛　┗┻┛
+//    *　　　
+//    */
 
 Unit ReportControl;
 
@@ -10,6 +56,34 @@ Uses
   Forms, Dialogs, Printers, Menus, Db,
   DesignEditors, ExtCtrls,osservice;
   function calcBottom(TempString:string ;TempRect:TRect;AlighFormat :UINT;FLogFont: TLOGFONT):Integer;
+type
+  StrSlice=class
+    FStr :string;
+  public
+    constructor Create(str:String);
+    function GoUntil(c:char):integer;
+    function Slice(b,e:integer):string;overload;
+    function Slice(b:integer):string;overload;
+    class function DoSlice(str: String; FromChar:char): string;
+  end;
+// Mappings From CellText to Data end :TDataset ,TField,Value
+type
+   CellField = class
+     FCellText : string;
+     Fds:TDataset;
+  private
+    function GetFieldName: String;
+    function IsDataField(s: String): Boolean;
+   public
+    constructor Create(CellText:String;ds:TDataset);
+    function DataValue(): Extended;
+    function ds: TDataset;
+    function GetField(): TField;
+    function IsNullField(): Boolean;
+    function IsNumberField(): Boolean;
+    function IsBlobField:Boolean;
+
+   end;
 type
   TOnChanged = procedure(Sender:TObject;str:String) of object;
 type
@@ -108,8 +182,7 @@ Type
     function MaxCellLeft:integer;
     function MinNextCellRight:integer;
     function MaxCellBottom:Integer;
-
-
+    function ToString: String;
   end;
   TLineList = class(TList)
   private                     
@@ -122,6 +195,18 @@ Type
     procedure MakeSelectedLines(FLineList:TLineList);
     function CombineVert:TReportCell;
     function TotalHeight:Integer;
+  published
+    {
+    G:How do I force the linker to include a function I need during debugging?
+    You can make function published.
+      TMyClass = class
+        F : integer;
+      published
+        function AsString : string;
+      end;
+      And switch on in 'Watch Properties' 'Allow function calls'
+    }
+    function ToString:String ;
   end;
   TReportCell = Class(TObject)
   private
@@ -156,6 +241,7 @@ Type
     function IsFormula:Boolean;
     procedure CloneFrom(ThisCell:TReportCell);
     function FormatValue(DataValue:Extended):string;
+    procedure LoadCF(cf:CellField);
   public
     FLeftMargin: Integer;               // 左边的空格
     FOwnerLine: TReportLine;            // 隶属行
@@ -334,6 +420,7 @@ Type
     procedure Load (s:TSimpleFileStream);
     procedure Save(s:TSimpleFileStream);
     function IsSumAllLine:Boolean;
+    function ToString:string;
   End;
   EachCellProc =  procedure (ThisCell:TReportCell) of object;
   EachLineProc =  procedure (ThisLine:TReportLine)of object;
@@ -1998,6 +2085,18 @@ begin
     (UpperCase(copy(FCellText, 1, 8)) <> '`PAGENUM') And
       (UpperCase(copy(FCellText, 1, 4)) <> '`SUM') and
       (FCellText[1] = '`') ;
+end;
+
+procedure TReportCell.LoadCF(cf: CellField);
+begin
+     If Not cf.IsNullField Then begin
+      fbmp := TBitmap.create;
+      FBmp.Assign(cf.GetField);
+      FbmpYn := true;
+      // 图片的话，默认的文字就不必显示了。(GRAPHIC)之类的
+      CellText := '';
+     end;
+
 end;
 
 {TReportControl}
@@ -4395,6 +4494,7 @@ begin
       Read(a,SizeOf(TLOGFONT))
 end;
 
+
 function TLineList.TotalHeight: Integer;var i :Integer;
 begin
   Result := 0;
@@ -4451,55 +4551,120 @@ begin
   Add(m);
 end;
 
-End.
+function TLineList.ToString: String;
+var
+  i : integer;
+  line:TReportLine;r:string;
+begin
+  R := '';
+  for i := 0 to Count -1 do
+  begin
+    line := Items[i];
+    if '' <> line.ToString then
+      R := R + line.ToString +#13#10;
+  end;
+  Result := R;
+end;
+function TCellList.ToString: String;
+var
+  i :Integer;
+begin
+   For i := 0 To Count - 1 Do
+     Result := Result + Items[i].CellText;
+end;
 
+function TReportLine.ToString: String;
+ var i :Integer;
+begin
+   For i := 0 To FCells.Count - 1 Do
+     Result := Result + TReportCell(FCells[i]).CellText;
+end;
+function CellField.ds : TDataset ;
+begin
+ result := FDs;
+end;
+function CellField.GetField() : TField ;
+begin
+ result := ds.fieldbyname(GetFieldName())
+end;
+function CellField.IsDataField(s:String):Boolean;
+begin
+  result :=  (Length(s) < 2) or
+   ((s[1] <> '@') And (s[1] <> '#'));
+   result := not result ;
+end;
 
+Function CellField.GetFieldName(): String;
+Var
+  I: Integer;
+  bFlag: Boolean;
+  s:StrSlice;
+Begin
+  If isDataField(FCellText) Then
+    Result := StrSlice.DoSlice(FCellText,'.')
+  else
+    Result := '';
+End;
 
+function CellField.IsNumberField():Boolean;
+begin
+  result := ds.fieldbyname(GetFieldName()) Is tnumericField
+end;
+function CellField.IsNullField( ):Boolean;
+begin
+  result := ds.fieldbyname(GetFieldName()).isnull;
+end;
+function CellField.DataValue():Extended;
+begin
+    result := ds.fieldbyname(GetFieldName()).value ;
+end;
+constructor CellField.Create(CellText:String;ds:TDataset);
+begin
+  FCellText:= CellText;
+  FDs :=ds
+end;
 
-//#
-//#                       _oo0oo_
-//#                      o8888888o
-//#                      88" . "88
-//#                      (| -_- |)
-//#                      0\  =  /0
-//#                    ___/`---'\___
-//#                  .' \\|     |# '.
-//#                 / \\|||  :  |||# \
-//#                / _||||| -:- |||||- \
-//#               |   | \\\  -  #/ |   |
-//#               | \_|  ''\---/''  |_/ |
-//#               \  .-\__  '-'  ___/-. /
-//#             ___'. .'  /--.--\  `. .'___
-//#          ."" '<  `.___\_<|>_/___.' >' "".
-//#         | | :  `- \`.;`\ _ /`;.`/ - ` : | |
-//#         \  \ `_.   \_ __\ /__ _/   .-` /  /
-//#     =====`-.____`.___ \_____/___.-`___.-'=====
-//#                       `=---='
-//#
-//#
-//#     ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
-//#
-//#               佛祖保佑         永无BUG
-//#               Siddhāttha Gotama
-//#
-///*code is far away from bug with the animal protecting
-//    *  ┏┓　　　┏┓
-//    *┏┛┻━━━┛┻┓
-//    *┃　　　　　　　┃ 　
-//    *┃　　　━　　　┃
-//    *┃　┳┛　┗┳　┃
-//    *┃　　　　　　　┃
-//    *┃　　　┻　　　┃
-//    *┃　　　　　　　┃
-//    *┗━┓　　　┏━┛
-//    *　　┃　　　┃神兽保佑
-//    *　　┃　　　┃代码无BUG！
-//    *　　┃　　　┗━━━┓
-//    *　　┃　　　　　　　┣┓
-//    *　　┃　　　　　　　┏┛
-//    *　　┗┓┓┏━┳┓┏┛
-//    *　　　┃┫┫　┃┫┫
-//    *　　　┗┻┛　┗┻┛ 
-//    *　　　
-//    */
+function CellField.IsBlobField: Boolean;
+begin
+   result := ds.fieldbyname(GetFieldName()) Is Tblobfield
+end;
+
+constructor StrSlice.Create(str: String);
+begin
+  FStr := str;
+end;
+
+function StrSlice.GoUntil(c: char): integer;
+var i : integer;
+begin
+  i := 2;
+  while  (i < Length(FStr)) and  ( FStr[I] <> c ) do
+    inc(i);
+  result := i ;
+end;
+
+function StrSlice.Slice(b, e: integer): string;
+var i : integer;
+begin
+   result := '';
+   i := b ;
+   while i <=e do begin
+    result := result + FStr[i];
+    inc(i);
+   end;
+end;
+
+function StrSlice.Slice(b: integer): string;
+begin
+  result := Slice(b,Length(FStr));
+end;
+
+class function StrSlice.DoSlice(str: String; FromChar:char): string;
+var   s:StrSlice;
+begin
+    s:=StrSlice.Create(str);
+    Result := s.Slice(s.GoUntil(FromChar)+1);
+    s.Free ;
+end;
+end.
 

@@ -7,6 +7,8 @@ uses ReportControl,  Windows, Messages, SysUtils,
   Forms, Dialogs, Printers, Menus, Db,
   DesignEditors, ExtCtrls,osservice,margin;
 Procedure Register;
+
+
 type
    TSummer = class
      //最多40列单元格,否则统计汇总时要出错. 拟换为动态的
@@ -36,6 +38,7 @@ type
     function ExpandLine(var HasDataNo, ndataHeight: integer): TReportLine;
     function RenderCellText(NewCell,ThisCell:TReportCell):String;
     function IsDataField(s: String): Boolean;
+    function GetValue(ThisCell: TReportCell): String;
 
   public
     //小计和合计用,最多40列单元格,否则统计汇总时要出错.
@@ -88,7 +91,7 @@ type
       cellIndex: integer): Boolean;
     function AppendList(l1, l2: TList): Boolean;
     function FillFootList(var nHootHeight: integer): TList;
-    function FillSumList(var nSumAllHeight: integer): TList;
+    function FillSumList(var nSumAllHeight: integer): TLineList;
     procedure JoinAllList(FPrintLineList, HandLineList, dataLineList,
       SumAllList, HootLineList: TList;IsLastPage:Boolean);
     procedure PaddingEmptyLine(hasdatano: integer; var dataLineList: TList;
@@ -167,6 +170,8 @@ begin
     DeleteFile(FileName);
   result := FileName;
 end;
+// call this function OnSave
+// todo: Sum Lines 's @t1.lb why not render ?
 function TReportRunTime.RenderText(ThisCell:TReportCell;PageNumber, Fpageall: Integer):String;
 var
   celltext : String;
@@ -182,14 +187,41 @@ begin
     Begin
       celltext := trim(setSumpageYg(thiscell.FCellDispformat,ThisCell.FCellText));
     End
-    Else If ThisCell.IsSumAllFormula  Then  //  增
+    Else If ThisCell.IsSumAllFormula  Then
     Begin
         celltext := setSumAllYg(thiscell.FCellDispformat,ThisCell.FCellText);
-    End Else
+    End else If ThisCell.IsHeadField or thiscell.isDetailField  Then
+    Begin
+        celltext := GetValue(ThisCell);
+    End else
         celltext := ThisCell.FCellText;
     Result := celltext;
 end;
 
+function TReportRunTime.GetValue(ThisCell:TReportCell):String;
+var
+   cellText :string;
+   cf: CellField ;
+begin
+  CellText := ThisCell.FCellText;
+  cf:= CellField.Create(ThisCell.CellText,GetDataset(thisCell.CellText)) ;
+  try
+    If ThisCell.IsHeadField and (not cf.IsNullField) Then
+    Begin
+      CellText := cf.GetField().displaytext ;
+      If cf.isNumberField  Then
+      Begin
+        If ThisCell.CellDispformat <> '' Then
+            cellText := ThisCell.FormatValue(cf.DataValue());
+      End
+    End
+    Else If ThisCell.IsFormula Then
+        CellText := GetVarValue(thiscell.FCellText) ;
+    result := CellText;
+  finally
+    cf.Free;
+  end;
+end;
 Procedure TReportRunTime.SaveTempFile(FileName: String;PageNumber, Fpageall: Integer);
 begin
   SaveToFile(FPrintLineList,FileName,PageNumber,Fpageall);
@@ -276,16 +308,6 @@ Function TReportRunTime.GetDataset(strCellText: String): TDataset;
 Begin
   Result := DatasetByName(GetDatasetName(strCellText));
 End;
-type
-  StrSlice=class
-    FStr :string;
-  public
-    constructor Create(str:String);
-    function GoUntil(c:char):integer;
-    function Slice(b,e:integer):string;overload;
-    function Slice(b:integer):string;overload;
-    class function DoSlice(str: String; FromChar:char): string;
-  end;
 function TReportRunTime.IsDataField(s:String):Boolean;
 begin
   result :=  (Length(s) < 2) or
@@ -368,24 +390,6 @@ Procedure TReportRunTime.SetEmptyCell(NewCell, ThisCell:TReportCell);
 Begin
   setNewCell(true,NewCell,ThisCell);
 End;
-// Mappings From CellText to Data end :TDataset ,TField,Value 
-type
-   CellField = class
-     FCellText : string;
-     Fds:TDataset;
-  private
-    function GetFieldName: String;
-    function IsDataField(s: String): Boolean;
-   public
-    constructor Create(CellText:String;ds:TDataset);
-    function DataValue(): Extended;
-    function ds: TDataset;
-    function GetField(): TField;
-    function IsNullField(): Boolean;
-    function IsNumberField(): Boolean;
-    function IsBlobField:Boolean;
-
-   end;
 function TReportRunTime.RenderCellText(NewCell,ThisCell:TReportCell):String;
 var
    cellText :string;
@@ -402,12 +406,10 @@ begin
         If ThisCell.CellDispformat <> '' Then
             cellText := ThisCell.FormatValue(cf.DataValue());
       End
-      Else If cf.IsBlobField Then
-      Begin
-        NewCell.fbmp := TBitmap.create;
-        NewCell.FBmp.Assign(cf.GetField);
-        NewCell.FbmpYn := true;
-      End
+      Else If cf.IsBlobField then begin
+         NewCell.LoadCF(cf);
+         CellText := '';
+      end;
     End
     Else If  thisCell.IsDetailField Then
     Begin
@@ -420,16 +422,10 @@ begin
             cellText := Thiscell.FormatValue(cf.DataValue);
         End
       End
-      Else If cf.IsBlobField then
-      Begin
-        CellText := '';
-        If Not cf.IsNullField Then
-        Begin
-          NewCell.fbmp := TBitmap.create;
-          NewCell.FBmp.Assign(cf.GetField);
-          NewCell.FbmpYn := true;
-        End
-      End
+      Else If cf.IsBlobField then begin
+         NewCell.LoadCF(cf);
+         CellText := '';
+      end
       Else
         CellText := cf.GetField.displaytext;
     End
@@ -448,15 +444,13 @@ Var
   TempOwnerCell: TReportCell;
 
 Begin 
-  With NewCell Do
-  Begin
     NewCell.CloneFrom(ThisCell);
     If Not spyn Then                    //spyn代表有数据库字段的处理
-      CellText:= RenderCellText(newCell,ThisCell)
+      NewCell.CellText:= RenderCellText(newCell,ThisCell)
     Else
-      CellText := '';
+      NewCell.CellText := '';
 
-    flogfont := thiscell.FLogFont;
+    NewCell.flogfont := thiscell.FLogFont;
     // TODO:LCJ :看了一遍， 没有看懂。
     // DONE : 基本懂了。
     // 运行逻辑：如果设计态是Slave，在runtime时也得是奴隶，通过这个FOwnerCellList找到自己的新主人
@@ -478,8 +472,7 @@ Begin
     End;
     If ThisCell.FSlaveCells.Count > 0 Then
       FDRMap.NewMapping(ThisCell,NewCell);
-    CalcHeight;
-  End;
+    NewCell.CalcHeight;
 End;
 //  增加 ,完全重写的 PreparePrint,并增加了用空行补满一页 统计等功能
 //返回数用于在预览中确定代＃字头数据库是在模板的第几行
@@ -508,19 +501,18 @@ Var
   HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisCell, NewCell: TReportCell;
 begin
-      templine := Treportline.Create;
-      TempLine.FMinHeight := ThisLine.FMinHeight;
-      TempLine.FDragHeight := ThisLine.FDragHeight;
-      For j := 0 To ThisLine.FCells.Count - 1 Do
-      Begin
-        ThisCell := TreportCell(ThisLine.FCells[j]);
-        NewCell := TReportCell.Create(Self);
-        TempLine.FCells.Add(NewCell);
-        NewCell.FOwnerLine := TempLine;
-        //setnewcell(true, newcell, thiscell, Dataset);
-        SetEmptyCell(newcell, thiscell);
-      End;
-
+  templine := Treportline.Create;
+  TempLine.FMinHeight := ThisLine.FMinHeight;
+  TempLine.FDragHeight := ThisLine.FDragHeight;
+  For j := 0 To ThisLine.FCells.Count - 1 Do
+  Begin
+    ThisCell := TreportCell(ThisLine.FCells[j]);
+    NewCell := TReportCell.Create(Self);
+    TempLine.FCells.Add(NewCell);
+    NewCell.FOwnerLine := TempLine;
+    //setnewcell(true, newcell, thiscell, Dataset);
+    SetEmptyCell(newcell, thiscell);
+  End;  
   result := templine;
 end;
 // clone from ThisLine to Line
@@ -696,16 +688,16 @@ begin
 end;
 
 //将有合计的行(`SumAll)存入一个列表中
-function TReportRunTime.FillSumList(var nSumAllHeight:integer ):TList;
+function TReportRunTime.FillSumList(var nSumAllHeight:integer ):TLineList;
 Var
   I, J, n,  TempDataSetCount:Integer;
-  HandLineList, datalinelist, HootLineList, sumAllList: TList;
+  sumAllList: TLineList;
   ThisLine, TempLine: TReportLine;
   ThisCell, NewCell: TReportCell;
   Dataset: TDataset;
 begin
   nSumAllHeight := 0;
-  sumAllList := TList.Create;
+  sumAllList := TLineList.Create(self);
   For i := HasDataNo + 1 To FlineList.Count - 1 Do
   Begin
     ThisLine := TReportLine(FlineList[i]);
@@ -860,7 +852,8 @@ end;
 procedure TReportRunTime.PreparePrintk(FpageAll: integer);
 Var
   CellIndex,I, J, n,  TempDataSetCount:Integer;
-  HandLineList, datalinelist, HootLineList, sumAllList: TList;
+  HandLineList, datalinelist, HootLineList:TList;
+  sumAllList: TLineList;
   ThisLine, TempLine: TReportLine;
   ThisCell, NewCell: TReportCell;
   
@@ -1523,91 +1516,5 @@ end;
 
 { StrUtil }
 
-constructor StrSlice.Create(str: String);
-begin
-  FStr := str;
-end;
-
-function StrSlice.GoUntil(c: char): integer;
-var i : integer;
-begin
-  i := 2;
-  while  (i < Length(FStr)) and  ( FStr[I] <> c ) do
-    inc(i);
-  result := i ;
-end;
-
-function StrSlice.Slice(b, e: integer): string;
-var i : integer;
-begin
-   result := '';
-   i := b ;
-   while i <=e do begin
-    result := result + FStr[i];
-    inc(i);
-   end;
-end;
-
-function StrSlice.Slice(b: integer): string;
-begin
-  result := Slice(b,Length(FStr));
-end;
-
-class function StrSlice.DoSlice(str: String; FromChar:char): string;
-var   s:StrSlice;
-begin
-    s:=StrSlice.Create(str);
-    Result := s.Slice(s.GoUntil(FromChar)+1);
-    s.Free ;
-end;
-function CellField.ds : TDataset ;
-begin
- result := FDs;
-end;
-function CellField.GetField() : TField ;
-begin
- result := ds.fieldbyname(GetFieldName())
-end;
-function CellField.IsDataField(s:String):Boolean;
-begin
-  result :=  (Length(s) < 2) or
-   ((s[1] <> '@') And (s[1] <> '#'));
-   result := not result ;
-end;
-
-Function CellField.GetFieldName(): String;
-Var
-  I: Integer;
-  bFlag: Boolean;
-  s:StrSlice;
-Begin
-  If isDataField(FCellText) Then
-    Result := StrSlice.DoSlice(FCellText,'.')
-  else
-    Result := '';
-End;
-
-function CellField.IsNumberField():Boolean;
-begin
-  result := ds.fieldbyname(GetFieldName()) Is tnumericField
-end;
-function CellField.IsNullField( ):Boolean;
-begin
-  result := ds.fieldbyname(GetFieldName()).isnull;
-end;
-function CellField.DataValue():Extended;
-begin
-    result := ds.fieldbyname(GetFieldName()).value ;
-end;
-constructor CellField.Create(CellText:String;ds:TDataset);
-begin
-  FCellText:= CellText;
-  FDs :=ds
-end;
-
-function CellField.IsBlobField: Boolean;
-begin
-   result := ds.fieldbyname(GetFieldName()) Is Tblobfield
-end;
 
 end.
