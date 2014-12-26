@@ -76,7 +76,7 @@ type
 
     Procedure LoadTempFile(strFileName: String);
     Procedure DeleteAllTempFiles;
-    Procedure SetNewCell(spyn: boolean; NewCell, ThisCell: TReportCell);
+    Procedure SetNewCell(NewCell, ThisCell: TReportCell);
     Procedure SetAddSpace(Const Value: boolean);
     procedure SetEmptyCell(NewCell, ThisCell: TReportCell);
     function HasEmptyRoomLastPage: Boolean;
@@ -103,7 +103,7 @@ type
     procedure PrintRange(Title: String; FromPage, ToPage: Integer);
     function ReadyFileName(PageNumber, Fpageall: Integer): String;
   Protected
-    function RenderText(ThisCell: TReportCell;PageNumber, Fpageall: Integer): String;override;
+    //function RenderText(ThisCell: TReportCell;PageNumber, Fpageall: Integer): String;override;
   Public
     procedure ClearDataset;
     Constructor Create(AOwner: TComponent); Override;
@@ -167,28 +167,30 @@ begin
     DeleteFile(FileName);
   result := FileName;
 end;
-function TReportRunTime.RenderText(ThisCell:TReportCell;PageNumber, Fpageall: Integer):String;
-var
-  celltext : String;
-
-begin
-    If  ThisCell.IsPageNumFormula Then
-      celltext :=Format('第%d页',[PageNumber])
-    Else If ThisCell.IsPageNumFormula1  Then
-      celltext :=Format('第%d/%d页',[PageNumber,FPageAll])
-    Else If ThisCell.IsPageNumFormula2 Then 
-      celltext :=Format('第%d-%d页',[PageNumber,FPageAll])
-    Else If ThisCell.IsSumPageFormula Then
-    Begin
-      celltext := trim(setSumpageYg(thiscell.FCellDispformat,ThisCell.FCellText));
-    End
-    Else If ThisCell.IsSumAllFormula  Then  //  增
-    Begin
-        celltext := setSumAllYg(thiscell.FCellDispformat,ThisCell.FCellText);
-    End Else
-        celltext := ThisCell.FCellText;
-    Result := celltext;
-end;
+//function TReportRunTime.RenderText(ThisCell:TReportCell;PageNumber, Fpageall: Integer):String;
+//var
+//  celltext : String;
+//
+//begin
+//  result := inherited(ThisCell,PageNumber, Fpageall);
+//  exit;
+//    If  ThisCell.IsPageNumFormula Then
+//      celltext :=Format('第%d页',[PageNumber])
+//    Else If ThisCell.IsPageNumFormula1  Then
+//      celltext :=Format('第%d/%d页',[PageNumber,FPageAll])
+//    Else If ThisCell.IsPageNumFormula2 Then 
+//      celltext :=Format('第%d-%d页',[PageNumber,FPageAll])
+//    Else If ThisCell.IsSumPageFormula Then
+//    Begin
+//      celltext := trim(setSumpageYg(thiscell.FCellDispformat,ThisCell.FCellText));
+//    End
+//    Else If ThisCell.IsSumAllFormula  Then  //  增
+//    Begin
+//        celltext := setSumAllYg(thiscell.FCellDispformat,ThisCell.FCellText);
+//    End Else
+//        celltext := ThisCell.FCellText;
+//    Result := celltext;
+//end;
 
 Procedure TReportRunTime.SaveTempFile(FileName: String;PageNumber, Fpageall: Integer);
 begin
@@ -366,7 +368,7 @@ begin
 end;
 Procedure TReportRunTime.SetEmptyCell(NewCell, ThisCell:TReportCell);
 Begin
-  setNewCell(true,NewCell,ThisCell);
+  setNewCell(NewCell,ThisCell);
 End;
 // Mappings From CellText to Data end :TDataset ,TField,Value 
 type
@@ -407,15 +409,17 @@ begin
     If ThisCell.IsHeadField  or thisCell.IsDetailField Then
       RenderFieldText
     Else If ThisCell.IsFormula Then
-      CellText := GetVarValue(thiscell.FCellText) ;
-    if (CellText = ThisCell.CellText) then
-      CellText:= '';
+      CellText := GetVarValue(thiscell.FCellText)
+    Else If ThisCell.IsSumAllFormula Then
+      CellText := self.setSumAllYg('',ThisCell.CellText)
+    Else If ThisCell.IsSumPageFormula Then
+      CellText := self.setSumpageYg('',ThisCell.CellText);
     result := CellText;
   finally
     cf.Free;
   end;
 end;
-Procedure TReportRunTime.SetNewCell(spyn: boolean; NewCell, ThisCell:
+Procedure TReportRunTime.SetNewCell(NewCell, ThisCell:
   TReportCell);
 Var
   TempCellTable: TDRMapping;
@@ -426,11 +430,10 @@ Begin
   With NewCell Do
   Begin
     NewCell.CloneFrom(ThisCell);
-    If spyn Then                    //spyn代表有数据库字段的处理
-      CellText:= RenderCellText(newCell,ThisCell)
+    If ThisCell.IsSimpleText Then
+      CellText := ThisCell.FCellText
     Else
-      CellText := ThisCell.FCellText;
-
+      CellText:= RenderCellText(newCell,ThisCell);
     flogfont := thiscell.FLogFont;
     // TODO:LCJ :看了一遍， 没有看懂。
     // DONE : 基本懂了。
@@ -513,7 +516,7 @@ begin
     NewCell := TReportCell.Create(Self);
     Line.FCells.Add(NewCell);
     NewCell.FOwnerLine := Line;
-    SetNewCell(false, newcell, thiscell);
+    SetNewCell( newcell, thiscell);
   End;
   Line.UpdateLineHeight;  
 end;
@@ -633,7 +636,7 @@ begin
       NewCell := TReportCell.Create(Self);
       TempLine.FCells.Add(NewCell);
       NewCell.FOwnerLine := TempLine;
-      setnewcell(false, newcell, thiscell);
+      setnewcell( newcell, thiscell);
     End;
     If (UpperCase(copy(ThisCell.FCellText, 1, 7)) <> '`SUMALL') Then
     Begin
@@ -694,7 +697,7 @@ begin
       NewCell := TReportCell.Create(Self);
       TempLine.FCells.Add(NewCell);
       NewCell.FOwnerLine := TempLine;
-      setnewcell(false, newcell, thiscell);
+      setnewcell( newcell, thiscell);
     End;                              //for j
     TempLine.UpdateLineHeight;
     nSumAllHeight := nSumAllHeight + TempLine.GetLineHeight;
@@ -787,7 +790,7 @@ begin
     NewCell := TReportCell.Create(Self);
     TempLine.FCells.Add(NewCell);
     NewCell.FOwnerLine := TempLine;
-    setnewcell(True, newcell, thiscell);
+    setnewcell( newcell, thiscell);
   End; //for j
   TempLine.UpdateLineHeight;
   ndataHeight := ndataHeight + TempLine.GetLineHeight;
@@ -1410,7 +1413,7 @@ Begin
   slice := StrSlice.Create(ss);
   s := slice.Slice(slice.GoUntil('(')+1,slice.GoUntil(')')-1);
   try
-   Value := strtoint(s) ;
+     Value := strtoint(s) ;
    Result := FormatFloat(fm,FSummer.GetSumPage(Value));
   except
      Result := 'N/A';

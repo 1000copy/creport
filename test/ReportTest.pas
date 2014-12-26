@@ -1526,11 +1526,12 @@ var i,j,height:integer;
 begin
   try
       R:=TReportRunTime.Create(Application.MainForm);
+      R.Setvarvalue('head','2');
       R.Visible := False;
       R.ClearDataSet;
       t1 := TClientDataset.Create(nil);
-      t1.FieldDefs.Add('f1',ftString,20,true);
-      t1.FieldDefs.Add('f2',ftString,20,true);
+      t1.FieldDefs.Add('f1',ftFloat,0,true);
+      t1.FieldDefs.Add('f2',ftFloat,0,true);
       t1.CreateDataSet;
       R.SetDataSet('t1',t1);
       t1.Open;
@@ -1545,7 +1546,7 @@ begin
         CombineCell;
         Lines[0].LineHeight := HEADERHEIGHT;
         SetCellLines(false,false,false,false,1,1,1,1);
-        Cells[0,0].CellText := 'bill';
+        Cells[0,0].CellText := '`HEAD';
         SetCellAlign(TEXT_ALIGN_CENTER, TEXT_ALIGN_VCENTER);
 
         cf := Tfont.Create;

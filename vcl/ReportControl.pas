@@ -148,6 +148,7 @@ Type
     function GetTextHeight: Integer;
     procedure ExpandHeight(delta: integer);
     function GetNextCell: TReportCell;
+    function IsSum: Boolean;
   public
     procedure DrawImage;
     function IsSlave:Boolean;
@@ -171,6 +172,7 @@ Type
     procedure CloneFrom(ThisCell:TReportCell);
     function FormatValue(DataValue:Extended):string;
     function BmpLoad(F:TField):string;
+    function IsSimpleText:Boolean;
   public
     FLeftMargin: Integer;               // ×ó±ßµÄ¿Õ¸ñ
     FOwnerLine: TReportLine;            // Á¥ÊôÐÐ
@@ -2015,12 +2017,24 @@ begin
       (UpperCase(copy(FCellText, 1, 4)) <> '`SUM') and
       (FCellText[1] = '`') ;
 end;
+function TReportCell.IsSum: Boolean;
+begin
+  result := (Length(CellText) > 0) and
+    (UpperCase(copy(FCellText, 1, 7)) =  '`SUMALL') OR
+      (UpperCase(copy(FCellText, 1, 8)) = '`SUMPAGE')  ;
+end;
 function TReportCell.BmpLoad(F:TField):string;
 begin
   result := '';
   fbmp := TBitmap.create;
   FBmp.Assign(F);
   FbmpYn := true;
+end;
+
+function TReportCell.IsSimpleText: Boolean;
+begin
+  result :=  (IsHeadField or IsDetailField or IsFormula or IsSum);
+  result := not result;
 end;
 
 {TReportControl}
