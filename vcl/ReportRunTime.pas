@@ -392,28 +392,59 @@ function TReportRunTime.RenderCellText(NewCell,ThisCell:TReportCell):String;
 var
    cellText :string;
    cf: CellField ;
-   procedure RenderFieldText;
-   begin
-      if (not cf.IsNullField )then begin
-        CellText := cf.GetField().displaytext ;
-        If cf.isNumberField  and (ThisCell.CellDispformat <> '') Then
-          cellText := ThisCell.FormatValue(cf.DataValue())
-        Else If cf.IsBlobField Then
-          CellText := NewCell.BmpLoad(cf.GetField);
-      end;
-   end;
 begin
-  CellText := thisCell.CellText;
+  CellText := ThisCell.FCellText;
   cf:= CellField.Create(ThisCell.CellText,GetDataset(thisCell.CellText)) ;
   try
-    If ThisCell.IsHeadField  or thisCell.IsDetailField Then
-      RenderFieldText
+    If ThisCell.IsHeadField and (not cf.IsNullField) Then
+    Begin
+      CellText := cf.GetField().displaytext ;
+      If cf.isNumberField  Then
+      Begin
+        If ThisCell.CellDispformat <> '' Then
+            cellText := ThisCell.FormatValue(cf.DataValue());
+      End
+      Else If cf.IsBlobField Then
+      Begin
+        NewCell.fbmp := TBitmap.create;
+        NewCell.FBmp.Assign(cf.GetField);
+        NewCell.FbmpYn := true;
+      End
+    End
+    Else If  thisCell.IsDetailField Then
+    Begin
+      If cf.IsNumberField Then
+      Begin
+        CellText := cf.GetField.displaytext;
+        If thiscell.CellDispformat <> '' Then
+        Begin
+          If Not cf.IsNullField  Then
+            cellText := Thiscell.FormatValue(cf.DataValue);
+        End
+      End
+      Else If cf.IsBlobField then
+      Begin
+        CellText := '';
+        If Not cf.IsNullField Then
+        Begin
+          NewCell.fbmp := TBitmap.create;
+          NewCell.FBmp.Assign(cf.GetField);
+          NewCell.FbmpYn := true;
+        End
+      End
+      Else
+        CellText := cf.GetField.displaytext;
+    End
     Else If ThisCell.IsFormula Then
+<<<<<<< HEAD
       CellText := GetVarValue(thiscell.FCellText)
     Else If ThisCell.IsSumAllFormula Then
       CellText := self.setSumAllYg('',ThisCell.CellText)
     Else If ThisCell.IsSumPageFormula Then
       CellText := self.setSumpageYg('',ThisCell.CellText);
+=======
+        CellText := GetVarValue(thiscell.FCellText) ;
+>>>>>>> parent of e1dec3e... todo : 闇�瑕佷竴涓ソ鐨別xpress parser锛屼互渚挎妸鍏抽棴鐨勫姛鑳藉姞涓婂幓
     result := CellText;
   finally
     cf.Free;
@@ -1387,12 +1418,17 @@ Begin
 End;
 
 
+<<<<<<< HEAD
 // todo : 需要一个好的express parser，以便把关闭的功能加上去
 Function TReportRunTime.SetSumAllYg(fm, ss: String): String; //add
 var
   Value :Integer;
   slice :StrSlice;
   s : string;
+=======
+
+Function TReportRunTime.SetSumAllYg(fm, ss: String): String; //add  
+>>>>>>> parent of e1dec3e... todo : 闇�瑕佷竴涓ソ鐨別xpress parser锛屼互渚挎妸鍏抽棴鐨勫姛鑳藉姞涓婂幓
 Begin
   slice := StrSlice.Create(ss);
   s := slice.Slice(slice.GoUntil('(')+1,slice.GoUntil(')')-1);

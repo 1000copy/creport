@@ -171,8 +171,11 @@ Type
     function IsFormula:Boolean;
     procedure CloneFrom(ThisCell:TReportCell);
     function FormatValue(DataValue:Extended):string;
+<<<<<<< HEAD
     function BmpLoad(F:TField):string;
     function IsSimpleText:Boolean;
+=======
+>>>>>>> parent of e1dec3e... todo : 需要一个好的express parser，以便把关闭的功能加上去
   public
     FLeftMargin: Integer;               // ��ߵĿո�
     FOwnerLine: TReportLine;            // ������
@@ -2017,6 +2020,7 @@ begin
       (UpperCase(copy(FCellText, 1, 4)) <> '`SUM') and
       (FCellText[1] = '`') ;
 end;
+<<<<<<< HEAD
 function TReportCell.IsSum: Boolean;
 begin
   result := (Length(CellText) > 0) and
@@ -2030,6 +2034,8 @@ begin
   FBmp.Assign(F);
   FbmpYn := true;
 end;
+=======
+>>>>>>> parent of e1dec3e... todo : 需要一个好的express parser，以便把关闭的功能加上去
 
 function TReportCell.IsSimpleText: Boolean;
 begin
