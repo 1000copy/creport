@@ -4,7 +4,8 @@ uses
   Forms,
   REportDemo in 'REportDemo.pas' {CReportDemoForm},
   Data in 'Data.pas' {Dataform: TDataModule},
-  ReportRunTime in '..\vcl\ReportRunTime.pas';
+  ReportRunTime in '..\vcl\ReportRunTime.pas',
+  CC in '..\vcl\CC.pas';
 
 {$R *.RES}
 

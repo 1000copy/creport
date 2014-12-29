@@ -5,7 +5,7 @@ uses ReportControl,  Windows, Messages, SysUtils,
   {$WARNINGS OFF}FileCtrl,{$WARNINGS ON}
    Classes, Graphics, Controls,
   Forms, Dialogs, Printers, Menus, Db,
-  DesignEditors, ExtCtrls,osservice,margin;
+  DesignEditors, ExtCtrls,osservice,margin,cc;
 Procedure Register;
 
 
@@ -109,7 +109,6 @@ type
     Procedure SetDataset(strDatasetName: String; pDataSet: TDataSet);
     Procedure SetVarValue(strVarName, strVarValue: String);
     Property allprint: boolean Read Fallprint Write Fallprint Default true;
-    Procedure ResetContent;
     Procedure PrintPreview(bPreviewMode: Boolean);
     function  EditReport (FileName:String):TReportControl;
     Function shpreview: boolean;        //重新生成预览有关文件
@@ -1373,12 +1372,6 @@ Begin
   End;
 End;
 
-Procedure TReportRunTime.ResetContent;
-Begin
-  //
-End;
-
-//调所需打印的报表文件
 
 Procedure TReportRunTime.loadfile(value: tfilename);
 Begin
@@ -1454,7 +1447,7 @@ Begin
   REPmessform.Close;
   PreviewForm.PageCount := FPageCount;
   PreviewForm.StatusBar1.Panels[0].Text :=
-   Format( '第%d/%d页' ,[PreviewForm.CurrentPage,PreviewForm.PageCount]) ;
+   Format(cc.PageFormat,[PreviewForm.CurrentPage,PreviewForm.PageCount]) ;
 
 End;
 Procedure Register;
@@ -1467,7 +1460,7 @@ End;
 
 constructor RenderException.Create;
 begin
-  self.message := '表格未能完全处理,请调整单元格宽度或页边距等设置';
+  self.message := cc.RenderException;
 end;
 
 { TSummer }
@@ -1486,7 +1479,7 @@ end;
 function TSummer.GetSumPage(i: integer): Real;
 begin
   If i < 0 Then
-   raise Exception.Create('模板文件中`Sumpage()括号内参数不应为零');
+   raise Exception.Create(cc.SumPageFormat);
   result := SumPage[i];
 end;
 
@@ -1503,8 +1496,8 @@ end;
 procedure TSummer.ResetSumPage;
 var n :integer;
 begin
-    For n := 0 To 40 Do
-          SumPage[n] := 0;
+  For n := 0 To 40 Do
+        SumPage[n] := 0;
 end;
 
  

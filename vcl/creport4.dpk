@@ -57,6 +57,7 @@ contains
   Preview in 'Preview.pas' {PreviewForm},
   REPMESS in 'repmess.PAS' {REPmessform},
   vsplit in 'vsplit.PAS' {VSplitForm},
-  ReportRunTime in 'ReportRunTime.pas';
+  ReportRunTime in 'ReportRunTime.pas',
+  CC in 'CC.pas';
 
 end.

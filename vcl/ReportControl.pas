@@ -3764,16 +3764,13 @@ End;
 // 将变化后的单元格宽度存入全局变量数组 
 
 
-Procedure TReportControl.FreeEdit;      //取销编辑状态  lzl 
+Procedure TReportControl.FreeEdit;
 Begin
-  If IsWindowVisible(FEditWnd) Then
+  If IsWindowVisible(FEditWnd) and (FEditCell <> Nil)Then
   Begin
-    If FEditCell <> Nil Then            //<>nil　
-    Begin
-      Windows.SetFocus(0);
-      DestroyWindow(FEditWnd);
-      FEditCell := Nil;
-    End;
+    Windows.SetFocus(0);
+    DestroyWindow(FEditWnd);
+    FEditCell := Nil;
   End;
 End;
 
