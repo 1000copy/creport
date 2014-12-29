@@ -878,7 +878,7 @@ Var
       If isPageFull Then
       Begin
         If dataLineList.Count = 0 Then
-          raise Exception.create('表格未能完全处理,请调整单元格宽度或页边距等设置');
+          raise RenderException.Create;
         FhootNo := HandLineList.Count+dataLineList.Count ;
         JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList,false);
         UpdatePrintLines;
@@ -918,22 +918,18 @@ Var
     For N := FDRMap.Count - 1 Downto 0 Do
       TDRMapping(FDRMap[N]).Free;
     FDRMap.Clear;
-
     HandLineList.free;
-
   end;
 Begin
   try
     FSummer.ResetAll;
     Dataset := Nil;
     FhootNo := 0;
-    nHandHeight := 0;                     //该页数据库行之前每行累加高度
-    FpageCount := 1;                      //正处理的页数
+    nHandHeight := 0;
+    FpageCount := 1;               
     HasDataNo := 0;
     nHootHeight := 0;
     TempDataSetCount := 0;
-
-    //将每页的表头存入一个列表中
     HandLineList := FillHeadList(nHandHeight);
     GetHasDataPosition(HasDataNo,CellIndex) ;
     If HasDataNo = -1 Then
@@ -993,25 +989,26 @@ End;
 
 
 function TReportRunTime.GetPrintRange(var A,Z:Integer):boolean;
-  var PrintDlg: TPrintDialog; I: Integer;
-  begin
-      PrintDlg := TPrintDialog.Create(Self);
-      PrintDlg.MinPage := 1;
-      PrintDlg.MaxPage := FPageCount;
-      PrintDlg.FromPage := 1;
-      PrintDlg.ToPage := FPageCount;
-      PrintDlg.Options := [poPageNums];
-      If Not PrintDlg.Execute Then
-        Begin
-          result := false;
-        End
-      else begin
-        a := printdlg.frompage;    //99.3.9
-        z := printdlg.topage;        //99.3.9
-        result := true;
-      end;
-      PrintDlg.Free;
+var
+  PrintDlg: TPrintDialog; I: Integer;
+begin
+  PrintDlg := TPrintDialog.Create(Self);
+  PrintDlg.MinPage := 1;
+  PrintDlg.MaxPage := FPageCount;
+  PrintDlg.FromPage := 1;
+  PrintDlg.ToPage := FPageCount;
+  PrintDlg.Options := [poPageNums];
+  If Not PrintDlg.Execute Then
+    Begin
+      result := false;
+    End
+  else begin
+    a := printdlg.frompage;    //99.3.9
+    z := printdlg.topage;        //99.3.9
+    result := true;
   end;
+  PrintDlg.Free;
+end;
 Procedure TReportRunTime.ClearDataset();
 Var
   I: Integer;

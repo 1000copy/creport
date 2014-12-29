@@ -10,7 +10,7 @@ type
   TPreviewForm = class(TForm)
     StatusBar1: TStatusBar;
     ScrollBox1: TScrollBox;
-    ReportControl1: TReportControl;
+    RC: TReportControl;
     filename: TLabel;
     Panel1: TPanel;
     PrevPageBtn: TSpeedButton;
@@ -41,7 +41,7 @@ type
     procedure FormCreate(Sender: TObject);
     procedure SpeedButton4Click(Sender: TObject);
     procedure SpeedButton1Click(Sender: TObject);
-    procedure ReportControl1MouseUp(Sender: TObject; Button: TMouseButton;
+    procedure RCMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure FormResize(Sender: TObject);
     procedure SpeedButton3Click(Sender: TObject);
@@ -52,8 +52,6 @@ type
      zoomxxx:integer;
      // LCJ : 最佳缩放比例
     procedure DoFit;
-    procedure CreateSlaves;
-    procedure FreeSlaves;
     procedure GoLastPage;
     procedure NextPage;
     procedure PrevPage;
@@ -86,15 +84,15 @@ procedure TPreviewForm.ScrollBox1Resize(Sender: TObject);
 begin
 
 ///////////////////////////// add  
-  if ClientRect.Right > ReportControl1.Width + 20 then
-    ReportControl1.Left := (ClientRect.Right - ReportControl1.Width-20) div 2
+  if ClientRect.Right > RC.Width + 20 then
+    RC.Left := (ClientRect.Right - RC.Width-20) div 2
   else
-    ReportControl1.Left := 23;
+    RC.Left := 23;
 
-   if ((height-110-ReportControl1.Height) div 2)+10 >10 then
-      ReportControl1.top:= ((height-110-ReportControl1.Height) div 2)+10
+   if ((height-110-RC.Height) div 2)+10 >10 then
+      RC.top:= ((height-110-RC.Height) div 2)+10
    else
-     ReportControl1.top:=10;
+     RC.top:=10;
 //////////////////////////
 end;
 
@@ -117,14 +115,14 @@ end;
 
 procedure TPreviewForm.PrintFile(strFileName: string);
 begin
-  ReportControl1.LoadFromFile(strFileName);
-  ReportControl1.PrintIt;
+  RC.LoadFromFile(strFileName);
+  RC.PrintIt;
 end;
 
 procedure TPreviewForm.SetPreviewMode(bPreview: Boolean);
 begin
-  ReportControl1.IsPreview := bPreview;
-  ReportControl1.Refresh;
+  RC.IsPreview := bPreview;
+  RC.Refresh;
 end;
 
 procedure TPreviewForm.But1Click(Sender: TObject);
@@ -147,12 +145,12 @@ end;
 procedure TPreviewForm.SpeedButton5Click(Sender: TObject);
 begin
   //add  
-  ReportControl1.FreeEdit;
+  RC.FreeEdit;
   zoomxxx:=zoomxxx-10;
-  ShowWindow(ReportControl1.Handle, SW_HIDE);
-  ReportControl1.ReportScale := zoomxxx;
+  ShowWindow(RC.Handle, SW_HIDE);
+  RC.ReportScale := zoomxxx;
   ScrollBox1Resize(Self);
-  ShowWindow(ReportControl1.Handle, SW_SHOW);
+  ShowWindow(RC.Handle, SW_SHOW);
 
 end;
 
@@ -169,7 +167,7 @@ begin
   if copy(strfiledir, length(strfiledir), 1) <> '\' then strFileDir := strFileDir + '\';
 
   if FileExists(strFileDir + 'Temp\1.tmp') then
-    ReportControl1.LoadFromFile(strFileDir + 'Temp\1.tmp');
+    RC.LoadFromFile(strFileDir + 'Temp\1.tmp');
 
   StatusBar1.Panels[0].Text :='第'+IntToStr(CurrentPage)+'／' +IntToStr(PageCount) +  '页';
 
@@ -180,12 +178,12 @@ end;
 procedure TPreviewForm.SpeedButton4Click(Sender: TObject);
 begin
 
-  ReportControl1.FreeEdit;
+  RC.FreeEdit;
   zoomxxx:=zoomxxx+10;
-  ShowWindow(ReportControl1.Handle, SW_HIDE);
-  ReportControl1.ReportScale := zoomxxx;
+  ShowWindow(RC.Handle, SW_HIDE);
+  RC.ReportScale := zoomxxx;
   ScrollBox1Resize(Self);
-  ShowWindow(ReportControl1.Handle, SW_SHOW);
+  ShowWindow(RC.Handle, SW_SHOW);
 
 end;
 
@@ -197,7 +195,7 @@ begin
 end;
 
 
-procedure TPreviewForm.ReportControl1MouseUp(Sender: TObject;
+procedure TPreviewForm.RCMouseUp(Sender: TObject;
   Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
   zoomxxx:=100;
@@ -210,21 +208,14 @@ end;
 procedure TPreviewForm.FormResize(Sender: TObject);
 var z1,z2:integer;
 begin
-
- 
-////////////////////////////////
-
-  zoomxxx:=ReportControl1.ZoomRate(Height,Width,110,170);
- ///////////////////////////////////////////////////
-  ShowWindow(ReportControl1.Handle, SW_HIDE);
-  ReportControl1.ReportScale := zoomxxx;
+  zoomxxx:=RC.ZoomRate(Height,Width,110,170);
+  ShowWindow(RC.Handle, SW_HIDE);
+  RC.ReportScale := zoomxxx;
   ScrollBox1Resize(Self);
-  ShowWindow(ReportControl1.Handle, SW_SHOW);
-
+  ShowWindow(RC.Handle, SW_SHOW);
 end;
 
 procedure TPreviewForm.SpeedButton3Click(Sender: TObject); 
-
 begin
   DoFit();
 end;
@@ -233,56 +224,25 @@ end;
 procedure TPreviewForm.DoFit();
 
 begin
-  ReportControl1.FreeEdit;  
-  zoomxxx := ReportControl1.ZoomRate(Height,Width,110,170);
-  ShowWindow(ReportControl1.Handle, SW_HIDE);
-  ReportControl1.ReportScale := zoomxxx;
+  RC.FreeEdit;  
+  zoomxxx := RC.ZoomRate(Height,Width,110,170);
+  ShowWindow(RC.Handle, SW_HIDE);
+  RC.ReportScale := zoomxxx;
   ScrollBox1Resize(Self);
-  ShowWindow(ReportControl1.Handle, SW_SHOW);
+  ShowWindow(RC.Handle, SW_SHOW);
 
 end;
-procedure TPreviewForm.CreateSlaves;
-begin
-  Application.CreateForm(TCreportform,Creportform);
-  Application.CreateForm(Tfrm_About, frm_About);
-  Application.CreateForm(TBorderform,Borderform );
-  Application.CreateForm(TColorform,Colorform );
-  Application.CreateForm(Tdiagonalform,diagonalform);
-  Application.CreateForm(TfrmNewTable,frmNewTable);
-  Application.CreateForm(Tvsplitform,vsplitform);
-end;
-procedure TPreviewForm.FreeSlaves;
-begin
-  Application.CreateForm(TCreportform,Creportform);
-  Application.CreateForm(Tfrm_About, frm_About);
-  Application.CreateForm(TBorderform,Borderform );
-  Application.CreateForm(TColorform,Colorform );
-  Application.CreateForm(Tdiagonalform,diagonalform);
-  Application.CreateForm(TfrmNewTable,frmNewTable);
-  Application.CreateForm(Tvsplitform,vsplitform);
-end;
+
 procedure TPreviewForm.EditEptkClick(Sender: TObject);
 begin
-  CreateSlaves;
-
-  Creportform.ReportControl1.LoadFromFile(filename.Caption);
-  Creportform.Caption:=filename.Caption;
-
-  Creportform.Thefile :=Filename.Caption;
-  Creportform.savefilename := Filename.Caption;
-
-  Creportform.showmodal;
+  TCreportForm.EditReport(filename.Caption);
   RR.updatepage;
-  But1.OnClick(Sender); 
-  FreeSlaves ;
+  GoFirstPage;
 end;
 
 procedure TPreviewForm.FormActivate(Sender: TObject);
 begin
-
-
-  ReportControl1.AllowPreviewEdit:=EditEptk.Visible; //add lzl 如果充许编辑模板则可编辑单元格否则不行。
-
+  RC.AllowPreviewEdit:=EditEptk.Visible; 
 end;
 
 procedure TPreviewForm.PrintBtnClick(Sender: TObject);
@@ -290,7 +250,6 @@ begin
   SpeedButton2.Enabled:=True;
   TReportRunTime(Owner).Print(false);
   SpeedButton2.Enabled:=false;
-
 end;
 
 function TPreviewForm.RR: TReportRuntime;
@@ -345,7 +304,7 @@ var
   end;
 begin
   RuleApply  ;
-  nPrevScale := ReportControl1.ReportScale;
+  nPrevScale := RC.ReportScale;
 
   StatusBar1.Panels[0].Text := format('第%d/%d页',[CurrentPage,PageCount]);
 
@@ -353,20 +312,16 @@ begin
 
   ReloadPageFile(CurrentPage);
 
-  ReportControl1.ReportScale := nPrevScale;
+  RC.ReportScale := nPrevScale;
   LockWindowUpdate(0);
   RuleApply ;
 
 end;
 procedure TPreviewForm.ReloadPageFile(CurrentPage:Integer);
-var
-  strFileDir: TFileName;
 begin
-   strFileDir := ExtractFileDir(Application.ExeName); // + '\';
-  if copy(strfiledir, length(strfiledir), 1) <> '\' then strFileDir := strFileDir + '\';
-
-  if FileExists(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp') then
-    ReportControl1.LoadFromFile(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp');
+  RC.LoadFromFile(
+    Format('%s\Temp\%d.tmp',[ ExtractFileDir(Application.ExeName),CurrentPage])
+  );
 end;
 
 end.

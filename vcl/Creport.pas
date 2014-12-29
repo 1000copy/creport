@@ -66,7 +66,6 @@ type
     N33: TMenuItem;
     ScrollBox1: TScrollBox;
     Panel3: TPanel;
-    ReportControl1: TReportControl;
     SpeedButton1: TSpeedButton;
     SpeedButton2: TSpeedButton;
     SpeedButton3: TSpeedButton;
@@ -124,6 +123,7 @@ type
     Label3: TLabel;
     SpeedButton17: TSpeedButton;
     StatusBar1: TStatusBar;
+    RC: TReportControl;
     procedure FileOpen1(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FileExitClick(Sender: TObject);
@@ -170,7 +170,7 @@ type
     procedure SpeedButton8Click(Sender: TObject);
     procedure SpeedButton12Click(Sender: TObject);
     procedure SpeedButton15Click(Sender: TObject);
-    procedure ReportControl1MouseDown(Sender: TObject;
+    procedure RCMouseDown(Sender: TObject;
       Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
     procedure SpeedButton7Click(Sender: TObject);
     procedure FormResize(Sender: TObject);
@@ -193,7 +193,7 @@ type
   public
     thefile, savefilename: string;
     zoomxxx:INTEGER;
-    property ReportControl: TReportControl read ReportControl1;
+    property ReportControl: TReportControl read RC;
     procedure DoCenter ;
     class function  EditReport(FileName: String):TReportControl;
     class function InitReport: TCreportForm;
@@ -272,12 +272,12 @@ begin
   zoomxxx:=100;
   If ParamCount>=1 Then
   Begin
-    ReportControl1.LoadFromFile(ParamStr(1));
+    RC.LoadFromFile(ParamStr(1));
     caption:=ParamStr(1);
     Thefile :=ParamStr(1);
     savefilename := Thefile;
   End;
-  ReportControl1.CalcWndSize;
+  RC.CalcWndSize;
 
  combobox1.Clear;
  for i:=0 to Screen.FormCount-1 do
@@ -317,22 +317,22 @@ begin
   if OpenDialog1.Execute then
   begin
     thefile := OpenDialog1.Filename;
-    ReportControl1.LoadFromFile(theFile);
+    RC.LoadFromFile(theFile);
     Creportform.caption := thefile ;
     savefilename := thefile;
     updateOldies(thefile, sender);
     thefile := '';
     zoomxxx:=100;
-    ShowWindow(ReportControl1.Handle, SW_HIDE);
-    ReportControl1.ReportScale := zoomxxx;
+    ShowWindow(RC.Handle, SW_HIDE);
+    RC.ReportScale := zoomxxx;
     ScrollBox1Resize(Self);
-    ShowWindow(ReportControl1.Handle, SW_SHOW);
+    ShowWindow(RC.Handle, SW_SHOW);
   end;
 end;
 
 procedure TCreportForm.FileOpen1(Sender: TObject);
 begin
-  ReportControl1.LoadFromFile(theFile);
+  RC.LoadFromFile(theFile);
   Creportform.caption := thefile ;
   savefilename := thefile;
   updateOldies(thefile, sender);
@@ -344,35 +344,35 @@ var
   t: boolean;
 begin
   if frmNewTable.ShowModal = IDOK then
-    ReportControl1.NewTable(StrToInt(frmNewTable.Edit2.Text), StrToInt(frmNewTable.Edit1.Text));
+    RC.NewTable(StrToInt(frmNewTable.Edit2.Text), StrToInt(frmNewTable.Edit1.Text));
 end;
 
 procedure TCreportForm.InsertLineClick(Sender: TObject);
 begin
-  ReportControl1.InsertLine;
+  RC.InsertLine;
       savebz:=false;
 
 end;
 
 procedure TCreportForm.AddLineClick(Sender: TObject);
 begin
-if self.ReportControl1.SelectedCells.Count > 0  then
+if self.RC.SelectedCells.Count > 0  then
 begin
-      ReportControl1.AddLine;
+      RC.AddLine;
       savebz:=false;
 end;
 end;
 
 procedure TCreportForm.CombineCellsClick(Sender: TObject);
 begin
-  ReportControl1.CombineCell;
+  RC.CombineCell;
       savebz:=false;
 
 end;
 
 procedure TCreportForm.SplitCellClick(Sender: TObject);
 begin
-  ReportControl1.SplitCell;
+  RC.SplitCell;
   fontboxChange(Sender);
     savebz:=false;
 
@@ -384,27 +384,27 @@ end;
  }
 procedure TCreportForm.DeleteLineClick(Sender: TObject);
 begin
-  ReportControl1.DeleteLine;
+  RC.DeleteLine;
       savebz:=false;
 
 end;
 
 procedure TCreportForm.AddCellClick(Sender: TObject);
 begin
-  ReportControl1.AddCell;
+  RC.AddCell;
       savebz:=false;
 
 end;
 
 procedure TCreportForm.InsertCellClick(Sender: TObject);
 begin
-  ReportControl1.InsertCell;
+  RC.InsertCell;
   savebz:=false;
 end;
 
 procedure TCreportForm.DeleteCellClick(Sender: TObject);
 begin
-  ReportControl1.DeleteCell;
+  RC.DeleteCell;
   savebz:=false;
 end;
 
@@ -412,9 +412,9 @@ procedure TCreportForm.CellBorderLineClick(Sender: TObject);
 var
   cell : TReportCell;
 begin
-  if ReportControl1.SelectedCells.Count >0  then
+  if RC.SelectedCells.Count >0  then
   begin
-    cell := ReportControl1.SelectedCells[0];
+    cell := RC.SelectedCells[0];
     borderform.LeftLine.Checked:=cell.LeftLine;
     borderform.TopLine.Checked:=cell.TopLine;
     borderform.RightLine.Checked:=cell.RightLine;
@@ -427,7 +427,7 @@ begin
 
     if BorderForm.ShowModal = mrOK then
       with BorderForm do
-      ReportControl1.SetCellLines(LeftLine.Checked,
+      RC.SetCellLines(LeftLine.Checked,
         TopLine.Checked,
         RightLine.Checked,
         BottomLine.Checked,
@@ -442,7 +442,7 @@ procedure TCreportForm.CellDiagonalLineClick(Sender: TObject);
 var
   nDiagonal: UINT;
 begin
-  if ReportControl1.SelectedCells.Count = 0  then
+  if RC.SelectedCells.Count = 0  then
     exit;
   if DiagonalForm.ShowModal = mrOK then
   begin
@@ -466,7 +466,7 @@ begin
 
       if RightDiagonal3.Checked then
         nDiagonal := nDiagonal or LINE_RIGHT3;
-      ReportControl1.SetCellDiagonal(nDiagonal);
+      RC.SetCellDiagonal(nDiagonal);
     savebz:=false;
     end;
   end;
@@ -478,23 +478,23 @@ var
   hTempDC: HDC;
   pt, ptOrg: TPoint;
 begin
-  if ReportControl1.SelectedCells.Count >0  then
+  if RC.SelectedCells.Count >0  then
   begin
     hTempDC := GetDC(0);
-    pt.y := abs(TReportCell(reportcontrol1.SelectedCells[0]).LogFont.lfheight) * 720 div GetDeviceCaps(hTempDC, LOGPIXELSY);
+    pt.y := abs(TReportCell(RC.SelectedCells[0]).LogFont.lfheight) * 720 div GetDeviceCaps(hTempDC, LOGPIXELSY);
     DPtoLP(hTempDC, pt, 1);
     ptOrg.x := 0;
     ptOrg.y := 0;
     DPtoLP(hTempDC, ptOrg, 1);
 
-    FontDialog1.Font.Name := TReportCell(reportcontrol1.SelectedCells[0]).LogFont.lfFaceName;
+    FontDialog1.Font.Name := TReportCell(RC.SelectedCells[0]).LogFont.lfFaceName;
     FontDialog1.Font.Size := ((pt.y - ptOrg.y) div 10);
 
     if FontDialog1.Execute then
     begin
       Windows.GetObject(FontDialog1.Font.Handle, SizeOf(CellFont), @CellFont);
-      ReportControl1.SetCellFont(CellFont);
-      ReportControl1.SetCellColor(FontDialog1.Font.color, ColorForm.Panel1.Color);
+      RC.SetCellFont(CellFont);
+      RC.SetCellColor(FontDialog1.Font.color, ColorForm.Panel1.Color);
       savebz:=false;
     end;
   end
@@ -503,11 +503,11 @@ end;
 
 procedure TCreportForm.CellColorClick(Sender: TObject);
 begin
-  if ReportControl1.SelectedCells.Count >0  then
+  if RC.SelectedCells.Count >0  then
   begin
     if ColorForm.ShowModal = mrOK then
     begin
-      ReportControl1.SetCellColor(ColorForm.Panel1.Font.Color, ColorForm.Panel1.Color);
+      RC.SetCellColor(ColorForm.Panel1.Font.Color, ColorForm.Panel1.Color);
     savebz:=false;
     end;
   end
@@ -519,7 +519,7 @@ begin
   savedialog1.filename := savefilename;
   if SaveDialog1.Execute then
   begin
-    ReportControl1.SaveToFile(SaveDialog1.FileName);
+    RC.SaveToFile(SaveDialog1.FileName);
     thefile := SaveDialog1.Filename;
     savefilename := thefile;
     Creportform.caption := thefile ;
@@ -530,16 +530,16 @@ end;
 
 procedure TCreportForm.PrintItClick(Sender: TObject);  // update  
 begin
-  if printer.Printers.Count > 0 then ReportControl1.PrintIt
+  if printer.Printers.Count > 0 then RC.PrintIt
   else Application.Messagebox('未安装打印机', '警告', MB_OK + MB_iconwarning);
 end;
 
 procedure TCreportForm.VSplitCellClick(Sender: TObject);
 begin
-if ReportControl1.SelectedCells.Count >0  then
+if RC.SelectedCells.Count >0  then
   if VSplitForm.ShowModal = mrOK then
   begin
-    ReportControl1.VSplitCell(VSplitForm.VSplitCount.Value);
+    RC.VSplitCell(VSplitForm.VSplitCount.Value);
         savebz:=false;
 end;
 end;
@@ -549,22 +549,22 @@ var
   MarginRect: TRect;
 begin
  
-  MarginRect := ReportControl1.GetMargin;
+  MarginRect := RC.GetMargin;
   MarginForm.LeftMargin.Value := MarginRect.Left;
   MarginForm.TopMargin.Value := MarginRect.Top;
   MarginForm.RightMargin.Value := MarginRect.Right;
   MarginForm.BottomMargin.Value := MarginRect.Bottom;
-  ReportControl1.PrintPaper.Batch;
+  RC.PrintPaper.Batch;
   if MarginForm.ShowModal = mrOK then
   begin
-      ReportControl1.SetMargin(MarginForm.LeftMargin.Value,
+      RC.SetMargin(MarginForm.LeftMargin.Value,
         MarginForm.TopMargin.Value,
         MarginForm.RightMargin.Value,
         MarginForm.BottomMargin.Value);
       savebz:=false;
-      ReportControl1.FLastPrintPageWidth:=0;
-      ReportControl1.CalcWndSize;
-      ReportControl1.CalcWndSize;
+      RC.FLastPrintPageWidth:=0;
+      RC.CalcWndSize;
+      RC.CalcWndSize;
   end;
 end;
 
@@ -572,10 +572,10 @@ procedure TCreportForm.FileCloseClick(Sender: TObject); // update
 begin
   if Application.Messagebox('确实要关闭文件吗？', '警告', MB_OKCANCEL) = MrOK then
   begin
-    ReportControl1.FreeEdit;
-    ReportControl1.ResetContent;
-    ReportControl1.FLastPrintPageWidth := 0;
-    ReportControl1.CalcWndSize;
+    RC.FreeEdit;
+    RC.ResetContent;
+    RC.FLastPrintPageWidth := 0;
+    RC.CalcWndSize;
     Creportform.caption := '[无文件名] ' ;
     thefile := '';
     savefilename := '';
@@ -605,10 +605,10 @@ begin
     A := B;
   end;
   zoomxxx:=100;
-  ShowWindow(ReportControl1.Handle, SW_HIDE);
-  ReportControl1.ReportScale := zoomxxx;
+  ShowWindow(RC.Handle, SW_HIDE);
+  RC.ReportScale := zoomxxx;
   ScrollBox1Resize(Self);
-  ShowWindow(ReportControl1.Handle, SW_SHOW);
+  ShowWindow(RC.Handle, SW_SHOW);
 
 end;
 
@@ -751,7 +751,7 @@ begin
   begin
     if SaveDialog1.Execute then
     begin
-      ReportControl1.SaveToFile(SaveDialog1.FileName);
+      RC.SaveToFile(SaveDialog1.FileName);
       thefile := SaveDialog1.Filename;
       updateOldies(thefile, sender);
       Creportform.caption := thefile ;
@@ -762,7 +762,7 @@ begin
   end
   else
   begin
-    ReportControl1.SaveToFile(SaveFilename);
+    RC.SaveToFile(SaveFilename);
     thefile := SaveFilename;
     updateOldies(thefile, sender);
     thefile := '';
@@ -774,15 +774,15 @@ end;
 
 procedure TCreportForm.ScrollBox1Resize(Sender: TObject);
 begin
-  if ClientRect.Right > ReportControl1.Width + 20 then
-    ReportControl1.Left := (ClientRect.Right - ReportControl1.Width-20) div 2
+  if ClientRect.Right > RC.Width + 20 then
+    RC.Left := (ClientRect.Right - RC.Width-20) div 2
   else
-    ReportControl1.Left := 30;
+    RC.Left := 30;
 
-   if ((height-150-ReportControl1.Height) div 2)+10 >10 then
-      ReportControl1.top:= ((height-150-ReportControl1.Height) div 2)+5
+   if ((height-150-RC.Height) div 2)+10 >10 then
+      RC.top:= ((height-150-RC.Height) div 2)+5
    else
-     ReportControl1.top:=5;
+     RC.top:=5;
 end;
 
 procedure TCreportForm.N33Click(Sender: TObject);
@@ -802,7 +802,7 @@ begin
   if top1.Down then v := 0;
   if medium1.Down then v := 1;
   if bottom1.down then v := 2;
-  ReportControl1.SetCellAlign(H, v);
+  RC.SetCellAlign(H, v);
   savebz:=false;
 
 end;
@@ -813,7 +813,7 @@ var
   cf: TFont;
   i, code: integer;
 begin
-  if ReportControl1.SelectedCells.Count >0  then
+  if RC.SelectedCells.Count >0  then
   begin
     cf := Tfont.Create;
     cf.Name := fontbox.items[fontbox.itemindex];
@@ -826,7 +826,7 @@ begin
 
     Windows.GetObject(cf.Handle, SizeOf(CellFont), @CellFont);
     cf.Free;
-    ReportControl1.SetCellFont(CellFont);
+    RC.SetCellFont(CellFont);
     savebz:=false;
   end;
 end;
@@ -854,7 +854,7 @@ var
   cf: TFont;
   i, code: integer;
 begin
-  if ReportControl1.SelectedCells.Count >0  then
+  if RC.SelectedCells.Count >0  then
   begin
 
     cf := Tfont.Create;
@@ -867,7 +867,7 @@ begin
     if underline.Down then cf.Style := cf.style + [fsunderline];
     Windows.GetObject(cf.Handle, SizeOf(CellFont), @CellFont);
     cf.Free;
-    ReportControl1.SetCellFont(CellFont);
+    RC.SetCellFont(CellFont);
         savebz:=false;
 
   end;
@@ -875,37 +875,37 @@ end;
 // LCJ : 最佳缩放比例
 procedure TCreportForm.SpeedButton8Click(Sender: TObject); // add  
 begin
-  zoomxxx:=ReportControl1.ZoomRate (Height,Width,160,171);
-  ReportControl1.FreeEdit;
-  ShowWindow(ReportControl1.Handle, SW_HIDE);
-  ReportControl1.ReportScale := zoomxxx;
+  zoomxxx:=RC.ZoomRate (Height,Width,160,171);
+  RC.FreeEdit;
+  ShowWindow(RC.Handle, SW_HIDE);
+  RC.ReportScale := zoomxxx;
   ScrollBox1Resize(Self);
-  ShowWindow(ReportControl1.Handle, SW_SHOW);
+  ShowWindow(RC.Handle, SW_SHOW);
 end;
 
 procedure TCreportForm.SpeedButton12Click(Sender: TObject);
 begin
   zoomxxx:=zoomxxx+10;
-  ReportControl1.FreeEdit;
-  ShowWindow(ReportControl1.Handle, SW_HIDE);
-  ReportControl1.ReportScale := zoomxxx;
+  RC.FreeEdit;
+  ShowWindow(RC.Handle, SW_HIDE);
+  RC.ReportScale := zoomxxx;
   ScrollBox1Resize(Self);
-  ShowWindow(ReportControl1.Handle, SW_SHOW);
+  ShowWindow(RC.Handle, SW_SHOW);
 
 end;
 
 procedure TCreportForm.SpeedButton15Click(Sender: TObject);
 begin
   zoomxxx:=zoomxxx-10;
-  ReportControl1.FreeEdit;
-  ShowWindow(ReportControl1.Handle, SW_HIDE);
-  ReportControl1.ReportScale := zoomxxx;
+  RC.FreeEdit;
+  ShowWindow(RC.Handle, SW_HIDE);
+  RC.ReportScale := zoomxxx;
   ScrollBox1Resize(Self);
-  ShowWindow(ReportControl1.Handle, SW_SHOW);
+  ShowWindow(RC.Handle, SW_SHOW);
 
 end;
 
-procedure TCreportForm.ReportControl1MouseDown(Sender: TObject;
+procedure TCreportForm.RCMouseDown(Sender: TObject;
   Button: TMouseButton; Shift: TShiftState; X, Y: Integer);// update  
 var
   hTempDC: HDC;
@@ -923,9 +923,9 @@ if ssleft in shift then
 try
  Panel3.Enabled:=false;
  Panel4.Enabled:=false;
- if reportcontrol1.SelectedCells.count > 0 then
+ if RC.SelectedCells.count > 0 then
   begin
-    celldisp := reportcontrol1.SelectedCells[0];
+    celldisp := RC.SelectedCells[0];
     if celldisp.HorzAlign = 0 then left1.Down := true;
     if celldisp.HorzAlign = 1 then center1.Down := true;
     if celldisp.HorzAlign = 2 then right1.Down := true;
@@ -970,11 +970,11 @@ end;
 
 procedure TCreportForm.FormResize(Sender: TObject); 
 begin               
-  zoomxxx:= ReportControl1.ZoomRate(Height,Width, 160,171);
-  ShowWindow(ReportControl1.Handle, SW_HIDE);
-  ReportControl1.ReportScale := zoomxxx;
+  zoomxxx:= RC.ZoomRate(Height,Width, 160,171);
+  ShowWindow(RC.Handle, SW_HIDE);
+  RC.ReportScale := zoomxxx;
   ScrollBox1Resize(Self);
-  ShowWindow(ReportControl1.Handle, SW_SHOW);
+  ShowWindow(RC.Handle, SW_SHOW);
 end;
 
 procedure TCreportForm.ListBoxDragOver(Sender, Source: TObject; X,
@@ -985,9 +985,9 @@ end;
 
 procedure TCreportForm.CellDispFormtChange(Sender: TObject);  
 begin
-if ReportControl1.SelectedCells.Count >0  then
+if RC.SelectedCells.Count >0  then
 begin
-   ReportControl1.SetCellDispFormt(CellDispFormt.items[CellDispFormt.itemindex]);
+   RC.SetCellDispFormt(CellDispFormt.items[CellDispFormt.itemindex]);
     savebz:=false;
 end;   
 end;
@@ -995,11 +995,11 @@ end;
 procedure TCreportForm.LsumChange(Sender: TObject);
 var celldisp : TReportCell;
 begin
-if ReportControl1.SelectedCells.Count >0  then
+if RC.SelectedCells.Count >0  then
 begin
-   celldisp := ReportControl1.SelectedCells[0];
+   celldisp := RC.SelectedCells[0];
    celldisp.CellText:=Lsum.Items[Lsum.ItemIndex];
-   ReportControl1.SetCellSumText('`'+Lsum.items[Lsum.itemindex]);
+   RC.SetCellSumText('`'+Lsum.items[Lsum.itemindex]);
    fontboxChange(Sender);
        savebz:=false;
 
@@ -1047,13 +1047,13 @@ end;
 procedure TCreportForm.SpeedButton10Click(Sender: TObject);
 var celldisp : TReportCell;
 begin
-if ReportControl1.SelectedCells.Count >0  then
+if RC.SelectedCells.Count >0  then
 begin
-   celldisp := ReportControl1.SelectedCells[0];
+   celldisp := RC.SelectedCells[0];
 try
   if OpenPictureDialog1.Execute then
   begin
-    ReportControl1.SaveBmp(celldisp,OpenPictureDialog1.FileName);
+    RC.SaveBmp(celldisp,OpenPictureDialog1.FileName);
         savebz:=false;
   end;
 except
@@ -1069,15 +1069,15 @@ var Acanvas:Tcanvas;
     LTempRect:Trect;
 var celldisp : TReportCell;
 begin
-if ReportControl1.SelectedCells.Count >0  then
+if RC.SelectedCells.Count >0  then
 begin
-   celldisp := ReportControl1.SelectedCells[0];
-   ReportControl1.FreeBmp(celldisp);
+   celldisp := RC.SelectedCells[0];
+   RC.FreeBmp(celldisp);
     savebz:=false;
 
-  ShowWindow(ReportControl1.Handle, SW_HIDE);
+  ShowWindow(RC.Handle, SW_HIDE);
   ScrollBox1Resize(Self);
-  ShowWindow(ReportControl1.Handle, SW_SHOW);
+  ShowWindow(RC.Handle, SW_SHOW);
 end
 else
   MessageDlg('请先选择单元格', mtInformation,[mbOk], 0);
@@ -1121,10 +1121,10 @@ end;
 procedure TCreportForm.DoCenter;
 begin
     zoomxxx:=100;
-    ShowWindow(ReportControl1.Handle, SW_HIDE);
-    ReportControl1.ReportScale := zoomxxx;
+    ShowWindow(RC.Handle, SW_HIDE);
+    RC.ReportScale := zoomxxx;
     ScrollBox1Resize(Self);
-    ShowWindow(ReportControl1.Handle, SW_SHOW);
+    ShowWindow(RC.Handle, SW_SHOW);
 end;
 
 class function  TCreportForm.EditReport(FileName: String):TReportControl;
@@ -1138,8 +1138,8 @@ begin
   Application.CreateForm(TfrmNewTable,frmNewTable);
   Application.CreateForm(Tvsplitform,vsplitform);
 
-  Creportform.ReportControl1.LoadFromFile(filename);
-  Result := Creportform.ReportControl1;
+  Creportform.RC.LoadFromFile(filename);
+  Result := Creportform.RC;
   Creportform.Caption:= filename;
 
   Creportform.Thefile :=filename;
