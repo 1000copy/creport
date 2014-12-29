@@ -474,6 +474,7 @@ Type
     // 鼠标操作支持
     FMousePoint: TPoint;
     // 编辑框、以及它的颜色和字体
+    // TODO : encapsulation  
     FEditWnd: HWND;
     FEditBrush: HBRUSH;
     FEditFont: HFONT;
@@ -3222,7 +3223,6 @@ Begin
             Result := ThisCell.OwnerCell
           Else
             Result := ThisCell;
-
           Break;
         End;
       End;
@@ -3999,32 +3999,45 @@ end;
 function TCellList.IsRegularForCombine(): Boolean;
 var i,j:integer;
   bigrect : TRect;
-  os : WindowsOS ;
   l : TReportLine;
   c : TReportCell;
-begin
-  result := true;
-  os.SetRectEmpty (bigrect);
-  try
-    os := WindowsOS.Create;
-    for i := 0 to Count -1 do
-      bigrect := os.UnionRect(bigrect,TReportCell(Items[i]).CellRect);
-    for i := 0 to ReportControl.FLineList.count -1 do  begin
-      l := ReportControl.Lines[i];
-      for j := 0 to l.FCells.Count -1 do begin
-        c := l.FCells[j] ;
-        if
-        os.Contains(bigrect,c.CellRect) and
+  function TakeupRect:TRect;
+  var
+    os : WindowsOS ;
+    bigrect : TRect;
+    i :integer;
+  begin
+      os := WindowsOS.Create;
+      os.SetRectEmpty (bigrect);
+      for i := 0 to Count -1 do
+        bigrect := os.UnionRect(bigrect,TReportCell(Items[i]).CellRect);
+      try
+       Result:= bigRect;
+      finally
+        os.free;
+      end;
+  end;
+  // Is cell become a trap in the selection rect ?
+  function IsCellTrap:Boolean;
+  begin
+    result :=
+         WindowsOS.Contains(TakeupRect,c.CellRect) and
         (c.OwnerCell = nil) and
-        (not ReportControl.IsCellSelected(c)) then
-        begin
-          result := false;
-          break;
-        end;
+        (not ReportControl.IsCellSelected(c))
+  end;
+begin
+  // A reduce calc ,but lamda is not inplace :)
+  result := true;
+  for i := 0 to ReportControl.FLineList.count -1 do  begin
+    l := ReportControl.Lines[i];
+    for j := 0 to l.FCells.Count -1 do begin
+      c := l.FCells[j] ;
+      if  IsCellTrap then
+      begin
+        result := false;
+        break;
       end;
     end;
-  finally
-    os.free;
   end;
 end;
 
@@ -4039,16 +4052,16 @@ Var
   TempCell: TReportCell;
   TempLine: TReportLine;
 begin
-      For I := 0 To Self.ReportControl.FLineList.Count - 1 Do
-      Begin
-        TempLine := TReportLine(Self.ReportControl.FLineList[I]);
-        For J := 0 To TempLine.FCells.Count - 1 Do
-        Begin
-          TempCell := TempLine.FCells[J];
-          If TempCell.CellRect.Right = ThisCell.CellRect.Right Then
-            Add(TempCell);
-        End;
-      End;
+  For I := 0 To Self.ReportControl.FLineList.Count - 1 Do
+  Begin
+    TempLine := TReportLine(Self.ReportControl.FLineList[I]);
+    For J := 0 To TempLine.FCells.Count - 1 Do
+    Begin
+      TempCell := TempLine.FCells[J];
+      If TempCell.CellRect.Right = ThisCell.CellRect.Right Then
+        Add(TempCell);
+    End;
+  End;
 end;
 
 procedure TCellList.MakeFromSameRightAndInterference(ThisCell: TReportCell);

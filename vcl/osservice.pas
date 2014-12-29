@@ -25,9 +25,9 @@ type
     function RectEquals(r1, r2: TRect): Boolean;
     procedure InflateRect(var r: TRect; dx, dy: integer);
     function UnionRect(lprcSrc1, lprcSrc2: TRect): TRect;
-    function IntersectRect(lprcSrc1, lprcSrc2: TRect): TRect;
+    class function IntersectRect(lprcSrc1, lprcSrc2: TRect): TRect;
     function IsIntersect(r1, r2: TRect): boolean;
-    function Contains(Bigger, smaller: TRect):boolean;
+    class function Contains(Bigger, smaller: TRect):boolean;
     procedure SetRectEmpty(var r :TRect);
     function MM2Dot(a:integer):integer;
     function MapDots(FromHandle, ToHandle: THandle;FromLen: Integer): Integer;
@@ -53,20 +53,20 @@ begin
 
 end;
 
-function WindowsOS.IntersectRect(lprcSrc1, lprcSrc2: TRect): TRect;
+class function WindowsOS.IntersectRect(lprcSrc1, lprcSrc2: TRect): TRect;
 var
    r: TRect;
 begin
   if not windows.IntersectRect(Result,lprcSrc1,lprcSrc2)  then
-    SetRectEmpty(result);
+    windows.SetRectEmpty(result);
 
 end;
 
-function WindowsOS.Contains(Bigger, smaller: TRect): boolean;
+class function WindowsOS.Contains(Bigger, smaller: TRect): boolean;
 var
   r :trect ;
 begin
-  r := self.IntersectRect(Bigger,smaller);
+  r := IntersectRect(Bigger,smaller);
   Result := windows.EqualRect(r,smaller) ;
 end;
 procedure CheckError(condition:Boolean ;msg :string);
