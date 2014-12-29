@@ -52,6 +52,11 @@ type
      zoomxxx:integer;
      // LCJ : 最佳缩放比例
     procedure DoFit;
+    procedure CreateSlaves;
+    procedure FreeSlaves;
+    procedure GoLastPage;
+    procedure NextPage;
+    procedure PrevPage;
     { Private declarations }
   public
     { Public declarations }
@@ -59,6 +64,7 @@ type
     CurrentPage: Integer;
     DataNameFilst:Tlist;
 
+    procedure GoFirstPage;
     procedure PrintFile(strFileName: string);
     procedure SetPreviewMode(bPreview: Boolean);
     function RR:TReportRuntime;
@@ -91,75 +97,16 @@ begin
 end;
 
 procedure TPreviewForm.NextPageBtnClick(Sender: TObject);
-var
-  nPrevScale: Integer;
-  strFileDir: TFileName;
 begin
-  nPrevScale := ReportControl1.ReportScale;
-
-  if CurrentPage >= PageCount then
-    Exit;
-
-  CurrentPage := CurrentPage + 1;
-
-  if CurrentPage >= PageCount then
-  begin
-    NextPageBtn.Enabled := False;
-    but2.enabled := false;
-  end;
-
-  PrevPageBtn.Enabled := True;
-  but1.enabled := true;
-  StatusBar1.Panels[0].Text :='第'+IntToStr(CurrentPage)+'／' +IntToStr(PageCount) +  '页';
-
-  LockWindowUpdate(Handle);
-
-  strFileDir := ExtractFileDir(Application.ExeName); // + '\';
-  if copy(strfiledir, length(strfiledir), 1) <> '\' then strFileDir := strFileDir + '\';
-
-  if FileExists(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp') then
-    ReportControl1.LoadFromFile(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp');
-
-  ReportControl1.ReportScale := nPrevScale;
-;
-  LockWindowUpdate(0);
+  NextPage;
 end;
+
 
 procedure TPreviewForm.PrevPageBtnClick(Sender: TObject);
-var
-  nPrevScale: Integer;
-  strFileDir: TFileName;
 begin
-  nPrevScale := ReportControl1.ReportScale;
-
-  if CurrentPage <= 1 then
-    Exit;
-
-  CurrentPage := CurrentPage - 1;
-
-  if CurrentPage <= 1 then
-  begin
-    PrevPageBtn.Enabled := False;
-    but1.enabled := false;
-  end;
-
-  NextPageBtn.Enabled := True;
-  but2.Enabled := true;
-
-  StatusBar1.Panels[0].Text :='第'+IntToStr(CurrentPage)+'／' +IntToStr(PageCount) +  '页';
-
-  LockWindowUpdate(Handle);
-
-  strFileDir := ExtractFileDir(Application.ExeName); // + '\';
-  if copy(strfiledir, length(strfiledir), 1) <> '\' then strFileDir := strFileDir + '\';
-
-  if FileExists(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp') then
-    ReportControl1.LoadFromFile(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp');
-
-  ReportControl1.ReportScale := nPrevScale;
-
-  LockWindowUpdate(0);
+  PrevPage;
 end;
+
 
 procedure TPreviewForm.CloseBtnClick(Sender: TObject);
 begin
@@ -179,59 +126,16 @@ begin
 end;
 
 procedure TPreviewForm.But1Click(Sender: TObject);
-var
-  nPrevScale: Integer;
-  strFileDir: TFileName;
 begin
-
-  nPrevScale := ReportControl1.ReportScale;
-  CurrentPage := 1;
-
-  PrevPageBtn.Enabled := False;
-  but1.Enabled := False;
-
-  NextPageBtn.Enabled := True;
-  but2.Enabled := true;
-  StatusBar1.Panels[0].Text :='第'+IntToStr(CurrentPage)+'／' +IntToStr(PageCount) +  '页';
-
-  LockWindowUpdate(Handle);
-
-  strFileDir := ExtractFileDir(Application.ExeName); // + '\';
-  if copy(strfiledir, length(strfiledir), 1) <> '\' then strFileDir := strFileDir + '\';
-
-  if FileExists(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp') then
-    ReportControl1.LoadFromFile(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp');
-
-  ReportControl1.ReportScale := nPrevScale;
-  LockWindowUpdate(0);
+  GoFirstPage;
 end;
-// next page
+
+
 procedure TPreviewForm.But2Click(Sender: TObject);
-var
-  nPrevScale: Integer;
-  strFileDir: TFileName;
 begin
-  nPrevScale := ReportControl1.ReportScale;
-
-  CurrentPage := PageCount;
-
-  NextPageBtn.Enabled := False;
-  but2.Enabled := false;
-  PrevPageBtn.Enabled := True;
-  but1.Enabled := True;
-  StatusBar1.Panels[0].Text :='第'+IntToStr(CurrentPage)+'／' +IntToStr(PageCount) +  '页';
-
-  LockWindowUpdate(Handle);
-
-  strFileDir := ExtractFileDir(Application.ExeName); // + '\';
-  if copy(strfiledir, length(strfiledir), 1) <> '\' then strFileDir := strFileDir + '\';
-
-  if FileExists(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp') then
-    ReportControl1.LoadFromFile(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp');
-
-  ReportControl1.ReportScale := nPrevScale;
-  LockWindowUpdate(0);
+  GoLastPage;
 end;
+
 
 procedure TPreviewForm.SpeedButton2Click(Sender: TObject);
 begin
@@ -286,7 +190,7 @@ end;
 procedure TPreviewForm.SpeedButton1Click(Sender: TObject);
 begin
   if tReportRunTime(owner).shpreview  then
-     But1.OnClick(Sender); //预览第一页
+     GoFirstPage;
   DoFit();
 end;
 
@@ -335,7 +239,7 @@ begin
   ShowWindow(ReportControl1.Handle, SW_SHOW);
 
 end;
-procedure TPreviewForm.EditEptkClick(Sender: TObject);
+procedure TPreviewForm.CreateSlaves;
 begin
   Application.CreateForm(TCreportform,Creportform);
   Application.CreateForm(Tfrm_About, frm_About);
@@ -344,6 +248,20 @@ begin
   Application.CreateForm(Tdiagonalform,diagonalform);
   Application.CreateForm(TfrmNewTable,frmNewTable);
   Application.CreateForm(Tvsplitform,vsplitform);
+end;
+procedure TPreviewForm.FreeSlaves;
+begin
+  Application.CreateForm(TCreportform,Creportform);
+  Application.CreateForm(Tfrm_About, frm_About);
+  Application.CreateForm(TBorderform,Borderform );
+  Application.CreateForm(TColorform,Colorform );
+  Application.CreateForm(Tdiagonalform,diagonalform);
+  Application.CreateForm(TfrmNewTable,frmNewTable);
+  Application.CreateForm(Tvsplitform,vsplitform);
+end;
+procedure TPreviewForm.EditEptkClick(Sender: TObject);
+begin
+  CreateSlaves;
 
   Creportform.ReportControl1.LoadFromFile(filename.Caption);
   Creportform.Caption:=filename.Caption;
@@ -351,18 +269,10 @@ begin
   Creportform.Thefile :=Filename.Caption;
   Creportform.savefilename := Filename.Caption;
 
-  //editept:=true;
   Creportform.showmodal;
-  //editept:=false;
   RR.updatepage;
-  But1.OnClick(Sender); //预览第一页
-  Creportform.Free;
-  frm_About.Free;
-  Borderform.Free;
-  Colorform.Free;
-  diagonalform.Free;
-  frmNewTable.Free;
-  vsplitform.Free;    
+  But1.OnClick(Sender); 
+  FreeSlaves ;
 end;
 
 procedure TPreviewForm.FormActivate(Sender: TObject);
@@ -384,6 +294,122 @@ end;
 function TPreviewForm.RR: TReportRuntime;
 begin
   Result := TReportRunTime(owner)
+end;
+procedure TPreviewForm.GoFirstPage;
+var
+  nPrevScale: Integer;
+  strFileDir: TFileName;
+begin
+
+  nPrevScale := ReportControl1.ReportScale;
+  CurrentPage := 1;
+
+  PrevPageBtn.Enabled := False;
+  but1.Enabled := False;
+
+  NextPageBtn.Enabled := True;
+  but2.Enabled := true;
+  StatusBar1.Panels[0].Text :='第'+IntToStr(CurrentPage)+'／' +IntToStr(PageCount) +  '页';
+
+  LockWindowUpdate(Handle);
+
+  strFileDir := ExtractFileDir(Application.ExeName); // + '\';
+  if copy(strfiledir, length(strfiledir), 1) <> '\' then strFileDir := strFileDir + '\';
+
+  if FileExists(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp') then
+    ReportControl1.LoadFromFile(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp');
+
+  ReportControl1.ReportScale := nPrevScale;
+  LockWindowUpdate(0);
+end;
+procedure TPreviewForm.GoLastPage;
+var
+  nPrevScale: Integer;
+  strFileDir: TFileName;
+begin
+  nPrevScale := ReportControl1.ReportScale;
+  CurrentPage := PageCount;
+  NextPageBtn.Enabled := False;
+  but2.Enabled := false;
+  PrevPageBtn.Enabled := True;
+  but1.Enabled := True;
+  StatusBar1.Panels[0].Text :='第'+IntToStr(CurrentPage)+'／' +IntToStr(PageCount) +  '页';
+  LockWindowUpdate(Handle);
+  strFileDir := ExtractFileDir(Application.ExeName); // + '\';
+  if copy(strfiledir, length(strfiledir), 1) <> '\' then strFileDir := strFileDir + '\';
+  if FileExists(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp') then
+    ReportControl1.LoadFromFile(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp');
+  ReportControl1.ReportScale := nPrevScale;
+  LockWindowUpdate(0);
+end;
+procedure TPreviewForm.PrevPage;
+var
+  nPrevScale: Integer;
+  strFileDir: TFileName;
+begin
+  nPrevScale := ReportControl1.ReportScale;
+
+  if CurrentPage <= 1 then
+    Exit;
+
+  CurrentPage := CurrentPage - 1;
+
+  if CurrentPage <= 1 then
+  begin
+    PrevPageBtn.Enabled := False;
+    but1.enabled := false;
+  end;
+
+  NextPageBtn.Enabled := True;
+  but2.Enabled := true;
+
+  StatusBar1.Panels[0].Text :='第'+IntToStr(CurrentPage)+'／' +IntToStr(PageCount) +  '页';
+
+  LockWindowUpdate(Handle);
+
+  strFileDir := ExtractFileDir(Application.ExeName); // + '\';
+  if copy(strfiledir, length(strfiledir), 1) <> '\' then strFileDir := strFileDir + '\';
+
+  if FileExists(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp') then
+    ReportControl1.LoadFromFile(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp');
+
+  ReportControl1.ReportScale := nPrevScale;
+
+  LockWindowUpdate(0);
+end;
+procedure TPreviewForm.NextPage;
+var
+  nPrevScale: Integer;
+  strFileDir: TFileName;
+begin
+  nPrevScale := ReportControl1.ReportScale;
+
+  if CurrentPage >= PageCount then
+    Exit;
+
+  CurrentPage := CurrentPage + 1;
+
+  if CurrentPage >= PageCount then
+  begin
+    NextPageBtn.Enabled := False;
+    but2.enabled := false;
+  end;
+
+  PrevPageBtn.Enabled := True;
+  but1.enabled := true;
+  StatusBar1.Panels[0].Text :='第'+IntToStr(CurrentPage)+'／' +IntToStr(PageCount) +  '页';
+
+  LockWindowUpdate(Handle);
+
+  strFileDir := ExtractFileDir(Application.ExeName); // + '\';
+  if copy(strfiledir, length(strfiledir), 1) <> '\' then strFileDir := strFileDir + '\';
+
+  if FileExists(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp') then
+    ReportControl1.LoadFromFile(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp');
+
+  ReportControl1.ReportScale := nPrevScale;
+;
+  LockWindowUpdate(0);
 end;
 
 end.
