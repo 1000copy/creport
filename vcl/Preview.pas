@@ -58,9 +58,10 @@ type
     PageCount: Integer;
     CurrentPage: Integer;
     DataNameFilst:Tlist;
-    procedure updatepage;
+
     procedure PrintFile(strFileName: string);
     procedure SetPreviewMode(bPreview: Boolean);
+    function RR:TReportRuntime;
   end;
 
 var
@@ -297,46 +298,6 @@ begin
 end;
 
 
-procedure TPreviewForm.updatepage;
-var
-  nPrevScale: Integer;
-  strFileDir: TFileName;
-begin
-  tReportRunTime(owner).updatepage;
-
-  nPrevScale := ReportControl1.ReportScale;
-  if PageCount>= CurrentPage then
-     CurrentPage := CurrentPage
-  else
-     CurrentPage :=1;
-
-  if CurrentPage = 1 then
-  begin
-     PrevPageBtn.Enabled := False;
-     NextPageBtn.Enabled := True;
-     but1.Enabled := false;
-     but2.Enabled := true;
-  end
-  else
-  begin
-     PrevPageBtn.Enabled := true;
-     NextPageBtn.Enabled := false;
-     but1.Enabled := true;
-     but2.Enabled := false;
-  end;
-  StatusBar1.Panels[0].Text :='µÚ'+IntToStr(CurrentPage)+'£¯' +IntToStr(PageCount) +  'Ò³';
-
-  LockWindowUpdate(Handle);
-
-  strFileDir := ExtractFileDir(Application.ExeName); // + '\';
-  if copy(strfiledir, length(strfiledir), 1) <> '\' then strFileDir := strFileDir + '\';
-
-  if FileExists(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp') then
-    ReportControl1.LoadFromFile(strFileDir + 'Temp\' + IntToStr(CurrentPage) + '.tmp');
-
-  ReportControl1.ReportScale := nPrevScale;
-  LockWindowUpdate(0);
-end;
 
 
 
@@ -374,7 +335,7 @@ begin
   ShowWindow(ReportControl1.Handle, SW_SHOW);
 
 end;
-procedure TPreviewForm.EditEptkClick(Sender: TObject);   
+procedure TPreviewForm.EditEptkClick(Sender: TObject);
 begin
   Application.CreateForm(TCreportform,Creportform);
   Application.CreateForm(Tfrm_About, frm_About);
@@ -393,7 +354,7 @@ begin
   //editept:=true;
   Creportform.showmodal;
   //editept:=false;
-  tReportRunTime(owner).updatepage;
+  RR.updatepage;
   But1.OnClick(Sender); //Ô¤ÀÀµÚÒ»Ò³
   Creportform.Free;
   frm_About.Free;
@@ -418,6 +379,11 @@ begin
   TReportRunTime(Owner).Print(false);
   SpeedButton2.Enabled:=false;
 
+end;
+
+function TPreviewForm.RR: TReportRuntime;
+begin
+  Result := TReportRunTime(owner)
 end;
 
 end.

@@ -1450,15 +1450,14 @@ Procedure TReportRunTime.updatepage;
 Var
   i: integer;
 Begin
-  ReportFile := reportfile;             //从新装入修改后的模版文件
+  ReportFile := reportfile;
   i := DoPageCount;
-  REPmessform.show;                     //lzla2001.4.27
+  REPmessform.show;
   PreparePrintk( i);
   REPmessform.Close;
   PreviewForm.PageCount := FPageCount;
-  PreviewForm.StatusBar1.Panels[0].Text := '第' +
-    IntToStr(PreviewForm.CurrentPage) + '／' + IntToStr(PreviewForm.PageCount) +
-    '页';
+  PreviewForm.StatusBar1.Panels[0].Text :=
+   Format( '第%d/%d页' ,[PreviewForm.CurrentPage,PreviewForm.PageCount]) ;
 
 End;
 Procedure Register;
@@ -1511,7 +1510,7 @@ begin
           SumPage[n] := 0;
 end;
 
-{ StrUtil }
+ 
 
 
 end.
