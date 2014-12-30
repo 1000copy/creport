@@ -947,7 +947,7 @@ begin
     TempLine.FCells.Add(NewCell);
     NewCell.FOwnerLine := TempLine;
     SetEmptyCell(newcell, thiscell);
-  End;  
+  End;
   result := templine;
 end;
 // clone from ThisLine to Line
@@ -1036,7 +1036,7 @@ end;
 
 function TReportRunTime.GetHasDataPosition(var HasDataNo,cellIndex:integer):Boolean;
 Var
-  I, J, n,  TempDataSetCount:Integer;
+  I, J, n:Integer;
   HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisLine, TempLine: TReportLine;
   ThisCell, NewCell: TReportCell;
@@ -1055,12 +1055,12 @@ begin
           cellIndex := j ;
           exit;
         End;
-    End;                                //for j
+    End;                             
   End;
 end;
 function TReportRunTime.FillFootList(var nHootHeight:integer ):TList;
   Var
-  I, J, n,  TempDataSetCount:Integer;
+  I, J, n:Integer;
   HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisLine, TempLine: TReportLine;
   ThisCell, NewCell: TReportCell;
