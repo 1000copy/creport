@@ -1016,36 +1016,7 @@ begin
      inc(i);
    end;
 end;
-function TReportRunTime.GetHeadHeight1:integer;
-var
-  LineList:TLineList;
-  i,j:integer;
-  ThisLine, Line: TReportLine;
-  function Fill:TLineList;
-  var
-    i:Integer;
-  begin
-     LineList := TLineList.Create(self);
-     try
-       For i := 0 To FLineList.Count - 1 Do
-       Begin
-        ThisLine := FlineList[i];
-        if Not ThisLine.IsDetailLine then
-        begin
-          Line := TReportLine.Create;
-          LineList.Add(Line);
-          CloneLine(ThisLine,Line);
-        end else
-          break;
-       End;
-     finally
-       result :=   LineList ;
-     end;
-  end;
-begin
-   LineList := Fill;
-   Result := LineList.TotalHeight;
-end;
+
 
 
 function TReportRunTime.GetHasDataPosition(var HasDataNo,cellIndex:integer):Boolean;
@@ -1121,32 +1092,7 @@ begin
      inc(i);
    end;
 end;
-function TReportRunTime.FooterHeight1:integer;
-Var
-  I, J, n,  TempDataSetCount:Integer;
-  HootLineList: TLineList;
-  ThisLine, TempLine: TReportLine;
-  ThisCell, NewCell: TReportCell;
-  nHootHeight:integer;
-begin
-  nHootHeight := 0 ;
-  HootLineList := TLineList.Create(Self);
-  try
-    For i := HasDataNo + 1 To FlineList.Count - 1 Do
-    Begin
-      ThisLine := TReportLine(FlineList[i]);
-      if not ThisLine.IsSumAllLine then
-      begin
-        TempLine := TReportLine.Create;
-        CloneLine(ThisLine,TempLine);
-        HootLineList.Add(TempLine);
-      end;
-    End;
-    result := HootLineList.TotalHeight;
-  except
-    HootLineList.Free;
-  end;
-end;
+
 //将有合计的行(`SumAll)存入一个列表中
 function TReportRunTime.FillSumList(var nSumAllHeight:integer ):TLineList;
 Var
@@ -1190,28 +1136,7 @@ begin
      inc(i);
    end;
 end;
-function TReportRunTime.SumHeight1:Integer;
-Var
-  I, J, n,  TempDataSetCount:Integer;
-  HandLineList, datalinelist, HootLineList, sumAllList: TLineList;
-  ThisLine, TempLine: TReportLine;
-  ThisCell, NewCell: TReportCell;
-  Dataset: TDataset;
-  nSumAllHeight:integer;
-begin
-  nSumAllHeight := 0;
-  sumAllList := TLineList.Create(Self);
-  For i := HasDataNo + 1 To FlineList.Count - 1 Do
-  Begin
-    ThisLine := TReportLine(FlineList[i]);
-    TempLine := TReportLine.Create;
-    sumAllList.Add(TempLine);
-    CloneLine(ThisLine,TempLine);
-    TempLine.UpdateLineHeight;
-  End;            
-  result := sumAllList.TotalHeight;
-  sumAllList.Free;
-end ;
+
 procedure TReportRunTime.PaddingEmptyLine(hasdatano:integer; var dataLineList:TList;var ndataHeight:integer);
 var
   thisline,templine : Treportline ;
