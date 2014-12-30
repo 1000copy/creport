@@ -35,13 +35,14 @@ type
     procedure CloneLine(ThisLine, Line: TReportLine);
 
     function PageMinHeight: Integer;
-    function HeaderHeight: integer;
+    //function HeaderHeight: integer;
     function FooterHeight: integer;
     function SumHeight:integer;
     function ExpandLine(var HasDataNo, ndataHeight: integer): TReportLine;
     function RenderCellText(NewCell,ThisCell:TReportCell):String;
     function IsDataField(s: String): Boolean;
     function GetValue(ThisCell: TReportCell): String;
+    function GetHeadHeight1: integer;
 
   public
     FFileName: Tfilename;
@@ -116,7 +117,8 @@ type
     Procedure loadfile(value: tfilename);
     Procedure Print(IsDirectPrint: Boolean);
     Procedure Resetself;
-    Function Cancelprint: boolean;                               
+    Function Cancelprint: boolean;
+    function GetHeadHeight: integer;
   Published
     Property ReportFile: TFilename Read FFileName Write SetRptFileName;
     Property AddSpace: boolean Read FAddSpace Write SetAddSpace;
@@ -1000,26 +1002,39 @@ begin
    H := H + LineList.TotalHeight;
    Result := LineList;
 end;
-function TReportRunTime.HeaderHeight:integer;
+function TReportRunTime.GetHeadHeight:integer;
+var
+   i:integer;
+begin
+   result := 0 ;
+   i := 0;
+   while (not FlineList[i].IsDetailLine) and (i < FLineList.Count) do
+   begin
+     inc(result,FlineList[i].LineHeight);
+     inc(i);
+   end;
+end;
+function TReportRunTime.GetHeadHeight1:integer;
 var
   LineList:TLineList;
   i,j:integer;
   ThisLine, Line: TReportLine;
-  ThisCell, NewCell: TReportCell;
   function Fill:TLineList;
-  var i,j:Integer;
+  var
+    i:Integer;
   begin
      LineList := TLineList.Create(self);
      try
-       For i := 0 To FlineList.Count - 1 Do
+       For i := 0 To FLineList.Count - 1 Do
        Begin
-        ThisLine := TReportLine(FlineList[i]);
+        ThisLine := FlineList[i];
         if Not ThisLine.IsDetailLine then
         begin
           Line := TReportLine.Create;
           LineList.Add(Line);
           CloneLine(ThisLine,Line);
-        end;
+        end else
+          break;
        End;
      finally
        result :=   LineList ;
@@ -1027,12 +1042,9 @@ var
   end;
 begin
    LineList := Fill;
-   try
-     Result := LineList.TotalHeight;
-   finally
-     LineList.Free;
-   end;
+   Result := LineList.TotalHeight;
 end;
+
 
 function TReportRunTime.GetHasDataPosition(var HasDataNo,cellIndex:integer):Boolean;
 Var

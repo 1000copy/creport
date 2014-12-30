@@ -1616,9 +1616,57 @@ begin
 end;
 
 procedure TReportRunTimeTest.HeadHeightMustEqualsFillHeadListsHeight;
+var H,i,j,height:integer;
+    strFileDir:string;
+    CellFont: TLogFont;
+    cf: TFont;
+    R:TReportRunTime;
+    t1 : TClientDataset;
+    F : TStringField;
+    list:TList;
+
 begin
-  // 再写一个单纯的GetheadHeight，替代FillHeadList ,但是不管何时，必须保证两者获得的Height相等。
+  try
+      R:=TReportRunTime.Create(Application.MainForm);
+      R.Visible := False;
+      R.ClearDataSet;
+      t1 := TClientDataset.Create(nil);
+      t1.FieldDefs.Add('f1',ftString,20,true);
+      t1.FieldDefs.Add('f2',ftString,20,true);
+      t1.CreateDataSet;
+      R.SetDataSet('t1',t1);
+      t1.Open;
+      for I:= 0 to 100 do
+        t1.AppendRecord([I,(cos(I)*1000)]);
+      strFileDir := ExtractFileDir(Application.ExeName);
+      with  R do
+      begin
+        SetWndSize(PAGEWIDTH,PAGEHEIGHT);
+        NewTable(2 ,4);
+        Lines[0].Select;  
+        CombineCell;
+        Lines[0].LineHeight := 2*HEADERHEIGHT;
+        for j:=0 to t1.FieldDefs.Count -1  do
+        begin
+           Cells[1,j].CellText := t1.FieldDefs[j].Name;
+           Cells[2,j].CellText := '#T1.'+t1.FieldDefs[j].Name;
+        end;
+        Cells[3,0].CellText := 'Footer..';
+        SaveToFile(strFileDir+'\'+'xxx.ept');
+        ResetContent;
+      end;
+      R.ReportFile:=strFileDir+'\'+'xxx.ept';
+      R.PrintPreview(true);
+      h :=0;
+      R.FillHeadList(H);
+      CheckEquals(H,R.GetHeadHeight);
+    finally
+      T1.free;
+    end;
 end;
+//begin
+//  // 再写一个单纯的GetheadHeight，替代FillHeadList ,但是不管何时，必须保证两者获得的Height相等。
+//end;
 
 initialization
   RegisterTests('Report',[
