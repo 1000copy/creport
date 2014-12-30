@@ -156,12 +156,16 @@ Var
   FileName: String;
 Var
   tempDir: String;
+  procedure EnsureTempDirExist;
+  begin
+    tempDir := Format('%s\temp',[os.ExeDir]);
+      If Not DirectoryExists(tempDir) Then
+        MkDir(tempDir);
+  end;
 begin
   REPmessform.Label1.Caption := inttostr(PageNumber);
-  tempDir := Format('%s\temp',[os.ExeDir]);
-  If Not DirectoryExists(tempDir) Then
-    MkDir(tempDir);
-  FileName := Format('%s\%d.tmp',[tempDir ,PageNumber]);
+  EnsureTempDirExist;
+  FileName := osservice.PageFileName(PageNumber);
   If FileExists(FileName) Then
     DeleteFile(FileName);
   result := FileName;
@@ -170,28 +174,24 @@ end;
 // todo: Sum Lines 's @t1.lb why not render ?
 function TReportRunTime.RenderText(ThisCell:TReportCell;PageNumber, Fpageall: Integer):String;
 var
-  celltext : String;
+  R : String;
 
 begin
-  If  ThisCell.IsPageNumFormula Then 
-    celltext :=Format('第%d页',[PageNumber])
+  If  ThisCell.IsPageNumFormula Then
+    R :=Format('第%d页',[PageNumber])
   Else If ThisCell.IsPageNumFormula1  Then
-    celltext :=Format('第%d/%d页',[PageNumber,FPageAll])
+    R :=Format('第%d/%d页',[PageNumber,FPageAll])
   Else If ThisCell.IsPageNumFormula2 Then 
-    celltext :=Format('第%d-%d页',[PageNumber,FPageAll])
+    R :=Format('第%d-%d页',[PageNumber,FPageAll])
   Else If ThisCell.IsSumPageFormula Then
-  Begin
-    celltext := trim(setSumpageYg(thiscell.FCellDispformat,ThisCell.FCellText));
-  End
+    R := setSumpageYg(thiscell.FCellDispformat,ThisCell.FCellText)
   Else If ThisCell.IsSumAllFormula  Then
-  Begin
-      celltext := setSumAllYg(thiscell.FCellDispformat,ThisCell.FCellText);
-  End else If ThisCell.IsHeadField or thiscell.isDetailField  Then
-  Begin
-      celltext := GetValue(ThisCell);
-  End else
-      celltext := ThisCell.FCellText;
-  Result := celltext;
+    R := setSumAllYg(thiscell.FCellDispformat,ThisCell.FCellText)
+  else If ThisCell.IsHeadField or thiscell.isDetailField  Then
+    R := GetValue(ThisCell)
+  else
+    R := ThisCell.FCellText;
+  Result := R;
 end;
 
 function TReportRunTime.GetValue(ThisCell:TReportCell):String;
@@ -1343,7 +1343,7 @@ Var
 Begin
   If Length(strVarName) <= 0 Then
     Exit;
-  //TempString:='';
+  // only [a-z] keep here 
   For I := 1 To Length(strVarName) Do
   Begin
     If (strVarName[I] <= 'z') Or (strVarName[I] >= 'A') Then
@@ -1352,7 +1352,7 @@ Begin
 
   TempString := UpperCase(TempString);
   bFind := False;
-
+//  FVarList.FindKey(strVarName)
   For I := 0 To FVarList.Count - 1 Do
   Begin
     ThisItem := TVarTableItem(FVarList[I]);
@@ -1362,7 +1362,7 @@ Begin
       ThisItem.strVarValue := strVarValue;
     End;
   End;
-
+//  FVarList.New
   If Not bFind Then
   Begin
     TempItem := TVarTableItem.Create;
@@ -1443,12 +1443,11 @@ Begin
   ReportFile := reportfile;
   i := DoPageCount;
   REPmessform.show;
-  PreparePrintk( i);
+  PreparePrintk(i);
   REPmessform.Close;
   PreviewForm.PageCount := FPageCount;
-  PreviewForm.StatusBar1.Panels[0].Text :=
-   Format(cc.PageFormat,[PreviewForm.CurrentPage,PreviewForm.PageCount]) ;
 
+  PreviewForm.Status := Format(cc.PageFormat,[PreviewForm.CurrentPage,PreviewForm.PageCount]);
 End;
 Procedure Register;
 Begin
@@ -1468,12 +1467,12 @@ end;
 procedure TSummer.Acc(j: integer; value: real);
 begin
    SumPage[j] := SumPage[j] + value;
-   SumAll[j] :=   SumAll[j] + value;
+   SumAll[j]  := SumAll[j] + value;
 end;
 
 function TSummer.GetSumAll(i: integer): Real;
 begin
-    result := SumALL[i];
+   result := SumALL[i];
 end;
 
 function TSummer.GetSumPage(i: integer): Real;
@@ -1497,10 +1496,8 @@ procedure TSummer.ResetSumPage;
 var n :integer;
 begin
   For n := 0 To 40 Do
-        SumPage[n] := 0;
+    SumPage[n] := 0;
 end;
-
- 
 
 
 end.

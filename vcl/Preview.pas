@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  ReportControl, ExtCtrls, Buttons, StdCtrls, Spin, ComCtrls,ReportRunTime;
+  ReportControl, ExtCtrls, Buttons, StdCtrls, Spin, ComCtrls,ReportRunTime,osservice;
 
 type
   TPreviewForm = class(TForm)
@@ -57,6 +57,7 @@ type
     procedure PrevPage;
     procedure ReloadPageFile(CurrentPage: Integer);
     procedure GoPage(CurrentPage: Integer);
+    procedure SetStatus(const Value: String);
     { Private declarations }
   public
     { Public declarations }
@@ -68,6 +69,7 @@ type
     procedure PrintFile(strFileName: string);
     procedure SetPreviewMode(bPreview: Boolean);
     function RR:TReportRuntime;
+    property Status :String write SetStatus;
   end;
 
 var
@@ -166,8 +168,8 @@ begin
   strFileDir := ExtractFileDir(Application.ExeName);
   if copy(strfiledir, length(strfiledir), 1) <> '\' then strFileDir := strFileDir + '\';
 
-  if FileExists(strFileDir + 'Temp\1.tmp') then
-    RC.LoadFromFile(strFileDir + 'Temp\1.tmp');
+  if FileExists( osservice.PageFileName(1)) then
+    RC.LoadFromFile(osservice.PageFileName(1));
 
   StatusBar1.Panels[0].Text :='µÚ'+IntToStr(CurrentPage)+'£¯' +IntToStr(PageCount) +  'Ò³';
 
@@ -306,12 +308,9 @@ begin
   RuleApply  ;
   nPrevScale := RC.ReportScale;
 
-  StatusBar1.Panels[0].Text := format('µÚ%d/%dÒ³',[CurrentPage,PageCount]);
-
+  Status  := format('µÚ%d/%dÒ³',[CurrentPage,PageCount]);
   LockWindowUpdate(Handle);
-
   ReloadPageFile(CurrentPage);
-
   RC.ReportScale := nPrevScale;
   LockWindowUpdate(0);
   RuleApply ;
@@ -320,8 +319,14 @@ end;
 procedure TPreviewForm.ReloadPageFile(CurrentPage:Integer);
 begin
   RC.LoadFromFile(
-    Format('%s\Temp\%d.tmp',[ ExtractFileDir(Application.ExeName),CurrentPage])
+    osservice.PageFileName(CurrentPage)
+
   );
+end;
+
+procedure TPreviewForm.SetStatus(const Value: String);
+begin
+    StatusBar1.Panels[0].Text := Value;
 end;
 
 end.

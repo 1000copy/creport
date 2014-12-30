@@ -24,6 +24,7 @@ type
   TReportRunTimeTest = class(TTestCase)
   private
   published
+    procedure VarList;
     procedure HeightHowtoConsumed;
     procedure Rita;
   end;
@@ -903,7 +904,7 @@ var s,b,Filename : string;
 begin
     form := TCreportForm.InitReport ;
     try
-      R := form.ReportControl1;
+      R := form.RC;
       r.SetWndSize(1058,748);
       r.NewTable(2 ,3);
       // 垂直合并后，Cell并不减少
@@ -927,7 +928,7 @@ var s,b,Filename : string;
 begin
     form := TCreportForm.InitReport ;
     try
-      R := form.ReportControl1;
+      R := form.RC;
       r.SetWndSize(1058,748);
       r.NewTable(2 ,3);
       // 垂直合并后，Cell并不减少
@@ -961,7 +962,7 @@ Var
 begin
     form := TCreportForm.InitReport ;
 
-      R := form.ReportControl1;
+      R := form.RC;
       r.SetWndSize(1058,748);
       r.NewTable(2 ,3);
       // 垂直合并后，Cell并不减少
@@ -1044,7 +1045,7 @@ var s,b,Filename : string;
 begin
     form := TCreportForm.InitReport ;
     try
-      R := form.ReportControl1;
+      R := form.RC;
       r.SetWndSize(1058,748);
       r.NewTable(2 ,3);
       // 垂直合并后，Cell并不减少
@@ -1069,7 +1070,7 @@ var s,b,Filename : string;
 begin
     form := TCreportForm.InitReport ;
     try
-      R := form.ReportControl1;
+      R := form.RC;
       r.SetWndSize(1058,748);
       r.NewTable(2 ,3);
       r.Cells[0,0].Select;
@@ -1098,7 +1099,7 @@ var s,b,Filename : string;
 begin
     form := TCreportForm.InitReport ;
     try
-      R := form.ReportControl1;
+      R := form.RC;
       r.SetWndSize(1058,748);
       r.NewTable(2 ,2);
       r.Cells[0,1].Select;
@@ -1119,7 +1120,7 @@ var s,b,Filename : string;
 begin
     form := TCreportForm.InitReport ;
     try
-      R := form.ReportControl1;
+      R := form.RC;
       r.SetWndSize(1058,748);
       r.NewTable(2 ,2);
       // 验证：UpdateLine做的事情，是否都那么必要？
@@ -1163,7 +1164,7 @@ var s,b,Filename : string;
 begin
     form := TCreportForm.InitReport ;
     try
-      R := form.ReportControl1;
+      R := form.RC;
       r.SetWndSize(1058,748);
       r.NewTable(2 ,2);
       // 验证：UpdateLine做的事情，是否都那么必要？
@@ -1579,6 +1580,40 @@ begin
       T1.free;
     end;
 end;
+
+ procedure TReportRunTimeTest.VarList;
+var i,j,height:integer;
+    strFileDir:string;
+    CellFont: TLogFont;
+    cf: TFont;
+    R:TReportRunTime;
+    t1 : TClientDataset;
+    F : TStringField;
+    list:TList;
+begin
+  try
+      R:=TReportRunTime.Create(Application.MainForm);
+      R.Visible := False;
+      R.ClearDataSet;
+      strFileDir := ExtractFileDir(Application.ExeName);
+      with  R do
+      begin
+        SetWndSize(PAGEWIDTH,PAGEHEIGHT);
+        NewTable(2 ,4);
+        Cells[3,0].CellText := '`HEAD';
+        Setvarvalue('HEAD','1');
+        SaveToFile(strFileDir+'\'+'xxx.ept');
+        ResetContent;
+      end;
+      R.ReportFile:=strFileDir+'\'+'xxx.ept';
+      R.PrintPreview(true);    
+      CheckEquals(5,R.DoPageCount);
+    finally
+      T1.free;
+    end;
+end;
+
+
 
 initialization
   RegisterTests('Report',[
