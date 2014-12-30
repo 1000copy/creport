@@ -1133,7 +1133,6 @@ begin
     HootLineList.Free;
   end;
 end;
-
 //将有合计的行(`SumAll)存入一个列表中
 function TReportRunTime.FillSumList(var nSumAllHeight:integer ):TLineList;
 Var
@@ -1400,7 +1399,7 @@ Begin
     Begin
       nHandHeight := GetHeadHeight;
       nHootHeight := FooterHeight ;
-      FillSumList(nSumAllHeight);
+      nSumAllHeight := SumHeight;
       Dataset := GetDataSetFromCell(HasDataNo,CellIndex);
       RowCount := Dataset.RecordCount;
       Dataset.First;
