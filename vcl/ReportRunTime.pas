@@ -1389,7 +1389,7 @@ End;
 Function TReportRunTime.DoPageCount:integer;
 Var
   CellIndex,I , RowCount:Integer;
-Begin   
+Begin
   try
     nHandHeight := 0;
     nHootHeight := 0;
@@ -1398,8 +1398,8 @@ Begin
     GetHasDataPosition(HasDataNo,CellIndex) ;
     If HasDataNo <> -1 Then
     Begin
-      FillHeadList(nHandHeight);
-      FillFootList(nHootHeight);
+      nHandHeight := GetHeadHeight;
+      nHootHeight := FooterHeight ;
       FillSumList(nSumAllHeight);
       Dataset := GetDataSetFromCell(HasDataNo,CellIndex);
       RowCount := Dataset.RecordCount;
