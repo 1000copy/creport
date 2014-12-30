@@ -36,15 +36,13 @@ type
 
     function PageMinHeight: Integer;
     //function HeaderHeight: integer;
-    function FooterHeight: integer;
-    function SumHeight:integer;
+    function FooterHeight(HasDataNo:integer):integer;
+    function SumHeight(HasDataNo:integer):integer;
     function ExpandLine(var HasDataNo, ndataHeight: integer): TReportLine;
     function RenderCellText(NewCell,ThisCell:TReportCell):String;
     function IsDataField(s: String): Boolean;
     function GetValue(ThisCell: TReportCell): String;
-    function GetHeadHeight1: integer;
-    function FooterHeight1: integer;
-    function SumHeight1: Integer;
+    function ExpandDataHeight(HasDataNo:integer): integer;
 
   public
     FFileName: Tfilename;
@@ -1001,7 +999,7 @@ var
   end;
 begin
    LineList := Fill;
-   H := H + LineList.TotalHeight;
+   H := LineList.TotalHeight;
    Result := LineList;
 end;
 function TReportRunTime.GetHeadHeight:integer;
@@ -1080,13 +1078,13 @@ begin
   End;
   result := HootLineList;
 end;
-function TReportRunTime.FooterHeight:integer;
+function TReportRunTime.FooterHeight(HasDataNo:integer):integer;
 var
    i:integer;
 begin
    result := 0 ;
    i := HasDataNo + 1;
-   while (not FlineList[i].IsSumAllLine) and (i < FLineList.Count) do
+   while  (i < FLineList.Count) and  (not FlineList[i].IsSumAllLine) do
    begin
      inc(result,FlineList[i].LineHeight);
      inc(i);
@@ -1124,7 +1122,7 @@ begin
   End;
   result :=  sumAllList;
 end ;
-function TReportRunTime.SumHeight:integer;
+function TReportRunTime.SumHeight(HasDataNo:integer):integer;
 var
    i:integer;
 begin
@@ -1200,6 +1198,13 @@ begin
   TempLine.UpdateLineHeight;
   ndataHeight := ndataHeight + TempLine.GetLineHeight;
   result := TempLine;
+end;
+function TReportRunTime.ExpandDataHeight(HasDataNo:integer):integer;
+var
+  thisLine : TReportLine;
+begin
+  ThisLine := TReportLine(FlineList[HasDataNo]);
+  result := ThisLine.GetLineHeight;
 end;
 function TReportRunTime.RenderLineHeight(HasDataNo:integer):Integer;
 var
@@ -1338,7 +1343,7 @@ Begin
 End;
 Function TReportRunTime.DoPageCount:integer;
 Var
-  CellIndex,I , RowCount:Integer;
+  CellIndex,I :Integer;
 Begin
   try
     nHandHeight := 0;
@@ -1349,15 +1354,15 @@ Begin
     If HasDataNo <> -1 Then
     Begin
       nHandHeight := GetHeadHeight;
-      nHootHeight := FooterHeight ;
-      nSumAllHeight := SumHeight;
+      nHootHeight := FooterHeight (HasDataNo);
+      nSumAllHeight := SumHeight(HasDataNo);
       Dataset := GetDataSetFromCell(HasDataNo,CellIndex);
-      RowCount := Dataset.RecordCount;
       Dataset.First;
       ndataHeight := 0;
       i := 0;
-      While (i < RowCount)  Do
+      While (i < Dataset.RecordCount)  Do
       Begin
+        //inc(ndataHeight ,ExpandDataHeight(HasDataNo)) ;
         ExpandLine(HasDataNo,ndataHeight);
         If isPageFull  Then
         Begin

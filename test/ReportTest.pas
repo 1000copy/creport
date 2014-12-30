@@ -1611,20 +1611,62 @@ begin
 end;
 
 procedure TReportRunTimeTest.NonRegularDetailLine;
-begin
-  // 如果一个detailLine 跨越了两行，会怎样？
-end;
-
-procedure TReportRunTimeTest.HeadHeightMustEqualsFillHeadListsHeight;
-var H,i,j,height:integer;
+var H,i,j:integer;
     strFileDir:string;
-    CellFont: TLogFont;
-    cf: TFont;
     R:TReportRunTime;
     t1 : TClientDataset;
-    F : TStringField;
-    list:TList;
+begin
+  try
+    R:=TReportRunTime.Create(Application.MainForm);
+    R.Visible := False;
+    R.ClearDataSet;
+    t1 := TClientDataset.Create(nil);
+    t1.FieldDefs.Add('f1',ftString,20,true);
+    t1.FieldDefs.Add('f2',ftString,20,true);
+    t1.CreateDataSet;
+    R.SetDataSet('t1',t1);
+    t1.Open;
+    for I:= 0 to 100 do
+      t1.AppendRecord([I,(cos(I)*1000)]);
+    strFileDir := ExtractFileDir(Application.ExeName)+'\'+'xxx.ept';
+    with  R do
+    begin
+      SetWndSize(PAGEWIDTH,PAGEHEIGHT);
+      NewTable(2 ,5);
+      Lines[0].Select;
+      CombineCell;
+      Lines[0].LineHeight := 2*HEADERHEIGHT;
+      for j:=0 to t1.FieldDefs.Count -1  do
+      begin
+         Cells[1,j].CellText := t1.FieldDefs[j].Name;
+         Cells[2,j].CellText := '#T1.'+t1.FieldDefs[j].Name;
+      end;
+      R.ClearSelect;
+      Cells[2,0].Select;
+      Cells[3,0].Select;
+      CombineCell;
+      Cells[4,0].CellText := 'Footer..';
+      SaveToFile(strFileDir);
+      ResetContent;
+    end;
+    R.ReportFile:=strFileDir;
+    R.FillHeadList(H);
+//      R.EditReport;
+    R.PrintPreview(True);
+    CheckEquals(H,R.GetHeadHeight);
+  finally
+    T1.free;
+  end;
+end;
+//begin
+//  // 如果一个detailLine 跨越了两行，会怎样？:会取最矮的行 ！
+//end;
 
+procedure TReportRunTimeTest.HeadHeightMustEqualsFillHeadListsHeight;
+var H,i,j:integer;
+    strFileDir:string;
+    R:TReportRunTime;
+    t1 : TClientDataset;
 begin
   try
       R:=TReportRunTime.Create(Application.MainForm);
@@ -1638,12 +1680,12 @@ begin
       t1.Open;
       for I:= 0 to 100 do
         t1.AppendRecord([I,(cos(I)*1000)]);
-      strFileDir := ExtractFileDir(Application.ExeName);
+      strFileDir := ExtractFileDir(Application.ExeName)+'\'+'xxx.ept';
       with  R do
       begin
         SetWndSize(PAGEWIDTH,PAGEHEIGHT);
-        NewTable(2 ,4);
-        Lines[0].Select;  
+        NewTable(2 ,5);
+        Lines[0].Select;
         CombineCell;
         Lines[0].LineHeight := 2*HEADERHEIGHT;
         for j:=0 to t1.FieldDefs.Count -1  do
@@ -1651,14 +1693,13 @@ begin
            Cells[1,j].CellText := t1.FieldDefs[j].Name;
            Cells[2,j].CellText := '#T1.'+t1.FieldDefs[j].Name;
         end;
-        Cells[3,0].CellText := 'Footer..';
-        SaveToFile(strFileDir+'\'+'xxx.ept');
+        Cells[4,0].CellText := 'Footer..';
+        SaveToFile(strFileDir);
         ResetContent;
       end;
-      R.ReportFile:=strFileDir+'\'+'xxx.ept';
-      R.PrintPreview(true);
-      h :=0;
+      R.ReportFile:=strFileDir;
       R.FillHeadList(H);
+      //R.EditReport;
       CheckEquals(H,R.GetHeadHeight);
     finally
       T1.free;
