@@ -25,6 +25,8 @@ type
   TReportRunTimeTest = class(TTestCase)
   private
   published
+    procedure HeadHeightMustEqualsFillHeadListsHeight ;
+    procedure NonRegularDetailLine;
     procedure VarList;
     procedure HeightHowtoConsumed;
     procedure Rita;
@@ -1606,6 +1608,16 @@ begin
   finally
      R.Free;
   end;
+end;
+
+procedure TReportRunTimeTest.NonRegularDetailLine;
+begin
+  // 如果一个detailLine 跨越了两行，会怎样？
+end;
+
+procedure TReportRunTimeTest.HeadHeightMustEqualsFillHeadListsHeight;
+begin
+  // 再写一个单纯的GetheadHeight，替代FillHeadList ,但是不管何时，必须保证两者获得的Height相等。
 end;
 
 initialization
