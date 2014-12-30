@@ -1362,8 +1362,9 @@ Begin
       i := 0;
       While (i < Dataset.RecordCount)  Do
       Begin
-        inc(ndataHeight ,ExpandDataHeight(HasDataNo)) ;
-        //ExpandLine(HasDataNo,ndataHeight);
+        
+//        inc(ndataHeight ,ExpandDataHeight(HasDataNo)) ;
+        ExpandLine(HasDataNo,ndataHeight);
         If isPageFull  Then
         Begin
           inc(FPagecount);
