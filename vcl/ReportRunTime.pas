@@ -43,6 +43,8 @@ type
     function IsDataField(s: String): Boolean;
     function GetValue(ThisCell: TReportCell): String;
     function GetHeadHeight1: integer;
+    function FooterHeight1: integer;
+    function SumHeight1: Integer;
 
   public
     FFileName: Tfilename;
@@ -1108,6 +1110,18 @@ begin
   result := HootLineList;
 end;
 function TReportRunTime.FooterHeight:integer;
+var
+   i:integer;
+begin
+   result := 0 ;
+   i := HasDataNo + 1;
+   while (not FlineList[i].IsSumAllLine) and (i < FLineList.Count) do
+   begin
+     inc(result,FlineList[i].LineHeight);
+     inc(i);
+   end;
+end;
+function TReportRunTime.FooterHeight1:integer;
 Var
   I, J, n,  TempDataSetCount:Integer;
   HootLineList: TLineList;
@@ -1164,7 +1178,19 @@ begin
   End;
   result :=  sumAllList;
 end ;
-function TReportRunTime.SumHeight:Integer;
+function TReportRunTime.SumHeight:integer;
+var
+   i:integer;
+begin
+   result := 0 ;
+   i := HasDataNo + 1;
+   while  (i < FLineList.Count) do
+   begin
+     inc(result,FlineList[i].LineHeight);
+     inc(i);
+   end;
+end;
+function TReportRunTime.SumHeight1:Integer;
 Var
   I, J, n,  TempDataSetCount:Integer;
   HandLineList, datalinelist, HootLineList, sumAllList: TLineList;
