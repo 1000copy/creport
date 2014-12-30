@@ -46,7 +46,7 @@ type
     FAddSpace: boolean;
     FSetData: TstringList;
     // 保存变量的名字和值的对照表
-    FVarList: TList;
+    FVarList: TVarList;
     //保存要打印的某一页的行信息
     FPrintLineList: TList;
     // 保存每一页中合并后单元格前后的指针
@@ -110,7 +110,8 @@ type
     Procedure SetVarValue(strVarName, strVarValue: String);
     Property allprint: boolean Read Fallprint Write Fallprint Default true;
     Procedure PrintPreview(bPreviewMode: Boolean);
-    function  EditReport (FileName:String):TReportControl;
+    function  EditReport :TReportControl;overload;
+    function  EditReport (FileName:String):TReportControl;overload;
     Function shpreview: boolean;        //重新生成预览有关文件
     Function PrintSET(prfile: String): boolean; //纸张及边距设置，lzl
     Procedure updatepage;               //
@@ -254,7 +255,7 @@ Begin
   fallprint := true;                   
   FSetData := Tstringlist.Create;
   FNamedDatasets := TList.Create;
-  FVarList := TList.Create;
+  FVarList := TVarList.Create;
   FPrintLineList := TList.Create;
   FDRMap := TDRMappings.Create;              
   repmessForm := TrepmessForm.Create(Self);
@@ -1048,7 +1049,7 @@ Begin
 			  REPmessform.show;
 			  i := DoPageCount;
 			  PreparePrintk( i);
-        REPmessform.Close;
+        REPmessform.Hide;
 			End;
 			FromPage := 1;
 			ToPage  := FPageCount;
@@ -1150,7 +1151,7 @@ Begin
       i := DoPageCount;
       REPmessform.show;
       PreparePrintk( i);
-      REPmessform.Close;
+      REPmessform.Hide;
       PreviewForm := TPreviewForm.Create(Self);
       PreviewForm.SetPreviewMode(bPreviewMode);
       PreviewForm.PageCount := FPageCount;
@@ -1172,7 +1173,7 @@ Begin
   Except
     MessageDlg('形成报表时发生错误，请检查各项参数与模板设置等是否正确',
       mtInformation, [mbOk], 0);
-    REPmessform.Close;
+    REPmessform.Hide;
     For I := FNamedDatasets.Count - 1 Downto 0 Do  //删除数据库表名与模板CELL的对照列表,否则每次调用都要增加列表项
       TDataSetItem(FNamedDatasets[I]).Free;
     FNamedDatasets.clear;
@@ -1193,7 +1194,7 @@ Begin
     i := DoPageCount;
     REPmessform.show;                     
     PreparePrintk( i);
-    REPmessform.Close;
+    REPmessform.Hide;
     PreviewForm.PageCount := FPageCount;
     PreviewForm.StatusBar1.Panels[0].Text := '第' +
       IntToStr(PreviewForm.CurrentPage) + '／' + IntToStr(PreviewForm.PageCount)
@@ -1335,41 +1336,24 @@ Begin
 End;
 
 Procedure TReportRunTime.SetVarValue(strVarName, strVarValue: String);
+  function KeepATOZOnly(a:string):string;
+  Var
+    I: Integer;
+  begin
+    Result := '';
+    For I := 1 To Length(a) Do
+    Begin
+      If (a[I] <= 'z') Or (a[I] >= 'A') Then
+        Result := Result + a[I];
+    End;
+  end;
 Var
-  I: Integer;
-  TempString: String;
-  bFind: Boolean;
-  TempItem, ThisItem: TVarTableItem;
+  ThisItem: TVarTableItem;
 Begin
   If Length(strVarName) <= 0 Then
     Exit;
-  // only [a-z] keep here 
-  For I := 1 To Length(strVarName) Do
-  Begin
-    If (strVarName[I] <= 'z') Or (strVarName[I] >= 'A') Then
-      TempString := TempString + strVarName[I];
-  End;
-
-  TempString := UpperCase(TempString);
-  bFind := False;
-//  FVarList.FindKey(strVarName)
-  For I := 0 To FVarList.Count - 1 Do
-  Begin
-    ThisItem := TVarTableItem(FVarList[I]);
-    If ThisItem.strVarName = TempString Then
-    Begin
-      bFind := True;
-      ThisItem.strVarValue := strVarValue;
-    End;
-  End;
-//  FVarList.New
-  If Not bFind Then
-  Begin
-    TempItem := TVarTableItem.Create;
-    TempItem.strVarName := TempString;
-    TempItem.strVarValue := strVarValue;
-    FVarList.Add(TempItem);
-  End;
+  ThisItem := FVarList.FindKeyOrNew(UpperCase(KeepATOZOnly(strVarName)));
+  ThisItem.strVarValue := strVarValue;
 End;
 
 
@@ -1431,7 +1415,10 @@ Begin
   FAddSpace := Value;
 End;
 
-
+function TReportRunTime.EditReport:TReportControl;
+begin
+  result := TCreportform.EditReport(ReportFile);
+end;
 function TReportRunTime.EditReport(FileName:String):TReportControl;
 begin
   result := TCreportform.EditReport(FileName);
@@ -1444,25 +1431,20 @@ Begin
   i := DoPageCount;
   REPmessform.show;
   PreparePrintk(i);
-  REPmessform.Close;
+  REPmessform.Hide;
   PreviewForm.PageCount := FPageCount;
 
   PreviewForm.Status := Format(cc.PageFormat,[PreviewForm.CurrentPage,PreviewForm.PageCount]);
 End;
 Procedure Register;
 Begin
-
   RegisterComponents('CReport', [TReportRunTime]);
-
 End;
-{ RenderException }
 
 constructor RenderException.Create;
 begin
   self.message := cc.RenderException;
 end;
-
-{ TSummer }
 
 procedure TSummer.Acc(j: integer; value: real);
 begin

@@ -6,6 +6,7 @@ uses
    Graphics,windows ,classes,SysUtils,Math,Forms;
 
 function  PageFileName(CurrentPage:Integer):string;
+function AppDir:String;
 type
   TBlueException = class(Exception);
   WindowsOS = class
@@ -308,7 +309,10 @@ begin
 end;
 function  PageFileName(CurrentPage:Integer):string;
 begin
- Result := Format('%s\Temp\%d.tmp',[ ExtractFileDir(Application.ExeName),CurrentPage]) ;
+ Result := Format('%s\Temp\%d.tmp',[ AppDir,CurrentPage]) ;
 end;
-
+function AppDir:String;
+begin
+   result := ExtractFileDir(Application.ExeName)+'\' ;
+end;
 end.

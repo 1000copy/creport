@@ -629,6 +629,11 @@ Type
     strVarName: String;
     strVarValue: String;
   End;
+  TVarList = class(TList)
+  private
+  public
+    function FindKeyOrNew(Key: String): TVarTableItem;
+  end;
   TMyRect = Class(TObject)
   Public
     Left: Integer;
@@ -4676,5 +4681,34 @@ begin
     Result := s.Slice(s.GoUntil(FromChar)+1);
     s.Free ;
 end;
+{ TVarList }
+
+
+function TVarList.FindKeyOrNew(Key: String): TVarTableItem;
+var
+  I :Integer;
+  ThisItem : TVarTableItem ;
+begin
+  Result := nil;
+  For I := 0 To Count - 1 Do
+  Begin
+    ThisItem := TVarTableItem(Items[I]);
+    If ThisItem.strVarName = Key Then
+    Begin
+      Result := ThisItem ;
+      break;
+    End;
+  End;
+  if Result = nil then
+  begin
+    ThisItem := TVarTableItem.Create;
+    ThisItem.strVarName := Key;
+    Add(ThisItem);
+    Result := ThisItem;
+  end;
+end;
+
+
+
 end.
 

@@ -1581,44 +1581,41 @@ begin
     end;
 end;
 
- procedure TReportRunTimeTest.VarList;
-var i,j,height:integer;
-    strFileDir:string;
-    CellFont: TLogFont;
-    cf: TFont;
+procedure TReportRunTimeTest.VarList;
+var
+    Key,Value,FileName:string;
     R:TReportRunTime;
-    t1 : TClientDataset;
-    F : TStringField;
-    list:TList;
 begin
+  Key := 'HEAD';
+  Value := '1-value';
   try
-      R:=TReportRunTime.Create(Application.MainForm);
-      R.Visible := False;
-      R.ClearDataSet;
-      strFileDir := ExtractFileDir(Application.ExeName);
-      with  R do
-      begin
-        SetWndSize(PAGEWIDTH,PAGEHEIGHT);
-        NewTable(2 ,4);
-        Cells[3,0].CellText := '`HEAD';
-        Setvarvalue('HEAD','1');
-        SaveToFile(strFileDir+'\'+'xxx.ept');
-        ResetContent;
-      end;
-      R.ReportFile:=strFileDir+'\'+'xxx.ept';
-      R.PrintPreview(true);    
-      CheckEquals(5,R.DoPageCount);
-    finally
-      T1.free;
+    R:=TReportRunTime.Create(Application.MainForm);
+    R.Visible := False;
+    R.ClearDataSet;
+    FileName :=osservice.AppDir+'xxx.ept';
+    with  R do
+    begin
+      SetWndSize(PAGEWIDTH,PAGEHEIGHT);
+      NewTable(2 ,4);
+      Cells[0,0].CellText := '`'+Key;
+      SetVarValue(Key,Value);
+      SaveToFile(FileName);
+      ResetContent;
     end;
+    R.ReportFile:=FileName;
+    R.PrintPreview(true);
+    CheckEquals(1,R.DoPageCount);
+    CheckEquals(Value,R.Cells[0,0].CellText);
+  finally
+     R.Free;
+  end;
 end;
-
-
 
 initialization
   RegisterTests('Report',[
-  TReportRuntimeTest.Suite,
-  TReportTest.Suite,
-  TReportUITest.Suite,
-  TCDSTest.Suite]);
+      TReportRuntimeTest.Suite,
+      TReportTest.Suite,
+      TReportUITest.Suite,
+      TCDSTest.Suite
+  ]);
 end.
