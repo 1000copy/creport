@@ -11,7 +11,6 @@ Procedure Register;
 
 type
    TSummer = class
-     //最多40列单元格,否则统计汇总时要出错. 拟换为动态的
      SumPage, SumAll: Array[0..40] Of real;
    public
      procedure Acc(j:integer;value:real);
@@ -45,21 +44,15 @@ type
     function GetValue(ThisCell: TReportCell): String;
 
   public
-    //小计和合计用,最多40列单元格,否则统计汇总时要出错.
     FFileName: Tfilename;
     FAddSpace: boolean;
     FSetData: TstringList;
-    // 保存变量的名字和值的对照表
     FVarList: TVarList;
-    //保存要打印的某一页的行信息
     FPrintLineList: TList;
-    // 保存每一页中合并后单元格前后的指针
     FDRMap: TDRMappings;
     FNamedDatasets: TDataList;
     FHeaderHeight: Integer;
-    //是否打印全部记录，默认为全部
     Fallprint: Boolean;
-    // 总页数
     FPageCount: Integer;
     nDataHeight, nHandHeight, nHootHeight, nSumAllHeight: Integer;
     Dataset: TDataset;
@@ -116,9 +109,9 @@ type
     Procedure PrintPreview(bPreviewMode: Boolean);
     function  EditReport :TReportControl;overload;
     function  EditReport (FileName:String):TReportControl;overload;
-    Function shpreview: boolean;        //重新生成预览有关文件
-    Function PrintSET(prfile: String): boolean; //纸张及边距设置，lzl
-    Procedure updatepage;               //
+    Function shpreview: boolean;
+    Function PrintSET(prfile: String): boolean; 
+    Procedure updatepage;           
     procedure PreparePrintk(FpageAll: integer);
     Procedure loadfile(value: tfilename);
     Procedure Print(IsDirectPrint: Boolean);
@@ -199,30 +192,7 @@ begin
   Result := R;
 end;
 
-function TReportRunTime.GetValue(ThisCell:TReportCell):String;
-var
-   cellText :string;
-   cf: CellField ;
-begin
-  CellText := ThisCell.FCellText;
-  cf:= CellField.Create(ThisCell.CellText,GetDataset(thisCell.CellText)) ;
-  try
-    If ThisCell.IsHeadField and (not cf.IsNullField) Then
-    Begin
-      CellText := cf.GetField().displaytext ;
-      If cf.isNumberField  Then
-      Begin
-        If ThisCell.CellDispformat <> '' Then
-            cellText := ThisCell.FormatValue(cf.DataValue());
-      End
-    End
-    Else If ThisCell.IsFormula Then
-        CellText := GetVarValue(thiscell.FCellText) ;
-    result := CellText;
-  finally
-    cf.Free;
-  end;
-end;
+
 Procedure TReportRunTime.SaveTempFile(FileName: String;PageNumber, Fpageall: Integer);
 begin
   SaveToFile(FPrintLineList,FileName,PageNumber,Fpageall);
@@ -334,10 +304,10 @@ Var
   bFlag: Boolean;
   s:StrSlice;
 Begin
-    If isDataField(strCellText) Then
-      Result := StrSlice.DoSlice(StrCellText,'.')
-    else
-      Result := '';
+  If isDataField(strCellText) Then
+    Result := StrSlice.DoSlice(StrCellText,'.')
+  else
+    Result := '';
 End;
 
 Procedure TReportRunTime.LoadReport;
@@ -361,34 +331,497 @@ Begin
     end;
 End;
 
-function TReportRunTime.GetHeaderHeight:Integer;
-var I,J,FHeaderHeight :Integer; ThisLine:TReportLine;bHasDataSet:boolean;  ThisCell :TReportCell;
-begin
-    FHeaderHeight := 0;
 
-  For I := 0 To FLineList.Count - 1 Do
-  Begin
-    ThisLine := TReportLine(FLineList[I]);
-    bHasDataSet := False;
-    For J := 0 To ThisLine.FCells.Count - 1 Do
-    Begin
-      ThisCell := TReportCell(ThisLine.FCells[J]);
-
-      If Length(ThisCell.FCellText) > 0 Then  //如果当前CELL有字符，判断是否有数据集
-      Begin
-        If ThisCell.FCellText[1] = '#' Then
-          bHasDataSet := True;
-      End;
-    End;
-    If Not bHasDataSet Then
-      FHeaderHeight := FHeaderHeight + ThisLine.LineHeight;
-  End;
-  result := FHeaderHeight;
-end;
 Procedure TReportRunTime.SetEmptyCell(NewCell, ThisCell:TReportCell);
 Begin
   setNewCell(true,NewCell,ThisCell);
 End;
+
+//  增加 ,完全重写的 PreparePrint,并增加了用空行补满一页 统计等功能
+//返回数用于在预览中确定代＃字头数据库是在模板的第几行
+function TReportRunTime.IsLastPageFull:Boolean ;
+begin
+  result := (FtopMargin + nHandHeight + nDataHeight + nSumAllHeight +
+          FBottomMargin) > height;
+end;
+function TReportRunTime.isPageFull:boolean;
+begin
+  result := (FtopMargin + nHandHeight + nDataHeight + nHootHeight + FBottomMargin >height);
+end;
+function TReportRunTime.PageMinHeight:Integer;
+begin
+  result := FtopMargin + nHandHeight + nHootHeight + FBottomMargin ;
+end;
+function TReportRunTime.HasEmptyRoomLastPage:Boolean;
+begin
+  result := FtopMargin + nHandHeight +
+      nDataHeight +
+      nSumAllHeight + FBottomMargin < height;
+end;
+
+function TReportRunTime.AppendList( l1, l2:TList):Boolean;var n :integer; begin
+    For n := 0 To l2.Count - 1 Do
+      l1.Add(l2[n]);
+    result := true;
+end;
+
+
+function TReportRunTime.GetDataSetFromCell(HasDataNo,CellIndex:Integer):TDataset;
+begin
+  result := GetDataSet(TReportCell(TReportLine(FlineList[HasDataNo]).FCells[CellIndex]).FCellText);
+end;
+
+function TReportRunTime.GetPrintRange(var A,Z:Integer):boolean;
+var
+  PrintDlg: TPrintDialog; I: Integer;
+begin
+  PrintDlg := TPrintDialog.Create(Self);
+  PrintDlg.MinPage := 1;
+  PrintDlg.MaxPage := FPageCount;
+  PrintDlg.FromPage := 1;
+  PrintDlg.ToPage := FPageCount;
+  PrintDlg.Options := [poPageNums];
+  If Not PrintDlg.Execute Then
+    Begin
+      result := false;
+    End
+  else begin
+    a := printdlg.frompage;
+    z := printdlg.topage;       
+    result := true;
+  end;
+  PrintDlg.Free;
+end;
+Procedure TReportRunTime.ClearDataset();
+Var
+  I: Integer;
+begin
+   For I := FNamedDatasets.Count - 1 Downto 0 Do
+    TDataSetItem(FNamedDatasets[I]).Free;
+   FNamedDatasets.clear;
+end;
+procedure TReportRunTime.PrintRange(Title:String;FromPage,ToPage:Integer);
+Var
+  I: Integer;
+begin
+			Printer.Title := Title;
+			Printer.BeginDoc;
+			For I := FromPage To ToPage Do
+			Begin
+			  LoadPage(I);
+			  PrintOnePage;
+			  If I < ToPage Then
+				Printer.NewPage;
+			End;
+			Printer.EndDoc;
+
+end;
+//IsDirectPrint  ：true , 代表是否直接打印 ,false 表示从预览UI中调用打印
+Procedure TReportRunTime.Print(IsDirectPrint: Boolean);
+Var
+  I: Integer;
+  strFileDir: TFileName;
+  frompage, topage: integer;
+Begin
+	try
+		Try
+			CheckError(printer.Printers.Count = 0 ,'未安装打印机');
+			// 爱上会展：金丝楠梳，宁德老寿眉，六安瓜片，太平猴魁，汝瓷 2014-11-7 茶博会
+			If IsDirectPrint Then
+			Begin
+			  REPmessform.show;
+			  i := DoPageCount;
+			  PreparePrintk( i);
+        REPmessform.Hide;
+			End;
+			FromPage := 1;
+			ToPage  := FPageCount;
+			if not GetPrintRange(frompage,topage) then exit;
+      PrintRange('C_Report',Frompage,ToPage);
+		Except
+		on E:Exception do
+		  MessageDlg(e.Message,mtInformation, [mbOk], 0);
+		End;
+	finally          
+     If IsDirectPrint  Then
+				DeleteAllTempFiles;
+	end;
+End;
+
+Procedure TReportRunTime.PrintOnePage;
+Var
+  hPrinterDC: HDC;
+  I, J: Integer;
+  ThisLine: TReportLine;
+  ThisCell: TReportCell;
+  PageSize: TSize;
+  Ltemprect: tRect;
+Begin
+  If FPrintLineList.Count <= 0 Then
+    Exit;
+
+  hPrinterDC := Printer.Handle;
+  SetMapMode(Printer.Handle, MM_ISOTROPIC);
+  PageSize.cx := Printer.PageWidth;
+  PageSize.cy := Printer.PageHeight;
+  SetWindowExtEx(Printer.Handle, Width, Height, @PageSize);
+  SetViewPortExtEx(Printer.Handle, Printer.PageWidth, Printer.PageHeight,
+    @PageSize);
+
+  For I := 0 To FPrintLineList.Count - 1 Do
+  Begin
+    ThisLine := TReportLine(FPrintLineList[I]);
+
+    For J := 0 To ThisLine.FCells.Count - 1 Do
+    Begin
+      ThisCell := TReportCell(ThisLine.FCells[J]);
+
+      If ThisCell.OwnerCell = Nil Then
+      Begin
+        LTempRect := ThisCell.FCellRect;
+        LTempRect.Left := ThisCell.FCellRect.Left + 3;
+        LTempRect.Top := ThisCell.FCellRect.Top + 3;
+        LTempRect.Right := ThisCell.FCellRect.Right - 3;
+        LTempRect.Bottom := ThisCell.FCellRect.Bottom - 3;
+        printer.Canvas.stretchdraw(LTempRect, ThisCell.fbmp);
+        ThisCell.PaintCell(hPrinterDC, True);
+      End;
+    End;
+  End;
+  // clear the temp data here
+  For I := FPrintLineList.Count - 1 Downto 0 Do
+  Begin
+    ThisLine := TReportLine(FPrintLineList[I]);
+    ThisLine.Free;
+  End;
+
+  FPrintLineList.Clear;
+
+  For I := FDRMap.Count - 1 Downto 0 Do
+    TDRMapping(FDRMap[I]).Free;
+
+  FDRMap.Clear;
+End;
+ //LCJ: 可直接或在预览中调用设置打印参数
+Function TReportRunTime.PrintSET(prfile: String): boolean;
+Begin
+  Application.CreateForm(TMarginForm, MarginForm);
+  MarginForm.filename.Caption := prfile;
+  Try
+    MarginForm.ShowModal;
+    result :=  MarginForm.okset ;
+  Finally
+    MarginForm.free;
+  End;
+End;
+
+Procedure TReportRunTime.PrintPreview(bPreviewMode: Boolean);
+Var
+  i: integer;
+Begin
+  try
+    Try
+      If printer.Printers.Count <= 0 Then
+        Application.Messagebox(cc.ErrorPrinterSetupRequired, '', MB_OK + MB_iconwarning)
+      Else
+      Begin
+        i := DoPageCount;
+        REPmessform.show;
+        PreparePrintk( i);
+        TPreviewForm.Action(ReportFile,FPageCount,bPreviewMode);
+      End;
+    Except
+      MessageDlg(cc.ErrorRendering, mtInformation, [mbOk], 0);
+    End;
+  finally
+    FNamedDatasets.FreeItems;
+    FNamedDatasets.clear;
+    DeleteAllTempFiles;
+    REPmessform.Hide;
+  end;
+End;
+
+Function TReportRunTime.shpreview: boolean;
+Var
+  i: integer;
+Begin
+  If PrintSET(reportfile)  Then
+  Begin
+    ReportFile := reportfile; 
+    i := DoPageCount;
+    REPmessform.show;                     
+    PreparePrintk( i);
+    REPmessform.Hide;
+    PreviewForm.PageCount := FPageCount;
+    PreviewForm.StatusBar1.Panels[0].Text := '第' +
+      IntToStr(PreviewForm.CurrentPage) + '／' + IntToStr(PreviewForm.PageCount)
+        +
+      '页';
+    result := true;
+  End
+  Else
+    result := false;
+End;
+
+Procedure TReportRunTime.SetDataset(strDatasetName: String; pDataSet: TDataSet);
+Var
+  TempItem: TDatasetItem;
+  dk, i: integer;
+Begin
+  TempItem := TDatasetItem.Create;
+  TempItem.pDataset := pDataSet;
+  TempItem.strName := UpperCase(strDataSetName);
+  FNamedDatasets.Add(TempItem);
+End;
+
+Procedure TReportRunTime.SetRptFileName(Const Value: TFilename);
+Begin
+  FFileName := Value;
+  If Value <> '' Then
+    LoadReport;
+End;
+
+
+Procedure TReportRunTime.UpdateLines;
+Begin
+  EachCell(EachCell_CalcHeight);
+  EachLine(EachLine_CalcLineHeight);
+  EachLineIndex(EachProc_UpdateIndex);
+  EachLineIndex(EachProc_UpdateLineTop);
+  EachLineIndex(EachProc_UpdateLineRect);
+End;
+
+Procedure TReportRunTime.UpdatePrintLines;
+Var
+  PrevRect, TempRect: TRect;
+  I, J: Integer;
+  ThisLine: TReportLine;
+  ThisCell: TReportCell;
+Begin
+  // 首先计算合并后的单元格
+  For I := 0 To FPrintLineList.Count - 1 Do
+  Begin
+    ThisLine := TReportLine(FPrintLineList[I]);
+
+    For J := 0 To ThisLine.FCells.Count - 1 Do
+    Begin
+      ThisCell := TReportCell(ThisLine.FCells[J]);
+
+      If ThisCell.FSlaveCells.Count > 0 Then
+        ThisCell.CalcHeight;
+    End;
+  End;
+
+  // 计算每行的高度
+  For I := 0 To FPrintLineList.Count - 1 Do
+  Begin
+    ThisLine := TReportLine(FPrintLineList[I]);
+    ThisLine.UpdateLineHeight;
+  End;
+
+  For I := 0 To FPrintLineList.Count - 1 Do
+  Begin
+    ThisLine := TReportLine(FPrintLineList[I]);
+
+    ThisLine.Index := I;
+
+    If I = 0 Then
+      ThisLine.LineTop := FTopMargin;
+    If I > 0 Then
+      ThisLine.LineTop := TReportLine(FPrintLineList[I - 1]).LineTop +
+        TReportLine(FPrintLineList[I - 1]).LineHeight;
+
+    PrevRect := ThisLine.PrevLineRect;
+    TempRect := ThisLine.LineRect;
+  End;
+End;
+
+
+Procedure treportruntime.resetself;
+Begin
+  FNamedDatasets.clear;
+  fvarlist.clear;
+  flinelist.clear;
+  fprintlinelist.clear;
+  FDRMap.clear;
+End;
+
+Function TReportRunTime.GetVarValue(strVarName: String): String;
+begin
+  Result := FVarList.GetVarValue(StrVarName);
+end;
+
+
+Procedure TReportRunTime.SetVarValue(strVarName, strVarValue: String);
+Var
+  ThisItem: TVarTableItem;
+Begin
+  If Length(strVarName) <= 0 Then
+    Exit;
+  ThisItem := FVarList.FindKeyOrNew(strVarName);
+  ThisItem.strVarValue := strVarValue;
+End;
+
+
+Procedure TReportRunTime.loadfile(value: tfilename);
+Begin
+  FFileName := Value;
+  If Value <> '' Then
+    LoadReport;
+End;
+
+Function treportruntime.cancelprint: boolean;
+Begin
+  Try
+    If printer.printing Then
+      printer.abort;
+    result := true;
+  Except
+    result := false;
+  End;
+End;
+
+
+
+Function TReportRunTime.SetSumAllYg(fm, ss: String): String; //add  
+var
+  Value,iCode :Integer;
+  slice :StrSlice;
+  s : string;
+Begin
+  slice := StrSlice.Create(ss);
+  s := slice.Slice(slice.GoUntil('(')+1,slice.GoUntil(')')-1);
+  val(s, Value, iCode);
+  if iCode = 0 then begin
+   Value := strtoint(s) ;
+    Result := FormatFloat(fm,FSummer.GetSumAll(Value));
+  end else
+   Result := 'N/A';
+ end;
+
+Function TReportRunTime.setSumpageYg(fm, ss: String): String;
+var
+  Value ,iCode:Integer;
+  slice :StrSlice;
+  s : string;
+Begin
+  slice := StrSlice.Create(ss);
+  s := slice.Slice(slice.GoUntil('(')+1,slice.GoUntil(')')-1);
+  val(s, Value, iCode);
+  if iCode = 0 then begin
+   Value := strtoint(s) ;
+   Result := FormatFloat(fm,FSummer.GetSumPage(Value));
+  end else
+   Result := 'N/A';
+ end;
+
+
+Procedure TReportRunTime.SetAddSpace(Const Value: boolean);
+Begin
+  FAddSpace := Value;
+End;
+
+function TReportRunTime.EditReport:TReportControl;
+begin
+  result := TCreportform.EditReport(ReportFile);
+end;
+function TReportRunTime.EditReport(FileName:String):TReportControl;
+begin
+  result := TCreportform.EditReport(FileName);
+end;
+Procedure TReportRunTime.updatepage;
+Var
+  i: integer;
+Begin
+  ReportFile := reportfile;
+  i := DoPageCount;
+  REPmessform.show;
+  PreparePrintk(i);
+  REPmessform.Hide;
+  PreviewForm.PageCount := FPageCount;
+
+  PreviewForm.Status := Format(cc.PageFormat,[PreviewForm.CurrentPage,PreviewForm.PageCount]);
+End;
+Procedure Register;
+Begin
+  RegisterComponents('CReport', [TReportRunTime]);
+End;
+
+constructor RenderException.Create;
+begin
+  self.message := cc.RenderException;
+end;
+
+procedure TSummer.Acc(j: integer; value: real);
+begin
+   SumPage[j] := SumPage[j] + value;
+   SumAll[j]  := SumAll[j] + value;
+end;
+
+function TSummer.GetSumAll(i: integer): Real;
+begin
+   result := SumALL[i];
+end;
+
+function TSummer.GetSumPage(i: integer): Real;
+begin
+  If i < 0 Then
+   raise Exception.Create(cc.SumPageFormat);
+  result := SumPage[i];
+end;
+
+procedure TSummer.ResetAll;
+var n :integer;
+begin
+  For n := 0 To 40 Do 
+  Begin
+    SumPage[n] := 0;
+    SumAll[n] := 0;
+  End;
+end;
+
+procedure TSummer.ResetSumPage;
+var n :integer;
+begin
+  For n := 0 To 40 Do
+    SumPage[n] := 0;
+end;
+
+
+{ TDataList }
+
+procedure TDataList.FreeItems;
+var I :integer;
+begin
+    For I := Count - 1 Downto 0 Do
+      TDataSetItem(Items[I]).Free;
+end;
+
+// TODO :以下代码都得好好改下。
+function TReportRunTime.GetValue(ThisCell:TReportCell):String;
+var
+   cellText :string;
+   cf: CellField ;
+begin
+  CellText := ThisCell.FCellText;
+  cf:= CellField.Create(ThisCell.CellText,GetDataset(thisCell.CellText)) ;
+  try
+    If ThisCell.IsHeadField and (not cf.IsNullField) Then
+    Begin
+      CellText := cf.GetField().displaytext ;
+      If cf.isNumberField  Then
+      Begin
+        If ThisCell.CellDispformat <> '' Then
+            cellText := ThisCell.FormatValue(cf.DataValue());
+      End
+    End
+    Else If ThisCell.IsFormula Then
+        CellText := GetVarValue(thiscell.FCellText) ;
+    result := CellText;
+  finally
+    cf.Free;
+  end;
+end;
 function TReportRunTime.RenderCellText(NewCell,ThisCell:TReportCell):String;
 var
    cellText :string;
@@ -444,56 +877,59 @@ Var
   TempOwnerCell: TReportCell;
 
 Begin
-    NewCell.CloneFrom(ThisCell);
-    If Not spyn Then
-      NewCell.CellText:= RenderCellText(newCell,ThisCell)
-    Else
-      NewCell.CellText := '';
+  NewCell.CloneFrom(ThisCell);
+  If Not spyn Then
+    NewCell.CellText:= RenderCellText(newCell,ThisCell)
+  Else
+    NewCell.CellText := '';
 
-    NewCell.flogfont := thiscell.FLogFont;
-    // TODO:LCJ :看了一遍， 没有看懂。
-    // DONE : 基本懂了。
-    // 运行逻辑：如果设计态是Slave，在runtime时也得是奴隶，通过这个FOwnerCellList找到自己的新主人
-    If ThisCell.OwnerCell <> Nil Then
+  NewCell.flogfont := thiscell.FLogFont;
+  // TODO:LCJ :看了一遍， 没有看懂。
+  // DONE : 基本懂了。
+  // 运行逻辑：如果设计态是Slave，在runtime时也得是奴隶，通过这个FOwnerCellList找到自己的新主人
+  If ThisCell.OwnerCell <> Nil Then
+  Begin
+    // 若隶属的CELL不为空则判断是否在同一页，若不在同一页则将自己加入到CELL对照表中去
+    TempOwnerCell := Nil;
+    // 若找到隶属的CELL则将自己加入到该CELL中去
+    For L := 0 To FDRMap.Count - 1 Do
     Begin
-      // 若隶属的CELL不为空则判断是否在同一页，若不在同一页则将自己加入到CELL对照表中去
-      TempOwnerCell := Nil;
-      // 若找到隶属的CELL则将自己加入到该CELL中去
-      For L := 0 To FDRMap.Count - 1 Do
-      Begin
-        If ThisCell.OwnerCell = TDRMapping(FDRMap[L]).DesignMasterCell Then
-          TempOwnerCell := TDRMapping(FDRMap[L]).RuntimeMasterCell;
-      End;
-      TempOwnerCell := FDRMap.FindRuntimeMasterCell(ThisCell);
-      If TempOwnerCell = Nil Then
-        FDRMap.NewMapping(ThisCell.OwnerCell,NewCell)
-      Else
-        TempOwnerCell.Own(NewCell);
+      If ThisCell.OwnerCell = TDRMapping(FDRMap[L]).DesignMasterCell Then
+        TempOwnerCell := TDRMapping(FDRMap[L]).RuntimeMasterCell;
     End;
-    If ThisCell.FSlaveCells.Count > 0 Then
-      FDRMap.NewMapping(ThisCell,NewCell);
-    NewCell.CalcHeight;
+    TempOwnerCell := FDRMap.FindRuntimeMasterCell(ThisCell);
+    If TempOwnerCell = Nil Then
+      FDRMap.NewMapping(ThisCell.OwnerCell,NewCell)
+    Else
+      TempOwnerCell.Own(NewCell);
+  End;
+  If ThisCell.FSlaveCells.Count > 0 Then
+    FDRMap.NewMapping(ThisCell,NewCell);
+  NewCell.CalcHeight;
 End;
-//  增加 ,完全重写的 PreparePrint,并增加了用空行补满一页 统计等功能
-//返回数用于在预览中确定代＃字头数据库是在模板的第几行
-function TReportRunTime.IsLastPageFull:Boolean ;
+function TReportRunTime.GetHeaderHeight:Integer;
+var I,J,FHeaderHeight :Integer; ThisLine:TReportLine;bHasDataSet:boolean;  ThisCell :TReportCell;
 begin
-  result := (FtopMargin + nHandHeight + nDataHeight + nSumAllHeight +
-          FBottomMargin) > height;
-end;
-function TReportRunTime.isPageFull:boolean;
-begin
-  result := (FtopMargin + nHandHeight + nDataHeight + nHootHeight + FBottomMargin >height);
-end;
-function TReportRunTime.PageMinHeight:Integer;
-begin
-  result := FtopMargin + nHandHeight + nHootHeight + FBottomMargin ;
-end;
-function TReportRunTime.HasEmptyRoomLastPage:Boolean;
-begin
-  result := FtopMargin + nHandHeight +
-      nDataHeight +
-      nSumAllHeight + FBottomMargin < height;
+    FHeaderHeight := 0;
+
+  For I := 0 To FLineList.Count - 1 Do
+  Begin
+    ThisLine := TReportLine(FLineList[I]);
+    bHasDataSet := False;
+    For J := 0 To ThisLine.FCells.Count - 1 Do
+    Begin
+      ThisCell := TReportCell(ThisLine.FCells[J]);
+
+      If Length(ThisCell.FCellText) > 0 Then  //如果当前CELL有字符，判断是否有数据集
+      Begin
+        If ThisCell.FCellText[1] = '#' Then
+          bHasDataSet := True;
+      End;
+    End;
+    If Not bHasDataSet Then
+      FHeaderHeight := FHeaderHeight + ThisLine.LineHeight;
+  End;
+  result := FHeaderHeight;
 end;
 function TReportRunTime.CloneEmptyLine(thisLine:TReportLine):TReportLine;
 var j:integer; templine:treportline;
@@ -779,12 +1215,6 @@ begin
     raise Exception.create('统计时发生错误，请检查模板设置是否正确');
   End;
 end;
- 
-function TReportRunTime.AppendList( l1, l2:TList):Boolean;var n :integer; begin
-    For n := 0 To l2.Count - 1 Do
-      l1.Add(l2[n]);
-    result := true;
-end;
 function TReportRunTime.ExpandLine(var HasDataNo,ndataHeight:integer):TReportLine;
 var
   thisLine ,TempLine: TReportLine;
@@ -944,11 +1374,6 @@ Begin
          MessageDlg(e.Message,mtInformation,[mbOk], 0);
   end;
 End;
-
-function TReportRunTime.GetDataSetFromCell(HasDataNo,CellIndex:Integer):TDataset;
-begin
-  result := GetDataSet(TReportCell(TReportLine(FlineList[HasDataNo]).FCells[CellIndex]).FCellText);
-end;
 Function TReportRunTime.DoPageCount:integer;
 Var
   CellIndex,I , RowCount:Integer;
@@ -984,462 +1409,9 @@ Begin
     End ;
     result := FPagecount;
   except
-    on E:Exception do
-         MessageDlg(e.Message,mtInformation,[mbOk], 0);
+    on E:Exception do MessageDlg(e.Message,mtInformation,[mbOk], 0);
   end;
 End;
 
-
-function TReportRunTime.GetPrintRange(var A,Z:Integer):boolean;
-var
-  PrintDlg: TPrintDialog; I: Integer;
-begin
-  PrintDlg := TPrintDialog.Create(Self);
-  PrintDlg.MinPage := 1;
-  PrintDlg.MaxPage := FPageCount;
-  PrintDlg.FromPage := 1;
-  PrintDlg.ToPage := FPageCount;
-  PrintDlg.Options := [poPageNums];
-  If Not PrintDlg.Execute Then
-    Begin
-      result := false;
-    End
-  else begin
-    a := printdlg.frompage;    //99.3.9
-    z := printdlg.topage;        //99.3.9
-    result := true;
-  end;
-  PrintDlg.Free;
-end;
-Procedure TReportRunTime.ClearDataset();
-Var
-  I: Integer;
-begin
-   For I := FNamedDatasets.Count - 1 Downto 0 Do
-    TDataSetItem(FNamedDatasets[I]).Free;
-   FNamedDatasets.clear;
-end;
-procedure TReportRunTime.PrintRange(Title:String;FromPage,ToPage:Integer);
-Var
-  I: Integer;
-begin
-			Printer.Title := Title;
-			Printer.BeginDoc;
-			For I := FromPage To ToPage Do
-			Begin
-			  LoadPage(I);
-			  PrintOnePage;
-			  If I < ToPage Then
-				Printer.NewPage;
-			End;
-			Printer.EndDoc;
-
-end;
-//IsDirectPrint  ：true , 代表是否直接打印 ,false 表示从预览UI中调用打印
-Procedure TReportRunTime.Print(IsDirectPrint: Boolean);
-Var
-  I: Integer;
-  strFileDir: TFileName;
-  frompage, topage: integer;
-Begin
-	try
-		Try
-			CheckError(printer.Printers.Count = 0 ,'未安装打印机');
-			// 爱上会展：金丝楠梳，宁德老寿眉，六安瓜片，太平猴魁，汝瓷 2014-11-7 茶博会
-			If IsDirectPrint Then
-			Begin
-			  REPmessform.show;
-			  i := DoPageCount;
-			  PreparePrintk( i);
-        REPmessform.Hide;
-			End;
-			FromPage := 1;
-			ToPage  := FPageCount;
-			if not GetPrintRange(frompage,topage) then exit;
-      PrintRange('C_Report',Frompage,ToPage);
-		Except
-		on E:Exception do
-		  MessageDlg(e.Message,mtInformation, [mbOk], 0);
-		End;
-	finally          
-     If IsDirectPrint  Then
-				DeleteAllTempFiles;
-	end;
-End;
-
-Procedure TReportRunTime.PrintOnePage;
-Var
-  hPrinterDC: HDC;
-  I, J: Integer;
-  ThisLine: TReportLine;
-  ThisCell: TReportCell;
-  PageSize: TSize;
-  Ltemprect: tRect;
-Begin
-  If FPrintLineList.Count <= 0 Then
-    Exit;
-
-  hPrinterDC := Printer.Handle;
-  SetMapMode(Printer.Handle, MM_ISOTROPIC);
-  PageSize.cx := Printer.PageWidth;
-  PageSize.cy := Printer.PageHeight;
-  SetWindowExtEx(Printer.Handle, Width, Height, @PageSize);
-  SetViewPortExtEx(Printer.Handle, Printer.PageWidth, Printer.PageHeight,
-    @PageSize);
-
-  For I := 0 To FPrintLineList.Count - 1 Do
-  Begin
-    ThisLine := TReportLine(FPrintLineList[I]);
-
-    For J := 0 To ThisLine.FCells.Count - 1 Do
-    Begin
-      ThisCell := TReportCell(ThisLine.FCells[J]);
-
-      If ThisCell.OwnerCell = Nil Then
-      Begin
-        LTempRect := ThisCell.FCellRect;
-        LTempRect.Left := ThisCell.FCellRect.Left + 3;
-        LTempRect.Top := ThisCell.FCellRect.Top + 3;
-        LTempRect.Right := ThisCell.FCellRect.Right - 3;
-        LTempRect.Bottom := ThisCell.FCellRect.Bottom - 3;
-        printer.Canvas.stretchdraw(LTempRect, ThisCell.fbmp);
-        ThisCell.PaintCell(hPrinterDC, True);
-      End;
-    End;
-  End;
-  // clear the temp data here
-  For I := FPrintLineList.Count - 1 Downto 0 Do
-  Begin
-    ThisLine := TReportLine(FPrintLineList[I]);
-    ThisLine.Free;
-  End;
-
-  FPrintLineList.Clear;
-
-  For I := FDRMap.Count - 1 Downto 0 Do
-    TDRMapping(FDRMap[I]).Free;
-
-  FDRMap.Clear;
-End;
- //LCJ: 可直接或在预览中调用设置打印参数
-Function TReportRunTime.PrintSET(prfile: String): boolean;
-Begin
-  Application.CreateForm(TMarginForm, MarginForm);
-  MarginForm.filename.Caption := prfile;
-  Try
-    MarginForm.ShowModal;
-    result :=  MarginForm.okset ;
-  Finally
-    MarginForm.free;
-  End;
-End;
-
-Procedure TReportRunTime.PrintPreview(bPreviewMode: Boolean);
-Var
-  i, HasDataNo: integer;
-Begin
-  Try
-    If printer.Printers.Count <= 0 Then
-    Begin
-      DeleteAllTempFiles;
-      Application.Messagebox('未安装打印机', '警告', MB_OK + MB_iconwarning);
-      For I := FNamedDatasets.Count - 1 Downto 0 Do // add  
-        TDataSetItem(FNamedDatasets[I]).Free;
-      FNamedDatasets.clear;
-      Exit;
-    End
-    Else
-    Begin
-      i := DoPageCount;
-      REPmessform.show;
-      PreparePrintk( i);
-      REPmessform.Hide;
-      PreviewForm := TPreviewForm.Create(Self);
-      PreviewForm.SetPreviewMode(bPreviewMode);
-      PreviewForm.PageCount := FPageCount;
-
-      PreviewForm.StatusBar1.Panels[0].Text := '第' +
-        IntToStr(PreviewForm.CurrentPage) + '／' +
-          IntToStr(PreviewForm.PageCount)
-        + '页';
-
-      PreviewForm.filename.Caption := ReportFile;
-      PreviewForm.tag := HasDataNo;
-      PreviewForm.ShowModal;
-      PreviewForm.Free;
-      DeleteAllTempFiles;
-    End;
-    //  for i:=0 to setdata.Count -1 do  // add  
-    //      setpar(fase,setdata[i]); //参数设置
-      //finally
-  Except
-    MessageDlg('形成报表时发生错误，请检查各项参数与模板设置等是否正确',
-      mtInformation, [mbOk], 0);
-    REPmessform.Hide;
-    For I := FNamedDatasets.Count - 1 Downto 0 Do  //删除数据库表名与模板CELL的对照列表,否则每次调用都要增加列表项
-      TDataSetItem(FNamedDatasets[I]).Free;
-    FNamedDatasets.clear;
-    exit;
-  End;
-  For I := FNamedDatasets.Count - 1 Downto 0 Do  //删除数据库表名与模板CELL的对照列表,否则每次调用都要增加列表项
-    TDataSetItem(FNamedDatasets[I]).Free;
-  FNamedDatasets.clear;
-End;
-
-Function TReportRunTime.shpreview: boolean;
-Var
-  i: integer;
-Begin
-  If PrintSET(reportfile)  Then
-  Begin
-    ReportFile := reportfile; 
-    i := DoPageCount;
-    REPmessform.show;                     
-    PreparePrintk( i);
-    REPmessform.Hide;
-    PreviewForm.PageCount := FPageCount;
-    PreviewForm.StatusBar1.Panels[0].Text := '第' +
-      IntToStr(PreviewForm.CurrentPage) + '／' + IntToStr(PreviewForm.PageCount)
-        +
-      '页';
-    result := true;
-  End
-  Else
-    result := false;
-End;
-
-Procedure TReportRunTime.SetDataset(strDatasetName: String; pDataSet: TDataSet);
-Var
-  TempItem: TDatasetItem;
-  dk, i: integer;
-Begin
-  TempItem := TDatasetItem.Create;
-  TempItem.pDataset := pDataSet;
-  TempItem.strName := UpperCase(strDataSetName);
-  FNamedDatasets.Add(TempItem);
-End;
-
-Procedure TReportRunTime.SetRptFileName(Const Value: TFilename);
-Begin
-  FFileName := Value;
-  If Value <> '' Then
-    LoadReport;
-End;
-
-
-Procedure TReportRunTime.UpdateLines;
-Begin
-  EachCell(EachCell_CalcHeight);
-  EachLine(EachLine_CalcLineHeight);
-  EachLineIndex(EachProc_UpdateIndex);
-  EachLineIndex(EachProc_UpdateLineTop);
-  EachLineIndex(EachProc_UpdateLineRect);
-End;
-
-Procedure TReportRunTime.UpdatePrintLines;
-Var
-  PrevRect, TempRect: TRect;
-  I, J: Integer;
-  ThisLine: TReportLine;
-  ThisCell: TReportCell;
-Begin
-  // 首先计算合并后的单元格
-  For I := 0 To FPrintLineList.Count - 1 Do
-  Begin
-    ThisLine := TReportLine(FPrintLineList[I]);
-
-    For J := 0 To ThisLine.FCells.Count - 1 Do
-    Begin
-      ThisCell := TReportCell(ThisLine.FCells[J]);
-
-      If ThisCell.FSlaveCells.Count > 0 Then
-        ThisCell.CalcHeight;
-    End;
-  End;
-
-  // 计算每行的高度
-  For I := 0 To FPrintLineList.Count - 1 Do
-  Begin
-    ThisLine := TReportLine(FPrintLineList[I]);
-    ThisLine.UpdateLineHeight;
-  End;
-
-  For I := 0 To FPrintLineList.Count - 1 Do
-  Begin
-    ThisLine := TReportLine(FPrintLineList[I]);
-
-    ThisLine.Index := I;
-
-    If I = 0 Then
-      ThisLine.LineTop := FTopMargin;
-    If I > 0 Then
-      ThisLine.LineTop := TReportLine(FPrintLineList[I - 1]).LineTop +
-        TReportLine(FPrintLineList[I - 1]).LineHeight;
-
-    PrevRect := ThisLine.PrevLineRect;
-    TempRect := ThisLine.LineRect;
-  End;
-End;
-
-
-Procedure treportruntime.resetself;
-Begin
-  FNamedDatasets.clear;
-  fvarlist.clear;
-  flinelist.clear;
-  fprintlinelist.clear;
-  FDRMap.clear;
-End;
-
-Function TReportRunTime.GetVarValue(strVarName: String): String;
-begin
-  Result := FVarList.GetVarValue(StrVarName);
-end;
-
-
-Procedure TReportRunTime.SetVarValue(strVarName, strVarValue: String);
-Var
-  ThisItem: TVarTableItem;
-Begin
-  If Length(strVarName) <= 0 Then
-    Exit;
-  ThisItem := FVarList.FindKeyOrNew(strVarName);
-  ThisItem.strVarValue := strVarValue;
-End;
-
-
-Procedure TReportRunTime.loadfile(value: tfilename);
-Begin
-  FFileName := Value;
-  If Value <> '' Then
-    LoadReport;
-End;
-
-Function treportruntime.cancelprint: boolean;
-Begin
-  Try
-    If printer.printing Then
-      printer.abort;
-    result := true;
-  Except
-    result := false;
-  End;
-End;
-
-
-
-Function TReportRunTime.SetSumAllYg(fm, ss: String): String; //add  
-var
-  Value,iCode :Integer;
-  slice :StrSlice;
-  s : string;
-Begin
-  slice := StrSlice.Create(ss);
-  s := slice.Slice(slice.GoUntil('(')+1,slice.GoUntil(')')-1);
-  val(s, Value, iCode);
-  if iCode = 0 then begin
-   Value := strtoint(s) ;
-    Result := FormatFloat(fm,FSummer.GetSumAll(Value));
-  end else
-   Result := 'N/A';
- end;
-
-Function TReportRunTime.setSumpageYg(fm, ss: String): String;
-var
-  Value ,iCode:Integer;
-  slice :StrSlice;
-  s : string;
-Begin
-  slice := StrSlice.Create(ss);
-  s := slice.Slice(slice.GoUntil('(')+1,slice.GoUntil(')')-1);
-  val(s, Value, iCode);
-  if iCode = 0 then begin
-   Value := strtoint(s) ;
-   Result := FormatFloat(fm,FSummer.GetSumPage(Value));
-  end else
-   Result := 'N/A';
- end;
-
-
-Procedure TReportRunTime.SetAddSpace(Const Value: boolean);
-Begin
-  FAddSpace := Value;
-End;
-
-function TReportRunTime.EditReport:TReportControl;
-begin
-  result := TCreportform.EditReport(ReportFile);
-end;
-function TReportRunTime.EditReport(FileName:String):TReportControl;
-begin
-  result := TCreportform.EditReport(FileName);
-end;
-Procedure TReportRunTime.updatepage;
-Var
-  i: integer;
-Begin
-  ReportFile := reportfile;
-  i := DoPageCount;
-  REPmessform.show;
-  PreparePrintk(i);
-  REPmessform.Hide;
-  PreviewForm.PageCount := FPageCount;
-
-  PreviewForm.Status := Format(cc.PageFormat,[PreviewForm.CurrentPage,PreviewForm.PageCount]);
-End;
-Procedure Register;
-Begin
-  RegisterComponents('CReport', [TReportRunTime]);
-End;
-
-constructor RenderException.Create;
-begin
-  self.message := cc.RenderException;
-end;
-
-procedure TSummer.Acc(j: integer; value: real);
-begin
-   SumPage[j] := SumPage[j] + value;
-   SumAll[j]  := SumAll[j] + value;
-end;
-
-function TSummer.GetSumAll(i: integer): Real;
-begin
-   result := SumALL[i];
-end;
-
-function TSummer.GetSumPage(i: integer): Real;
-begin
-  If i < 0 Then
-   raise Exception.Create(cc.SumPageFormat);
-  result := SumPage[i];
-end;
-
-procedure TSummer.ResetAll;
-var n :integer;
-begin
-  For n := 0 To 40 Do 
-  Begin
-    SumPage[n] := 0;
-    SumAll[n] := 0;
-  End;
-end;
-
-procedure TSummer.ResetSumPage;
-var n :integer;
-begin
-  For n := 0 To 40 Do
-    SumPage[n] := 0;
-end;
-
-
-{ TDataList }
-
-procedure TDataList.FreeItems;
-var I :integer;
-begin
-    For I := Count - 1 Downto 0 Do
-      TDataSetItem(Items[I]).Free;
-end;
 
 end.

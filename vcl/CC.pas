@@ -8,6 +8,8 @@ const
   PageFormat1 = '第%d页' ;
   PageFormat2 = '第%d-%d页' ;
   FormulaPrefix = '`' ;
+  ErrorRendering = '形成报表时发生错误，请检查各项参数与模板设置等是否正确';
+  ErrorPrinterSetupRequired = '未安装打印机';
 implementation
 
 end.

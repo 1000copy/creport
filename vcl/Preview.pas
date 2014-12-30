@@ -70,6 +70,8 @@ type
     procedure SetPreviewMode(bPreview: Boolean);
     function RR:TReportRuntime;
     property Status :String write SetStatus;
+    procedure SetPage;
+    class procedure Action(ReportFile:string;FPageCount:Integer;bPreviewMode:Boolean);
   end;
 
 var
@@ -327,6 +329,26 @@ end;
 procedure TPreviewForm.SetStatus(const Value: String);
 begin
     StatusBar1.Panels[0].Text := Value;
+end;
+
+procedure TPreviewForm.SetPage;
+begin
+  StatusBar1.Panels[0].Text := 'µÚ' +
+          IntToStr(CurrentPage) + '£¯' +
+            IntToStr(PageCount)
+          + 'Ò³';
+
+end;
+
+class procedure TPreviewForm.Action(ReportFile:string;FPageCount:Integer;bPreviewMode:Boolean);
+begin
+  PreviewForm := TPreviewForm.Create(nil);
+  PreviewForm.SetPreviewMode(bPreviewMode);
+  PreviewForm.PageCount := FPageCount;
+  PreviewForm.SetPage();
+  PreviewForm.filename.Caption := ReportFile;
+  PreviewForm.ShowModal;
+  PreviewForm.Free;
 end;
 
 end.

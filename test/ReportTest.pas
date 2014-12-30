@@ -961,33 +961,30 @@ Var
   TempPChar: Array[0..3000] Of Char;
   bHasDataSet: Boolean;
 begin
-    form := TCreportForm.InitReport ;
-
-      R := form.RC;
-      r.SetWndSize(1058,748);
-      r.NewTable(2 ,3);
-      // 垂直合并后，Cell并不减少
-      r.Cells[0,0].Select;
-      r.Cells[1,0].Select;
-      r.Cells[2,0].Select;
-      r.CombineCell ;
-      r.Cells[0,0].VertAlign := TEXT_ALIGN_TOP ;
-      r.Cells[0,0].CalcHeight;
-      s := 'long text 111so is incremented absolutly ';
-      r.Cells[0,0].CellText := s ;
-      FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
-      R.SaveToFile(FileName);
-      TargetFile := TSimpleFileStream.Create(FileName, fmOpenRead);
-      Try
-        With TargetFile Do
-        Begin
-          ReadWord(FileFlag);CheckEquals($AA57,FileFlag);
-          // TODO : 继续ut，以便重构代码 Load / Save 部分。分化之。
-      end;
-    finally
-      targetFile.Free;
-      TCreportForm.UninitReport();
+  form := TCreportForm.InitReport ;   
+  R := form.RC;
+  r.SetWndSize(1058,748);
+  r.NewTable(2 ,3);
+  r.Cells[0,0].Select;
+  r.Cells[1,0].Select;
+  r.Cells[2,0].Select;
+  r.CombineCell ;
+  r.Cells[0,0].VertAlign := TEXT_ALIGN_TOP ;
+  r.Cells[0,0].CalcHeight;
+  s := 'long text 111so is incremented absolutly ';
+  r.Cells[0,0].CellText := s ;
+  FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
+  R.SaveToFile(FileName);
+  TargetFile := TSimpleFileStream.Create(FileName, fmOpenRead);
+  Try
+    With TargetFile Do
+    Begin
+      ReadWord(FileFlag);CheckEquals($AA57,FileFlag);
     end;
+  finally
+    targetFile.Free;
+    TCreportForm.UninitReport();
+  end;
 end;
 
 

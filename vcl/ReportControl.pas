@@ -4701,9 +4701,7 @@ begin
 end;
 function TVarList.GetVarValue(Key: String): String;
 Var
-  I: Integer;
   ThisItem: TVarTableItem;
-  TempString: String;
 Begin
   Result := '';
   If (Length(Key) <= 0) or (Key[1] <> '`' ) Then
@@ -4738,16 +4736,14 @@ begin
 end;
 function TVarList.FindKeyOrNew(Key: String): TVarTableItem;
 var
-  I :Integer;
   ThisItem : TVarTableItem ;
 begin
   Result := FindKey(Key);
   if Result = nil then
-    Result :=  New (Key);  
+    Result :=  New (Key);
 end;
 function TVarList.New (Key: String): TVarTableItem;
 var
-  I :Integer;
   ThisItem : TVarTableItem ;
 begin
   ThisItem := TVarTableItem.Create;
