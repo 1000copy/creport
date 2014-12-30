@@ -21,6 +21,10 @@ type
      function GetSumPage(i:integer):Real;
    end;
 type
+  TDataList = class(TList)
+  public
+   procedure FreeItems;
+  end;
   RenderException =class(Exception)
   public
     constructor Create;
@@ -51,7 +55,7 @@ type
     FPrintLineList: TList;
     // 保存每一页中合并后单元格前后的指针
     FDRMap: TDRMappings;
-    FNamedDatasets: TList;
+    FNamedDatasets: TDataList;
     FHeaderHeight: Integer;
     //是否打印全部记录，默认为全部
     Fallprint: Boolean;
@@ -143,7 +147,7 @@ Var
   tempDir: String;
 Begin                             
   Try
-    tempDir := Format('%s\temp\',[os.ExeDir]);
+    tempDir := Format('%s\temp\',[AppDir]);
     If Not DirectoryExists(tempDir) Then
       Exit;
     os.DeleteFiles(tempDir, '*.tmp');
@@ -152,14 +156,14 @@ Begin
   End;
 End;
 function TReportRunTime.ReadyFileName(PageNumber, Fpageall: Integer):String;
-Var
-  strFileDir: String;
-  FileName: String;
-Var
-  tempDir: String;
+  Var
+    strFileDir: String;
+    FileName: String;
   procedure EnsureTempDirExist;
+  Var
+    tempDir: String;
   begin
-    tempDir := Format('%s\temp',[os.ExeDir]);
+    tempDir := Format('%s\temp',[AppDir]);
       If Not DirectoryExists(tempDir) Then
         MkDir(tempDir);
   end;
@@ -179,11 +183,11 @@ var
 
 begin
   If  ThisCell.IsPageNumFormula Then
-    R :=Format('第%d页',[PageNumber])
+    R :=Format(cc.PageFormat1,[PageNumber])
   Else If ThisCell.IsPageNumFormula1  Then
-    R :=Format('第%d/%d页',[PageNumber,FPageAll])
+    R :=Format(cc.PageFormat,[PageNumber,FPageAll])
   Else If ThisCell.IsPageNumFormula2 Then 
-    R :=Format('第%d-%d页',[PageNumber,FPageAll])
+    R :=Format(cc.PageFormat2,[PageNumber,FPageAll])
   Else If ThisCell.IsSumPageFormula Then
     R := setSumpageYg(thiscell.FCellDispformat,ThisCell.FCellText)
   Else If ThisCell.IsSumAllFormula  Then
@@ -254,7 +258,7 @@ Begin
   Height := 0;             
   fallprint := true;                   
   FSetData := Tstringlist.Create;
-  FNamedDatasets := TList.Create;
+  FNamedDatasets := TDataList.Create;
   FVarList := TVarList.Create;
   FPrintLineList := TList.Create;
   FDRMap := TDRMappings.Create;              
@@ -268,12 +272,10 @@ Destructor TReportRunTime.Destroy;
 Var
   I: Integer;
 Begin
-  For I := FNamedDatasets.Count - 1 Downto 0 Do
-    TDataSetItem(FNamedDatasets[I]).Free;
-  FNamedDatasets.clear;
 
-  For I := FVarList.Count - 1 Downto 0 Do
-    TVarTableItem(FVarList[I]).Free;
+  FNamedDatasets.FreeItems;
+  FNamedDatasets.clear;
+  FVarList.FreeItems;
   FVarList.Free;
 
 
@@ -1290,69 +1292,18 @@ Begin
 End;
 
 Function TReportRunTime.GetVarValue(strVarName: String): String;
-Var
-  I: Integer;
-  ThisItem: TVarTableItem;
-  TempString: String;
-Begin
-  Result := '';
+begin
+  Result := FVarList.GetVarValue(StrVarName);
+end;
 
-  If Length(strVarName) <= 0 Then
-    Exit;
-
-  If strVarName[1] <> '`' Then
-    Exit;
-
-
-
-  shortdateformat := 'yyy-mm-dd';
-  shorttimeformat := 'HH:MM:SS';
-  If UpperCase(strVarName) = '`DATE' Then //日期
-    Result := datetostr(date);
-
-  If UpperCase(strVarName) = '`TIME' Then //时间
-    Result := timetostr(time);
-
-  If UpperCase(strVarName) = '`DATETIME' Then //日期时间
-    Result := datetimetostr(now);
-
-  For I := 2 To Length(strVarName) Do
-  Begin
-    If (strVarName[I] <= 'z') Or (strVarName[I] >= 'A') Then
-      TempString := TempString + strVarName[I];
-  End;
-
-  TempString := UpperCase(TempString);
-
-  For I := 0 To FVarList.Count - 1 Do
-  Begin
-    ThisItem := TVarTableItem(FVarList[I]);
-    If ThisItem.strVarName = TempString Then
-    Begin
-      Result := ThisItem.strVarValue;
-      Exit;
-    End;
-  End;
-End;
 
 Procedure TReportRunTime.SetVarValue(strVarName, strVarValue: String);
-  function KeepATOZOnly(a:string):string;
-  Var
-    I: Integer;
-  begin
-    Result := '';
-    For I := 1 To Length(a) Do
-    Begin
-      If (a[I] <= 'z') Or (a[I] >= 'A') Then
-        Result := Result + a[I];
-    End;
-  end;
 Var
   ThisItem: TVarTableItem;
 Begin
   If Length(strVarName) <= 0 Then
     Exit;
-  ThisItem := FVarList.FindKeyOrNew(UpperCase(KeepATOZOnly(strVarName)));
+  ThisItem := FVarList.FindKeyOrNew(strVarName);
   ThisItem.strVarValue := strVarValue;
 End;
 
@@ -1481,5 +1432,14 @@ begin
     SumPage[n] := 0;
 end;
 
+
+{ TDataList }
+
+procedure TDataList.FreeItems;
+var I :integer;
+begin
+    For I := Count - 1 Downto 0 Do
+      TDataSetItem(Items[I]).Free;
+end;
 
 end.

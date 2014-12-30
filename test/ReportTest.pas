@@ -5,6 +5,7 @@ interface
 
 uses
   // user
+  cc,
   uHornCartesian,
   osservice,
   ReportControl,
@@ -1558,7 +1559,6 @@ begin
            Cells[2,j].CellText := '#T1.'+t1.FieldDefs[j].Name;
         end;
         Cells[3,0].CellText := 'Footer..';
-//        Cells[4,0].CellText := '`SumAll(1)';
         SaveToFile(strFileDir+'\'+'xxx.ept');
         ResetContent;
         cf.Free;
@@ -1597,7 +1597,7 @@ begin
     begin
       SetWndSize(PAGEWIDTH,PAGEHEIGHT);
       NewTable(2 ,4);
-      Cells[0,0].CellText := '`'+Key;
+      Cells[0,0].CellText := cc.FormulaPrefix+Key;
       SetVarValue(Key,Value);
       SaveToFile(FileName);
       ResetContent;

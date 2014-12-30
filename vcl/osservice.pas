@@ -14,7 +14,6 @@ type
     nPixelsPerInch:integer;
     hDesktopDC :THandle;
   public
-      function ExeDir:String;
 
     procedure ScaleRect(var rectPaint: TRect; FReportScale: Integer);
     procedure InverseScaleRect(var rectPaint: TRect;
@@ -303,10 +302,6 @@ begin
   End;
 end;
 
-function WindowsOS.ExeDir: String;
-begin
-   Result := ExtractFileDir(Application.ExeName);
-end;
 function  PageFileName(CurrentPage:Integer):string;
 begin
  Result := Format('%s\Temp\%d.tmp',[ AppDir,CurrentPage]) ;

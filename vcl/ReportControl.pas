@@ -50,7 +50,7 @@ Unit ReportControl;
 Interface
 
 Uses
-  Windows, Messages, SysUtils,Math,
+  Windows, Messages, SysUtils,Math,cc,
   {$WARNINGS OFF}FileCtrl,{$WARNINGS ON}
    Classes, Graphics, Controls,
   Forms, Dialogs, Printers, Menus, Db,
@@ -631,8 +631,13 @@ Type
   End;
   TVarList = class(TList)
   private
+    function KeepAlphaOnly(a: string): string;
+    function FindKey(Key: String): TVarTableItem;
+    function New(Key: String): TVarTableItem;
   public
     function FindKeyOrNew(Key: String): TVarTableItem;
+    function GetVarValue(Key: String): String;
+    procedure FreeItems;
   end;
   TMyRect = Class(TObject)
   Public
@@ -4683,32 +4688,81 @@ begin
 end;
 { TVarList }
 
-
-function TVarList.FindKeyOrNew(Key: String): TVarTableItem;
+function TVarList.KeepAlphaOnly(a:string):string;
+Var
+  I: Integer;
+begin
+  Result := '';
+  For I := 1 To Length(a) Do
+  Begin
+    If (a[I] <= 'z') Or (a[I] >= 'A') Then
+      Result := Result + a[I];
+  End;
+end;
+function TVarList.GetVarValue(Key: String): String;
+Var
+  I: Integer;
+  ThisItem: TVarTableItem;
+  TempString: String;
+Begin
+  Result := '';
+  If (Length(Key) <= 0) or (Key[1] <> '`' ) Then
+    Exit;
+  If UpperCase(Key) = '`DATE' Then
+    Result := datetostr(date);
+  If UpperCase(Key) = '`TIME' Then
+    Result := timetostr(time);
+  If UpperCase(Key) = '`DATETIME' Then 
+    Result := datetimetostr(now);
+  Key := Uppercase(KeepAlphaOnly(Key));
+  ThisItem := FindKey(Key);
+  if  nil <> ThisItem then
+    Result := ThisItem.strVarValue;
+End;
+function TVarList.FindKey(Key: String): TVarTableItem;
 var
   I :Integer;
   ThisItem : TVarTableItem ;
 begin
+  Key := Uppercase(KeepAlphaOnly(Key));
   Result := nil;
   For I := 0 To Count - 1 Do
   Begin
     ThisItem := TVarTableItem(Items[I]);
-    If ThisItem.strVarName = Key Then
+    If (cc.FormulaPrefix+ThisItem.strVarName = Key )Then
     Begin
       Result := ThisItem ;
       break;
     End;
   End;
+end;
+function TVarList.FindKeyOrNew(Key: String): TVarTableItem;
+var
+  I :Integer;
+  ThisItem : TVarTableItem ;
+begin
+  Result := FindKey(Key);
   if Result = nil then
-  begin
-    ThisItem := TVarTableItem.Create;
-    ThisItem.strVarName := Key;
-    Add(ThisItem);
-    Result := ThisItem;
-  end;
+    Result :=  New (Key);  
+end;
+function TVarList.New (Key: String): TVarTableItem;
+var
+  I :Integer;
+  ThisItem : TVarTableItem ;
+begin
+  ThisItem := TVarTableItem.Create;
+  ThisItem.strVarName := Key;
+  Add(ThisItem);
+  Result := ThisItem;
 end;
 
 
+procedure TVarList.FreeItems;
+var i :Integer;
+begin
+  For I := Count - 1 Downto 0 Do
+    TVarTableItem(Items[I]).Free;
+end;
 
 end.
 
