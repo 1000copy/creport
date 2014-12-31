@@ -1286,16 +1286,15 @@ Var
   Var
     ThisLine, TempLine: TReportLine;
     ThisCell, NewCell: TReportCell;
-    I, J,N, TempDataSetCount:Integer;
+    I, J,N:Integer;
   Begin
-    TempDataSetCount := Dataset.RecordCount;
     Dataset.First;
     HootLineList := FillFootList();
     sumAllList := FillSumList();
     FDataLineHeight := 0;
     dataLineList := TList.Create;
     i := 0;
-    While (i < TempDataSetCount) Do
+    While (i < Dataset.RecordCount) Do
     Begin
       TempLine := ExpandLine(DetailLineIndex);
       inc(FDataLineHeight,ExpandDataHeight(DetailLineIndex));
