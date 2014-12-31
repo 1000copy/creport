@@ -57,7 +57,7 @@ type
     FHeaderHeight: Integer;
     Fallprint: Boolean;
     FPageCount: Integer;
-    nDataHeight, nHandHeight,  nSumAllHeight: Integer;
+    nDataHeight, nHandHeight: Integer;
     Dataset: TDataset;
     Procedure UpdateLines;
     Procedure UpdatePrintLines;
@@ -352,7 +352,7 @@ End;
 //返回数用于在预览中确定代＃字头数据库是在模板的第几行
 function TReportRunTime.IsLastPageFull:Boolean ;
 begin
-  result := (FtopMargin + nHandHeight + nDataHeight + nSumAllHeight +
+  result := (FtopMargin + nHandHeight + nDataHeight + SumHeight +
           FBottomMargin) > height;
 end;
 function TReportRunTime.isPageFull:boolean;
@@ -367,7 +367,7 @@ function TReportRunTime.HasEmptyRoomLastPage:Boolean;
 begin
   result := FtopMargin + nHandHeight +
       nDataHeight +
-      nSumAllHeight + FBottomMargin < height;
+      SumHeight + FBottomMargin < height;
 end;
 
 function TReportRunTime.AppendList( l1, l2:TList):Boolean;var n :integer; begin
@@ -1310,7 +1310,6 @@ Var
     Dataset.First;
     HootLineList := FillFootList();
     sumAllList := FillSumList();
-    nSumAllHeight := SumHeight();
     ndataHeight := 0;
     dataLineList := TList.Create;
     i := 0;
@@ -1381,7 +1380,6 @@ Begin
     If DetailLineIndex <> -1 Then
     Begin
       nHandHeight := GetHeadHeight;
-      nSumAllHeight := SumHeight();
       Dataset := Dset(DetailLineIndex,DetailCellIndex(DetailLineIndex));
       Dataset.First;
       ndataHeight := 0;
