@@ -1336,57 +1336,7 @@ Var
       SaveTempFile(ReadyFileName(fpagecount, Fpageall),fpagecount, FpageAll);
     end; 
   End ;
-//  procedure DataPage1(Dataset:TDataset);
-//  Var
-//    ThisLine, TempLine: TReportLine;
-//    ThisCell, NewCell: TReportCell;
-//    I, J,N:Integer;
-//  Begin
-//    Dataset.First;
-//    rp.FillFoot ;
-//    rp.FillSumAll ;
-//    FDataLineHeight := 0;
-//    // dataLineList era
-//    dataLineList := TList.Create;
-//    i := 0;
-//    While (i < Dataset.RecordCount) Do
-//    Begin
-//      TempLine := ExpandLine(DetailLineIndex);
-//      inc(FDataLineHeight,ExpandDataHeight(DetailLineIndex));
-//      If isPageFull Then
-//      Begin
-//        CheckError(dataLineList.Count = 0,cc.RenderException);
-//        JoinAllList(FPrintLineList, rp.Head,dataLineList,rp.FSumAll,rp.Foot,false);
-//        UpdatePrintLines;
-//        SaveTempFile(fpagecount, FpageAll);
-//        application.ProcessMessages;
-//        inc(Fpagecount);
-//        begin
-//          FSummer.ResetSumPage;
-//          FPrintLineList.Clear;
-//          datalinelist.clear;
-//          FDataLineHeight := 0;
-//        end
-//      End else begin
-//        DataLineList.add(tempLine);
-//        SumLine(DetailLineIndex);
-//        Dataset.Next;
-//        i := i + 1;
-//      end;
-//    End;
-//    // dataLineList END
-//    // 都是  i =  TempDataSetCount，也看从那个分支出来的。
-//    if not IsPageFull then
-//    begin
-//      If (Faddspace) And (HasEmptyRoomLastPage) Then begin
-//        PaddingEmptyLine(DetailLineIndex,dataLineList );
-//      end;
-//      JoinAllList(FPrintLineList, rp.Head,dataLineList,rp.FSumAll,rp.Foot,True);
-//      UpdatePrintLines;
-//      SaveTempFile(ReadyFileName(fpagecount, Fpageall),fpagecount, FpageAll);
-//    end;
-//
-//  End ;
+
 Var
   CellIndex:Integer;
 
