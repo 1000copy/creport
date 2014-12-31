@@ -36,8 +36,8 @@ type
 
     function PageMinHeight: Integer;
     //function HeaderHeight: integer;
-    function FooterHeight(HasDataNo:integer):integer;
-    function SumHeight(HasDataNo:integer):integer;
+    function FooterHeight():integer;
+    function SumHeight():integer;
     function ExpandLine(HasDataNo:integer;var ndataHeight:integer):TReportLine;
     function RenderCellText(NewCell,ThisCell:TReportCell):String;
     function IsDataField(s: String): Boolean;
@@ -57,7 +57,7 @@ type
     FHeaderHeight: Integer;
     Fallprint: Boolean;
     FPageCount: Integer;
-    nDataHeight, nHandHeight, nHootHeight, nSumAllHeight: Integer;
+    nDataHeight, nHandHeight,  nSumAllHeight: Integer;
     Dataset: TDataset;
     Procedure UpdateLines;
     Procedure UpdatePrintLines;
@@ -88,7 +88,7 @@ type
       cellIndex: integer): Boolean;
     function AppendList(l1, l2: TList): Boolean;
     function FillFootList(): TList;
-    function FillSumList(var nSumAllHeight: integer): TLineList;
+    function FillSumList(): TLineList;
     procedure JoinAllList(FPrintLineList, HandLineList, dataLineList,
       SumAllList, HootLineList: TList;IsLastPage:Boolean);
     procedure PaddingEmptyLine(hasdatano: integer; var dataLineList: TList;
@@ -357,11 +357,11 @@ begin
 end;
 function TReportRunTime.isPageFull:boolean;
 begin
-  result := (FtopMargin + nHandHeight + nDataHeight + nHootHeight + FBottomMargin >height);
+  result := (FtopMargin + nHandHeight + nDataHeight + FooterHeight + FBottomMargin >height);
 end;
 function TReportRunTime.PageMinHeight:Integer;
 begin
-  result := FtopMargin + nHandHeight + nHootHeight + FBottomMargin ;
+  result := FtopMargin + nHandHeight + FooterHeight + FBottomMargin ;
 end;
 function TReportRunTime.HasEmptyRoomLastPage:Boolean;
 begin
@@ -1090,12 +1090,12 @@ begin
   End;
   result := HootLineList;
 end;
-function TReportRunTime.FooterHeight(HasDataNo:integer):integer;
+function TReportRunTime.FooterHeight():integer;
 var
    i:integer;
 begin
    result := 0 ;
-   i := HasDataNo + 1;
+   i := DetailLineIndex + 1;
    while  (i < FLineList.Count) and  (not FlineList[i].IsSumAllLine) do
    begin
      inc(result,FlineList[i].LineHeight);
@@ -1104,14 +1104,13 @@ begin
 end;
 
 //将有合计的行(`SumAll)存入一个列表中
-function TReportRunTime.FillSumList(var nSumAllHeight:integer ):TLineList;
+function TReportRunTime.FillSumList():TLineList;
 Var
   I, J, n,  TempDataSetCount:Integer;
   sumAllList: TLineList;
   ThisLine, TempLine: TReportLine;
   ThisCell, NewCell: TReportCell;
 begin
-  nSumAllHeight := 0;
   sumAllList := TLineList.Create(self);
   For i := DetailLineIndex + 1 To FlineList.Count - 1 Do
   Begin
@@ -1129,16 +1128,15 @@ begin
       setnewcell(false, newcell, thiscell);
     End;                              //for j
     TempLine.UpdateLineHeight;
-    nSumAllHeight := nSumAllHeight + TempLine.GetLineHeight;
   End;
   result :=  sumAllList;
 end ;
-function TReportRunTime.SumHeight(HasDataNo:integer):integer;
+function TReportRunTime.SumHeight():integer;
 var
    i:integer;
 begin
    result := 0 ;
-   i := HasDataNo + 1;
+   i := DetailLineIndex + 1;
    while  (i < FLineList.Count) do
    begin
      inc(result,FlineList[i].LineHeight);
@@ -1311,8 +1309,8 @@ Var
     TempDataSetCount := Dataset.RecordCount;
     Dataset.First;
     HootLineList := FillFootList();
-    nHootHeight := FooterHeight(DetailLineIndex);
-    sumAllList := FillSumList(nSumAllHeight);
+    sumAllList := FillSumList();
+    nSumAllHeight := SumHeight();
     ndataHeight := 0;
     dataLineList := TList.Create;
     i := 0;
@@ -1379,13 +1377,11 @@ Var
 Begin
   try
     nHandHeight := 0;
-    nHootHeight := 0;
     FpageCount := 1;
     If DetailLineIndex <> -1 Then
     Begin
       nHandHeight := GetHeadHeight;
-      nHootHeight := FooterHeight (DetailLineIndex);
-      nSumAllHeight := SumHeight(DetailLineIndex);
+      nSumAllHeight := SumHeight();
       Dataset := Dset(DetailLineIndex,DetailCellIndex(DetailLineIndex));
       Dataset.First;
       ndataHeight := 0;
