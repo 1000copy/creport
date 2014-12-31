@@ -43,6 +43,7 @@ type
     function IsDataField(s: String): Boolean;
     function GetValue(ThisCell: TReportCell): String;
     function ExpandDataHeight(HasDataNo:integer): integer;
+    function ExpandDataHeight1(HasDataNo: integer): integer;
 
   public
     FFileName: Tfilename;
@@ -870,7 +871,9 @@ begin
     cf.Free;
   end;
 end;
-  //spyn代表有数据库字段的处理
+// TODO:LCJ :看了一遍， 没有看懂。
+// DONE : 基本懂了。
+
 Procedure TReportRunTime.SetNewCell(spyn: boolean; NewCell, ThisCell:
   TReportCell);
 Var
@@ -886,14 +889,12 @@ Begin
     NewCell.CellText := '';
 
   NewCell.flogfont := thiscell.FLogFont;
-  // TODO:LCJ :看了一遍， 没有看懂。
-  // DONE : 基本懂了。
   // 运行逻辑：如果设计态是Slave，在runtime时也得是奴隶，通过这个FOwnerCellList找到自己的新主人
+  // 若隶属的CELL不为空则判断是否在同一页，若不在同一页则将自己加入到CELL对照表中去
+  // 若找到隶属的CELL则将自己加入到该CELL中去
   If ThisCell.OwnerCell <> Nil Then
   Begin
-    // 若隶属的CELL不为空则判断是否在同一页，若不在同一页则将自己加入到CELL对照表中去
     TempOwnerCell := Nil;
-    // 若找到隶属的CELL则将自己加入到该CELL中去
     For L := 0 To FDRMap.Count - 1 Do
     Begin
       If ThisCell.OwnerCell = TDRMapping(FDRMap[L]).DesignMasterCell Then
@@ -1199,12 +1200,33 @@ begin
   ndataHeight := ndataHeight + TempLine.GetLineHeight;
   result := TempLine;
 end;
-function TReportRunTime.ExpandDataHeight(HasDataNo:integer):integer;
+function TReportRunTime.ExpandDataHeight1(HasDataNo:integer):integer;
 var
   thisLine : TReportLine;
 begin
   ThisLine := TReportLine(FlineList[HasDataNo]);
   result := ThisLine.GetLineHeight;
+end;
+function TReportRunTime.ExpandDataHeight(HasDataNo:integer):integer;
+var
+  thisLine ,TempLine: TReportLine;
+  I, J, n,  TempDataSetCount:Integer;
+  HandLineList, datalinelist, HootLineList, sumAllList: TList;
+  ThisCell, NewCell: TReportCell;
+begin
+  ThisLine := TReportLine(FlineList[HasDataNo]);
+  TempLine := TReportLine.Create;
+  TempLine.FMinHeight := ThisLine.FMinHeight;
+  TempLine.FDragHeight := ThisLine.FDragHeight;
+  For j := 0 To ThisLine.FCells.Count - 1 Do
+  Begin
+    ThisCell := TreportCell(ThisLine.FCells[j]);
+    NewCell := TReportCell.Create(Self);
+    TempLine.FCells.Add(NewCell);
+    NewCell.FOwnerLine := TempLine;
+    setnewcell(false, newcell, thiscell);
+  End;
+  Result := ThisLine.GetLineHeight;
 end;
 function TReportRunTime.RenderLineHeight(HasDataNo:integer):Integer;
 var
@@ -1363,8 +1385,8 @@ Begin
       While (i < Dataset.RecordCount)  Do
       Begin
         
-//        inc(ndataHeight ,ExpandDataHeight(HasDataNo)) ;
-        ExpandLine(HasDataNo,ndataHeight);
+        inc(ndataHeight ,ExpandDataHeight(HasDataNo)) ;
+//        ExpandLine(HasDataNo,ndataHeight);
         If isPageFull  Then
         Begin
           inc(FPagecount);
