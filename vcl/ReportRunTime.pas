@@ -1268,6 +1268,7 @@ Type
     procedure JoinList(FPrintLineList: TList; IsLastPage: Boolean);
     function AppendList(l1, l2: TList): Boolean;
     procedure SaveHeadPage;
+    procedure SaveLastPage(fpagecount, FpageAll: Integer);
   private
      FHead,FFoot,FData,FSumAll:TLineList;
   public
@@ -1324,16 +1325,12 @@ Var
       End;
       application.ProcessMessages;
     End;
-    // dataLineList END
-    // 都是  i =  TempDataSetCount，也看从那个分支出来的。
     if not IsPageFull then
     begin
       If (Faddspace) And (HasEmptyRoomLastPage) Then begin
         PaddingEmptyLine(DetailLineIndex,rp.FData );
       end;
-      JoinAllList(FPrintLineList, rp.Head,rp.FData,rp.FSumAll,rp.Foot,True);
-      UpdatePrintLines;
-      SaveTempFile(ReadyFileName(fpagecount, Fpageall),fpagecount, FpageAll);
+      rp.SaveLastPage(fpagecount, FpageAll);
     end; 
   End ;
 
@@ -1511,6 +1508,13 @@ begin
   end;
   Result := i;
 end;
+procedure RenderParts.SaveLastPage(fpagecount, FpageAll:Integer);
+begin
+   JoinList(FRC.FPrintLineList,True);
+   FRC.UpdatePrintLines;
+   FRC.SaveTempFile(fpagecount, FpageAll);
+end;
+
 procedure RenderParts.SavePage(fpagecount, FpageAll:Integer);
 begin
    JoinList(FRC.FPrintLineList,false);
