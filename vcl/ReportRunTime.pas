@@ -1305,6 +1305,7 @@ Var
     rp.FillFoot ;
     rp.FillSumAll ;
     FDataLineHeight := 0;
+    // dataLineList era
     dataLineList := TList.Create;
     i := 0;
     While (i < Dataset.RecordCount) Do
@@ -1332,6 +1333,7 @@ Var
         i := i + 1;
       end;
     End;
+    // dataLineList END
     // 都是  i =  TempDataSetCount，也看从那个分支出来的。
     if not IsPageFull then
     begin
