@@ -654,6 +654,7 @@ Type
     procedure NewMapping (ThisCell,NewCell:TReportCell);
     function FindRuntimeMasterCell(ThisCell:TReportCell):TReportCell;
   public
+    procedure FreeItems;
     procedure RuntimeMapping(NewCell, ThisCell: TReportCell);
   end;
   TDRMapping = Class(TObject)
@@ -2854,7 +2855,6 @@ Begin
     Result := False;
 End;
 
-Procedure TReportControl.CombineCell;
 // LCJ : 描绘被选中的单元格的轮廓
 // LCJ : 把comment 字体的italic去掉。很舒服。感谢 steve jobs .
 // LCJ : 来帮忙的弟妹说{一个月来有阳光的日子不过4,5回，我都数过了:}。今天，阳光明媚+1。
@@ -2873,13 +2873,14 @@ Procedure TReportControl.CombineCell;
 // LCJ : 然后，另一个声音响起：你他妈听不清楚，是另外一个人说的，不是我说的吗？
 // LCJ : 然后，说明，我累了。累了才会响起曾经的不愉快的事情。
 
+Procedure TReportControl.CombineCell;
 var
     OwnerCell: TReportCell;
     I, J: Integer;
     ThisCell: TReportCell;
 Begin
-  checkError(FSelectCells.Count >= 2,'请至少选择两个单元格');
-  checkError(FSelectCells.IsRegularForCombine  ,'选择矩形不够规整，请重选');
+  checkError(FSelectCells.Count < 2,cc.TwoCellSelectedAtLeast);
+  checkError(not FSelectCells.IsRegularForCombine  ,cc.IsRegularForCombine);
   For I := 0 To FSelectCells.Count - 1 Do
   Begin
     ThisCell := TReportCell(FSelectCells[I]);
@@ -3570,7 +3571,7 @@ Begin
       ReadInteger(FprPageXy);
       ReadInteger(fpaperLength);
       ReadInteger(fpaperWidth);
-      ReadIntegerSkip(0);//FHootNo
+      ReadIntegerSkip();//FHootNo
     End;
   Finally
     TargetFile.Free;
@@ -4569,6 +4570,13 @@ begin
       R := TDRMapping(Self[L]).RuntimeMasterCell;
   End;
   result:= R;
+end;
+
+procedure TDRMappings.FreeItems;
+var n :Integer;
+begin
+    For N := Count - 1 Downto 0 Do
+      TDRMapping(Items[N]).Free;
 end;
 
 procedure TDRMappings.NewMapping(ThisCell, NewCell: TReportCell);

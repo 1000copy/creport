@@ -72,7 +72,7 @@ begin
 end;
 procedure CheckError(condition:Boolean ;msg :string);
 begin
-  if not condition then
+  if condition then
     raise TBlueException.Create(msg);
 end;
 

@@ -10,6 +10,8 @@ const
   FormulaPrefix = '`' ;
   ErrorRendering = '形成报表时发生错误，请检查各项参数与模板设置等是否正确';
   ErrorPrinterSetupRequired = '未安装打印机';
+  TwoCellSelectedAtLeast = '请至少选择两个单元格' ;
+  IsRegularForCombine  = '选择矩形不够规整，请重选' ;
 implementation
 
 end.

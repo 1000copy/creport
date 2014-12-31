@@ -67,7 +67,8 @@ type
     Function GetVarValue(strVarName: String): String;
     Function GetFieldName(strCellText: String): String;
     Procedure SetRptFileName(Const Value: TFilename);
-    Procedure SaveTempFile(FileName:string;PageNumber, Fpageall: Integer);
+    Procedure SaveTempFile(FileName:string;PageNumber, Fpageall: Integer);overload;
+    Procedure SaveTempFile(PageNumber, Fpageall: Integer);overload;
     Function setSumAllYg(fm, ss: String): String;
     Function setSumpageYg(fm, ss: String): String;
     Procedure LoadTempFile(strFileName: String);
@@ -194,7 +195,12 @@ begin
   Result := R;
 end;
 
-
+Procedure TReportRunTime.SaveTempFile(PageNumber, Fpageall: Integer);
+var f :string;
+begin
+   f:= ReadyFileName(PageNumber, Fpageall);
+   SaveTempFile(f,PageNumber, Fpageall);
+end;
 Procedure TReportRunTime.SaveTempFile(FileName: String;PageNumber, Fpageall: Integer);
 begin
   SaveToFile(FPrintLineList,FileName,PageNumber,Fpageall);
@@ -427,7 +433,7 @@ Var
 Begin
 	try
 		Try
-			CheckError(printer.Printers.Count = 0 ,'未安装打印机');
+			CheckError(printer.Printers.Count = 0 ,cc.ErrorPrinterSetupRequired);
 			// 爱上会展：金丝楠梳，宁德老寿眉，六安瓜片，太平猴魁，汝瓷 2014-11-7 茶博会
 			If IsDirectPrint Then
 			Begin
@@ -1237,11 +1243,10 @@ end;
 // todo:NextStep --> Iam tired ,have a rest
 procedure TReportRunTime.PreparePrintk(FpageAll: integer);
 Var
-  CellIndex,I, J, n,  TempDataSetCount:Integer;
+  CellIndex:Integer;
   HandLineList, datalinelist, HootLineList:TList;
   sumAllList: TLineList;
-  ThisLine, TempLine: TReportLine;
-  ThisCell, NewCell: TReportCell;
+
   procedure FreeList;
   Var
     n :Integer;
@@ -1249,8 +1254,7 @@ Var
     HootLineList.Free;
     dataLineList.free;
     FPrintLineList.Clear;
-    For N := FDRMap.Count - 1 Downto 0 Do
-      TDRMapping(FDRMap[N]).Free;
+    FDRMap.FreeItems;
     FDRMap.Clear;
     HandLineList.free;
   end;
@@ -1259,11 +1263,13 @@ Var
   begin
     AppendList(  FPrintLineList, HandLineList);
     UpdatePrintLines;
-    SaveTempFile( ReadyFileName(fpagecount, Fpageall),fpagecount, FpageAll);
+    SaveTempFile(fpagecount, FpageAll);
   end;
   procedure DataPage;
   Var
-    n :Integer;
+    ThisLine, TempLine: TReportLine;
+    ThisCell, NewCell: TReportCell;
+    I, J,N, TempDataSetCount:Integer;
   Begin
     Dataset := GetDataSet(TReportCell(TReportLine(FlineList[HasDataNo]).FCells[CellIndex]).FCellText);
     TempDataSetCount := Dataset.RecordCount;
@@ -1272,24 +1278,24 @@ Var
     sumAllList := FillSumList(nSumAllHeight);
     ndataHeight := 0;
     dataLineList := TList.Create;
-    i := 0;                                      
+    i := 0;
     While (i < TempDataSetCount) Do
     Begin
       TempLine := ExpandLine(HasDataNo,ndataHeight);
       If isPageFull Then
       Begin
-        If dataLineList.Count = 0 Then
-          raise RenderException.Create;
-//        FhootNo := HandLineList.Count+dataLineList.Count ;
+        CheckError(dataLineList.Count = 0,cc.RenderException);
         JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList,false);
         UpdatePrintLines;
-        SaveTempFile(ReadyFileName(fpagecount, Fpageall),fpagecount, FpageAll);
+        SaveTempFile(fpagecount, FpageAll);
         application.ProcessMessages;
-        FSummer.ResetSumPage;
-        fpagecount := fpagecount + 1;
-        FPrintLineList.Clear;
-        datalinelist.clear;
-        ndataHeight := 0;
+        inc(Fpagecount);
+        begin
+          FSummer.ResetSumPage;
+          FPrintLineList.Clear;
+          datalinelist.clear;
+          ndataHeight := 0;
+        end
       End else begin
         DataLineList.add(tempLine);
         SumLine(HasDataNo);
@@ -1314,12 +1320,10 @@ Begin
   try
     FSummer.ResetAll;
     Dataset := Nil;
-//    FhootNo := 0;
     nHandHeight := 0;
     FpageCount := 1;               
     HasDataNo := 0;
     nHootHeight := 0;
-    TempDataSetCount := 0;
     HandLineList := FillHeadList(nHandHeight);
     GetHasDataPosition(HasDataNo,CellIndex) ;
     If HasDataNo = -1 Then
