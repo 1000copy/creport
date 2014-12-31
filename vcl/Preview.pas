@@ -233,6 +233,7 @@ end;
 procedure TPreviewForm.EditEptkClick(Sender: TObject);
 begin
   TCreportForm.EditReport(filename.Caption);
+  // why RR is nil ?
   RR.updatepage;
   GoFirstPage;
 end;

@@ -943,7 +943,7 @@ begin
     NewCell := TReportCell.Create(Self);
     Line.FCells.Add(NewCell);
     NewCell.FOwnerLine := Line;
-    SetNewCell(false, newcell, thiscell);
+    SetNewCell(False, newcell, thiscell);
   End;
   Line.UpdateLineHeight;  
 end;
@@ -1395,11 +1395,11 @@ end;
 
 procedure RenderParts.FillHead;
 var
-  LineList:TLineList;
+  R:TLineList;
   ThisLine, Line: TReportLine;
   i:Integer;
 begin
-   LineList := TLineList.Create(FRC);
+   R := TLineList.Create(FRC);
    try
      For i := 0 To FLineList.Count - 1 Do
      Begin
@@ -1407,13 +1407,13 @@ begin
       if Not ThisLine.IsDetailLine then
       begin
         Line := TReportLine.Create;
-        LineList.Add(Line);
+        R.Add(Line);
         FRC.CloneLine(ThisLine,Line);
       end else
         break;
      End;
    finally
-     FHead :=   LineList ;
+     FHead :=   R ;
    end;
 end;
 procedure RenderParts.FillFoot;
