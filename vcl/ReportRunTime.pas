@@ -1258,27 +1258,40 @@ begin
    result := GetDataSet(t);
 end;
 
+Type
+  RenderParts = class
+  private
+    FRC:TReportRuntime;
+    FLineList:TLineList;
+  private
+     FHead,FFoot,FData,FSumAll:TLineList;
+  public
+     constructor Create(RC:TReportRuntime);
+     procedure FillHead;
+     procedure FillFoot;
+     procedure FillSumAll;
+     property Head:TLineList read FHead;
+     property Foot:TLineList read FFoot;
+  end;
+
 // todo:NextStep --> Iam tired ,have a rest
 procedure TReportRunTime.PreparePrintk(FpageAll: integer);
 Var
-  HandLineList, datalinelist, HootLineList:TList;
-  sumAllList: TLineList;
-
+  datalinelist:TList;
+  rp : RenderParts ;
   procedure FreeList;
   Var
     n :Integer;
   begin
-    HootLineList.Free;
     dataLineList.free;
     FPrintLineList.Clear;
     FDRMap.FreeItems;
     FDRMap.Clear;
-    HandLineList.free;
   end;
 
   procedure NoDataPage;
   begin
-    AppendList(  FPrintLineList, HandLineList);
+    AppendList(  FPrintLineList, rp.Head);
     UpdatePrintLines;
     SaveTempFile(fpagecount, FpageAll);
   end;
@@ -1289,8 +1302,8 @@ Var
     I, J,N:Integer;
   Begin
     Dataset.First;
-    HootLineList := FillFootList();
-    sumAllList := FillSumList();
+    rp.FillFoot ;
+    rp.FillSumAll ;
     FDataLineHeight := 0;
     dataLineList := TList.Create;
     i := 0;
@@ -1301,7 +1314,7 @@ Var
       If isPageFull Then
       Begin
         CheckError(dataLineList.Count = 0,cc.RenderException);
-        JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList,false);
+        JoinAllList(FPrintLineList, rp.Head,dataLineList,rp.FSumAll,rp.Foot,false);
         UpdatePrintLines;
         SaveTempFile(fpagecount, FpageAll);
         application.ProcessMessages;
@@ -1325,7 +1338,7 @@ Var
       If (Faddspace) And (HasEmptyRoomLastPage) Then begin
         PaddingEmptyLine(DetailLineIndex,dataLineList );
       end;
-      JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList,True);
+      JoinAllList(FPrintLineList, rp.Head,dataLineList,rp.FSumAll,rp.Foot,True);
       UpdatePrintLines;
       SaveTempFile(ReadyFileName(fpagecount, Fpageall),fpagecount, FpageAll);
     end;
@@ -1333,21 +1346,27 @@ Var
   End ;
 Var
   CellIndex:Integer;
+
 Begin
+  rp := RenderParts.Create(Self);
   try
-    FSummer.ResetAll;
-    FpageCount := 1;
-    HandLineList := FillHeadList();
-    If DetailLineIndex = -1 Then
-     noDataPage
-    else
-    begin
-     DataPage(Dataset);
+    try
+      FSummer.ResetAll;
+      FpageCount := 1;
+      rp.FillHead();
+      If DetailLineIndex = -1 Then
+       noDataPage
+      else
+      begin
+       DataPage(Dataset);
+      end;
+      FreeList;
+    except
+      on E:Exception do
+           MessageDlg(e.Message,mtInformation,[mbOk], 0);
     end;
-    FreeList;
-  except
-    on E:Exception do
-         MessageDlg(e.Message,mtInformation,[mbOk], 0);
+  finally
+    rp.Free ;
   end;
 End;
 Function TReportRunTime.DoPageCount:integer;
@@ -1379,6 +1398,99 @@ Begin
     on E:Exception do MessageDlg(e.Message,mtInformation,[mbOk], 0);
   end;
 End;       
+
+{ RenderParts }
+
+constructor RenderParts.Create(RC:TReportRuntime);
+begin
+  Self.FLineList := RC.LineList ;
+  Self.FRC :=RC ;
+end;
+
+procedure RenderParts.FillHead;
+var
+  LineList:TLineList;
+  ThisLine, Line: TReportLine;
+  i:Integer;
+begin
+   LineList := TLineList.Create(FRC);
+   try
+     For i := 0 To FLineList.Count - 1 Do
+     Begin
+      ThisLine := FlineList[i];
+      if Not ThisLine.IsDetailLine then
+      begin
+        Line := TReportLine.Create;
+        LineList.Add(Line);
+        FRC.CloneLine(ThisLine,Line);
+      end else
+        break;
+     End;
+   finally
+     FHead :=   LineList ;
+   end;
+end;
+procedure RenderParts.FillFoot;
+  Var
+  I, J, n:Integer;
+  HootLineList: TLineList;
+  ThisLine, TempLine: TReportLine;
+  ThisCell, NewCell: TReportCell;
+begin
+  HootLineList := TLineList.Create(FRC);
+  For i := FRc.DetailLineIndex + 1 To FlineList.Count - 1 Do
+  Begin
+    ThisLine := TReportLine(FlineList[i]);
+    TempLine := TReportLine.Create;
+    TempLine.FMinHeight := ThisLine.FMinHeight;
+    TempLine.FDragHeight := ThisLine.FDragHeight;
+    HootLineList.Add(TempLine);
+    For j := 0 To ThisLine.FCells.Count - 1 Do
+    Begin
+      ThisCell := TreportCell(ThisLine.FCells[j]);
+      If (Length(ThisCell.CellText) > 0) And
+        (UpperCase(copy(ThisCell.FCellText, 1, 7)) = '`SUMALL') Then
+      Begin
+        HootLineList.Delete(HootLineList.count - 1);
+        break;
+      End;
+      NewCell := TReportCell.Create(self.FRC);
+      TempLine.FCells.Add(NewCell);
+      NewCell.FOwnerLine := TempLine;
+      FRC.setnewcell(false, newcell, thiscell);
+    End;
+    If (UpperCase(copy(ThisCell.FCellText, 1, 7)) <> '`SUMALL') Then
+      TempLine.UpdateLineHeight;
+  End;
+  FFoot := HootLineList;
+end;
+procedure RenderParts.FillSumAll();
+Var
+  I, J, n,  TempDataSetCount:Integer;
+  sumAllList: TLineList;
+  ThisLine, TempLine: TReportLine;
+  ThisCell, NewCell: TReportCell;
+begin
+  sumAllList := TLineList.Create(FRC);
+  For i := FRC.DetailLineIndex + 1 To FlineList.Count - 1 Do
+  Begin
+    ThisLine := TReportLine(FlineList[i]);
+    TempLine := TReportLine.Create;
+    TempLine.FMinHeight := ThisLine.FMinHeight;
+    TempLine.FDragHeight := ThisLine.FDragHeight;
+    sumAllList.Add(TempLine);
+    For j := 0 To ThisLine.FCells.Count - 1 Do
+    Begin
+      ThisCell := TreportCell(ThisLine.FCells[j]);
+      NewCell := TReportCell.Create(FRC);
+      TempLine.FCells.Add(NewCell);
+      NewCell.FOwnerLine := TempLine;
+      FRC.setnewcell(false, newcell, thiscell);
+    End;                              //for j
+    TempLine.UpdateLineHeight;
+  End;
+  FSumAll :=  sumAllList;
+end ;
 
 end.
 
