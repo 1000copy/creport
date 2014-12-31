@@ -1242,7 +1242,19 @@ Var
   sumAllList: TLineList;
   ThisLine, TempLine: TReportLine;
   ThisCell, NewCell: TReportCell;
-  
+  procedure FreeList;
+  Var
+    n :Integer;
+  begin
+    HootLineList.Free;
+    dataLineList.free;
+    FPrintLineList.Clear;
+    For N := FDRMap.Count - 1 Downto 0 Do
+      TDRMapping(FDRMap[N]).Free;
+    FDRMap.Clear;
+    HandLineList.free;
+  end;
+
   procedure NoDataPage;
   begin
     AppendList(  FPrintLineList, HandLineList);
@@ -1268,7 +1280,7 @@ Var
       Begin
         If dataLineList.Count = 0 Then
           raise RenderException.Create;
-        FhootNo := HandLineList.Count+dataLineList.Count ;
+//        FhootNo := HandLineList.Count+dataLineList.Count ;
         JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList,false);
         UpdatePrintLines;
         SaveTempFile(ReadyFileName(fpagecount, Fpageall),fpagecount, FpageAll);
@@ -1297,23 +1309,12 @@ Var
     end;
 
   End ;
-  procedure FreeList;
-  Var
-    n :Integer;
-  begin
-    HootLineList.Free;
-    dataLineList.free;
-    FPrintLineList.Clear;
-    For N := FDRMap.Count - 1 Downto 0 Do
-      TDRMapping(FDRMap[N]).Free;
-    FDRMap.Clear;
-    HandLineList.free;
-  end;
+
 Begin
   try
     FSummer.ResetAll;
     Dataset := Nil;
-    FhootNo := 0;
+//    FhootNo := 0;
     nHandHeight := 0;
     FpageCount := 1;               
     HasDataNo := 0;

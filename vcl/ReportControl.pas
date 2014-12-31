@@ -89,6 +89,7 @@ type
 type
    TSimpleFileStream = class(TFileStream)
   private
+    procedure ReadIntegerSkip;
    public
      procedure ReadWord(var a : Word);
      procedure ReadInteger(var a: Integer);
@@ -465,7 +466,7 @@ Type
     FTopMargin1: Integer;
     FBottomMargin1: Integer;
     //表尾的第一行在整个页的第几行
-    FHootNo: integer;
+    //FHootNo: integer;
     // 换页加表头（不加表头）
     FNewTable: Boolean;
     // 定义打印多少行后从新加表头
@@ -3454,7 +3455,7 @@ Begin
       WriteInteger(FprPageXy);
       WriteInteger(fPaperLength);
       WriteInteger(fPaperWidth);
-      WriteInteger(FHootNo);
+      WriteInteger(0);//FHootNo
     End;
   Finally
     TargetFile.Free;
@@ -3569,7 +3570,7 @@ Begin
       ReadInteger(FprPageXy);
       ReadInteger(fpaperLength);
       ReadInteger(fpaperWidth);
-      ReadInteger(FHootNo);
+      ReadIntegerSkip(0);//FHootNo
     End;
   Finally
     TargetFile.Free;
@@ -4491,6 +4492,11 @@ begin
 end;
 
 procedure TSimpleFileStream.ReadInteger(var a: Integer);
+begin
+    Read(a,SizeOf(Integer))
+end;
+procedure TSimpleFileStream.ReadIntegerSkip;
+var a: Integer;
 begin
     Read(a,SizeOf(Integer))
 end;
