@@ -488,7 +488,6 @@ Type
     procedure DoEdit(str:string);
     procedure DoMouseDown(P:TPoint;Shift:Boolean);
   Protected
-    hasdatano: integer;
     function RenderText(ThisCell: TReportCell; PageNumber,Fpageall: Integer): String;virtual ;
     Procedure CreateWnd; Override;
     procedure InternalLoadFromFile(FileName:string;FLineList:TList);

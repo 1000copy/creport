@@ -38,13 +38,13 @@ type
     //function HeaderHeight: integer;
     function FooterHeight():integer;
     function SumHeight():integer;
-    function ExpandLine(HasDataNo:integer;var ndataHeight:integer):TReportLine;
+    function ExpandLine(HasDataNo:integer):TReportLine;
     function RenderCellText(NewCell,ThisCell:TReportCell):String;
     function IsDataField(s: String): Boolean;
     function GetValue(ThisCell: TReportCell): String;
     function ExpandDataHeight(HasDataNo:integer): integer;
     function DetailCellIndex(NO:integer) :Integer;
-    function Dset(HasDataNo, cellIndex: integer): TDataset;
+    function Dataset(): TDataset;
 
   public
     FFileName: Tfilename;
@@ -57,8 +57,7 @@ type
     FHeaderHeight: Integer;
     Fallprint: Boolean;
     FPageCount: Integer;
-    nDataHeight, nHandHeight: Integer;
-    Dataset: TDataset;
+    FDataLineHeight: Integer;
     Procedure UpdateLines;
     Procedure UpdatePrintLines;
     Procedure PrintOnePage;
@@ -91,12 +90,10 @@ type
     function FillSumList(): TLineList;
     procedure JoinAllList(FPrintLineList, HandLineList, dataLineList,
       SumAllList, HootLineList: TList;IsLastPage:Boolean);
-    procedure PaddingEmptyLine(hasdatano: integer; var dataLineList: TList;
-      var ndataHeight: integer);overload;
+    procedure PaddingEmptyLine(hasdatano: integer; var dataLineList: TList);overload;
     procedure SumCell(ThisCell: TReportCell; j: Integer);
     procedure SumLine(HasDataNo: integer);
     function DoPageCount(): integer;
-    function RenderLineHeight(HasDataNo:integer):Integer;//
     function GetDataSetFromCell(HasDataNo,CellIndex:Integer):TDataset;
     function GetPrintRange(var A, Z: Integer): boolean;
     procedure LoadPage(I: integer);
@@ -352,21 +349,21 @@ End;
 //返回数用于在预览中确定代＃字头数据库是在模板的第几行
 function TReportRunTime.IsLastPageFull:Boolean ;
 begin
-  result := (FtopMargin + nHandHeight + nDataHeight + SumHeight +
+  result := (FtopMargin + getHeadHeight + FDataLineHeight + SumHeight +
           FBottomMargin) > height;
 end;
 function TReportRunTime.isPageFull:boolean;
 begin
-  result := (FtopMargin + nHandHeight + nDataHeight + FooterHeight + FBottomMargin >height);
+  result := (FtopMargin + getHeadHeight + FDataLineHeight + FooterHeight + FBottomMargin >height);
 end;
 function TReportRunTime.PageMinHeight:Integer;
 begin
-  result := FtopMargin + nHandHeight + FooterHeight + FBottomMargin ;
+  result := FtopMargin + getHeadHeight + FooterHeight + FBottomMargin ;
 end;
 function TReportRunTime.HasEmptyRoomLastPage:Boolean;
 begin
-  result := FtopMargin + nHandHeight +
-      nDataHeight +
+  result := FtopMargin + getHeadHeight +
+      FDataLineHeight +
       SumHeight + FBottomMargin < height;
 end;
 
@@ -1144,23 +1141,23 @@ begin
    end;
 end;
 
-procedure TReportRunTime.PaddingEmptyLine(hasdatano:integer; var dataLineList:TList;var ndataHeight:integer);
+procedure TReportRunTime.PaddingEmptyLine(hasdatano:integer; var dataLineList:TList);
 var
   thisline,templine : Treportline ;
 begin
-      thisline := Treportline(FLineList[hasdatano]);
-      templine := CloneEmptyLine(thisLine);
-      While true Do
-      Begin
-        dataLineList.Add(templine);
-        TempLine.UpdateLineHeight;
-        ndataHeight := ndataHeight + templine.GetLineHeight;
-        If IsLastPageFull Then
-        Begin
-          dataLineList.Delete(dataLineList.Count - 1);
-          break;
-        End;
-      End;
+  thisline := FLineList[hasdatano];
+  templine := CloneEmptyLine(thisLine);
+  While true Do
+  Begin
+    dataLineList.Add(templine);
+    TempLine.UpdateLineHeight;
+    inc(FDataLineHeight ,templine.GetLineHeight);
+    If IsLastPageFull Then
+    Begin
+      dataLineList.Delete(dataLineList.Count - 1);
+      break;
+    End;
+  End;
 end;
 procedure TReportRunTime.SumCell(ThisCell:TReportCell;j:Integer);
   function IsFieldNumric(FieldName:String):Boolean;
@@ -1184,7 +1181,7 @@ begin
     raise Exception.create('统计时发生错误，请检查模板设置是否正确');
   End;
 end;
-function TReportRunTime.ExpandLine(HasDataNo:integer;var ndataHeight:integer):TReportLine;
+function TReportRunTime.ExpandLine(HasDataNo:integer):TReportLine;
 var
   thisLine ,TempLine: TReportLine;
   I, J, n,  TempDataSetCount:Integer;
@@ -1205,7 +1202,6 @@ begin
     setnewcell(false, newcell, thiscell);
   End; //for j
   TempLine.UpdateLineHeight;
-  ndataHeight := ndataHeight + TempLine.GetLineHeight;
   result := TempLine;
 end;
 function TReportRunTime.ExpandDataHeight(HasDataNo:integer):integer;
@@ -1229,20 +1225,6 @@ begin
     SetNewCell(false, newcell, thiscell);
   End;
   Result := ThisLine.GetLineHeight;
-end;
-function TReportRunTime.RenderLineHeight(HasDataNo:integer):Integer;
-var
-  thisLine ,TempLine: TReportLine;
-  HandLineList, datalinelist, HootLineList, sumAllList: TList;
-  ThisCell, NewCell: TReportCell;
-  ndataHeight:integer;
-begin
-  ThisLine := TReportLine(FlineList[HasDataNo]);
-  TempLine := TReportLine.Create;
-  CloneLine(ThisLine,TempLine);
-  ndataHeight := 0;
-  inc(ndataHeight ,TempLine.GetLineHeight);
-  result := ndataHeight;
 end;
 procedure TReportRunTime.SumLine(HasDataNo:integer);
 var j:integer;var thisLine ,TempLine: TReportLine;
@@ -1268,13 +1250,13 @@ begin
     Else
       AppendList(  FPrintLineList, HootLineList);
 end;
-  function TReportRunTime.Dset (HasDataNo,cellIndex:integer):TDataset;
-  var
-     t : string;
-  begin
-     t :=  Cells[ HasDataNo,cellIndex].FCellText;
-     result := GetDataSet(t);
-  end;
+function TReportRunTime.DataSet ():TDataset;
+var
+   t : string;
+begin
+   t :=  Cells[ DetailLineIndex,DetailCellIndex(DetailLineIndex)].FCellText;
+   result := GetDataSet(t);
+end;
 
 // todo:NextStep --> Iam tired ,have a rest
 procedure TReportRunTime.PreparePrintk(FpageAll: integer);
@@ -1310,12 +1292,13 @@ Var
     Dataset.First;
     HootLineList := FillFootList();
     sumAllList := FillSumList();
-    ndataHeight := 0;
+    FDataLineHeight := 0;
     dataLineList := TList.Create;
     i := 0;
     While (i < TempDataSetCount) Do
     Begin
-      TempLine := ExpandLine(DetailLineIndex,ndataHeight);
+      TempLine := ExpandLine(DetailLineIndex);
+      inc(FDataLineHeight,ExpandDataHeight(DetailLineIndex));
       If isPageFull Then
       Begin
         CheckError(dataLineList.Count = 0,cc.RenderException);
@@ -1328,7 +1311,7 @@ Var
           FSummer.ResetSumPage;
           FPrintLineList.Clear;
           datalinelist.clear;
-          ndataHeight := 0;
+          FDataLineHeight := 0;
         end
       End else begin
         DataLineList.add(tempLine);
@@ -1341,7 +1324,7 @@ Var
     if not IsPageFull then
     begin
       If (Faddspace) And (HasEmptyRoomLastPage) Then begin
-        PaddingEmptyLine(DetailLineIndex,dataLineList,ndataHeight );
+        PaddingEmptyLine(DetailLineIndex,dataLineList );
       end;
       JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList,True);
       UpdatePrintLines;
@@ -1356,12 +1339,10 @@ Begin
     FSummer.ResetAll;
     FpageCount := 1;
     HandLineList := FillHeadList();
-    nHandHeight := getHeadHeight;
     If DetailLineIndex = -1 Then
      noDataPage
     else
     begin
-     Dataset := Dset(DetailLineIndex,DetailCellIndex(DetailLineIndex));
      DataPage(Dataset);
     end;
     FreeList;
@@ -1375,22 +1356,19 @@ Var
   CellIndex,I :Integer;
 Begin
   try
-    nHandHeight := 0;
     FpageCount := 1;
     If DetailLineIndex <> -1 Then
     Begin
-      nHandHeight := GetHeadHeight;
-      Dataset := Dset(DetailLineIndex,DetailCellIndex(DetailLineIndex));
       Dataset.First;
-      ndataHeight := 0;
+      FDataLineHeight := 0;
       i := 0;
       While (i < Dataset.RecordCount)  Do
       Begin
-        inc(ndataHeight ,ExpandDataHeight(DetailLineIndex)) ;
+        inc(FDataLineHeight ,ExpandDataHeight(DetailLineIndex)) ;
         If isPageFull  Then
         Begin
           inc(FPagecount);
-          ndataHeight := 0;
+          FDataLineHeight := 0;
         End else begin
           Dataset.Next;
           i := i + 1;
