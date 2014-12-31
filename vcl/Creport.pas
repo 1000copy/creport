@@ -133,7 +133,6 @@ type
     procedure AddLineClick(Sender: TObject);
     procedure CombineCellsClick(Sender: TObject);
     procedure SplitCellClick(Sender: TObject);
-    //procedure CellPropClick(Sender: TObject);
     procedure DeleteLineClick(Sender: TObject);
     procedure AddCellClick(Sender: TObject);
     procedure InsertCellClick(Sender: TObject);

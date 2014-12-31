@@ -1362,9 +1362,7 @@ Begin
   except
     on E:Exception do MessageDlg(e.Message,mtInformation,[mbOk], 0);
   end;
-End;
-
-
+End;       
 end.
 
 
