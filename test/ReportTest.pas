@@ -1570,7 +1570,8 @@ begin
       R.SetDataSet('t1',t1);
       CheckEquals(5,R.DoPageCount);
       height := 0;
-      list := r.FillHeadList(height);
+      list := r.FillHeadList;
+      height := r.GetHeadHeight;
       CheckEquals(HEADERHEIGHT+LINEHEIGHT*1,height);
       CheckEquals(2,list.count);
       CheckEquals(HEADERHEIGHT,TReportLine(list[0]).Lineheight);
@@ -1650,7 +1651,8 @@ begin
       ResetContent;
     end;
     R.ReportFile:=strFileDir;
-    R.FillHeadList(H);
+    R.FillHeadList();
+    H := R.GetHeadHeight;
 //      R.EditReport;
     R.PrintPreview(True);
     CheckEquals(H,R.GetHeadHeight);
@@ -1698,8 +1700,8 @@ begin
         ResetContent;
       end;
       R.ReportFile:=strFileDir;
-      R.FillHeadList(H);
-      //R.EditReport;
+      R.FillHeadList();
+      H := R.GetHeadHeight;
       CheckEquals(H,R.GetHeadHeight);
     finally
       T1.free;

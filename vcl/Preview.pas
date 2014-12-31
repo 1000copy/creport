@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  ReportControl, ExtCtrls, Buttons, StdCtrls, Spin, ComCtrls,ReportRunTime,osservice;
+  ReportControl, ExtCtrls, Buttons, StdCtrls, Spin, ComCtrls,ReportRunTime,osservice,cc;
 
 type
   TPreviewForm = class(TForm)
@@ -57,10 +57,7 @@ type
     procedure PrevPage;
     procedure ReloadPageFile(CurrentPage: Integer);
     procedure GoPage(CurrentPage: Integer);
-    procedure SetStatus(const Value: String);
-    { Private declarations }
   public
-    { Public declarations }
     PageCount: Integer;
     CurrentPage: Integer;
     DataNameFilst:Tlist;
@@ -69,7 +66,6 @@ type
     procedure PrintFile(strFileName: string);
     procedure SetPreviewMode(bPreview: Boolean);
     function RR:TReportRuntime;
-    property Status :String write SetStatus;
     procedure SetPage;
     class procedure Action(ReportFile:string;FPageCount:Integer;bPreviewMode:Boolean);
   end;
@@ -172,11 +168,8 @@ begin
 
   if FileExists( osservice.PageFileName(1)) then
     RC.LoadFromFile(osservice.PageFileName(1));
-
-  StatusBar1.Panels[0].Text :='µÚ'+IntToStr(CurrentPage)+'£¯' +IntToStr(PageCount) +  'Ò³';
-
-  SpeedButton3.OnClick(sender);
-
+  Setpage;                                     
+  SpeedButton3.OnClick(sender);                
 end;
 
 procedure TPreviewForm.SpeedButton4Click(Sender: TObject);
@@ -310,7 +303,7 @@ begin
   RuleApply  ;
   nPrevScale := RC.ReportScale;
 
-  Status  := format('µÚ%d/%dÒ³',[CurrentPage,PageCount]);
+  SetPage;
   LockWindowUpdate(Handle);
   ReloadPageFile(CurrentPage);
   RC.ReportScale := nPrevScale;
@@ -326,18 +319,11 @@ begin
   );
 end;
 
-procedure TPreviewForm.SetStatus(const Value: String);
-begin
-    StatusBar1.Panels[0].Text := Value;
-end;
+
 
 procedure TPreviewForm.SetPage;
 begin
-  StatusBar1.Panels[0].Text := 'µÚ' +
-          IntToStr(CurrentPage) + '£¯' +
-            IntToStr(PageCount)
-          + 'Ò³';
-
+  StatusBar1.Panels[0].Text :=Format(cc.PageFormat,[CurrentPage,PageCount]);
 end;
 
 class procedure TPreviewForm.Action(ReportFile:string;FPageCount:Integer;bPreviewMode:Boolean);

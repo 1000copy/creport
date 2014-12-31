@@ -745,8 +745,6 @@ procedure TCreportForm.N29Click(Sender: TObject);
 var
   t: string;
 begin
-//  t := statusbar1.Panels[3].text;
-//  statusbar1.Panels[3].text := savefilename + ' ÕıÔÚ´æÅÌ...';
   if savefilename = '' then
   begin
     if SaveDialog1.Execute then
@@ -769,7 +767,6 @@ begin
     savebz:=true;
 
   end;
-//  statusbar1.Panels[3].text := t;
 end;
 
 procedure TCreportForm.ScrollBox1Resize(Sender: TObject);

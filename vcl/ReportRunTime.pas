@@ -80,7 +80,7 @@ type
     function IsLastPageFull: Boolean;
     function isPageFull: boolean;
     function CloneEmptyLine(thisLine: TReportLine): TReportLine;
-    function FillHeadList(var H: integer): TList;
+    function FillHeadList(): TList;
     function GetHasDataPosition(var HasDataNo,
       cellIndex: integer): Boolean;
     function AppendList(l1, l2: TList): Boolean;
@@ -561,10 +561,7 @@ Begin
     PreparePrintk( i);
     REPmessform.Hide;
     PreviewForm.PageCount := FPageCount;
-    PreviewForm.StatusBar1.Panels[0].Text := 'µÚ' +
-      IntToStr(PreviewForm.CurrentPage) + '£¯' + IntToStr(PreviewForm.PageCount)
-        +
-      'Ò³';
+    PreviewForm.SetPage;
     result := true;
   End
   Else
@@ -747,8 +744,7 @@ Begin
   PreparePrintk(i);
   REPmessform.Hide;
   PreviewForm.PageCount := FPageCount;
-
-  PreviewForm.Status := Format(cc.PageFormat,[PreviewForm.CurrentPage,PreviewForm.PageCount]);
+  PreviewForm.SetPage;
 End;
 Procedure Register;
 Begin
@@ -952,37 +948,30 @@ begin
   End;
   Line.UpdateLineHeight;  
 end;
-function TReportRunTime.FillHeadList(var H:integer):TList;
+function TReportRunTime.FillHeadList():TList;
 var
   LineList:TLineList;
-  i,j:integer;
   ThisLine, Line: TReportLine;
-  function Fill:TLineList;
-  var
-    i:Integer;
-  begin
-     LineList := TLineList.Create(self);
-     try
-       For i := 0 To FLineList.Count - 1 Do
-       Begin
-        ThisLine := FlineList[i];
-        if Not ThisLine.IsDetailLine then
-        begin
-          Line := TReportLine.Create;
-          LineList.Add(Line);
-          CloneLine(ThisLine,Line);
-        end else
-          break;
-       End;
-     finally
-       result :=   LineList ;
-     end;
-  end;
+  i:Integer;
 begin
-   LineList := Fill;
-   H := LineList.TotalHeight;
-   Result := LineList;
+   LineList := TLineList.Create(self);
+   try
+     For i := 0 To FLineList.Count - 1 Do
+     Begin
+      ThisLine := FlineList[i];
+      if Not ThisLine.IsDetailLine then
+      begin
+        Line := TReportLine.Create;
+        LineList.Add(Line);
+        CloneLine(ThisLine,Line);
+      end else
+        break;
+     End;
+   finally
+     result :=   LineList ;
+   end;
 end;
+
 function TReportRunTime.GetHeadHeight:integer;
 var
    i:integer;
@@ -1324,7 +1313,8 @@ Begin
     FpageCount := 1;               
     HasDataNo := 0;
     nHootHeight := 0;
-    HandLineList := FillHeadList(nHandHeight);
+    HandLineList := FillHeadList();
+    nHandHeight := getHeadHeight;
     GetHasDataPosition(HasDataNo,CellIndex) ;
     If HasDataNo = -1 Then
       noDataPage
