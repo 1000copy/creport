@@ -1269,6 +1269,8 @@ Type
     function AppendList(l1, l2: TList): Boolean;
     procedure SaveHeadPage;
     procedure SaveLastPage(fpagecount, FpageAll: Integer);
+    procedure FillFixParts;
+    procedure Reset;
   private
      FHead,FFoot,FData,FSumAll:TLineList;
   public
@@ -1297,14 +1299,10 @@ Var
 
   procedure DataPage(Dataset:TDataset);
   Var
-    ThisLine, TempLine: TReportLine;
-    ThisCell, NewCell: TReportCell;
-    I, J,N:Integer;
+    I:Integer;
   Begin
     Dataset.First;
-    rp.FillHead();
-    rp.FillFoot ;
-    rp.FillSumAll ;
+    rp.FillFixParts;
     FDataLineHeight := 0;
     // dataLineList era
     i := 0;
@@ -1315,12 +1313,7 @@ Var
       Begin
         CheckError(rp.FData.Count = 0,cc.RenderException);
         rp.SavePage(fpagecount, FpageAll);
-        begin
-          FSummer.ResetSumPage;
-          FPrintLineList.Clear;
-          rp.ResetData;
-        end;
-        FDataLineHeight := 0;
+        rp.Reset;
         inc(Fpagecount);
       End;
       application.ProcessMessages;
@@ -1457,6 +1450,12 @@ begin
   End;
   FFoot := HootLineList;
 end;
+procedure RenderParts.FillFixParts();
+begin
+    FillHead();
+    FillFoot ;
+    FillSumAll ;
+end;
 procedure RenderParts.FillSumAll();
 Var
   I, J, n,  TempDataSetCount:Integer;
@@ -1544,6 +1543,14 @@ begin
     For n := 0 To l2.Count - 1 Do
       l1.Add(l2[n]);
     result := true;
+end;
+
+procedure  RenderParts.Reset;
+begin
+  FRC.FSummer.ResetSumPage;
+  FRC.FPrintLineList.Clear;
+  ResetData;
+  FRC.FDataLineHeight := 0;
 end;
 
 end.
