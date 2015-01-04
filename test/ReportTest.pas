@@ -1627,7 +1627,7 @@ begin
     t1.CreateDataSet;
     R.SetDataSet('t1',t1);
     t1.Open;
-    for I:= 0 to 100 do
+    for I:= 0 to 20 do
       t1.AppendRecord([I,(cos(I)*1000)]);
     strFileDir := ExtractFileDir(Application.ExeName)+'\'+'xxx.ept';
     with  R do

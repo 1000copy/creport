@@ -48,6 +48,8 @@ type
     function Dataset(): TDataset;
     procedure DataPage(Dataset: TDataset);
     procedure FreeList;
+    procedure SetNewCell_For_ExpandDataHeight(spyn: boolean; NewCell,
+      ThisCell: TReportCell);
   public
     FpageAll: integer ;
     FFileName: Tfilename;
@@ -912,7 +914,7 @@ Begin
   If Not spyn Then
     NewCell.CellText:= RenderCellText(newCell,ThisCell)
   Else
-    NewCell.CellText := ''; 
+    NewCell.CellText := '';
   NewCell.FLogFont := ThisCell.FLogFont;
   FDRMap.RuntimeMapping(NewCell, ThisCell);
   NewCell.CalcHeight;
@@ -1256,6 +1258,10 @@ begin
   TempLine.UpdateLineHeight;
   result := TempLine;
 end;
+
+
+
+
 function TReportRunTime.ExpandDataHeight(HasDataNo:integer):integer;
 var
   thisLine ,TempLine: TReportLine;
@@ -1263,6 +1269,7 @@ var
   HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisCell, NewCell: TReportCell;
 begin
+  {$Optimization on}
   ThisLine := TReportLine(FlineList[HasDataNo]);
   // 痛苦的副作用：下面的11行代码对Result无影响，但是不能删除，否则飞线。
   TempLine := TReportLine.Create;
@@ -1274,10 +1281,15 @@ begin
     NewCell := TReportCell.Create(Self);
     TempLine.FCells.Add(NewCell);
     NewCell.FOwnerLine := TempLine;
-    SetNewCell(false, newcell, thiscell);
+    NewCell.CloneFrom(ThisCell);
+    FDRMap.RuntimeMapping(NewCell, ThisCell);
   End;
+
   Result := ThisLine.GetLineHeight;
+  {$Optimization off}
 end;
+
+
 procedure TReportRunTime.SumLine(HasDataNo:integer);
 var j:integer;var thisLine ,TempLine: TReportLine;
 Var
@@ -1370,7 +1382,7 @@ Begin
 End;
 Function TReportRunTime.DoPageCount:integer;
 Var
-  CellIndex,I :Integer;
+  I :Integer;
 Begin
   try
     FpageCount := 1;
@@ -1388,7 +1400,7 @@ Begin
           FDataLineHeight := 0;
         End else begin
           Dataset.Next;
-          i := i + 1;
+          inc(I);
         end;
       End;
     End ;
@@ -1419,34 +1431,32 @@ begin
       ThisLine := FlineList[i];
       if Not ThisLine.IsDetailLine then
       begin
-        Line := TReportLine.Create;
+        Line := FRC.CloneNewLine(ThisLine);
         R.Add(Line);
-        FRC.CloneLine(ThisLine,Line);
       end else
         break;
      End;
    finally
-     FHead :=   R ;
+     FHead :=  R ;
    end;
 end;
 procedure RenderParts.FillFoot;
   Var
-  I, J, n:Integer;
-  HootLineList: TLineList;
+  I :Integer;
+  R: TLineList;
   ThisLine, Line: TReportLine;
-  ThisCell, NewCell: TReportCell;
 begin
-  HootLineList := TLineList.Create(FRC);
+  R := TLineList.Create(FRC);
   For i := FRc.DetailLineIndex + 1 To FlineList.Count - 1 Do
   Begin
     ThisLine := TReportLine(FlineList[i]);
     if not ThisLine.IsSumAllLine then begin
       Line := FRC.CloneNewLine(ThisLine);
-      HootLineList.Add(Line);
+      R.Add(Line);
       Line.UpdateLineHeight;
     end;
   End;
-  FFoot := HootLineList;
+  FFoot := R;
 end;
 procedure RenderParts.FillFixParts();
 begin
