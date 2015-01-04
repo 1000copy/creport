@@ -57,6 +57,7 @@ type
     Fallprint: Boolean;
     FPageCount: Integer;
     FDataLineHeight: Integer;
+    function CloneNewLine(ThisLine: TReportLine): TReportLine;
     Procedure UpdateLines;
     Procedure UpdatePrintLines;
     Procedure PrintOnePage;
@@ -947,6 +948,27 @@ begin
   End;
   Line.UpdateLineHeight;  
 end;
+function TReportRunTime.CloneNewLine(ThisLine:TReportLine):TReportLine;
+var
+  LineList:TLineList;
+  i,j:integer;
+  ThisCell, NewCell: TReportCell;
+  Line : TReportLine ;
+begin
+  Line := TReportLine.Create;
+  Line.FMinHeight := ThisLine.FMinHeight;
+  Line.FDragHeight := ThisLine.FDragHeight;
+  For j := 0 To ThisLine.FCells.Count - 1 Do
+  Begin
+    ThisCell := TreportCell(ThisLine.FCells[j]);
+    NewCell := TReportCell.Create(Self);
+    Line.FCells.Add(NewCell);
+    NewCell.FOwnerLine := Line;
+    SetNewCell(False, newcell, thiscell);
+  End;
+  Line.UpdateLineHeight;
+  result := Line;
+end;
 function TReportRunTime.FillHeadList():TList;
 var
   LineList:TLineList;
@@ -1420,33 +1442,18 @@ procedure RenderParts.FillFoot;
   Var
   I, J, n:Integer;
   HootLineList: TLineList;
-  ThisLine, TempLine: TReportLine;
+  ThisLine, Line: TReportLine;
   ThisCell, NewCell: TReportCell;
 begin
   HootLineList := TLineList.Create(FRC);
   For i := FRc.DetailLineIndex + 1 To FlineList.Count - 1 Do
   Begin
     ThisLine := TReportLine(FlineList[i]);
-    TempLine := TReportLine.Create;
-    TempLine.FMinHeight := ThisLine.FMinHeight;
-    TempLine.FDragHeight := ThisLine.FDragHeight;
-    HootLineList.Add(TempLine);
-    For j := 0 To ThisLine.FCells.Count - 1 Do
-    Begin
-      ThisCell := TreportCell(ThisLine.FCells[j]);
-      If (Length(ThisCell.CellText) > 0) And
-        (UpperCase(copy(ThisCell.FCellText, 1, 7)) = '`SUMALL') Then
-      Begin
-        HootLineList.Delete(HootLineList.count - 1);
-        break;
-      End;
-      NewCell := TReportCell.Create(self.FRC);
-      TempLine.FCells.Add(NewCell);
-      NewCell.FOwnerLine := TempLine;
-      FRC.setnewcell(false, newcell, thiscell);
-    End;
-    If (UpperCase(copy(ThisCell.FCellText, 1, 7)) <> '`SUMALL') Then
-      TempLine.UpdateLineHeight;
+    if not ThisLine.IsSumAllLine then begin
+      Line := FRC.CloneNewLine(ThisLine);
+      HootLineList.Add(Line);
+      Line.UpdateLineHeight;
+    end;
   End;
   FFoot := HootLineList;
 end;
@@ -1458,30 +1465,17 @@ begin
 end;
 procedure RenderParts.FillSumAll();
 Var
-  I, J, n,  TempDataSetCount:Integer;
-  sumAllList: TLineList;
-  ThisLine, TempLine: TReportLine;
-  ThisCell, NewCell: TReportCell;
+  I :Integer;
+  ThisLine, Line: TReportLine;
 begin
-  sumAllList := TLineList.Create(FRC);
+  FSumAll := TLineList.Create(FRC);
   For i := FRC.DetailLineIndex + 1 To FlineList.Count - 1 Do
   Begin
     ThisLine := TReportLine(FlineList[i]);
-    TempLine := TReportLine.Create;
-    TempLine.FMinHeight := ThisLine.FMinHeight;
-    TempLine.FDragHeight := ThisLine.FDragHeight;
-    sumAllList.Add(TempLine);
-    For j := 0 To ThisLine.FCells.Count - 1 Do
-    Begin
-      ThisCell := TreportCell(ThisLine.FCells[j]);
-      NewCell := TReportCell.Create(FRC);
-      TempLine.FCells.Add(NewCell);
-      NewCell.FOwnerLine := TempLine;
-      FRC.setnewcell(false, newcell, thiscell);
-    End;                              //for j
-    TempLine.UpdateLineHeight;
+    Line := FRC.CloneNewLine(ThisLine);
+    Line.UpdateLineHeight;
+    FSumAll.Add(Line);
   End;
-  FSumAll :=  sumAllList;
 end ;
 procedure RenderParts.ResetData;
 begin
