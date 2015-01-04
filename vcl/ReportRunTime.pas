@@ -10,6 +10,7 @@ Procedure Register;
 
 
 type
+  RenderParts =class ;
    TSummer = class
      SumPage, SumAll: Array[0..40] Of real;
    public
@@ -19,7 +20,6 @@ type
      function GetSumAll(i:integer):Real;
      function GetSumPage(i:integer):Real;
    end;
-type
   TDataList = class(TList)
   public
    procedure FreeItems;
@@ -30,6 +30,7 @@ type
   end;
   TReportRunTime = Class(TReportControl)
   private
+    FRender:RenderParts ;
     FSummer:TSummer;
     function GetHeaderHeight: Integer;
     procedure CloneLine(ThisLine, Line: TReportLine);
@@ -45,7 +46,10 @@ type
     function ExpandDataHeight(HasDataNo:integer): integer;
     function DetailCellIndex(NO:integer) :Integer;
     function Dataset(): TDataset;
+    procedure DataPage(Dataset: TDataset);
+    procedure FreeList;
   public
+    FpageAll: integer ;
     FFileName: Tfilename;
     FAddSpace: boolean;
     FSetData: TstringList;
@@ -114,7 +118,7 @@ type
     Function shpreview: boolean;
     Function PrintSET(prfile: String): boolean; 
     Procedure updatepage;           
-    procedure PreparePrintk(FpageAll: integer);
+    procedure PreparePrintk();
     Procedure loadfile(value: tfilename);
     Procedure Print(IsDirectPrint: Boolean);
     Procedure Resetself;
@@ -125,6 +129,31 @@ type
     Property AddSpace: boolean Read FAddSpace Write SetAddSpace;
 
   End;
+  RenderParts = class
+  private
+    FRC:TReportRuntime;
+    FLineList:TLineList;
+    FDataLineList :TLineList ;
+    procedure ResetData;
+    procedure SavePage(fpagecount, FpageAll:Integer);
+    procedure JoinList(FPrintLineList: TList; IsLastPage: Boolean);
+    function AppendList(l1, l2: TList): Boolean;
+    procedure SaveHeadPage;
+    procedure SaveLastPage(fpagecount, FpageAll: Integer);
+    procedure FillFixParts;
+    procedure Reset;
+  private
+     FHead,FFoot,FData,FSumAll:TLineList;
+  public
+     constructor Create(RC:TReportRuntime);
+     function FillPage(FromIndex: Integer):Integer;
+     procedure FillHead;
+     procedure FillFoot;
+     procedure FillSumAll;
+     property Head:TLineList read FHead;
+     property Foot:TLineList read FFoot;
+  end;
+
 implementation
 
 Uses
@@ -229,17 +258,18 @@ End;
 Constructor TReportRunTime.Create(AOwner: TComponent);
 Begin
   Inherited create(AOwner);
+  FRender := RenderParts.Create(Self);
   FSummer:=TSummer.Create;
   FAddspace := false;
   FReportScale := 100;
   Width := 0;
-  Height := 0;             
-  fallprint := true;                   
+  Height := 0;
+  fallprint := true;
   FSetData := Tstringlist.Create;
   FNamedDatasets := TDataList.Create;
   FVarList := TVarList.Create;
   FPrintLineList := TList.Create;
-  FDRMap := TDRMappings.Create;              
+  FDRMap := TDRMappings.Create;
   repmessForm := TrepmessForm.Create(Self);
   FHeaderHeight := 0;            
   If FFileName <> '' Then
@@ -263,6 +293,7 @@ Begin
 
   FDRMap.Free;
   FSummer.Free;
+  FRender.Free ;
   Inherited Destroy;
 End;
 
@@ -438,8 +469,8 @@ Begin
 			If IsDirectPrint Then
 			Begin
 			  REPmessform.show;
-			  i := DoPageCount;
-			  PreparePrintk( i);
+			  FpageAll := DoPageCount;
+			  PreparePrintk( );
         REPmessform.Hide;
 			End;
 			FromPage := 1;
@@ -533,9 +564,9 @@ Begin
         Application.Messagebox(cc.ErrorPrinterSetupRequired, '', MB_OK + MB_iconwarning)
       Else
       Begin
-        i := DoPageCount;
+        FpageAll := DoPageCount;
         REPmessform.show;
-        PreparePrintk( i);
+        PreparePrintk( );
         TPreviewForm.Action(ReportFile,FPageCount,bPreviewMode);
       End;
     Except
@@ -556,9 +587,9 @@ Begin
   If PrintSET(reportfile)  Then
   Begin
     ReportFile := reportfile; 
-    i := DoPageCount;
-    REPmessform.show;                     
-    PreparePrintk( i);
+    FpageAll := DoPageCount;
+    REPmessform.show;
+    PreparePrintk( );
     REPmessform.Hide;
     PreviewForm.PageCount := FPageCount;
     PreviewForm.SetPage;
@@ -739,9 +770,9 @@ Var
   i: integer;
 Begin
   ReportFile := reportfile;
-  i := DoPageCount;
+  FpageAll := DoPageCount;
   REPmessform.show;
-  PreparePrintk(i);
+  PreparePrintk();
   REPmessform.Hide;
   PreviewForm.PageCount := FPageCount;
   PreviewForm.SetPage;
@@ -1279,102 +1310,62 @@ begin
    result := GetDataSet(t);
 end;
 
-Type
-  RenderParts = class
-  private
-    FRC:TReportRuntime;
-    FLineList:TLineList;
-    FDataLineList :TLineList ;
-    procedure ResetData;
-    procedure SavePage(fpagecount, FpageAll:Integer);
-    procedure JoinList(FPrintLineList: TList; IsLastPage: Boolean);
-    function AppendList(l1, l2: TList): Boolean;
-    procedure SaveHeadPage;
-    procedure SaveLastPage(fpagecount, FpageAll: Integer);
-    procedure FillFixParts;
-    procedure Reset;
-  private
-     FHead,FFoot,FData,FSumAll:TLineList;
-  public
-     constructor Create(RC:TReportRuntime);
-     function FillPage(FromIndex: Integer):Integer;
-     procedure FillHead;
-     procedure FillFoot;
-     procedure FillSumAll;
-     property Head:TLineList read FHead;
-     property Foot:TLineList read FFoot;
-  end;
-
-// todo:NextStep --> Iam tired ,have a rest
-procedure TReportRunTime.PreparePrintk(FpageAll: integer);
+procedure TReportRunTime.DataPage(Dataset:TDataset);
 Var
-  rp : RenderParts ;
-  procedure FreeList;
-  Var
-    n :Integer;
-  begin
-    FPrintLineList.Clear;
-    FDRMap.FreeItems;
-    FDRMap.Clear;
-  end;
- procedure DataPage(Dataset:TDataset);
-  Var
-    I:Integer;
+  I:Integer;
+Begin
+  Dataset.First;
+  FRender.FillFixParts;
+  FDataLineHeight := 0;
+  i := 0;
+  While (i < Dataset.RecordCount) Do
   Begin
-    Dataset.First;
-    rp.FillFixParts;
-    FDataLineHeight := 0;
-    // dataLineList era
-    i := 0;
-    While (i < Dataset.RecordCount) Do
+    i := FRender.FillPage (i);
+    If isPageFull Then
     Begin
-      i := rp.FillPage (i);
-      If isPageFull Then
-      Begin
-        CheckError(rp.FData.Count = 0,cc.RenderException);
-        rp.SavePage(fpagecount, FpageAll);
-        rp.Reset;
-        inc(Fpagecount);
-      End;
-      application.ProcessMessages;
+      CheckError(FRender.FData.Count = 0,cc.RenderException);
+      FRender.SavePage(fpagecount, FpageAll);
+      FRender.Reset;
+      inc(Fpagecount);
     End;
-    if not IsPageFull then
-    begin
-      If (Faddspace) And (HasEmptyRoomLastPage) Then begin
-        PaddingEmptyLine(DetailLineIndex,rp.FData );
-      end;
-      rp.SaveLastPage(fpagecount, FpageAll);
-    end; 
-  End ;
-
-
-
+    application.ProcessMessages;
+  End;
+  if not IsPageFull then
+  begin
+    If (Faddspace) And (HasEmptyRoomLastPage) Then begin
+      PaddingEmptyLine(DetailLineIndex,FRender.FData );
+    end;
+    FRender.SaveLastPage(fpagecount, FpageAll);
+  end; 
+End ;
+procedure TReportRunTime.FreeList;
+Var
+  n :Integer;
+begin
+  FPrintLineList.Clear;
+  FDRMap.FreeItems;
+  FDRMap.Clear;
+end;
+procedure TReportRunTime.PreparePrintk();
 Var
   CellIndex:Integer;
-
 Begin
-  rp := RenderParts.Create(Self);
   try
-    try
-      FSummer.ResetAll;
-      FpageCount := 1;
-
-      If DetailLineIndex = -1 Then
-      begin
-        rp.FillHead();
-        rp.SaveHeadPage()
-      end
-      else
-      begin
-       DataPage(Dataset);
-      end;
-      FreeList;
-    except
-      on E:Exception do
-           MessageDlg(e.Message,mtInformation,[mbOk], 0);
+    FSummer.ResetAll;
+    FpageCount := 1;
+    If DetailLineIndex = -1 Then
+    begin
+      FRender.FillHead();
+      FRender.SaveHeadPage()
+    end
+    else
+    begin
+     DataPage(Dataset);
     end;
-  finally
-    rp.Free ;
+    FreeList;
+  except
+    on E:Exception do
+         MessageDlg(e.Message,mtInformation,[mbOk], 0);
   end;
 End;
 Function TReportRunTime.DoPageCount:integer;
