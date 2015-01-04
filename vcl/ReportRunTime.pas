@@ -1317,9 +1317,7 @@ Var
     FDRMap.FreeItems;
     FDRMap.Clear;
   end;
-
-
-  procedure DataPage(Dataset:TDataset);
+ procedure DataPage(Dataset:TDataset);
   Var
     I:Integer;
   Begin
@@ -1348,6 +1346,8 @@ Var
       rp.SaveLastPage(fpagecount, FpageAll);
     end; 
   End ;
+
+
 
 Var
   CellIndex:Integer;
@@ -1466,13 +1466,12 @@ end;
 procedure RenderParts.FillSumAll();
 Var
   I :Integer;
-  ThisLine, Line: TReportLine;
+  Line: TReportLine;
 begin
   FSumAll := TLineList.Create(FRC);
   For i := FRC.DetailLineIndex + 1 To FlineList.Count - 1 Do
   Begin
-    ThisLine := TReportLine(FlineList[i]);
-    Line := FRC.CloneNewLine(ThisLine);
+    Line := FRC.CloneNewLine(FlineList[i]);
     Line.UpdateLineHeight;
     FSumAll.Add(Line);
   End;

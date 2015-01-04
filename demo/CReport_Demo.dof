@@ -90,7 +90,7 @@ MaxStackSize=1048576
 ImageBase=4194304
 ExeDescription=
 [Directories]
-OutputDir=
+OutputDir=c:\dcu
 UnitOutputDir=c:\dcu
 PackageDLLOutputDir=
 PackageDCPOutputDir=
@@ -138,8 +138,9 @@ Comments=
 Count=1
 Item0=WinTypes=Windows;WinProcs=Windows;DbiTypes=BDE;DbiProcs=BDE;DbiErrs=BDE;
 [HistoryLists\hlSearchPath]
-Count=1
-Item0=../../lib;../../src/delphi;../../src/delphi/util
+Count=2
+Item0=C:\Users\lcj\Documents\GitHub\creport\vcl
+Item1=../../lib;../../src/delphi;../../src/delphi/util
 [HistoryLists\hlUnitOutputDirectory]
 Count=2
 Item0=c:\dcu
@@ -465,4 +466,5 @@ Count mtSend_FailureMsg=1
 mtSend_FailureMsg0="Sorry, sending the message didn't work."
 
 
-="Ø¸6Üm‘,!
+\
+ÀJØK¨
