@@ -48,8 +48,6 @@ type
     function Dataset(): TDataset;
     procedure DataPage(Dataset: TDataset);
     procedure FreeList;
-    procedure SetNewCell_For_ExpandDataHeight(spyn: boolean; NewCell,
-      ThisCell: TReportCell);
   public
     FpageAll: integer ;
     FFileName: Tfilename;
@@ -59,7 +57,7 @@ type
     FPrintLineList: TList;
     FDRMap: TDRMappings;
     FNamedDatasets: TDataList;
-    FHeaderHeight: Integer;
+    FHeaderHeight: Integer;         //
     Fallprint: Boolean;
     FPageCount: Integer;
     FDataLineHeight: Integer;
