@@ -170,7 +170,6 @@ Type
     procedure MakeFromSameRight(ThisCell:TReportCell);
     procedure MakeFromSameRightAndInterference(ThisCell:TReportCell);
 
-
     function TotalWidth:Integer;
     // How to implement indexed [] default property
     // http://stackoverflow.com/questions/10796417/how-to-implement-indexed-default-property
@@ -2703,39 +2702,27 @@ Procedure TReportControl.StartMouseDrag_Verz(point: TPoint);
 Var
   ThisCell: TReportCell;
   Nepotism: TCellList;
-  TempRect,  RectClient: TRect;
-  
-  hInvertPen, hPrevPen: HPEN;
-  PrevDrawMode: Integer;
-  I, J: Integer;
-  ThisLine, TempLine: TReportLine;
-
+  I: Integer;
   RectBorder:TRect;
+  c : Canvas;
 Begin
   ThisCell := CellFromPoint(point);
   FMousePoint := point;
-  Windows.GetClientRect(Handle, RectClient);
-
-  // 设置线形和绘制模式
   hClientDC := GetDC(Handle);
-  hInvertPen := CreatePen(PS_DOT, 1, cc.Black);
-  hPrevPen := SelectObject(hClientDC, hInvertPen);
-
-  PrevDrawMode := SetROP2(hClientDC, R2_NOTXORPEN);
-
-  ThisLine := ThisCell.OwnerLine;
+  c := Canvas.Create(hClientDC);
+  c.ReadyDotPen(1,cc.Black);
+  c.ReadyDrawModeInvert;
   Nepotism := TCellList.Create(self);
   If not Interference (ThisCell) Then
     Nepotism.MakeFromSameRight(ThisCell)
   Else
     Nepotism.MakeFromSameRightAndInterference(ThisCell);
-  // 画第一条线
+
   RectBorder := RectBorder1(thisCell,Nepotism);
   DrawIndicatorLine(FMousePoint.x,RectBorder);
   SetCursor(LoadCursor(0, IDC_SIZEWE));
   SetCapture(Handle);
 
-  // 取得鼠标输入，进入第二个消息循环
   MsgLoop (RectBorder);
 
   If GetCapture = Handle Then
@@ -2743,8 +2730,6 @@ Begin
 
   try
     DrawIndicatorLine(FMousePoint.x,RectBorder);
-
-    // 在此处判断对CELL宽度的设定是否有效
     try
       Nepotism.CheckAllNextCellIsSlave;
       Nepotism.CheckAllNextCellIsBiggerBottom;
@@ -2754,9 +2739,9 @@ Begin
     except
     end;
   finally
-    SelectObject(hClientDC, hPrevPen);
-    DeleteObject(hInvertPen);
-    SetROP2(hClientDc, PrevDrawMode);
+    c.KillDrawMode;
+    c.KillPen;
+    c.Free;
     ReleaseDC(Handle, hClientDC);
   end;
 End;
@@ -4822,6 +4807,7 @@ begin
   If ThisCell.FSlaveCells.Count > 0 Then
     NewMapping(ThisCell,NewCell);
 end;
+
 
 
 

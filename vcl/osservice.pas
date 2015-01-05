@@ -11,13 +11,16 @@ type
   Canvas = class
     dc : HDC ;
     hPrevPen, hTempPen: HPEN;
-  private
-    procedure ReadySolidPen(Width: Integer; Color: ColorREF);
+    PrevDrawMode: Integer;
   public
     constructor Create(dc : HDC);
+    procedure KillDrawMode;
+    procedure ReadyDrawModeInvert;
     procedure ReadyDefaultPen;
     procedure KillPen();
     procedure DrawLine(p1, p2: TPoint);
+    procedure ReadySolidPen(Width: Integer; Color: ColorREF);
+    procedure ReadyDotPen(Width: Integer; Color: ColorREF);
   end;
   Rect = class
     FRect:TRect;
@@ -404,6 +407,10 @@ begin
   DeleteObject(hTempPen);
 end;
 
+procedure Canvas.KillDrawMode;
+begin
+    SetROP2(dc, PrevDrawMode);
+end;
 procedure Canvas.ReadySolidPen(Width:Integer;Color:ColorREF);
 begin
   hTempPen := CreatePen(PS_SOLID, width, Color);
@@ -420,5 +427,16 @@ begin
   LineTo(dc, p2.x, p2.y);
 end;
 
+
+procedure Canvas.ReadyDotPen(Width: Integer; Color: ColorREF);
+begin
+  hTempPen := CreatePen(PS_DOT, 1, cc.Black);
+  hPrevPen := SelectObject(dc, hTempPen);
+
+end;
+procedure Canvas.ReadyDrawModeInvert();
+begin
+  PrevDrawMode := SetROP2(dc, R2_NOTXORPEN);
+end;
 
 end.
