@@ -8,6 +8,19 @@ uses
 function  PageFileName(CurrentPage:Integer):string;
 function AppDir:String;
 type
+  Rect = class
+    FRect:TRect;
+  public
+    function BottomMid: TPoint;
+    function LeftBottom: TPoint;
+    function LeftMid: TPoint;
+    function RightTop: TPoint;
+    function TopLeft:TPoint;
+    function BottomRight:TPoint;
+    function RightMid: TPoint;
+    constructor Create(R:TRect);
+  end;
+type
   TBlueException = class(Exception);
   WindowsOS = class
   private
@@ -315,5 +328,56 @@ end;
 function AppDir:String;
 begin
    result := ExtractFileDir(Application.ExeName)+'\' ;
+end;
+{ Rect }
+
+
+function Rect.BottomRight: TPoint;
+begin
+  result.X := FRect.Right;
+  result.y := FRect.Bottom ;
+
+end;
+
+constructor Rect.Create(R: TRect);
+begin
+  self.FRect := r;
+end;
+
+
+
+function Rect.TopLeft: TPoint;
+begin
+  result.X := FRect.Left;
+  result.y := FRect.Top ;
+
+end;
+function Rect.RightMid: TPoint;
+begin
+  result.X := FRect.Right;
+  result.y := trunc((FRect.bottom + FRect.top) / 2 + 0.5) ;
+end;
+
+function Rect.BottomMid: TPoint;
+begin
+  result.X := trunc((FRect.right + FRect.left) / 2 + 0.5);
+  result.y := FRect.Bottom;
+end;
+
+function Rect.LeftMid: TPoint;
+begin
+  result.X := FRect.Left;
+  result.y := trunc((FRect.bottom + FRect.top) / 2 + 0.5)
+end;
+function Rect.RightTop: TPoint;
+begin
+  result.X := FRect.Right;
+  result.y := FRect.Top;
+end;
+
+function Rect.LeftBottom: TPoint;
+begin
+  result.X := FRect.Left;
+  result.y := FRect.Bottom;
 end;
 end.

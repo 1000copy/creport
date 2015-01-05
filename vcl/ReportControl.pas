@@ -1138,20 +1138,6 @@ Begin
   CalcCellRect;
   CalcTextRect;
 End;
-type
-  Rect = class
-    FRect:TRect;
-  private
-    function BottomMid: TPoint;
-    function LeftBottom: TPoint;
-    function LeftMid: TPoint;
-    function RightTop: TPoint;
-  public
-    constructor Create(R:TRect);
-    function TopLeft:TPoint;
-    function BottomRight:TPoint;
-    function RightMid: TPoint;
-  end;
 Procedure TReportCell.PaintCell(hPaintDC: HDC; bPrint: Boolean);
 Var
   SaveDCIndex: Integer;
@@ -4822,57 +4808,7 @@ begin
     NewMapping(ThisCell,NewCell);
 end;
 
-{ Rect }
 
-
-function Rect.BottomRight: TPoint;
-begin
-  result.X := FRect.Right;
-  result.y := FRect.Bottom ;
-
-end;
-
-constructor Rect.Create(R: TRect);
-begin
-  self.FRect := r;
-end;
-
-
-
-function Rect.TopLeft: TPoint;
-begin
-  result.X := FRect.Left;
-  result.y := FRect.Top ;
-
-end;
-function Rect.RightMid: TPoint;
-begin
-  result.X := FRect.Right;
-  result.y := trunc((FRect.bottom + FRect.top) / 2 + 0.5) ;
-end;
-
-function Rect.BottomMid: TPoint;
-begin
-  result.X := trunc((FRect.right + FRect.left) / 2 + 0.5);
-  result.y := FRect.Bottom;
-end;
-
-function Rect.LeftMid: TPoint;
-begin
-  result.X := FRect.Left;
-  result.y := trunc((FRect.bottom + FRect.top) / 2 + 0.5)
-end;
-function Rect.RightTop: TPoint;
-begin
-  result.X := FRect.Right;
-  result.y := FRect.Top;
-end;
-
-function Rect.LeftBottom: TPoint;
-begin
-  result.X := FRect.Left;
-  result.y := FRect.Bottom;
-end;
 
 
 
