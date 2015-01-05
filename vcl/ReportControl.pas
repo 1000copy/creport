@@ -80,6 +80,8 @@ type
   TReportControl = class ;
   MouseSelector = class
     FControl :TReportControl ;
+  private
+    procedure MsgLoop;
   public
     constructor Create(RC:TReportControl);
     procedure DoMouseMove(p: TPoint; Shift: Boolean);
@@ -446,11 +448,8 @@ type
 
   TReportControl = Class(TWinControl)
   private
-<<<<<<< HEAD
     MouseSelect : MouseSelector;
-=======
     hClientDC: HDC;
->>>>>>> b1b7e5fafc0725a629412777b3486135aa8eeb3d
     procedure InternalSaveToFile(
       FLineList: TList; FileName: String;PageNumber, Fpageall: integer);
     procedure DoInvalidateRect(Rect:TRect);
@@ -2757,18 +2756,33 @@ Begin
     ReleaseDC(Handle, hClientDC);
   end;
 End;
-
-<<<<<<< HEAD
-  // bSelectFlag ：是选中还是编辑?
-// LCJ:以消息循环方式，来处理Mouse事件的持续性，这个做法很有意思。
-
+Procedure MouseSelector.MsgLoop;
+var   Msg: TMSG;
+begin
+  While GetCapture = FControl.Handle Do
+  Begin
+    If Not GetMessage(Msg, FControl.Handle, 0, 0) Then
+    Begin
+      PostQuitMessage(0);
+      Break;
+    End;
+    Case Msg.Message Of
+      WM_LBUTTONUP:
+        // 这里会导致 GetCapture = Handle，不在成立，因此，可以退出While 。
+        ReleaseCapture;
+      WM_MOUSEMOVE:
+        DoMouseMove(msg.pt,msg.wParam =5);
+    Else
+      DispatchMessage(Msg);
+    End;
+  End;
+  If GetCapture = FControl.Handle Then
+    ReleaseCapture;
+end;
 Procedure MouseSelector.StartMouseSelect(point: TPoint;Shift: Boolean );
-=======
-Procedure TReportControl.StartMouseSelect(point: TPoint;Shift: Boolean );
->>>>>>> b1b7e5fafc0725a629412777b3486135aa8eeb3d
 Var
   ThisCell: TReportCell;
-  Msg: TMSG;
+
 Begin
   If not Shift Then
     FControl.ClearSelect;
@@ -2776,25 +2790,7 @@ Begin
   FControl.AddSelectedCell(ThisCell);
   SetCapture(FControl.Handle);
   FControl.FMousePoint := point;
-  While GetCapture = FControl.Handle Do
-  Begin
-    If Not GetMessage(Msg, FControl.Handle, 0, 0) Then
-    Begin
-      PostQuitMessage(0);
-      Break;
-    End;  
-    Case Msg.Message Of
-      WM_LBUTTONUP:
-        // 这里会导致 GetCapture = Handle，不在成立，因此，可以退出While 。
-        ReleaseCapture;
-      WM_MOUSEMOVE:
-          DoMouseMove(msg.pt,msg.wParam =5);
-    Else
-      DispatchMessage(Msg);
-    End;
-  End;
-  If GetCapture = FControl.Handle Then
-    ReleaseCapture;
+  MsgLoop;
 End;
 
 Procedure MouseSelector.DoMouseMove(p: TPoint;Shift:Boolean);
@@ -4832,19 +4828,10 @@ begin
     NewMapping(ThisCell,NewCell);
 end;
 
-<<<<<<< HEAD
 constructor MouseSelector.Create(RC: TReportControl);
 begin
   FControl := rc;
 end;
-=======
 
-
-
-
-
-
->>>>>>> b1b7e5fafc0725a629412777b3486135aa8eeb3d
-
-end.
+end.
 
