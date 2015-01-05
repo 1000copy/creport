@@ -211,6 +211,7 @@ Type
   end;
   TReportCell = Class(TObject)
   private
+
     NearResolution : integer;
     ReportControl:TReportControl;
     function GetOwnerCellHeight: Integer;
@@ -220,6 +221,14 @@ Type
     function GetTextHeight: Integer;
     procedure ExpandHeight(delta: integer);
     function GetNextCell: TReportCell;
+    procedure DrawDragon(hPaintDC:HDC);
+    procedure DrawLine(hPaintDc:HDC;x1, y1, x2, y2: integer; color: COLORREF;
+      PenWidth: Integer);
+    procedure DrawBottom(hPaintDc: HDC; color: COLORREF);
+    procedure DrawFrameLine(hPaintDc:HDC);
+    procedure DrawLeft(hPaintDc: HDC; color: COLORREF);
+    procedure DrawRight(hPaintDc: HDC; color: COLORREF);
+    procedure DrawTop(hPaintDc: HDC; color: COLORREF);
   public
     procedure DrawImage;
     function IsSlave:Boolean;
@@ -1138,86 +1147,7 @@ Begin
   CalcCellRect;
   CalcTextRect;
 End;
-Procedure TReportCell.PaintCell(hPaintDC: HDC; bPrint: Boolean);
-Var
-  SaveDCIndex: Integer;
-  hTempBrush: HBRUSH;
-  TempLogBrush: TLOGBRUSH;
-  hPrevPen, hTempPen: HPEN;
-  bDelete: Boolean;
-  Format: UINT;
-  hTextFont, hPrevFont: HFONT;
-  TempRect: TRect;
-  color  : COLORREF ;
-  procedure DrawLine(x1,y1,x2,y2:integer;color:COLORREF;PenWidth:Integer);
-  begin
-    hTempPen := CreatePen(BS_SOLID, PenWidth, color);
-    hPrevPen := SelectObject(hPaintDc, hTempPen);
-    MoveToEx(hPaintDc, x1, y1, Nil);
-    LineTo(hPaintDC, x2, y2);
-    SelectObject(hPaintDc, hPrevPen);
-    DeleteObject(hTempPen);
-  end;
-  procedure DrawLeft(color:COLORREF);
-  begin
-    DrawLine(FCellRect.left, FCellRect.top,FCellRect.left, FCellRect.bottom,color,FLeftLineWidth);
-  end;
-  procedure DrawTop(color:COLORREF);
-  begin
-    DrawLine( FCellRect.left, FCellRect.top,FCellRect.right, FCellRect.top,color,FTopLineWidth);
-  end;
-  procedure DrawRight(color:COLORREF);
-  begin
-    DrawLine( FCellRect.right, FCellRect.top,FCellRect.right, FCellRect.bottom,color,FRightLineWidth);
-  end;
-  procedure DrawBottom(color:COLORREF);
-  begin
-    DrawLine( FCellRect.left, FCellRect.bottom,FCellRect.right, FCellRect.bottom,color,FBottomLineWidth);
-  end;
-  procedure DrawFrameLine();
-  var cBlack: COLORREF ;
-  begin
-    cBlack := RGB(0, 0, 0);
-    // »æÖÆ±ß¿ò
-    If FLeftLine Then
-      DrawLeft(cBlack);
-    If FTopLine Then
-      DrawTop(cBlack);
-    If FRightLine Then
-      DrawRight(cBlack); 
-    If FBottomLine Then
-      DrawBottom(cBlack);
-  end;
-  procedure DrawAuxiliaryLine ;
-  var cGrey: COLORREF ;
-  begin
-    cGrey :=  RGB(192, 192, 192);
-    if (not FLeftLine) and (not bPrint) and (CellIndex = 0) then
-      DrawLeft(cGrey);
-    if (not FTopLine) and (not bPrint) and (OwnerLine.Index = 0) then
-      DrawTop(cGrey);
-    if (not FRightLine) and (not bPrint)  then
-      DrawRight(cGrey);
-    if (not FBottomLine )and (not bPrint)  then
-      DrawBottom(cGrey);
-  end;
-  procedure FillBg(FCellRect:TRect;FBackGroundColor:COLORREF);
-  var TempRect:TRect;
-  begin
-      TempRect := FCellRect;
-      TempRect.Top := TempRect.Top + 1;
-      TempRect.Right := TempRect.Right + 1;
-      If FBackGroundColor <> RGB(255, 255, 255) Then
-      Begin
-      TempLogBrush.lbStyle := BS_SOLID;
-      TempLogBrush.lbColor := FBackGroundColor;
-      hTempBrush := CreateBrushIndirect(TempLogBrush);
-      FillRect(hPaintDC, TempRect, hTempBrush);
-      DeleteObject(hTempBrush);
-      End;
-    end;
-
-  procedure DrawDragon;
+  procedure TReportCell.DrawDragon(hPaintDc:HDC);
   var p1,p2:TPoint ;R:TRect;
   procedure DrawLine(hPaintDC:HDC;p1,p2:TPoint);
   begin
@@ -1226,6 +1156,7 @@ Var
   end;
 
   var R1:Rect;
+    hPrevPen, hTempPen: HPEN;
   begin
     If FDiagonal <= 0 Then exit;
     hTempPen := CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
@@ -1280,6 +1211,89 @@ Var
       R1.Free;
     end;
   end;
+procedure TReportCell.DrawLine(hPaintDc:HDC;x1,y1,x2,y2:integer;color:COLORREF;PenWidth:Integer);
+VAR     hPrevPen, hTempPen: HPEN;
+begin
+  hTempPen := CreatePen(BS_SOLID, PenWidth, color);
+  hPrevPen := SelectObject(hPaintDc, hTempPen);
+  MoveToEx(hPaintDc, x1, y1, Nil);
+  LineTo(hPaintDC, x2, y2);
+  SelectObject(hPaintDc, hPrevPen);
+  DeleteObject(hTempPen);
+end;
+  procedure TReportCell.DrawLeft(hPaintDc:HDC;color:COLORREF);
+  begin
+    DrawLine(hPaintDc,FCellRect.left, FCellRect.top,FCellRect.left, FCellRect.bottom,color,FLeftLineWidth);
+  end;
+  procedure TReportCell.DrawTop(hPaintDc:HDC;color:COLORREF);
+  begin
+    DrawLine( hPaintDc,FCellRect.left, FCellRect.top,FCellRect.right, FCellRect.top,color,FTopLineWidth);
+  end;
+  procedure TReportCell.DrawRight(hPaintDc:HDC;color:COLORREF);
+  begin
+    DrawLine( hPaintDc,FCellRect.right, FCellRect.top,FCellRect.right, FCellRect.bottom,color,FRightLineWidth);
+  end;
+  procedure TReportCell.DrawBottom(hPaintDc:HDC;color:COLORREF);
+  begin
+    DrawLine( hPaintDc,FCellRect.left, FCellRect.bottom,FCellRect.right, FCellRect.bottom,color,FBottomLineWidth);
+  end;
+  procedure TReportCell.DrawFrameLine(hPaintDc:HDC);
+  var cBlack: COLORREF ;
+  begin
+    cBlack := RGB(0, 0, 0);
+    // »æÖÆ±ß¿ò
+    If FLeftLine Then
+      DrawLeft(hPaintDc,cBlack);
+    If FTopLine Then
+      DrawTop(hPaintDc,cBlack);
+    If FRightLine Then
+      DrawRight(hPaintDc,cBlack);
+    If FBottomLine Then
+      DrawBottom(hPaintDc,cBlack);
+  end;
+Procedure TReportCell.PaintCell(hPaintDC: HDC; bPrint: Boolean);
+Var
+  SaveDCIndex: Integer;
+  hTempBrush: HBRUSH;
+  TempLogBrush: TLOGBRUSH;
+  hPrevPen, hTempPen: HPEN;
+  bDelete: Boolean;
+  Format: UINT;
+  hTextFont, hPrevFont: HFONT;
+  TempRect: TRect;
+  color  : COLORREF ;
+
+
+  procedure DrawAuxiliaryLine ;
+  var cGrey: COLORREF ;
+  begin
+    cGrey :=  RGB(192, 192, 192);
+    if (not FLeftLine) and (not bPrint) and (CellIndex = 0) then
+      DrawLeft(hPaintDc,cGrey);
+    if (not FTopLine) and (not bPrint) and (OwnerLine.Index = 0) then
+      DrawTop(hPaintDc,cGrey);
+    if (not FRightLine) and (not bPrint)  then
+      DrawRight(hPaintDc,cGrey);
+    if (not FBottomLine )and (not bPrint)  then
+      DrawBottom(hPaintDc,cGrey);
+  end;
+  procedure FillBg(FCellRect:TRect;FBackGroundColor:COLORREF);
+  var TempRect:TRect;
+  begin
+      TempRect := FCellRect;
+      TempRect.Top := TempRect.Top + 1;
+      TempRect.Right := TempRect.Right + 1;
+      If FBackGroundColor <> RGB(255, 255, 255) Then
+      Begin
+      TempLogBrush.lbStyle := BS_SOLID;
+      TempLogBrush.lbColor := FBackGroundColor;
+      hTempBrush := CreateBrushIndirect(TempLogBrush);
+      FillRect(hPaintDC, TempRect, hTempBrush);
+      DeleteObject(hTempBrush);
+      End;
+    end;
+
+
   procedure DrawContentText;
   begin
    If Length(FCellText) > 0 Then
@@ -1311,9 +1325,9 @@ Begin
   try
     SetBkMode(hPaintDC, TRANSPARENT);
     FillBg ( FCellRect,FBackGroundColor);
-    DrawFrameLine();
+    DrawFrameLine(hPaintDc,);
     DrawAuxiliaryLine ;
-    DrawDragon;
+    DrawDragon(hPaintDC);
     DrawContentText ;
   finally
     RestoreDC(hPaintDC, SaveDCIndex);
