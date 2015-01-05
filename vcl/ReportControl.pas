@@ -2756,81 +2756,7 @@ Begin
     ReleaseDC(Handle, hClientDC);
   end;
 End;
-Procedure MouseSelector.MsgLoop;
-var   Msg: TMSG;
-begin
-  While GetCapture = FControl.Handle Do
-  Begin
-    If Not GetMessage(Msg, FControl.Handle, 0, 0) Then
-    Begin
-      PostQuitMessage(0);
-      Break;
-    End;
-    Case Msg.Message Of
-      WM_LBUTTONUP:
-        // 这里会导致 GetCapture = Handle，不在成立，因此，可以退出While 。
-        ReleaseCapture;
-      WM_MOUSEMOVE:
-        DoMouseMove(msg.pt,msg.wParam =5);
-    Else
-      DispatchMessage(Msg);
-    End;
-  End;
-  If GetCapture = FControl.Handle Then
-    ReleaseCapture;
-end;
-Procedure MouseSelector.StartMouseSelect(point: TPoint;Shift: Boolean );
-Var
-  ThisCell: TReportCell;
 
-Begin
-  If not Shift Then
-    FControl.ClearSelect;
-  ThisCell := FControl.CellFromPoint(point);
-  FControl.AddSelectedCell(ThisCell);
-  SetCapture(FControl.Handle);
-  FControl.FMousePoint := point;
-  MsgLoop;
-End;
-
-Procedure MouseSelector.DoMouseMove(p: TPoint;Shift:Boolean);
-Var
-  RectSelection, TempRect: TRect;
-  ThisCell: TReportCell;
-  I, J: Integer;
-  ThisLine: TReportLine;
-
-Begin
-  Windows.ScreenToClient(FControl.Handle, p);
-  RectSelection := FControl.os.MakeRect(FControl.FMousePoint,p);
-  //清除掉不在选中矩形中的CELL ; 除非Shift 按下
-  If not Shift  Then
-    For I := FControl.FSelectCells.Count - 1 Downto 0 Do
-    Begin
-      ThisCell := TReportCell(FControl.FSelectCells[I]);
-      if not FControl.os.IsIntersect(ThisCell.CellRect, RectSelection) then
-          FControl.RemoveSelectedCell(ThisCell);
-    End;
-  // 查找选中的Cell
-  For I := 0 To FControl.FLineList.Count - 1 Do
-  Begin
-    ThisLine := TReportLine(FControl.FLineList[I]);
-    If FControl.os.IsIntersect(RectSelection, ThisLine.LineRect) Then
-    Begin
-      For J := 0 To ThisLine.FCells.Count - 1 Do
-      Begin
-        ThisCell := TReportCell(ThisLine.FCells[J]);
-        if FControl.os.IsIntersect(ThisCell.CellRect, RectSelection) Then
-        Begin
-          If ThisCell.IsSlave Then
-            ThisCell :=  ThisCell.OwnerCell ;
-          FControl.AddSelectedCell(ThisCell);
-        End;
-      End;
-    End;
-  End;
-
-End;
 Procedure TReportControl.StartMouseSelect(point: TPoint;Shift: Boolean );
 begin
   MouseSelect.StartMouseSelect(point,shift);
@@ -4832,6 +4758,79 @@ constructor MouseSelector.Create(RC: TReportControl);
 begin
   FControl := rc;
 end;
+Procedure MouseSelector.MsgLoop;
+var   Msg: TMSG;
+begin
+  While GetCapture = FControl.Handle Do
+  Begin
+    If Not GetMessage(Msg, FControl.Handle, 0, 0) Then
+    Begin
+      PostQuitMessage(0);
+      Break;
+    End;
+    Case Msg.Message Of
+      WM_LBUTTONUP:
+        ReleaseCapture;
+      WM_MOUSEMOVE:
+        DoMouseMove(msg.pt,msg.wParam =5);
+    Else
+      DispatchMessage(Msg);
+    End;
+  End;
+  If GetCapture = FControl.Handle Then
+    ReleaseCapture;
+end;
+Procedure MouseSelector.StartMouseSelect(point: TPoint;Shift: Boolean );
+Var
+  ThisCell: TReportCell;
 
+Begin
+  If not Shift Then
+    FControl.ClearSelect;
+  ThisCell := FControl.CellFromPoint(point);
+  FControl.AddSelectedCell(ThisCell);
+  SetCapture(FControl.Handle);
+  FControl.FMousePoint := point;
+  MsgLoop;
+End;
+
+Procedure MouseSelector.DoMouseMove(p: TPoint;Shift:Boolean);
+Var
+  RectSelection, TempRect: TRect;
+  ThisCell: TReportCell;
+  I, J: Integer;
+  ThisLine: TReportLine;
+
+Begin
+  Windows.ScreenToClient(FControl.Handle, p);
+  RectSelection := FControl.os.MakeRect(FControl.FMousePoint,p);
+  //清除掉不在选中矩形中的CELL ; 除非Shift 按下
+  If not Shift  Then
+    For I := FControl.FSelectCells.Count - 1 Downto 0 Do
+    Begin
+      ThisCell := TReportCell(FControl.FSelectCells[I]);
+      if not FControl.os.IsIntersect(ThisCell.CellRect, RectSelection) then
+          FControl.RemoveSelectedCell(ThisCell);
+    End;
+  // 查找选中的Cell
+  For I := 0 To FControl.FLineList.Count - 1 Do
+  Begin
+    ThisLine := TReportLine(FControl.FLineList[I]);
+    If FControl.os.IsIntersect(RectSelection, ThisLine.LineRect) Then
+    Begin
+      For J := 0 To ThisLine.FCells.Count - 1 Do
+      Begin
+        ThisCell := TReportCell(ThisLine.FCells[J]);
+        if FControl.os.IsIntersect(ThisCell.CellRect, RectSelection) Then
+        Begin
+          If ThisCell.IsSlave Then
+            ThisCell :=  ThisCell.OwnerCell ;
+          FControl.AddSelectedCell(ThisCell);
+        End;
+      End;
+    End;
+  End;
+
+End;
 end.
 
