@@ -57,7 +57,7 @@ type
     FPrintLineList: TList;
     FDRMap: TDRMappings;
     FNamedDatasets: TDataList;
-    FHeaderHeight: Integer;         //
+    FHeaderHeight: Integer;         
     Fallprint: Boolean;
     FPageCount: Integer;
     FDataLineHeight: Integer;
@@ -1269,7 +1269,7 @@ var
 begin
   {$Optimization on}
   ThisLine := TReportLine(FlineList[HasDataNo]);
-  // 痛苦的副作用：下面的11行代码对Result无影响，但是不能删除，否则飞线。
+  // painful side effects as follow 11 statements
   TempLine := TReportLine.Create;
   TempLine.FMinHeight := ThisLine.FMinHeight;
   TempLine.FDragHeight := ThisLine.FDragHeight;

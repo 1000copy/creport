@@ -3,10 +3,37 @@ unit osservice;
 interface
 
 uses
-   Graphics,windows ,classes,SysUtils,Math,Forms;
+   Graphics,windows ,classes,SysUtils,Math,Forms,cc;
 
 function  PageFileName(CurrentPage:Integer):string;
 function AppDir:String;
+type
+  Canvas = class
+    dc : HDC ;
+    hPrevPen, hTempPen: HPEN;
+    PrevDrawMode: Integer;
+  public
+    constructor Create(dc : HDC);
+    procedure KillDrawMode;
+    procedure ReadyDrawModeInvert;
+    procedure ReadyDefaultPen;
+    procedure KillPen();
+    procedure DrawLine(p1, p2: TPoint);
+    procedure ReadySolidPen(Width: Integer; Color: ColorREF);
+    procedure ReadyDotPen(Width: Integer; Color: ColorREF);
+  end;
+  Rect = class
+    FRect:TRect;
+  public
+    function BottomMid: TPoint;
+    function LeftBottom: TPoint;
+    function LeftMid: TPoint;
+    function RightTop: TPoint;
+    function TopLeft:TPoint;
+    function BottomRight:TPoint;
+    function RightMid: TPoint;
+    constructor Create(R:TRect);
+  end;
 type
   TBlueException = class(Exception);
   WindowsOS = class
@@ -25,6 +52,7 @@ type
     function InvalidateRect(hWnd: HWND; lpRect: PRect; bErase: BOOL): BOOL;
     function RectEquals(r1, r2: TRect): Boolean;
     procedure InflateRect(var r: TRect; dx, dy: integer);
+    function Inflate(r: TRect; dx, dy: integer):TRect;
     function UnionRect(lprcSrc1, lprcSrc2: TRect): TRect;
     class function IntersectRect(lprcSrc1, lprcSrc2: TRect): TRect;
     function IsIntersect(r1, r2: TRect): boolean;
@@ -170,6 +198,11 @@ procedure WindowsOS.InflateRect(var r: TRect; dx, dy: integer);
 begin
   windows.inflateRect(r,dx,dy);
 end;
+function WindowsOS.Inflate(r: TRect; dx, dy: integer):TRect;
+begin
+  windows.inflateRect(r,dx,dy);
+  result := r;
+end;
 
 function WindowsOS.InvalidateRect(hWnd: HWND; lpRect: PRect;
   bErase: BOOL): BOOL;
@@ -310,4 +343,100 @@ function AppDir:String;
 begin
    result := ExtractFileDir(Application.ExeName)+'\' ;
 end;
+{ Rect }
+
+
+function Rect.BottomRight: TPoint;
+begin
+  result.X := FRect.Right;
+  result.y := FRect.Bottom ;
+
+end;
+
+constructor Rect.Create(R: TRect);
+begin
+  self.FRect := r;
+end;
+
+
+
+function Rect.TopLeft: TPoint;
+begin
+  result.X := FRect.Left;
+  result.y := FRect.Top ;
+
+end;
+function Rect.RightMid: TPoint;
+begin
+  result.X := FRect.Right;
+  result.y := trunc((FRect.bottom + FRect.top) / 2 + 0.5) ;
+end;
+
+function Rect.BottomMid: TPoint;
+begin
+  result.X := trunc((FRect.right + FRect.left) / 2 + 0.5);
+  result.y := FRect.Bottom;
+end;
+
+function Rect.LeftMid: TPoint;
+begin
+  result.X := FRect.Left;
+  result.y := trunc((FRect.bottom + FRect.top) / 2 + 0.5)
+end;
+function Rect.RightTop: TPoint;
+begin
+  result.X := FRect.Right;
+  result.y := FRect.Top;
+end;
+
+function Rect.LeftBottom: TPoint;
+begin
+  result.X := FRect.Left;
+  result.y := FRect.Bottom;
+end;
+{ Canvas }
+
+constructor Canvas.Create(dc: HDC);
+begin
+  self.dc := dc;
+end;
+
+procedure Canvas.KillPen;
+begin
+  SelectObject(dc, hPrevPen);
+  DeleteObject(hTempPen);
+end;
+
+procedure Canvas.KillDrawMode;
+begin
+    SetROP2(dc, PrevDrawMode);
+end;
+procedure Canvas.ReadySolidPen(Width:Integer;Color:ColorREF);
+begin
+  hTempPen := CreatePen(PS_SOLID, width, Color);
+  hPrevPen := SelectObject(dc, hTempPen);
+end;
+procedure Canvas.ReadyDefaultPen();
+begin
+  ReadySolidPen (1, cc.Black);
+end;
+
+procedure Canvas.DrawLine(p1,p2:TPoint);
+begin
+  MoveToEx(dc,p1.x, p1.y, Nil);
+  LineTo(dc, p2.x, p2.y);
+end;
+
+
+procedure Canvas.ReadyDotPen(Width: Integer; Color: ColorREF);
+begin
+  hTempPen := CreatePen(PS_DOT, 1, cc.Black);
+  hPrevPen := SelectObject(dc, hTempPen);
+
+end;
+procedure Canvas.ReadyDrawModeInvert();
+begin
+  PrevDrawMode := SetROP2(dc, R2_NOTXORPEN);
+end;
+
 end.

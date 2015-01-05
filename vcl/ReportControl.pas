@@ -174,7 +174,6 @@ type
     procedure MakeFromSameRight(ThisCell:TReportCell);
     procedure MakeFromSameRightAndInterference(ThisCell:TReportCell);
 
-
     function TotalWidth:Integer;
     // How to implement indexed [] default property
     // http://stackoverflow.com/questions/10796417/how-to-implement-indexed-default-property
@@ -215,6 +214,7 @@ type
   end;
   TReportCell = Class(TObject)
   private
+
     NearResolution : integer;
     ReportControl:TReportControl;
     function GetOwnerCellHeight: Integer;
@@ -224,6 +224,19 @@ type
     function GetTextHeight: Integer;
     procedure ExpandHeight(delta: integer);
     function GetNextCell: TReportCell;
+    // group by hPaintDC ,so simplize is possible
+    procedure DrawDragon(hPaintDC:HDC);
+    procedure DrawLine(hPaintDc:HDC;x1, y1, x2, y2: integer; color: COLORREF;
+      PenWidth: Integer);
+    procedure DrawBottom(hPaintDc: HDC; color: COLORREF);
+    procedure DrawFrameLine(hPaintDc:HDC);
+    procedure DrawLeft(hPaintDc: HDC; color: COLORREF);
+    procedure DrawRight(hPaintDc: HDC; color: COLORREF);
+    procedure DrawTop(hPaintDc: HDC; color: COLORREF);
+    procedure DrawAuxiliaryLine(hPaintDc:HDC;bPrint:Boolean);
+    procedure FillBg(hPaintDC: HDC; FCellRect: TRect;
+      FBackGroundColor: COLORREF);
+    procedure DrawContentText(hPaintDC: HDC);
   public
     procedure DrawImage;
     function IsSlave:Boolean;
@@ -433,7 +446,11 @@ type
 
   TReportControl = Class(TWinControl)
   private
+<<<<<<< HEAD
     MouseSelect : MouseSelector;
+=======
+    hClientDC: HDC;
+>>>>>>> b1b7e5fafc0725a629412777b3486135aa8eeb3d
     procedure InternalSaveToFile(
       FLineList: TList; FileName: String;PageNumber, Fpageall: integer);
     procedure DoInvalidateRect(Rect:TRect);
@@ -446,6 +463,12 @@ type
     procedure UpdateHeight(ThisCell: TReportCell; Y: Integer);
     procedure DrawHorzLine(HClientDC: HDC; y: integer; RectBorder: TRect);
     procedure UpdateTwinCell(ThisCell: TReportCell; x: integer);
+    function Interference(ThisCell: TReportCell): boolean;
+    function RectBorder1(ThisCell: TReportCell;
+      ThisCellsList: TCellList): TRect;
+    procedure DrawIndicatorLine(var x: Integer; RectBorder: TRect);
+    procedure MsgLoop(RectBorder:TRect);
+    procedure OnMove(TempMsg: TMSG;RectBorder:TRect );
   protected
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
@@ -1145,149 +1168,148 @@ Begin
   CalcCellRect;
   CalcTextRect;
 End;
+procedure TReportCell.DrawDragon(hPaintDc:HDC);
+var p1,p2:TPoint ;R:TRect;
+procedure DrawLine(hPaintDC:HDC;p1,p2:TPoint);
+begin
+      MoveToEx(hPaintDC,p1.x, p1.y, Nil);
+      LineTo(hPaintDC, p2.x, p2.y);
+end;
 
-Procedure TReportCell.PaintCell(hPaintDC: HDC; bPrint: Boolean);
-Var
-  SaveDCIndex: Integer;
-  hTempBrush: HBRUSH;
-  TempLogBrush: TLOGBRUSH;
-  hPrevPen, hTempPen: HPEN;
-  bDelete: Boolean;
-  Format: UINT;
-  hTextFont, hPrevFont: HFONT;
-  TempRect: TRect;
-  color  : COLORREF ;
-  procedure DrawLine(x1,y1,x2,y2:integer;color:COLORREF;PenWidth:Integer);
-  begin
-    hTempPen := CreatePen(BS_SOLID, PenWidth, color);
-    hPrevPen := SelectObject(hPaintDc, hTempPen);
-    MoveToEx(hPaintDc, x1, y1, Nil);
-    LineTo(hPaintDC, x2, y2);
-    SelectObject(hPaintDc, hPrevPen);
-    DeleteObject(hTempPen);
-  end;
-  procedure DrawLeft(color:COLORREF);
-  begin
-    DrawLine(FCellRect.left, FCellRect.top,FCellRect.left, FCellRect.bottom,color,FLeftLineWidth);
-  end;
-  procedure DrawTop(color:COLORREF);
-  begin
-    DrawLine( FCellRect.left, FCellRect.top,FCellRect.right, FCellRect.top,color,FTopLineWidth);
-  end;
-  procedure DrawRight(color:COLORREF);
-  begin
-    DrawLine( FCellRect.right, FCellRect.top,FCellRect.right, FCellRect.bottom,color,FRightLineWidth);
-  end;
-  procedure DrawBottom(color:COLORREF);
-  begin
-    DrawLine( FCellRect.left, FCellRect.bottom,FCellRect.right, FCellRect.bottom,color,FBottomLineWidth);
-  end;
-  procedure DrawFrameLine();
-  var cBlack: COLORREF ;
-  begin
-    cBlack := RGB(0, 0, 0);
-    // 绘制边框
-    If FLeftLine Then
-      DrawLeft(cBlack);
-    If FTopLine Then
-      DrawTop(cBlack);
-    If FRightLine Then
-      DrawRight(cBlack); 
-    If FBottomLine Then
-      DrawBottom(cBlack);
-  end;
-  procedure DrawAuxiliaryLine ;
-  var cGrey: COLORREF ;
-  begin
-    cGrey :=  RGB(192, 192, 192);
-    if (not FLeftLine) and (not bPrint) and (CellIndex = 0) then
-      DrawLeft(cGrey);
-    if (not FTopLine) and (not bPrint) and (OwnerLine.Index = 0) then
-      DrawTop(cGrey);
-    if (not FRightLine) and (not bPrint)  then
-      DrawRight(cGrey);
-    if (not FBottomLine )and (not bPrint)  then
-      DrawBottom(cGrey);
-  end;
-  procedure FillBg(FCellRect:TRect;FBackGroundColor:COLORREF);
-  var TempRect:TRect;
-  begin
-      TempRect := FCellRect;
-      TempRect.Top := TempRect.Top + 1;
-      TempRect.Right := TempRect.Right + 1;
-      If FBackGroundColor <> RGB(255, 255, 255) Then
-      Begin
-      TempLogBrush.lbStyle := BS_SOLID;
-      TempLogBrush.lbColor := FBackGroundColor;
-      hTempBrush := CreateBrushIndirect(TempLogBrush);
-      FillRect(hPaintDC, TempRect, hTempBrush);
-      DeleteObject(hTempBrush);
-      End;
-    end;
-  procedure DrawDragon;begin
-    hTempPen := CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
-    hPrevPen := SelectObject(hPaintDc, hTempPen);
-
-    // 绘制斜线
-    If FDiagonal > 0 Then
-    Begin
+var R1:Rect;
+  c : Canvas;
+begin
+  If FDiagonal <= 0 Then exit;
+  c := Canvas.Create(hPaintDC);
+  c.ReadyDefaultPen;
+  R1 := Rect.Create(self.ReportControl.os.Inflate(FCellRect,-1,-1));
+  try
     If ((FDiagonal And LINE_LEFT1) > 0) Then
     Begin
-      MoveToEx(hPaintDC, FCellRect.left + 1, FCellRect.top + 1, Nil);
-      LineTo(hPaintDC, FCellRect.right - 1, FCellRect.bottom - 1);
+      p1 := R1.TopLeft ;
+      p2 := R1.BottomRight;
+      c.DrawLine(p1,p2);
     End;
 
     If ((FDiagonal And LINE_LEFT2) > 0) Then
     Begin
-      MoveToEx(hPaintDC, FCellRect.left + 1, FCellRect.top + 1, Nil);
-      LineTo(hPaintDC, FCellRect.right - 1, trunc((FCellRect.bottom +
-      FCellRect.top) / 2 + 0.5));
+      p1 := R1.TopLeft ;
+      p2 := R1.RightMid;
+      c.DrawLine(p1,p2);
     End;
 
     If ((FDiagonal And LINE_LEFT3) > 0) Then
     Begin
-      MoveToEx(hPaintDC, FCellRect.left + 1, FCellRect.top + 1, Nil);
-      LineTo(hPaintDC, trunc((FCellRect.right + FCellRect.left) / 2 + 0.5),
-      FCellRect.bottom - 1);
+      p1 := R1.TopLeft ;
+      p2 := R1.BottomMid;
+      c.DrawLine(p1,p2);
     End;
 
     If ((FDiagonal And LINE_RIGHT1) > 0) Then
     Begin
-      MoveToEx(hPaintDC, FCellRect.right - 1, FCellRect.top + 1, Nil);
-      LineTo(hPaintDC, FCellRect.left + 1, FCellRect.bottom - 1);
+      p1 := R1.RightTop;
+      p2 := R1.LeftBottom;
+      c.DrawLine(p1,p2);
     End;
 
     If ((FDiagonal And LINE_RIGHT2) > 0) Then
     Begin
-      MoveToEx(hPaintDC, FCellRect.right - 1, FCellRect.top + 1, Nil);
-      LineTo(hPaintDC, FCellRect.left + 1, trunc((FCellRect.bottom +
-      FCellRect.top) / 2 + 0.5));
+      p1 := R1.RightTop;
+      p2 := R1.LeftMid;
+      c.DrawLine(p1,p2);
     End;
 
     If ((FDiagonal And LINE_RIGHT3) > 0) Then
     Begin
-      MoveToEx(hPaintDC, FCellRect.right - 1, FCellRect.top + 1, Nil);
-      LineTo(hPaintDC, trunc((FCellRect.right + FCellRect.left) / 2 + 0.5),
-      FCellRect.bottom - 1);
-    End;
-
-    End;
-
-    SelectObject(hPaintDC, hPrevPen);
-    DeleteObject(hTempPen);
+      p1 := R1.RightTop;
+      p2 := R1.BottomMid;
+      c.DrawLine(p1,p2);
+    End;                
+  finally
+    c.KillPen;
+    c.free;
+    R1.Free;
   end;
-  procedure DrawContentText;
-  begin
-   If Length(FCellText) > 0 Then
-   Begin
+end;
+procedure TReportCell.DrawLine(hPaintDc:HDC;x1,y1,x2,y2:integer;color:COLORREF;PenWidth:Integer);
+VAR     hPrevPen, hTempPen: HPEN;
+begin
+  hTempPen := CreatePen(BS_SOLID, PenWidth, color);
+  hPrevPen := SelectObject(hPaintDc, hTempPen);
+  MoveToEx(hPaintDc, x1, y1, Nil);
+  LineTo(hPaintDC, x2, y2);
+  SelectObject(hPaintDc, hPrevPen);
+  DeleteObject(hTempPen);
+end;
+procedure TReportCell.DrawLeft(hPaintDc:HDC;color:COLORREF);
+begin
+  DrawLine(hPaintDc,FCellRect.left, FCellRect.top,FCellRect.left, FCellRect.bottom,color,FLeftLineWidth);
+end;
+procedure TReportCell.DrawTop(hPaintDc:HDC;color:COLORREF);
+begin
+  DrawLine( hPaintDc,FCellRect.left, FCellRect.top,FCellRect.right, FCellRect.top,color,FTopLineWidth);
+end;
+procedure TReportCell.DrawRight(hPaintDc:HDC;color:COLORREF);
+begin
+  DrawLine( hPaintDc,FCellRect.right, FCellRect.top,FCellRect.right, FCellRect.bottom,color,FRightLineWidth);
+end;
+procedure TReportCell.DrawBottom(hPaintDc:HDC;color:COLORREF);
+begin
+  DrawLine( hPaintDc,FCellRect.left, FCellRect.bottom,FCellRect.right, FCellRect.bottom,color,FBottomLineWidth);
+end;
+procedure TReportCell.DrawFrameLine(hPaintDc:HDC);
+begin
+  If FLeftLine Then
+    DrawLeft(hPaintDc,cc.Black);
+  If FTopLine Then
+    DrawTop(hPaintDc,cc.Black);
+  If FRightLine Then
+    DrawRight(hPaintDc,cc.Black);
+  If FBottomLine Then
+    DrawBottom(hPaintDc,cc.Black);
+end;
+procedure  TReportCell.DrawAuxiliaryLine(hPaintDc:HDC;bPrint:Boolean) ;
+begin
+  if (not FLeftLine) and (not bPrint) and (CellIndex = 0) then
+    DrawLeft(hPaintDc,cc.Grey);
+  if (not FTopLine) and (not bPrint) and (OwnerLine.Index = 0) then
+    DrawTop(hPaintDc,cc.Grey);
+  if (not FRightLine) and (not bPrint)  then
+    DrawRight(hPaintDc,cc.Grey);
+  if (not FBottomLine )and (not bPrint)  then
+    DrawBottom(hPaintDc,cc.Grey);
+end;
+procedure TReportCell.FillBg(hPaintDC: HDC;FCellRect:TRect;FBackGroundColor:COLORREF);
+var
+  TempRect:TRect;
+  TempLogBrush: TLOGBRUSH;
+  hTempBrush: HBRUSH;
+begin
+  TempRect := FCellRect;
+  TempRect.Top := TempRect.Top + 1;
+  TempRect.Right := TempRect.Right + 1;
+  If FBackGroundColor <>cc.White Then
+  Begin
+    TempLogBrush.lbStyle := BS_SOLID;
+    TempLogBrush.lbColor := FBackGroundColor;
+    hTempBrush := CreateBrushIndirect(TempLogBrush);
+    FillRect(hPaintDC, TempRect, hTempBrush);
+    DeleteObject(hTempBrush);
+  End;
+end;
+procedure TReportCell.DrawContentText(hPaintDC: HDC);
+var   Format: UINT;  hTextFont, hPrevFont: HFONT; TempRect: TRect;
+begin
+  If Length(FCellText) > 0 Then
+  Begin
     Windows.SetTextColor(hPaintDC, FTextColor);
     Format := DT_EDITCONTROL Or DT_WORDBREAK;
     Case FHorzAlign Of
-      TEXT_ALIGN_LEFT:
+    TEXT_ALIGN_LEFT:
       Format := Format Or DT_LEFT;
-      TEXT_ALIGN_CENTER:
+    TEXT_ALIGN_CENTER:
       Format := Format Or DT_CENTER;
-      TEXT_ALIGN_RIGHT:
+    TEXT_ALIGN_RIGHT:
       Format := Format Or DT_RIGHT;
     Else
       Format := Format Or DT_LEFT;
@@ -1298,19 +1320,22 @@ Var
     DrawText(hPaintDC, PChar(FCellText), Length(FCellText), TempRect, Format);
     SelectObject(hPaintDC, hPrevFont);
     DeleteObject(hTextFont);
-   End;
-  end;
+  End;
+end;
+Procedure TReportCell.PaintCell(hPaintDC: HDC; bPrint: Boolean);
+Var
+  SaveDCIndex: Integer;
 Begin
   If FOwnerCell <> Nil Then
     Exit;                          
   SaveDCIndex := SaveDC(hPaintDC);
   try
     SetBkMode(hPaintDC, TRANSPARENT);
-    FillBg ( FCellRect,FBackGroundColor);
-    DrawFrameLine();
-    DrawAuxiliaryLine ;
-    DrawDragon;
-    DrawContentText ;
+    FillBg (hPaintDC, FCellRect,FBackGroundColor);
+    DrawFrameLine(hPaintDc,);
+    DrawAuxiliaryLine (hPaintDc,bPrint);
+    DrawDragon(hPaintDC);
+    DrawContentText(hPaintDC) ;
   finally
     RestoreDC(hPaintDC, SaveDCIndex);
   end;
@@ -1378,8 +1403,8 @@ Begin
   FBottomLine := True;
   FBottomLineWidth := 1;
   FDiagonal := 0;
-  FTextColor := RGB(0, 0, 0);
-  FBackGroundColor := RGB(255, 255, 255);
+  FTextColor := cc.Black;
+  FBackGroundColor := cc.White;
   FHorzAlign := TEXT_ALIGN_LEFT;
   FVertAlign := TEXT_ALIGN_CENTER;
   FCellText := '';
@@ -2259,7 +2284,7 @@ Var
   TempRect: TRect;
   hGrayPen, hPrevPen: HPEN;
 begin
-  hGrayPen := CreatePen(PS_SOLID, 1, RGB(128, 128, 128));
+  hGrayPen := CreatePen(PS_SOLID, 1, cc.Grey);
   try
     hPrevPen := SelectObject(hPaintDC, hGrayPen);
     // 左上
@@ -2489,7 +2514,7 @@ Var
 Begin
   // 设置线形和绘制模式
   hClientDC := GetDC(Handle);
-  hInvertPen := CreatePen(PS_DOT, 1, RGB(0, 0, 0));
+  hInvertPen := CreatePen(PS_DOT, 1, cc.Black);
   hPrevPen := SelectObject(hClientDC, hInvertPen);
   PrevDrawMode := SetROP2(hClientDC, R2_NOTXORPEN);
   try
@@ -2614,140 +2639,133 @@ begin
   End
   Else
     RectBorder.Right := ClientRect.Right - DRAGMARGIN;
-end;  
+end;
+  // 选区和拖放区互相干涉否
+  // 若无选中的CELL,或者要改变宽度的CELL和NEXTCELL不在选中区中
+function TReportControl.Interference( ThisCell: TReportCell) :boolean;
+var r:boolean ;
+begin
+  r := False;
+  If FSelectCells.Count <= 0 Then
+    r := True;
+  If ThisCell.NextCell = Nil Then
+  Begin
+    If not IsCellSelected(ThisCell) Then
+      r := True;
+  End
+  Else If (Not IsCellSelected(ThisCell)) And (Not IsCellSelected(ThisCell.NextCell))
+    And
+    (Not IsCellSelected(ThisCell.NextCell.OwnerCell)) Then
+    r := True;
+  result := not r;
+end;
+function TReportControl.RectBorder1(ThisCell: TReportCell;ThisCellsList: TCellList):TRect;
+var R: TRect;
+begin
+  MaxDragExtent(ThisCell,R) ;
+  R.Left := Max(ThisCellsList.MaxCellLeft + DRAGMARGIN,R.Left);
+  R.Right := Min(ThisCellsList.MinNextCellRight - DRAGMARGIN,R.Right);
+  result := R;
+end;
+
+procedure TReportControl.DrawIndicatorLine(var x:Integer;RectBorder:TRect );
+var  RectClient:TRect;
+Begin
+  x:= trunc(x / 5 * 5 + 0.5);
+  x  := Max (x , RectBorder.Left);
+  x := Min (x , RectBorder.Right);
+  MoveToEx(hClientDC,x, 0, Nil);
+    Windows.GetClientRect(Handle, RectClient);
+  LineTo(hClientDC, x, RectClient.Bottom);
+End;
+procedure TReportControl.OnMove(TempMsg: TMSG;RectBorder:TRect );
+begin
+  DrawIndicatorLine(FMousePoint.x,RectBorder);
+  FMousePoint := TempMsg.pt;
+  Windows.ScreenToClient(Handle, FMousePoint);
+  DrawIndicatorLine(FMousePoint.x,RectBorder);
+end;
+procedure TReportControl.MsgLoop(RectBorder:TRect);
+var TempMsg: TMSG;
+begin
+  While GetCapture = Handle Do
+  Begin
+    If Not GetMessage(TempMsg, Handle, 0, 0) Then
+    Begin
+      PostQuitMessage(TempMsg.wParam);
+      Break;
+    End;
+    Case TempMsg.message Of
+      WM_LBUTTONUP:
+        ReleaseCapture;
+      WM_MOUSEMOVE:
+        Begin
+          OnMove(TempMsg,RectBorder);
+        End;
+      WM_SETCURSOR:
+        ;
+    Else
+      DispatchMessage(TempMsg);
+    End;
+  End; 
+end;
 Procedure TReportControl.StartMouseDrag_Verz(point: TPoint);
 
 Var
   ThisCell: TReportCell;
-  ThisCellsList: TCellList;
-  TempRect, RectBorder, RectCell, RectClient: TRect;
-  hClientDC: HDC;
-  hInvertPen, hPrevPen: HPEN;
-  PrevDrawMode, PrevCellWidth, Distance: Integer;
-  I, J: Integer;
-  bSelectFlag: Boolean;
-  ThisLine, TempLine: TReportLine;
-  TempMsg: TMSG;
-  BottomCell: TReportCell;
-  Top: Integer;
-  //  CellList : TList;
-  DragBottom: Integer;
-  // 选区和拖放区互相干涉否
-  // 若无选中的CELL,或者要改变宽度的CELL和NEXTCELL不在选中区中
-  function Interference :boolean;
-  var r:boolean ;
-  begin
-    r := False;
-    If FSelectCells.Count <= 0 Then
-      r := True;
-    If ThisCell.NextCell = Nil Then
-    Begin
-      If not IsCellSelected(ThisCell) Then
-        r := True;
-    End
-    Else If (Not IsCellSelected(ThisCell)) And (Not IsCellSelected(ThisCell.NextCell))
-      And
-      (Not IsCellSelected(ThisCell.NextCell.OwnerCell)) Then
-      r := True;
-    result := not r;
-  end;
-  procedure DrawIndicatorLine(var x:Integer;RectBorder:TRect );
-  Begin
-    x:= trunc(x / 5 * 5 + 0.5);
-    x  := Max (x , RectBorder.Left);
-    x := Min (x , RectBorder.Right);
-    MoveToEx(hClientDC,x, 0, Nil);
-    LineTo(hClientDC, x, RectClient.Bottom);
-  End;
-  procedure OnMove;
-  begin
-    DrawIndicatorLine(FMousePoint.x,RectBorder);
-    FMousePoint := TempMsg.pt;
-    Windows.ScreenToClient(Handle, FMousePoint);
-    DrawIndicatorLine(FMousePoint.x,RectBorder);
-  end;
-  procedure MsgLoop;
-  begin
-    While GetCapture = Handle Do
-    Begin
-      If Not GetMessage(TempMsg, Handle, 0, 0) Then
-      Begin
-        PostQuitMessage(TempMsg.wParam);
-        Break;
-      End;
-      Case TempMsg.message Of
-        WM_LBUTTONUP:
-          ReleaseCapture;
-        WM_MOUSEMOVE:
-          Begin
-            OnMove;
-          End;
-        WM_SETCURSOR:
-          ;
-      Else
-        DispatchMessage(TempMsg);
-      End;
-    End; 
-  end;
-
+  Nepotism: TCellList;
+  I: Integer;
+  RectBorder:TRect;
+  c : Canvas;
 Begin
   ThisCell := CellFromPoint(point);
-  RectCell := ThisCell.CellRect;
   FMousePoint := point;
-  Windows.GetClientRect(Handle, RectClient);
-
-  // 设置线形和绘制模式
   hClientDC := GetDC(Handle);
-  hInvertPen := CreatePen(PS_DOT, 1, RGB(0, 0, 0));
-  hPrevPen := SelectObject(hClientDC, hInvertPen);
-
-  PrevDrawMode := SetROP2(hClientDC, R2_NOTXORPEN);
-
-  ThisLine := ThisCell.OwnerLine;
-  ThisCellsList := TCellList.Create(self);
-  If not Interference Then
-    ThisCellsList.MakeFromSameRight(ThisCell)
+  c := Canvas.Create(hClientDC);
+  c.ReadyDotPen(1,cc.Black);
+  c.ReadyDrawModeInvert;
+  Nepotism := TCellList.Create(self);
+  If not Interference (ThisCell) Then
+    Nepotism.MakeFromSameRight(ThisCell)
   Else
-    ThisCellsList.MakeFromSameRightAndInterference(ThisCell);
-  MaxDragExtent(ThisCell,RectBorder) ;
-  RectBorder.Left := Max(ThisCellsList.MaxCellLeft + DRAGMARGIN,RectBorder.Left);
-  RectBorder.Right := Min(ThisCellsList.MinNextCellRight - DRAGMARGIN,RectBorder.Right);
+    Nepotism.MakeFromSameRightAndInterference(ThisCell);
 
-  // 画第一条线
+  RectBorder := RectBorder1(thisCell,Nepotism);
   DrawIndicatorLine(FMousePoint.x,RectBorder);
   SetCursor(LoadCursor(0, IDC_SIZEWE));
   SetCapture(Handle);
 
-  // 取得鼠标输入，进入第二个消息循环
-  MsgLoop ;
+  MsgLoop (RectBorder);
 
   If GetCapture = Handle Then
     ReleaseCapture;
 
   try
     DrawIndicatorLine(FMousePoint.x,RectBorder);
-
-    // 在此处判断对CELL宽度的设定是否有效
     try
-      ThisCellsList.CheckAllNextCellIsSlave;
-      ThisCellsList.CheckAllNextCellIsBiggerBottom;
-      For I := 0 To ThisCellsList.Count - 1 Do
-        UpdateTwinCell (ThisCellsList[I],FMousePoint.x);
+      Nepotism.CheckAllNextCellIsSlave;
+      Nepotism.CheckAllNextCellIsBiggerBottom;
+      For I := 0 To Nepotism.Count - 1 Do
+        UpdateTwinCell (Nepotism[I],FMousePoint.x);
       UpdateLines;
     except
     end;
   finally
-    SelectObject(hClientDC, hPrevPen);
-    DeleteObject(hInvertPen);
-    SetROP2(hClientDc, PrevDrawMode);
+    c.KillDrawMode;
+    c.KillPen;
+    c.Free;
     ReleaseDC(Handle, hClientDC);
   end;
 End;
 
+<<<<<<< HEAD
   // bSelectFlag ：是选中还是编辑?
 // LCJ:以消息循环方式，来处理Mouse事件的持续性，这个做法很有意思。
 
 Procedure MouseSelector.StartMouseSelect(point: TPoint;Shift: Boolean );
+=======
+Procedure TReportControl.StartMouseSelect(point: TPoint;Shift: Boolean );
+>>>>>>> b1b7e5fafc0725a629412777b3486135aa8eeb3d
 Var
   ThisCell: TReportCell;
   Msg: TMSG;
@@ -2767,7 +2785,8 @@ Begin
     End;  
     Case Msg.Message Of
       WM_LBUTTONUP:
-        ReleaseCapture; // 这里会导致 GetCapture = Handle，不在成立，因此，可以退出While 。
+        // 这里会导致 GetCapture = Handle，不在成立，因此，可以退出While 。
+        ReleaseCapture;
       WM_MOUSEMOVE:
           DoMouseMove(msg.pt,msg.wParam =5);
     Else
@@ -2857,15 +2876,16 @@ End;
 
 Function TReportControl.CanSplit: Boolean;
 Begin
-  If (FSelectCells.Count = 1) Then
-  Begin
-    If FSelectCells[0].FSlaveCells.Count > 0 Then
-      Result := True
-    Else
-      Result := False;
-  End
-  Else
-    Result := False;
+  Result := (FSelectCells.Count = 1) and (FSelectCells[0].FSlaveCells.Count > 0)
+//  If (FSelectCells.Count = 1) Then
+//  Begin
+//    If FSelectCells[0].FSlaveCells.Count > 0 Then
+//      Result := True
+//    Else
+//      Result := False;
+//  End
+//  Else
+//    Result := False;
 End;
 
 // LCJ : 描绘被选中的单元格的轮廓
@@ -2984,7 +3004,7 @@ Var
 Begin
   If FLineList.Count > 0 Then
   Begin
-    Application.Messagebox('关闭正在编辑的文件后，才能建立新表格。', '警告',
+    Application.Messagebox(cc.NewTableError, '警告',
       MB_OK + MB_iconwarning);
     Exit;
   End;                      
@@ -4303,6 +4323,7 @@ begin
   End;
 end;
 
+
 { TLineList }
 
 procedure TLineList.CombineHorz;
@@ -4811,10 +4832,19 @@ begin
     NewMapping(ThisCell,NewCell);
 end;
 
+<<<<<<< HEAD
 constructor MouseSelector.Create(RC: TReportControl);
 begin
   FControl := rc;
 end;
+=======
+
+
+
+
+
+
+>>>>>>> b1b7e5fafc0725a629412777b3486135aa8eeb3d
 
 end.
 
