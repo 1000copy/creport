@@ -221,6 +221,7 @@ Type
     function GetTextHeight: Integer;
     procedure ExpandHeight(delta: integer);
     function GetNextCell: TReportCell;
+    // group by hPaintDC ,so simplize is possible
     procedure DrawDragon(hPaintDC:HDC);
     procedure DrawLine(hPaintDc:HDC;x1, y1, x2, y2: integer; color: COLORREF;
       PenWidth: Integer);
@@ -1163,7 +1164,7 @@ End;
     hPrevPen, hTempPen: HPEN;
   begin
     If FDiagonal <= 0 Then exit;
-    hTempPen := CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
+    hTempPen := CreatePen(PS_SOLID, 1, cc.Black);
     hPrevPen := SelectObject(hPaintDc, hTempPen);
     R1 := Rect.Create(self.ReportControl.os.Inflate(FCellRect,-1,-1));
     try
@@ -1242,32 +1243,26 @@ begin
   DrawLine( hPaintDc,FCellRect.left, FCellRect.bottom,FCellRect.right, FCellRect.bottom,color,FBottomLineWidth);
 end;
 procedure TReportCell.DrawFrameLine(hPaintDc:HDC);
-var cBlack: COLORREF ;
 begin
-  cBlack := RGB(0, 0, 0);
-  // 绘制边框
   If FLeftLine Then
-    DrawLeft(hPaintDc,cBlack);
+    DrawLeft(hPaintDc,cc.Black);
   If FTopLine Then
-    DrawTop(hPaintDc,cBlack);
+    DrawTop(hPaintDc,cc.Black);
   If FRightLine Then
-    DrawRight(hPaintDc,cBlack);
+    DrawRight(hPaintDc,cc.Black);
   If FBottomLine Then
-    DrawBottom(hPaintDc,cBlack);
+    DrawBottom(hPaintDc,cc.Black);
 end;
 procedure  TReportCell.DrawAuxiliaryLine(hPaintDc:HDC;bPrint:Boolean) ;
-var
-  cGrey: COLORREF ;
 begin
-  cGrey :=  RGB(192, 192, 192);
   if (not FLeftLine) and (not bPrint) and (CellIndex = 0) then
-    DrawLeft(hPaintDc,cGrey);
+    DrawLeft(hPaintDc,cc.Grey);
   if (not FTopLine) and (not bPrint) and (OwnerLine.Index = 0) then
-    DrawTop(hPaintDc,cGrey);
+    DrawTop(hPaintDc,cc.Grey);
   if (not FRightLine) and (not bPrint)  then
-    DrawRight(hPaintDc,cGrey);
+    DrawRight(hPaintDc,cc.Grey);
   if (not FBottomLine )and (not bPrint)  then
-    DrawBottom(hPaintDc,cGrey);
+    DrawBottom(hPaintDc,cc.Grey);
 end;
 procedure TReportCell.FillBg(hPaintDC: HDC;FCellRect:TRect;FBackGroundColor:COLORREF);
 var
@@ -1278,7 +1273,7 @@ begin
   TempRect := FCellRect;
   TempRect.Top := TempRect.Top + 1;
   TempRect.Right := TempRect.Right + 1;
-  If FBackGroundColor <> RGB(255, 255, 255) Then
+  If FBackGroundColor <>cc.White Then
   Begin
     TempLogBrush.lbStyle := BS_SOLID;
     TempLogBrush.lbColor := FBackGroundColor;
@@ -1393,8 +1388,8 @@ Begin
   FBottomLine := True;
   FBottomLineWidth := 1;
   FDiagonal := 0;
-  FTextColor := RGB(0, 0, 0);
-  FBackGroundColor := RGB(255, 255, 255);
+  FTextColor := cc.Black;
+  FBackGroundColor := cc.White;
   FHorzAlign := TEXT_ALIGN_LEFT;
   FVertAlign := TEXT_ALIGN_CENTER;
   FCellText := '';
@@ -2272,7 +2267,7 @@ Var
   TempRect: TRect;
   hGrayPen, hPrevPen: HPEN;
 begin
-  hGrayPen := CreatePen(PS_SOLID, 1, RGB(128, 128, 128));
+  hGrayPen := CreatePen(PS_SOLID, 1, cc.Grey);
   try
     hPrevPen := SelectObject(hPaintDC, hGrayPen);
     // 左上
@@ -2502,7 +2497,7 @@ Var
 Begin
   // 设置线形和绘制模式
   hClientDC := GetDC(Handle);
-  hInvertPen := CreatePen(PS_DOT, 1, RGB(0, 0, 0));
+  hInvertPen := CreatePen(PS_DOT, 1, cc.Black);
   hPrevPen := SelectObject(hClientDC, hInvertPen);
   PrevDrawMode := SetROP2(hClientDC, R2_NOTXORPEN);
   try
@@ -2711,7 +2706,7 @@ Begin
 
   // 设置线形和绘制模式
   hClientDC := GetDC(Handle);
-  hInvertPen := CreatePen(PS_DOT, 1, RGB(0, 0, 0));
+  hInvertPen := CreatePen(PS_DOT, 1, cc.Black);
   hPrevPen := SelectObject(hClientDC, hInvertPen);
 
   PrevDrawMode := SetROP2(hClientDC, R2_NOTXORPEN);
