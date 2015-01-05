@@ -459,6 +459,9 @@ Type
     function Interference(ThisCell: TReportCell): boolean;
     function RectBorder1(ThisCell: TReportCell;
       ThisCellsList: TCellList): TRect;
+    procedure DrawIndicatorLine(var x: Integer; RectBorder: TRect);
+    procedure MsgLoop(RectBorder:TRect);
+    procedure OnMove(TempMsg: TMSG;RectBorder:TRect );
   protected
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
@@ -2653,7 +2656,49 @@ begin
   R.Left := Max(ThisCellsList.MaxCellLeft + DRAGMARGIN,R.Left);
   R.Right := Min(ThisCellsList.MinNextCellRight - DRAGMARGIN,R.Right);
   result := R;
-end;         
+end;
+
+procedure TReportControl.DrawIndicatorLine(var x:Integer;RectBorder:TRect );
+var  RectClient:TRect;
+Begin
+  x:= trunc(x / 5 * 5 + 0.5);
+  x  := Max (x , RectBorder.Left);
+  x := Min (x , RectBorder.Right);
+  MoveToEx(hClientDC,x, 0, Nil);
+    Windows.GetClientRect(Handle, RectClient);
+  LineTo(hClientDC, x, RectClient.Bottom);
+End;
+procedure TReportControl.OnMove(TempMsg: TMSG;RectBorder:TRect );
+begin
+  DrawIndicatorLine(FMousePoint.x,RectBorder);
+  FMousePoint := TempMsg.pt;
+  Windows.ScreenToClient(Handle, FMousePoint);
+  DrawIndicatorLine(FMousePoint.x,RectBorder);
+end;
+procedure TReportControl.MsgLoop(RectBorder:TRect);
+var TempMsg: TMSG;
+begin
+  While GetCapture = Handle Do
+  Begin
+    If Not GetMessage(TempMsg, Handle, 0, 0) Then
+    Begin
+      PostQuitMessage(TempMsg.wParam);
+      Break;
+    End;
+    Case TempMsg.message Of
+      WM_LBUTTONUP:
+        ReleaseCapture;
+      WM_MOUSEMOVE:
+        Begin
+          OnMove(TempMsg,RectBorder);
+        End;
+      WM_SETCURSOR:
+        ;
+    Else
+      DispatchMessage(TempMsg);
+    End;
+  End; 
+end;
 Procedure TReportControl.StartMouseDrag_Verz(point: TPoint);
 
 Var
@@ -2665,50 +2710,8 @@ Var
   PrevDrawMode: Integer;
   I, J: Integer;
   ThisLine, TempLine: TReportLine;
-  TempMsg: TMSG;
-  function RectBorder():TRect;
-  begin
-    result := RectBorder1(ThisCell,Nepotism);
-  end;
 
-  procedure DrawIndicatorLine(var x:Integer;RectBorder:TRect );
-  Begin
-    x:= trunc(x / 5 * 5 + 0.5);
-    x  := Max (x , RectBorder.Left);
-    x := Min (x , RectBorder.Right);
-    MoveToEx(hClientDC,x, 0, Nil);
-    LineTo(hClientDC, x, RectClient.Bottom);
-  End;
-  procedure OnMove(TempMsg: TMSG);
-  begin
-    DrawIndicatorLine(FMousePoint.x,RectBorder);
-    FMousePoint := TempMsg.pt;
-    Windows.ScreenToClient(Handle, FMousePoint);
-    DrawIndicatorLine(FMousePoint.x,RectBorder);
-  end;
-  procedure MsgLoop;
-  begin
-    While GetCapture = Handle Do
-    Begin
-      If Not GetMessage(TempMsg, Handle, 0, 0) Then
-      Begin
-        PostQuitMessage(TempMsg.wParam);
-        Break;
-      End;
-      Case TempMsg.message Of
-        WM_LBUTTONUP:
-          ReleaseCapture;
-        WM_MOUSEMOVE:
-          Begin
-            OnMove(TempMsg);
-          End;
-        WM_SETCURSOR:
-          ;
-      Else
-        DispatchMessage(TempMsg);
-      End;
-    End; 
-  end;
+  RectBorder:TRect;
 Begin
   ThisCell := CellFromPoint(point);
   FMousePoint := point;
@@ -2728,12 +2731,13 @@ Begin
   Else
     Nepotism.MakeFromSameRightAndInterference(ThisCell);
   // 画第一条线
+  RectBorder := RectBorder1(thisCell,Nepotism);
   DrawIndicatorLine(FMousePoint.x,RectBorder);
   SetCursor(LoadCursor(0, IDC_SIZEWE));
   SetCapture(Handle);
 
   // 取得鼠标输入，进入第二个消息循环
-  MsgLoop ;
+  MsgLoop (RectBorder);
 
   If GetCapture = Handle Then
     ReleaseCapture;
@@ -2758,8 +2762,6 @@ Begin
   end;
 End;
 
-  // bSelectFlag ：是选中还是编辑?
-// LCJ:以消息循环方式，来处理Mouse事件的持续性，这个做法很有意思。
 Procedure TReportControl.StartMouseSelect(point: TPoint;Shift: Boolean );
 Var
   ThisCell: TReportCell;
@@ -2780,7 +2782,8 @@ Begin
     End;  
     Case Msg.Message Of
       WM_LBUTTONUP:
-        ReleaseCapture; // 这里会导致 GetCapture = Handle，不在成立，因此，可以退出While 。
+        // 这里会导致 GetCapture = Handle，不在成立，因此，可以退出While 。
+        ReleaseCapture;
       WM_MOUSEMOVE:
           DoMouseMove(msg.pt,msg.wParam =5);
     Else
@@ -2993,7 +2996,7 @@ Var
 Begin
   If FLineList.Count > 0 Then
   Begin
-    Application.Messagebox('关闭正在编辑的文件后，才能建立新表格。', '警告',
+    Application.Messagebox(cc.NewTableError, '警告',
       MB_OK + MB_iconwarning);
     Exit;
   End;                      
@@ -4311,6 +4314,7 @@ begin
     RecreateEdit(ThisCell);
   End;
 end;
+
 
 { TLineList }
 
