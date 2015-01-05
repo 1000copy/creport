@@ -1,4 +1,4 @@
 creport
 =======
 
-a tech challenge ,not a product 
+It's a tech challenge ,not a product . so go away if you want to be lazy man 
