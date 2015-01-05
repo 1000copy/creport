@@ -8,6 +8,16 @@ uses
 function  PageFileName(CurrentPage:Integer):string;
 function AppDir:String;
 type
+  Canvas = class
+    dc : HDC ;
+    hPrevPen, hTempPen: HPEN;
+  private
+  public
+    constructor Create(dc : HDC);
+    procedure KillPen();
+    procedure ReadySolidPen(Width: Integer; Color: ColorREF);
+    procedure DrawLine(p1, p2: TPoint);
+  end;
   Rect = class
     FRect:TRect;
   public
@@ -380,4 +390,30 @@ begin
   result.X := FRect.Left;
   result.y := FRect.Bottom;
 end;
+{ Canvas }
+
+constructor Canvas.Create(dc: HDC);
+begin
+  self.dc := dc;
+end;
+
+procedure Canvas.KillPen;
+begin
+  SelectObject(dc, hPrevPen);
+  DeleteObject(hTempPen);
+end;
+
+procedure Canvas.ReadySolidPen(Width:Integer;Color:ColorREF);
+begin
+  hTempPen := CreatePen(PS_SOLID, width, Color);
+  hPrevPen := SelectObject(dc, hTempPen);
+end;
+
+procedure Canvas.DrawLine(p1,p2:TPoint);
+begin
+  MoveToEx(dc,p1.x, p1.y, Nil);
+  LineTo(dc, p2.x, p2.y);
+end;
+
+
 end.
