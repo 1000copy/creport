@@ -1219,56 +1219,53 @@ Var
     end;
   procedure DrawDragon;
   begin
+    If FDiagonal <= 0 Then exit;
     hTempPen := CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
     hPrevPen := SelectObject(hPaintDc, hTempPen);
+    try
+      If ((FDiagonal And LINE_LEFT1) > 0) Then
+      Begin
+        MoveToEx(hPaintDC, FCellRect.left + 1, FCellRect.top + 1, Nil);
+        LineTo(hPaintDC, FCellRect.right - 1, FCellRect.bottom - 1);
+      End;
 
-    // »æÖÆÐ±Ïß
-    If FDiagonal > 0 Then
-    Begin
-    If ((FDiagonal And LINE_LEFT1) > 0) Then
-    Begin
-      MoveToEx(hPaintDC, FCellRect.left + 1, FCellRect.top + 1, Nil);
-      LineTo(hPaintDC, FCellRect.right - 1, FCellRect.bottom - 1);
-    End;
+      If ((FDiagonal And LINE_LEFT2) > 0) Then
+      Begin
+        MoveToEx(hPaintDC, FCellRect.left + 1, FCellRect.top + 1, Nil);
+        LineTo(hPaintDC, FCellRect.right - 1, trunc((FCellRect.bottom +
+        FCellRect.top) / 2 + 0.5));
+      End;
 
-    If ((FDiagonal And LINE_LEFT2) > 0) Then
-    Begin
-      MoveToEx(hPaintDC, FCellRect.left + 1, FCellRect.top + 1, Nil);
-      LineTo(hPaintDC, FCellRect.right - 1, trunc((FCellRect.bottom +
-      FCellRect.top) / 2 + 0.5));
-    End;
+      If ((FDiagonal And LINE_LEFT3) > 0) Then
+      Begin
+        MoveToEx(hPaintDC, FCellRect.left + 1, FCellRect.top + 1, Nil);
+        LineTo(hPaintDC, trunc((FCellRect.right + FCellRect.left) / 2 + 0.5),
+        FCellRect.bottom - 1);
+      End;
 
-    If ((FDiagonal And LINE_LEFT3) > 0) Then
-    Begin
-      MoveToEx(hPaintDC, FCellRect.left + 1, FCellRect.top + 1, Nil);
-      LineTo(hPaintDC, trunc((FCellRect.right + FCellRect.left) / 2 + 0.5),
-      FCellRect.bottom - 1);
-    End;
+      If ((FDiagonal And LINE_RIGHT1) > 0) Then
+      Begin
+        MoveToEx(hPaintDC, FCellRect.right - 1, FCellRect.top + 1, Nil);
+        LineTo(hPaintDC, FCellRect.left + 1, FCellRect.bottom - 1);
+      End;
 
-    If ((FDiagonal And LINE_RIGHT1) > 0) Then
-    Begin
-      MoveToEx(hPaintDC, FCellRect.right - 1, FCellRect.top + 1, Nil);
-      LineTo(hPaintDC, FCellRect.left + 1, FCellRect.bottom - 1);
-    End;
+      If ((FDiagonal And LINE_RIGHT2) > 0) Then
+      Begin
+        MoveToEx(hPaintDC, FCellRect.right - 1, FCellRect.top + 1, Nil);
+        LineTo(hPaintDC, FCellRect.left + 1, trunc((FCellRect.bottom +
+        FCellRect.top) / 2 + 0.5));
+      End;
 
-    If ((FDiagonal And LINE_RIGHT2) > 0) Then
-    Begin
-      MoveToEx(hPaintDC, FCellRect.right - 1, FCellRect.top + 1, Nil);
-      LineTo(hPaintDC, FCellRect.left + 1, trunc((FCellRect.bottom +
-      FCellRect.top) / 2 + 0.5));
-    End;
-
-    If ((FDiagonal And LINE_RIGHT3) > 0) Then
-    Begin
-      MoveToEx(hPaintDC, FCellRect.right - 1, FCellRect.top + 1, Nil);
-      LineTo(hPaintDC, trunc((FCellRect.right + FCellRect.left) / 2 + 0.5),
-      FCellRect.bottom - 1);
-    End;
-
-    End;
-
-    SelectObject(hPaintDC, hPrevPen);
-    DeleteObject(hTempPen);
+      If ((FDiagonal And LINE_RIGHT3) > 0) Then
+      Begin
+        MoveToEx(hPaintDC, FCellRect.right - 1, FCellRect.top + 1, Nil);
+        LineTo(hPaintDC, trunc((FCellRect.right + FCellRect.left) / 2 + 0.5),
+        FCellRect.bottom - 1);
+      End;
+    finally
+      SelectObject(hPaintDC, hPrevPen);
+      DeleteObject(hTempPen);
+    end;
   end;
   procedure DrawContentText;
   begin
