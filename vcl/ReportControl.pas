@@ -443,6 +443,7 @@ Type
 
   TReportControl = Class(TWinControl)
   private
+    hClientDC: HDC;
     procedure InternalSaveToFile(
       FLineList: TList; FileName: String;PageNumber, Fpageall: integer);
     procedure DoInvalidateRect(Rect:TRect);
@@ -2657,22 +2658,17 @@ Procedure TReportControl.StartMouseDrag_Verz(point: TPoint);
 
 Var
   ThisCell: TReportCell;
-  ThisCellsList: TCellList;
-  TempRect,  RectCell, RectClient: TRect;
-  hClientDC: HDC;
+  Nepotism: TCellList;
+  TempRect,  RectClient: TRect;
+  
   hInvertPen, hPrevPen: HPEN;
   PrevDrawMode: Integer;
   I, J: Integer;
-  bSelectFlag: Boolean;
   ThisLine, TempLine: TReportLine;
   TempMsg: TMSG;
-  BottomCell: TReportCell;
-  Top: Integer;
-  //  CellList : TList;
-  DragBottom: Integer;
   function RectBorder():TRect;
   begin
-    result := RectBorder1(ThisCell,ThisCellsList);
+    result := RectBorder1(ThisCell,Nepotism);
   end;
 
   procedure DrawIndicatorLine(var x:Integer;RectBorder:TRect );
@@ -2683,7 +2679,7 @@ Var
     MoveToEx(hClientDC,x, 0, Nil);
     LineTo(hClientDC, x, RectClient.Bottom);
   End;
-  procedure OnMove;
+  procedure OnMove(TempMsg: TMSG);
   begin
     DrawIndicatorLine(FMousePoint.x,RectBorder);
     FMousePoint := TempMsg.pt;
@@ -2704,7 +2700,7 @@ Var
           ReleaseCapture;
         WM_MOUSEMOVE:
           Begin
-            OnMove;
+            OnMove(TempMsg);
           End;
         WM_SETCURSOR:
           ;
@@ -2715,7 +2711,6 @@ Var
   end;
 Begin
   ThisCell := CellFromPoint(point);
-  RectCell := ThisCell.CellRect;
   FMousePoint := point;
   Windows.GetClientRect(Handle, RectClient);
 
@@ -2727,11 +2722,11 @@ Begin
   PrevDrawMode := SetROP2(hClientDC, R2_NOTXORPEN);
 
   ThisLine := ThisCell.OwnerLine;
-  ThisCellsList := TCellList.Create(self);
+  Nepotism := TCellList.Create(self);
   If not Interference (ThisCell) Then
-    ThisCellsList.MakeFromSameRight(ThisCell)
+    Nepotism.MakeFromSameRight(ThisCell)
   Else
-    ThisCellsList.MakeFromSameRightAndInterference(ThisCell);
+    Nepotism.MakeFromSameRightAndInterference(ThisCell);
   // 画第一条线
   DrawIndicatorLine(FMousePoint.x,RectBorder);
   SetCursor(LoadCursor(0, IDC_SIZEWE));
@@ -2748,10 +2743,10 @@ Begin
 
     // 在此处判断对CELL宽度的设定是否有效
     try
-      ThisCellsList.CheckAllNextCellIsSlave;
-      ThisCellsList.CheckAllNextCellIsBiggerBottom;
-      For I := 0 To ThisCellsList.Count - 1 Do
-        UpdateTwinCell (ThisCellsList[I],FMousePoint.x);
+      Nepotism.CheckAllNextCellIsSlave;
+      Nepotism.CheckAllNextCellIsBiggerBottom;
+      For I := 0 To Nepotism.Count - 1 Do
+        UpdateTwinCell (Nepotism[I],FMousePoint.x);
       UpdateLines;
     except
     end;
