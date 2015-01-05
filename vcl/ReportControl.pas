@@ -2853,15 +2853,16 @@ End;
 
 Function TReportControl.CanSplit: Boolean;
 Begin
-  If (FSelectCells.Count = 1) Then
-  Begin
-    If FSelectCells[0].FSlaveCells.Count > 0 Then
-      Result := True
-    Else
-      Result := False;
-  End
-  Else
-    Result := False;
+  Result := (FSelectCells.Count = 1) and (FSelectCells[0].FSlaveCells.Count > 0)
+//  If (FSelectCells.Count = 1) Then
+//  Begin
+//    If FSelectCells[0].FSlaveCells.Count > 0 Then
+//      Result := True
+//    Else
+//      Result := False;
+//  End
+//  Else
+//    Result := False;
 End;
 
 // LCJ : 描绘被选中的单元格的轮廓
