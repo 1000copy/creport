@@ -1138,7 +1138,20 @@ Begin
   CalcCellRect;
   CalcTextRect;
 End;
-
+type
+  Rect = class
+    FRect:TRect;
+  private
+    function BottomMid: TPoint;
+    function LeftBottom: TPoint;
+    function LeftMid: TPoint;
+    function RightTop: TPoint;
+  public
+    constructor Create(R:TRect);
+    function TopLeft:TPoint;
+    function BottomRight:TPoint;
+    function RightMid: TPoint;
+  end;
 Procedure TReportCell.PaintCell(hPaintDC: HDC; bPrint: Boolean);
 Var
   SaveDCIndex: Integer;
@@ -1217,54 +1230,68 @@ Var
       DeleteObject(hTempBrush);
       End;
     end;
+
   procedure DrawDragon;
+  var p1,p2:TPoint ;R:TRect;
+  procedure DrawLine(hPaintDC:HDC;p1,p2:TPoint);
+  begin
+        MoveToEx(hPaintDC,p1.x, p1.y, Nil);
+        LineTo(hPaintDC, p2.x, p2.y);
+  end;
+
+  var R1:Rect;
   begin
     If FDiagonal <= 0 Then exit;
     hTempPen := CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
     hPrevPen := SelectObject(hPaintDc, hTempPen);
+    R1 := Rect.Create(self.ReportControl.os.Inflate(FCellRect,-1,-1));
     try
       If ((FDiagonal And LINE_LEFT1) > 0) Then
       Begin
-        MoveToEx(hPaintDC, FCellRect.left + 1, FCellRect.top + 1, Nil);
-        LineTo(hPaintDC, FCellRect.right - 1, FCellRect.bottom - 1);
+        p1 := R1.TopLeft ;
+        p2 := R1.BottomRight;
+        DrawLine(hPaintDC,p1,p2);
       End;
 
       If ((FDiagonal And LINE_LEFT2) > 0) Then
       Begin
-        MoveToEx(hPaintDC, FCellRect.left + 1, FCellRect.top + 1, Nil);
-        LineTo(hPaintDC, FCellRect.right - 1, trunc((FCellRect.bottom +
-        FCellRect.top) / 2 + 0.5));
+        p1 := R1.TopLeft ;
+        p2 := R1.RightMid;
+        DrawLine(hPaintDC,p1,p2);
       End;
 
       If ((FDiagonal And LINE_LEFT3) > 0) Then
       Begin
-        MoveToEx(hPaintDC, FCellRect.left + 1, FCellRect.top + 1, Nil);
-        LineTo(hPaintDC, trunc((FCellRect.right + FCellRect.left) / 2 + 0.5),
-        FCellRect.bottom - 1);
+        p1 := R1.TopLeft ;
+        p2 := R1.BottomMid;
+        DrawLine(hPaintDC,p1,p2);
       End;
 
       If ((FDiagonal And LINE_RIGHT1) > 0) Then
       Begin
-        MoveToEx(hPaintDC, FCellRect.right - 1, FCellRect.top + 1, Nil);
-        LineTo(hPaintDC, FCellRect.left + 1, FCellRect.bottom - 1);
+        p1 := R1.RightTop;
+        p2 := R1.LeftBottom;
+        DrawLine(hPaintDC,p1,p2);
       End;
 
       If ((FDiagonal And LINE_RIGHT2) > 0) Then
       Begin
-        MoveToEx(hPaintDC, FCellRect.right - 1, FCellRect.top + 1, Nil);
-        LineTo(hPaintDC, FCellRect.left + 1, trunc((FCellRect.bottom +
-        FCellRect.top) / 2 + 0.5));
+        p1 := R1.RightTop;
+        p2 := R1.LeftMid;
+        DrawLine(hPaintDC,p1,p2);
       End;
 
       If ((FDiagonal And LINE_RIGHT3) > 0) Then
       Begin
-        MoveToEx(hPaintDC, FCellRect.right - 1, FCellRect.top + 1, Nil);
-        LineTo(hPaintDC, trunc((FCellRect.right + FCellRect.left) / 2 + 0.5),
-        FCellRect.bottom - 1);
+        p1 := R1.RightTop;
+        p2 := R1.BottomMid;
+        DrawLine(hPaintDC,p1,p2);
       End;
+
     finally
       SelectObject(hPaintDC, hPrevPen);
       DeleteObject(hTempPen);
+      R1.Free;
     end;
   end;
   procedure DrawContentText;
@@ -4794,6 +4821,62 @@ begin
   If ThisCell.FSlaveCells.Count > 0 Then
     NewMapping(ThisCell,NewCell);
 end;
+
+{ Rect }
+
+
+function Rect.BottomRight: TPoint;
+begin
+  result.X := FRect.Right;
+  result.y := FRect.Bottom ;
+
+end;
+
+constructor Rect.Create(R: TRect);
+begin
+  self.FRect := r;
+end;
+
+
+
+function Rect.TopLeft: TPoint;
+begin
+  result.X := FRect.Left;
+  result.y := FRect.Top ;
+
+end;
+function Rect.RightMid: TPoint;
+begin
+  result.X := FRect.Right;
+  result.y := trunc((FRect.bottom + FRect.top) / 2 + 0.5) ;
+end;
+
+function Rect.BottomMid: TPoint;
+begin
+  result.X := trunc((FRect.right + FRect.left) / 2 + 0.5);
+  result.y := FRect.Bottom;
+end;
+
+function Rect.LeftMid: TPoint;
+begin
+  result.X := FRect.Left;
+  result.y := trunc((FRect.bottom + FRect.top) / 2 + 0.5)
+end;
+function Rect.RightTop: TPoint;
+begin
+  result.X := FRect.Right;
+  result.y := FRect.Top;
+end;
+
+function Rect.LeftBottom: TPoint;
+begin
+  result.X := FRect.Left;
+  result.y := FRect.Bottom;
+end;
+
+
+
+
 
 end.
 

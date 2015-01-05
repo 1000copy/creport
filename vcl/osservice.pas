@@ -25,6 +25,7 @@ type
     function InvalidateRect(hWnd: HWND; lpRect: PRect; bErase: BOOL): BOOL;
     function RectEquals(r1, r2: TRect): Boolean;
     procedure InflateRect(var r: TRect; dx, dy: integer);
+    function Inflate(r: TRect; dx, dy: integer):TRect;
     function UnionRect(lprcSrc1, lprcSrc2: TRect): TRect;
     class function IntersectRect(lprcSrc1, lprcSrc2: TRect): TRect;
     function IsIntersect(r1, r2: TRect): boolean;
@@ -169,6 +170,11 @@ end;
 procedure WindowsOS.InflateRect(var r: TRect; dx, dy: integer);
 begin
   windows.inflateRect(r,dx,dy);
+end;
+function WindowsOS.Inflate(r: TRect; dx, dy: integer):TRect;
+begin
+  windows.inflateRect(r,dx,dy);
+  result := r;
 end;
 
 function WindowsOS.InvalidateRect(hWnd: HWND; lpRect: PRect;
