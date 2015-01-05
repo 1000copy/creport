@@ -1169,57 +1169,57 @@ end;
 
 var R1:Rect;
   hPrevPen, hTempPen: HPEN;
+  c : Canvas;
 begin
   If FDiagonal <= 0 Then exit;
-  hTempPen := CreatePen(PS_SOLID, 1, cc.Black);
-  hPrevPen := SelectObject(hPaintDc, hTempPen);
+  c := Canvas.Create(hPaintDC);
+  c.ReadyDefaultPen;
   R1 := Rect.Create(self.ReportControl.os.Inflate(FCellRect,-1,-1));
   try
     If ((FDiagonal And LINE_LEFT1) > 0) Then
     Begin
       p1 := R1.TopLeft ;
       p2 := R1.BottomRight;
-      DrawLine(hPaintDC,p1,p2);
+      c.DrawLine(p1,p2);
     End;
 
     If ((FDiagonal And LINE_LEFT2) > 0) Then
     Begin
       p1 := R1.TopLeft ;
       p2 := R1.RightMid;
-      DrawLine(hPaintDC,p1,p2);
+      c.DrawLine(p1,p2);
     End;
 
     If ((FDiagonal And LINE_LEFT3) > 0) Then
     Begin
       p1 := R1.TopLeft ;
       p2 := R1.BottomMid;
-      DrawLine(hPaintDC,p1,p2);
+      c.DrawLine(p1,p2);
     End;
 
     If ((FDiagonal And LINE_RIGHT1) > 0) Then
     Begin
       p1 := R1.RightTop;
       p2 := R1.LeftBottom;
-      DrawLine(hPaintDC,p1,p2);
+      c.DrawLine(p1,p2);
     End;
 
     If ((FDiagonal And LINE_RIGHT2) > 0) Then
     Begin
       p1 := R1.RightTop;
       p2 := R1.LeftMid;
-      DrawLine(hPaintDC,p1,p2);
+      c.DrawLine(p1,p2);
     End;
 
     If ((FDiagonal And LINE_RIGHT3) > 0) Then
     Begin
       p1 := R1.RightTop;
       p2 := R1.BottomMid;
-      DrawLine(hPaintDC,p1,p2);
-    End;
-
+      c.DrawLine(p1,p2);
+    End;                
   finally
-    SelectObject(hPaintDC, hPrevPen);
-    DeleteObject(hTempPen);
+    c.KillPen;
+    c.free;
     R1.Free;
   end;
 end;

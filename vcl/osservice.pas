@@ -3,7 +3,7 @@ unit osservice;
 interface
 
 uses
-   Graphics,windows ,classes,SysUtils,Math,Forms;
+   Graphics,windows ,classes,SysUtils,Math,Forms,cc;
 
 function  PageFileName(CurrentPage:Integer):string;
 function AppDir:String;
@@ -12,10 +12,11 @@ type
     dc : HDC ;
     hPrevPen, hTempPen: HPEN;
   private
+    procedure ReadySolidPen(Width: Integer; Color: ColorREF);
   public
     constructor Create(dc : HDC);
+    procedure ReadyDefaultPen;
     procedure KillPen();
-    procedure ReadySolidPen(Width: Integer; Color: ColorREF);
     procedure DrawLine(p1, p2: TPoint);
   end;
   Rect = class
@@ -407,6 +408,10 @@ procedure Canvas.ReadySolidPen(Width:Integer;Color:ColorREF);
 begin
   hTempPen := CreatePen(PS_SOLID, width, Color);
   hPrevPen := SelectObject(dc, hTempPen);
+end;
+procedure Canvas.ReadyDefaultPen();
+begin
+  ReadySolidPen (1, cc.Black);
 end;
 
 procedure Canvas.DrawLine(p1,p2:TPoint);
