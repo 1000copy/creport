@@ -1217,7 +1217,8 @@ Var
       DeleteObject(hTempBrush);
       End;
     end;
-  procedure DrawDragon;begin
+  procedure DrawDragon;
+  begin
     hTempPen := CreatePen(PS_SOLID, 1, RGB(0, 0, 0));
     hPrevPen := SelectObject(hPaintDc, hTempPen);
 
