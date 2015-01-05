@@ -2651,7 +2651,7 @@ Var
   TempRect, RectBorder, RectCell, RectClient: TRect;
   hClientDC: HDC;
   hInvertPen, hPrevPen: HPEN;
-  PrevDrawMode, PrevCellWidth, Distance: Integer;
+  PrevDrawMode: Integer;
   I, J: Integer;
   bSelectFlag: Boolean;
   ThisLine, TempLine: TReportLine;
