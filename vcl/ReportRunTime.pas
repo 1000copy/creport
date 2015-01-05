@@ -57,7 +57,7 @@ type
     FPrintLineList: TList;
     FDRMap: TDRMappings;
     FNamedDatasets: TDataList;
-    FHeaderHeight: Integer;         //
+    FHeaderHeight: Integer;         
     Fallprint: Boolean;
     FPageCount: Integer;
     FDataLineHeight: Integer;
