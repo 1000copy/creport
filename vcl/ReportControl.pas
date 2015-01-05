@@ -456,6 +456,8 @@ Type
     procedure DrawHorzLine(HClientDC: HDC; y: integer; RectBorder: TRect);
     procedure UpdateTwinCell(ThisCell: TReportCell; x: integer);
     function Interference(ThisCell: TReportCell): boolean;
+    function RectBorder1(ThisCell: TReportCell;
+      ThisCellsList: TCellList): TRect;
   protected
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
@@ -2643,12 +2645,20 @@ begin
     r := True;
   result := not r;
 end;
+function TReportControl.RectBorder1(ThisCell: TReportCell;ThisCellsList: TCellList):TRect;
+var R: TRect;
+begin
+  MaxDragExtent(ThisCell,R) ;
+  R.Left := Max(ThisCellsList.MaxCellLeft + DRAGMARGIN,R.Left);
+  R.Right := Min(ThisCellsList.MinNextCellRight - DRAGMARGIN,R.Right);
+  result := R;
+end;         
 Procedure TReportControl.StartMouseDrag_Verz(point: TPoint);
 
 Var
   ThisCell: TReportCell;
   ThisCellsList: TCellList;
-  TempRect, RectBorder, RectCell, RectClient: TRect;
+  TempRect,  RectCell, RectClient: TRect;
   hClientDC: HDC;
   hInvertPen, hPrevPen: HPEN;
   PrevDrawMode: Integer;
@@ -2660,6 +2670,10 @@ Var
   Top: Integer;
   //  CellList : TList;
   DragBottom: Integer;
+  function RectBorder():TRect;
+  begin
+    result := RectBorder1(ThisCell,ThisCellsList);
+  end;
 
   procedure DrawIndicatorLine(var x:Integer;RectBorder:TRect );
   Begin
@@ -2699,7 +2713,6 @@ Var
       End;
     End; 
   end;
-
 Begin
   ThisCell := CellFromPoint(point);
   RectCell := ThisCell.CellRect;
@@ -2719,10 +2732,6 @@ Begin
     ThisCellsList.MakeFromSameRight(ThisCell)
   Else
     ThisCellsList.MakeFromSameRightAndInterference(ThisCell);
-  MaxDragExtent(ThisCell,RectBorder) ;
-  RectBorder.Left := Max(ThisCellsList.MaxCellLeft + DRAGMARGIN,RectBorder.Left);
-  RectBorder.Right := Min(ThisCellsList.MinNextCellRight - DRAGMARGIN,RectBorder.Right);
-
   // 画第一条线
   DrawIndicatorLine(FMousePoint.x,RectBorder);
   SetCursor(LoadCursor(0, IDC_SIZEWE));
