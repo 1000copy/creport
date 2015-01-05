@@ -455,6 +455,7 @@ Type
     procedure UpdateHeight(ThisCell: TReportCell; Y: Integer);
     procedure DrawHorzLine(HClientDC: HDC; y: integer; RectBorder: TRect);
     procedure UpdateTwinCell(ThisCell: TReportCell; x: integer);
+    function Interference(ThisCell: TReportCell): boolean;
   protected
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
@@ -2622,7 +2623,26 @@ begin
   End
   Else
     RectBorder.Right := ClientRect.Right - DRAGMARGIN;
-end;  
+end;
+  // 选区和拖放区互相干涉否
+  // 若无选中的CELL,或者要改变宽度的CELL和NEXTCELL不在选中区中
+function TReportControl.Interference( ThisCell: TReportCell) :boolean;
+var r:boolean ;
+begin
+  r := False;
+  If FSelectCells.Count <= 0 Then
+    r := True;
+  If ThisCell.NextCell = Nil Then
+  Begin
+    If not IsCellSelected(ThisCell) Then
+      r := True;
+  End
+  Else If (Not IsCellSelected(ThisCell)) And (Not IsCellSelected(ThisCell.NextCell))
+    And
+    (Not IsCellSelected(ThisCell.NextCell.OwnerCell)) Then
+    r := True;
+  result := not r;
+end;
 Procedure TReportControl.StartMouseDrag_Verz(point: TPoint);
 
 Var
@@ -2640,25 +2660,7 @@ Var
   Top: Integer;
   //  CellList : TList;
   DragBottom: Integer;
-  // 选区和拖放区互相干涉否
-  // 若无选中的CELL,或者要改变宽度的CELL和NEXTCELL不在选中区中
-  function Interference :boolean;
-  var r:boolean ;
-  begin
-    r := False;
-    If FSelectCells.Count <= 0 Then
-      r := True;
-    If ThisCell.NextCell = Nil Then
-    Begin
-      If not IsCellSelected(ThisCell) Then
-        r := True;
-    End
-    Else If (Not IsCellSelected(ThisCell)) And (Not IsCellSelected(ThisCell.NextCell))
-      And
-      (Not IsCellSelected(ThisCell.NextCell.OwnerCell)) Then
-      r := True;
-    result := not r;
-  end;
+
   procedure DrawIndicatorLine(var x:Integer;RectBorder:TRect );
   Begin
     x:= trunc(x / 5 * 5 + 0.5);
@@ -2713,7 +2715,7 @@ Begin
 
   ThisLine := ThisCell.OwnerLine;
   ThisCellsList := TCellList.Create(self);
-  If not Interference Then
+  If not Interference (ThisCell) Then
     ThisCellsList.MakeFromSameRight(ThisCell)
   Else
     ThisCellsList.MakeFromSameRightAndInterference(ThisCell);
