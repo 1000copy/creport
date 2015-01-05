@@ -55,9 +55,37 @@ Uses
    Classes, Graphics, Controls,
   Forms, Dialogs, Printers, Menus, Db,
   DesignEditors, ExtCtrls,osservice;
+Const
+  // Horz Align
+  TEXT_ALIGN_LEFT = 0;
+  TEXT_ALIGN_CENTER = 1;
+  TEXT_ALIGN_RIGHT = 2;
+
+  // Vert Align
+  TEXT_ALIGN_TOP = 0;
+  TEXT_ALIGN_VCENTER = 1;
+  TEXT_ALIGN_BOTTOM = 2;
+
+  // 斜线定义
+  LINE_LEFT1 = 1;                       // left top to right bottom
+  LINE_LEFT2 = 2;                       // left top to right
+  LINE_LEFT3 = 4;                       // left top to bottom
+
+  LINE_RIGHT1 = $100;                   // right top to left bottom
+  LINE_RIGHT2 = $200;                   // right top to left
+  LINE_RIGHT3 = $400;                   // right top to bottom
+
   function calcBottom(TempString:string ;TempRect:TRect;AlighFormat :UINT;FLogFont: TLOGFONT):Integer;
 type
-  StrSlice=class
+  TReportControl = class ;
+  MouseSelector = class
+    FControl :TReportControl ;
+  public
+    constructor Create(RC:TReportControl);
+    procedure DoMouseMove(p: TPoint; Shift: Boolean);
+    procedure StartMouseSelect(point: TPoint; Shift: Boolean);
+  end;
+    StrSlice=class
     FStr :string;
   public
     constructor Create(str:String);
@@ -67,7 +95,6 @@ type
     class function DoSlice(str: String; FromChar:char): string;
   end;
 // Mappings From CellText to Data end :TDataset ,TField,Value
-type
    CellField = class
      FCellText : string;
      Fds:TDataset;
@@ -84,9 +111,7 @@ type
     function IsBlobField:Boolean;
 
    end;
-type
   TOnChanged = procedure(Sender:TObject;str:String) of object;
-type
    TSimpleFileStream = class(TFileStream)
   private
     procedure ReadIntegerSkip;
@@ -107,7 +132,6 @@ type
      procedure WriteTLOGFONT(a:TLOGFONT);
 
    end;
-type
   CellType = (ctOwnerCell,ctSlaveCell,ctNormalCell);
   TPrinterPaper = class
   private
@@ -132,30 +156,10 @@ type
     procedure GetPaper(var FprPageNo, FprPageXy, fpaperLength,
       fpaperWidth: Integer);
   end;
-Const
-  // Horz Align
-  TEXT_ALIGN_LEFT = 0;
-  TEXT_ALIGN_CENTER = 1;
-  TEXT_ALIGN_RIGHT = 2;
 
-  // Vert Align
-  TEXT_ALIGN_TOP = 0;
-  TEXT_ALIGN_VCENTER = 1;
-  TEXT_ALIGN_BOTTOM = 2;
-
-  // 斜线定义
-  LINE_LEFT1 = 1;                       // left top to right bottom
-  LINE_LEFT2 = 2;                       // left top to right
-  LINE_LEFT3 = 4;                       // left top to bottom
-
-  LINE_RIGHT1 = $100;                   // right top to left bottom
-  LINE_RIGHT2 = $200;                   // right top to left
-  LINE_RIGHT3 = $400;                   // right top to bottom
-
-Type
   TReportCell = Class;
   TReportLine = Class;
-  TReportControl = Class;
+
   TLineList = class;
   TCellList = class(TList)
   private
@@ -429,6 +433,7 @@ Type
 
   TReportControl = Class(TWinControl)
   private
+    MouseSelect : MouseSelector;
     procedure InternalSaveToFile(
       FLineList: TList; FileName: String;PageNumber, Fpageall: integer);
     procedure DoInvalidateRect(Rect:TRect);
@@ -588,8 +593,10 @@ Type
     //取销编辑状态
     Procedure FreeEdit;
     Procedure StartMouseDrag(point: TPoint);
+//    Procedure StartMouseSelect(point: TPoint; Shift: Boolean );
+//    Procedure DoMouseMove(p: TPoint;Shift:Boolean);
     Procedure StartMouseSelect(point: TPoint; Shift: Boolean );
-    Procedure DoMouseMove(p: TPoint;Shift:Boolean);
+//    Procedure DoMouseMove(p: TPoint;Shift:Boolean);
     procedure SelectLine(row: integer);
     // 选中区的操作
     Function AddSelectedCell(Cell: TReportCell): Boolean;
@@ -2129,6 +2136,8 @@ Var
   nPixelsPerInch: Integer;
 Begin
   Inherited Create(AOwner);
+  mouseSelect := MouseSelector.Create(Self);
+
   Os := WindowsOS.create;
   Parent := TWinControl(aOwner);
   PrintPaper:= TPrinterPaper.Create;
@@ -2737,20 +2746,21 @@ End;
 
   // bSelectFlag ：是选中还是编辑?
 // LCJ:以消息循环方式，来处理Mouse事件的持续性，这个做法很有意思。
-Procedure TReportControl.StartMouseSelect(point: TPoint;Shift: Boolean );
+
+Procedure MouseSelector.StartMouseSelect(point: TPoint;Shift: Boolean );
 Var
   ThisCell: TReportCell;
   Msg: TMSG;
 Begin
   If not Shift Then
-    ClearSelect;
-  ThisCell := CellFromPoint(point);
-  AddSelectedCell(ThisCell);
-  SetCapture(Handle);
-  FMousePoint := point;
-  While GetCapture = Handle Do
+    FControl.ClearSelect;
+  ThisCell := FControl.CellFromPoint(point);
+  FControl.AddSelectedCell(ThisCell);
+  SetCapture(FControl.Handle);
+  FControl.FMousePoint := point;
+  While GetCapture = FControl.Handle Do
   Begin
-    If Not GetMessage(Msg, Handle, 0, 0) Then
+    If Not GetMessage(Msg, FControl.Handle, 0, 0) Then
     Begin
       PostQuitMessage(0);
       Break;
@@ -2764,11 +2774,11 @@ Begin
       DispatchMessage(Msg);
     End;
   End;
-  If GetCapture = Handle Then
+  If GetCapture = FControl.Handle Then
     ReleaseCapture;
 End;
 
-Procedure TReportControl.DoMouseMove(p: TPoint;Shift:Boolean);
+Procedure MouseSelector.DoMouseMove(p: TPoint;Shift:Boolean);
 Var
   RectSelection, TempRect: TRect;
   ThisCell: TReportCell;
@@ -2776,36 +2786,40 @@ Var
   ThisLine: TReportLine;
 
 Begin
-  Windows.ScreenToClient(Handle, p);
-  RectSelection := os.MakeRect(FMousePoint,p); 
+  Windows.ScreenToClient(FControl.Handle, p);
+  RectSelection := FControl.os.MakeRect(FControl.FMousePoint,p);
   //清除掉不在选中矩形中的CELL ; 除非Shift 按下
   If not Shift  Then
-    For I := FSelectCells.Count - 1 Downto 0 Do
+    For I := FControl.FSelectCells.Count - 1 Downto 0 Do
     Begin
-      ThisCell := TReportCell(FSelectCells[I]);
-      if not os.IsIntersect(ThisCell.CellRect, RectSelection) then
-          RemoveSelectedCell(ThisCell);
+      ThisCell := TReportCell(FControl.FSelectCells[I]);
+      if not FControl.os.IsIntersect(ThisCell.CellRect, RectSelection) then
+          FControl.RemoveSelectedCell(ThisCell);
     End;
   // 查找选中的Cell
-  For I := 0 To FLineList.Count - 1 Do
+  For I := 0 To FControl.FLineList.Count - 1 Do
   Begin
-    ThisLine := TReportLine(FLineList[I]);
-    If os.IsIntersect(RectSelection, ThisLine.LineRect) Then
+    ThisLine := TReportLine(FControl.FLineList[I]);
+    If FControl.os.IsIntersect(RectSelection, ThisLine.LineRect) Then
     Begin
       For J := 0 To ThisLine.FCells.Count - 1 Do
       Begin
         ThisCell := TReportCell(ThisLine.FCells[J]);
-        if os.IsIntersect(ThisCell.CellRect, RectSelection) Then
+        if FControl.os.IsIntersect(ThisCell.CellRect, RectSelection) Then
         Begin
           If ThisCell.IsSlave Then
             ThisCell :=  ThisCell.OwnerCell ;
-          AddSelectedCell(ThisCell);
+          FControl.AddSelectedCell(ThisCell);
         End;
       End;
     End;
   End;
 
 End;
+Procedure TReportControl.StartMouseSelect(point: TPoint;Shift: Boolean );
+begin
+  MouseSelect.StartMouseSelect(point,shift);
+end;
 
 Procedure TReportControl.AddLine;
 Var
@@ -4795,6 +4809,11 @@ begin
   End;
   If ThisCell.FSlaveCells.Count > 0 Then
     NewMapping(ThisCell,NewCell);
+end;
+
+constructor MouseSelector.Create(RC: TReportControl);
+begin
+  FControl := rc;
 end;
 
 end.

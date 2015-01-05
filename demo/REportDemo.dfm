@@ -175,9 +175,9 @@ object CReportDemoForm: TCReportDemoForm
     end
     object Button4: TButton
       Left = 10
-      Top = 424
+      Top = 352
       Width = 83
-      Height = 18
+      Height = 34
       Caption = #20851#38381
       Font.Charset = GB2312_CHARSET
       Font.Color = clWindowText
