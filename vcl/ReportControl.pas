@@ -1168,7 +1168,6 @@ begin
 end;
 
 var R1:Rect;
-  hPrevPen, hTempPen: HPEN;
   c : Canvas;
 begin
   If FDiagonal <= 0 Then exit;
