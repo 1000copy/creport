@@ -1159,70 +1159,70 @@ Begin
   CalcCellRect;
   CalcTextRect;
 End;
-  procedure TReportCell.DrawDragon(hPaintDc:HDC);
-  var p1,p2:TPoint ;R:TRect;
-  procedure DrawLine(hPaintDC:HDC;p1,p2:TPoint);
-  begin
-        MoveToEx(hPaintDC,p1.x, p1.y, Nil);
-        LineTo(hPaintDC, p2.x, p2.y);
+procedure TReportCell.DrawDragon(hPaintDc:HDC);
+var p1,p2:TPoint ;R:TRect;
+procedure DrawLine(hPaintDC:HDC;p1,p2:TPoint);
+begin
+      MoveToEx(hPaintDC,p1.x, p1.y, Nil);
+      LineTo(hPaintDC, p2.x, p2.y);
+end;
+
+var R1:Rect;
+  hPrevPen, hTempPen: HPEN;
+begin
+  If FDiagonal <= 0 Then exit;
+  hTempPen := CreatePen(PS_SOLID, 1, cc.Black);
+  hPrevPen := SelectObject(hPaintDc, hTempPen);
+  R1 := Rect.Create(self.ReportControl.os.Inflate(FCellRect,-1,-1));
+  try
+    If ((FDiagonal And LINE_LEFT1) > 0) Then
+    Begin
+      p1 := R1.TopLeft ;
+      p2 := R1.BottomRight;
+      DrawLine(hPaintDC,p1,p2);
+    End;
+
+    If ((FDiagonal And LINE_LEFT2) > 0) Then
+    Begin
+      p1 := R1.TopLeft ;
+      p2 := R1.RightMid;
+      DrawLine(hPaintDC,p1,p2);
+    End;
+
+    If ((FDiagonal And LINE_LEFT3) > 0) Then
+    Begin
+      p1 := R1.TopLeft ;
+      p2 := R1.BottomMid;
+      DrawLine(hPaintDC,p1,p2);
+    End;
+
+    If ((FDiagonal And LINE_RIGHT1) > 0) Then
+    Begin
+      p1 := R1.RightTop;
+      p2 := R1.LeftBottom;
+      DrawLine(hPaintDC,p1,p2);
+    End;
+
+    If ((FDiagonal And LINE_RIGHT2) > 0) Then
+    Begin
+      p1 := R1.RightTop;
+      p2 := R1.LeftMid;
+      DrawLine(hPaintDC,p1,p2);
+    End;
+
+    If ((FDiagonal And LINE_RIGHT3) > 0) Then
+    Begin
+      p1 := R1.RightTop;
+      p2 := R1.BottomMid;
+      DrawLine(hPaintDC,p1,p2);
+    End;
+
+  finally
+    SelectObject(hPaintDC, hPrevPen);
+    DeleteObject(hTempPen);
+    R1.Free;
   end;
-
-  var R1:Rect;
-    hPrevPen, hTempPen: HPEN;
-  begin
-    If FDiagonal <= 0 Then exit;
-    hTempPen := CreatePen(PS_SOLID, 1, cc.Black);
-    hPrevPen := SelectObject(hPaintDc, hTempPen);
-    R1 := Rect.Create(self.ReportControl.os.Inflate(FCellRect,-1,-1));
-    try
-      If ((FDiagonal And LINE_LEFT1) > 0) Then
-      Begin
-        p1 := R1.TopLeft ;
-        p2 := R1.BottomRight;
-        DrawLine(hPaintDC,p1,p2);
-      End;
-
-      If ((FDiagonal And LINE_LEFT2) > 0) Then
-      Begin
-        p1 := R1.TopLeft ;
-        p2 := R1.RightMid;
-        DrawLine(hPaintDC,p1,p2);
-      End;
-
-      If ((FDiagonal And LINE_LEFT3) > 0) Then
-      Begin
-        p1 := R1.TopLeft ;
-        p2 := R1.BottomMid;
-        DrawLine(hPaintDC,p1,p2);
-      End;
-
-      If ((FDiagonal And LINE_RIGHT1) > 0) Then
-      Begin
-        p1 := R1.RightTop;
-        p2 := R1.LeftBottom;
-        DrawLine(hPaintDC,p1,p2);
-      End;
-
-      If ((FDiagonal And LINE_RIGHT2) > 0) Then
-      Begin
-        p1 := R1.RightTop;
-        p2 := R1.LeftMid;
-        DrawLine(hPaintDC,p1,p2);
-      End;
-
-      If ((FDiagonal And LINE_RIGHT3) > 0) Then
-      Begin
-        p1 := R1.RightTop;
-        p2 := R1.BottomMid;
-        DrawLine(hPaintDC,p1,p2);
-      End;
-
-    finally
-      SelectObject(hPaintDC, hPrevPen);
-      DeleteObject(hTempPen);
-      R1.Free;
-    end;
-  end;
+end;
 procedure TReportCell.DrawLine(hPaintDc:HDC;x1,y1,x2,y2:integer;color:COLORREF;PenWidth:Integer);
 VAR     hPrevPen, hTempPen: HPEN;
 begin
