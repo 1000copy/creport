@@ -708,6 +708,18 @@ type
     RuntimeMasterCell: TReportCell;
   End;
 
+type
+  Combinator = class
+    ReportControl:TReportControl ;
+    CellList:TCellList;
+    bigrect : TRect;
+  private
+    function IsPit(c : TReportCell): Boolean;
+    procedure TakeupRect;
+  public
+    constructor Create(R:TReportControl;CellList:TCellList);
+    function IsRegularForCombine(): Boolean;
+  end;
 
 Procedure Register;
 // 2014-11-13 这两天正在喝。平和，质朴，散发着有钱的感觉...
@@ -3903,44 +3915,47 @@ function TCellList.Get(Index: Integer): TReportCell;
 begin
   Result := TReportCell(inherited Get(Index));
 end;
-
-function TCellList.IsRegularForCombine(): Boolean;
-var i,j:integer;
-  bigrect : TRect;
-  l : TReportLine;
-  c : TReportCell;
-  function TakeupRect:TRect;
-  var
-    os : WindowsOS ;
-    bigrect : TRect;
-    i :integer;
-  begin
-      os := WindowsOS.Create;
-      os.SetRectEmpty (bigrect);
-      for i := 0 to Count -1 do
-        bigrect := os.UnionRect(bigrect,TReportCell(Items[i]).CellRect);
-      try
-       Result:= bigRect;
-      finally
-        os.free;
-      end;
-  end;
-  // Is cell become a trap in the selection rect ?
-  function IsCellTrap:Boolean;
-  begin
-    result :=
-         WindowsOS.Contains(TakeupRect,c.CellRect) and
-        (c.OwnerCell = nil) and
-        (not ReportControl.IsCellSelected(c))
-  end;
+constructor Combinator.Create(R: TReportControl;CellList:TCellList);
 begin
+  self.ReportControl := R ;
+  Self.CellList := CellList;
+end;
+
+procedure Combinator.TakeupRect;
+var
+  os : WindowsOS ;
+  i :integer;
+begin
+  os := WindowsOS.Create;
+  os.SetRectEmpty (bigrect);
+  try
+    for i := 0 to CellList.Count -1 do
+      bigrect := os.UnionRect(bigrect,TReportCell(CellList[i]).CellRect);
+  finally
+    os.free;
+  end;
+end;
+// Is cell become a trap in the selection rect ?
+function Combinator.IsPit(c : TReportCell):Boolean;
+begin
+  result :=
+       WindowsOS.Contains(BigRect,c.CellRect) and
+      (c.OwnerCell = nil) and
+      (not ReportControl.IsCellSelected(c))
+end;
+function Combinator.IsRegularForCombine: Boolean;
+var i,j:integer;
+    l : TReportLine;
+    c : TReportCell;
+begin
+  TakeupRect ;
   // A reduce calc ,but lamda is not inplace :)
   result := true;
   for i := 0 to ReportControl.FLineList.count -1 do  begin
     l := ReportControl.Lines[i];
     for j := 0 to l.FCells.Count -1 do begin
       c := l.FCells[j] ;
-      if  IsCellTrap then
+      if  IsPit(c) then
       begin
         result := false;
         break;
@@ -3948,6 +3963,14 @@ begin
     end;
   end;
 end;
+function TCellList.IsRegularForCombine(): Boolean;
+var c : Combinator ;
+begin    
+   c := Combinator.Create(Self.ReportControl,self) ;
+   Result :=  c.IsRegularForCombine;
+   c.Free;
+end;
+
 
 function TCellList.Last: TReportCell;
 begin
@@ -4866,6 +4889,9 @@ begin
     FEditBrush := CreateBrushIndirect(TempLogBrush);
     Result := FEditBrush;
 end;
+
+{ Combinator }
+
 
 end.
 
