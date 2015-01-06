@@ -3696,7 +3696,7 @@ Begin
     FEditCell := Nil;
 End;
 
-Procedure TReportControl.SetCellDispFormt(mek: String); // lzl add
+Procedure TReportControl.SetCellDispFormt(mek: String);  
 Var
   i: integer;
 Begin
@@ -3704,7 +3704,7 @@ Begin
     TReportCell(FSelectCells[I]).CellDispformat := mek;
 End;
 
-Procedure TReportControl.SetCellSumText(mek: String); // lzl add
+Procedure TReportControl.SetCellSumText(mek: String);
 Var
   i: integer;
 Begin
@@ -3713,7 +3713,7 @@ Begin
 End;
 
 
-Procedure TReportControl.SetCellFocus(row, col: integer); // add lzl
+Procedure TReportControl.SetCellFocus(row, col: integer);
 Var
   thiscell: TreportCell;
   ThisLine: Treportline;
@@ -3722,11 +3722,11 @@ Begin
   ThisCell := TreportCell(ThisLine.FCells[col]);
   AddSelectedCell(ThisCell);
 End;
-Procedure TReportControl.SelectLine(row : integer);  // add lzl
+Procedure TReportControl.SelectLine(row : integer);
 Begin
   SetCellsFocus(row,0,row,TReportLine(FlineList[row]).FCells.Count -1);
 End;
-Procedure TReportControl.SelectLines(row1,row2 : integer);  // add lzl
+Procedure TReportControl.SelectLines(row1,row2 : integer);
 Begin
   SetCellsFocus(row1,0,row2,TReportLine(FlineList[row1]).FCells.Count -1);
 End;
@@ -3744,8 +3744,7 @@ Begin
       ThisCell := TreportCell(ThisLine.FCells[j]);
       AddSelectedCell(ThisCell);
     End;
-  End;
-
+  End;                             
 End;
 
 
@@ -3866,30 +3865,30 @@ begin
 end;
 
 procedure TCellList.ColumnSelectedCells(FLineList: TLineList);
-  Var
-    I, J, Count: Integer;
-    CellsToCombine: TCellList;
-    OwnerCell: TReportCell;
-    ThisCell, FirstCell: TReportCell;
-    ThisLine: TReportLine;
-    SelectedLines : TLineList;
-    SelectedCells :TCellList;
+Var
+  I, J, Count: Integer;
+  CellsToCombine: TCellList;
+  OwnerCell: TReportCell;
+  ThisCell, FirstCell: TReportCell;
+  ThisLine: TReportLine;
+  SelectedLines : TLineList;
+  SelectedCells :TCellList;
 begin
-    CellsToCombine := self;
-    SelectedLines := TLineList.Create(Self.ReportControl);
-    SelectedLines.makeSelectedLines(FLineList);
-    For I := 0 To SelectedLines.Count - 1 Do
-    Begin
-      ThisLine := SelectedLines[I];
-      SelectedCells :=TCellList.Create(ReportControl);
-      try
-        SelectedCells.MakeSelectedCellsFromLine(ThisLine);
-        SelectedCells.Fill(CellsToCombine);
-      finally
-        SelectedCells.Free;
-      end;
-    End;
-    SelectedLines.Free;
+  CellsToCombine := self;
+  SelectedLines := TLineList.Create(Self.ReportControl);
+  SelectedLines.makeSelectedLines(FLineList);
+  For I := 0 To SelectedLines.Count - 1 Do
+  Begin
+    ThisLine := SelectedLines[I];
+    SelectedCells :=TCellList.Create(ReportControl);
+    try
+      SelectedCells.MakeSelectedCellsFromLine(ThisLine);
+      SelectedCells.Fill(CellsToCombine);
+    finally
+      SelectedCells.Free;
+    end;
+  End;
+  SelectedLines.Free;
 end;
 
 constructor TCellList.Create(ReportControl:TReportControl);
