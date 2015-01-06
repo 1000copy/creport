@@ -1264,7 +1264,6 @@ function TReportRunTime.ExpandDataHeight(HasDataNo:integer):integer;
 var
   thisLine ,TempLine: TReportLine;
   I, J, n,  TempDataSetCount:Integer;
-  HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisCell, NewCell: TReportCell;
 begin
   // google:$Optimization on off insite: delphibasics.co.uk
@@ -1293,7 +1292,6 @@ procedure TReportRunTime.SumLine(HasDataNo:integer);
 var j:integer;var thisLine ,TempLine: TReportLine;
 Var
   I,  n,  TempDataSetCount:Integer;
-  HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisCell, NewCell: TReportCell;
 begin
   ThisLine := TReportLine(FlineList[HasDataNo]);
