@@ -55,10 +55,11 @@ Const
   LINE_RIGHT1 = $100;                   // right top to left bottom
   LINE_RIGHT2 = $200;                   // right top to left
   LINE_RIGHT3 = $400;                   // right top to bottom
-
+  function RegularPoint(V:Integer):Integer;
   function calcBottom(TempString:string ;TempRect:TRect;AlighFormat :UINT;FLogFont: TLOGFONT):Integer;
 type
   TReportControl = class ;
+  TReportCell =class     ;
   MouseSelector = class
     FControl :TReportControl ;
   private
@@ -81,9 +82,10 @@ type
     FControl :TReportControl ;
     hClientDC: HDC;
     RectBorder: TRect;
+    ThisCell: TReportCell;
   private
     procedure MsgLoop;
-    procedure DrawHorzLine(HClientDC: HDC; y: integer; RectBorder: TRect);
+    procedure DrawHorzLine(HClientDC: HDC; y: integer);
   public
     constructor Create(RC:TReportControl);
     procedure DoMouseMove(TempMsg: TMSG);
@@ -153,7 +155,6 @@ type
       fpaperWidth: Integer);
   end;
 
-  TReportCell = Class;
   TReportLine = Class;
 
   TLineList = class;
@@ -454,6 +455,7 @@ type
     procedure StartMouseDrag_Horz(point: TPoint);
     procedure StartMouseDrag_Verz(point: TPoint);
     procedure MaxDragExtent(ThisCell: TReportCell; var RectBorder: TRect);
+    function QueryMaxDragExtent(ThisCell:TReportCell):TRect;
     procedure UpdateHeight(ThisCell: TReportCell; Y: Integer);
     procedure UpdateTwinCell(ThisCell: TReportCell; x: integer);
     function Interference(ThisCell: TReportCell): boolean;
@@ -2563,6 +2565,27 @@ begin
   Else
     RectBorder.Right := ClientRect.Right - DRAGMARGIN;
 end;
+
+function TReportControl.QueryMaxDragExtent(ThisCell:TReportCell):TRect;
+var
+  NextCell: TReportCell;
+  ThisLine, TempLine: TReportLine;
+  RectBorder: TRect ;
+begin
+  ThisLine := ThisCell.OwnerLine;
+  RectBorder.Top := ThisLine.LineTop + (DRAGMARGIN div 2);
+  RectBorder.Bottom := Height - DRAGMARGIN;
+  NextCell := Nil;
+  RectBorder.Left := ThisCell.CellLeft + DRAGMARGIN;
+  If ThisCell.CellIndex < ThisLine.FCells.Count - 1 Then
+  Begin
+    NextCell := ThisLine.FCells[ThisCell.CellIndex + 1];
+    RectBorder.Right := NextCell.CellLeft + NextCell.CellWidth - DRAGMARGIN;
+  End
+  Else
+    RectBorder.Right := ClientRect.Right - DRAGMARGIN;
+  Result := RectBorder ;
+end;
   // 选区和拖放区互相干涉否
   // 若无选中的CELL,或者要改变宽度的CELL和NEXTCELL不在选中区中
 function TReportControl.Interference( ThisCell: TReportCell) :boolean;
@@ -2594,7 +2617,7 @@ end;
 procedure TReportControl.DrawIndicatorLine(var x:Integer;RectBorder:TRect );
 var  RectClient:TRect;
 Begin
-  x:= trunc(x / 5 * 5 + 0.5);
+  x:= RegularPoint(x);
   x  := Max (x , RectBorder.Left);
   x := Min (x , RectBorder.Right);
   MoveToEx(hClientDC,x, 0, Nil);
@@ -4761,15 +4784,18 @@ constructor MouseDragger.Create(RC: TReportControl);
 begin
   FControl := RC;
 end;
-
+function RegularPoint(V:Integer):Integer;
+begin
+   result :=  trunc(V / 5 * 5 + 0.5);
+end;
 procedure MouseDragger.DoMouseMove(TempMsg: TMSG);
 Begin
   // XOR prev indicator line
-  DrawHorzLine(hClientDC,FControl.FMousePoint.y,RectBorder);
+  DrawHorzLine(hClientDC,FControl.FMousePoint.y);
   FControl.FMousePoint := TempMsg.pt;
   Windows.ScreenToClient(FControl.Handle, FControl.FMousePoint);
-  FControl.FMousePoint.y := trunc(FControl.FMousePoint.y / 5 * 5 + 0.5);
-  DrawHorzLine(hClientDC,FControl.FMousePoint.y,RectBorder);
+  FControl.FMousePoint.y := RegularPoint(FControl.FMousePoint.y );
+  DrawHorzLine(hClientDC,FControl.FMousePoint.y);
 End;
 
 procedure MouseDragger.MsgLoop;
@@ -4802,47 +4828,44 @@ end;
 
 procedure MouseDragger.StartMouseDrag_Horz(point: TPoint);
 Var
-  ThisCell: TReportCell;
-  RectCell: TRect;
-  
-  hInvertPen, hPrevPen: HPEN;
-  PrevDrawMode, PrevCellWidth, Distance: Integer;
   c : Canvas ;
 Begin
-  // 设置线形和绘制模式
   hClientDC := GetDC(FControl.Handle);
   c := Canvas.Create(hClientDC);
   c.ReadyDotPen(1, cc.Black);
   c.ReadyDrawModeInvert();
   try
     ThisCell := FControl.CellFromPoint(point);
-    RectCell := ThisCell.CellRect;
     FControl.FMousePoint := point;
     FControl.MaxDragExtent (ThisCell,RectBorder);
-    // 第一个横线 ，指示当前拖动位置
+    //RectBorder := FControl.QueryMaxDragExtent(ThisCell);
     Begin
-      FControl.FMousePoint.y := trunc(FControl.FMousePoint.y / 5 * 5 + 0.5);
-      DrawHorzLine(hClientDC,FControl.FMousePoint.y,RectBorder);
+      FControl.FMousePoint.y := RegularPoint(FControl.FMousePoint.y);
+      DrawHorzLine(hClientDC,FControl.FMousePoint.y);
       SetCursor(LoadCursor(0, IDC_SIZENS));
     End;
     MsgLoop;
     // XOR Last Line
-    DrawHorzLine(hClientDC,FControl.FMousePoint.y,RectBorder);
+    DrawHorzLine(hClientDC,FControl.FMousePoint.y);
     FControl.UpdateHeight(ThisCell,FControl.FMousePoint.Y);
   finally
     c.KillPen ;
     c.KillDrawMode ;
+    c.Free;
     ReleaseDC(FControl.Handle, hClientDC);
   end;
 End;
-procedure MouseDragger.DrawHorzLine(HClientDC:HDC;y :integer;RectBorder:TRect);
+procedure MouseDragger.DrawHorzLine(HClientDC:HDC;y :integer);
+var RectBorder:TRect ;
   function BoundValue(Value,Bigger,Smaller:Integer):Integer;
   begin
     Value := Max(Smaller,Value);
     Value := Min(Bigger,Value);
     Result := Value ;
   end;
+
 begin
+  RectBorder :=FControl.QueryMaxDragExtent(ThisCell);
   Y  := BoundValue(y,RectBorder.Bottom,RectBorder.Top) ;
   MoveToEx(hClientDC, 0, Y, Nil);
   LineTo(hClientDC, FControl.ClientRect.Right, Y);
