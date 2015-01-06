@@ -1,7 +1,7 @@
 unit CC;
 
 interface
-uses windows;
+uses windows,Math;
 const
   RenderException = '表格未能完全处理,请调整单元格宽度或页边距等设置' ;
   SumPageFormat = '模板文件中Sumpage()括号内参数不应为零';
@@ -17,6 +17,9 @@ const
 function Grey :COLORREF;
 function White :COLORREF;
 function Black :COLORREF;
+function RegularPoint(V:Integer):Integer;
+function calcBottom(TempString:string ;TempRect:TRect;AlighFormat :UINT;FLogFont: TLOGFONT):Integer;
+function BoundValue(Value,Bigger,Smaller:Integer):Integer;
 implementation
 function Black :COLORREF;
 begin
@@ -30,4 +33,51 @@ function White :COLORREF;
 begin
  result:= RGB(255, 255, 255)
 end;
+function RegularPoint(V:Integer):Integer;
+begin
+   result :=  trunc(V / 5 * 5 + 0.5);
+end;
+function BoundValue(Value,Bigger,Smaller:Integer):Integer;
+begin
+  Value := Max(Smaller,Value);
+  Value := Min(Bigger,Value);
+  Result := Value ;
+end;
+function IsCRTail(s : string):Boolean;
+begin
+  Result := (Length(s) >= 2) and (s[Length(s)] = Chr(10)) And (s[Length(s) - 1] = Chr(13));
+end;
+function calcBottom(TempString:string ;TempRect:TRect;AlighFormat :UINT;FLogFont: TLOGFONT):Integer;
+var
+  hTempFont, hPrevFont: HFONT;
+  hTempDC: HDC;
+  Format: UINT;
+  TempSize: TSize;
+begin
+  // LCJ : 最小高度需要能够放下文字，并且留下直线的宽度和2个点的空间出来。 + 4
+  //       因此，需要实际绘制文字在DC 0 上，获得它的TempRect-文字所占的空间
+  //       - FLeftMargin : Cell 内文字和边线之间留下的空的宽度
+  hTempFont := CreateFontIndirect(FLogFont);
+  hTempDC := GetDC(0);
+  hPrevFont := SelectObject(hTempDC, hTempFont);
+  try
+    Format := DT_EDITCONTROL Or DT_WORDBREAK;
+    Format := Format Or AlighFormat ;
+    Format := Format Or DT_CALCRECT;
+    // lpRect [in, out] !  TempRect.Bottom ,TempRect.Right  会被修改 。但是手册上没有提到。
+    DrawText(hTempDC, PChar(TempString), Length(TempString), TempRect, Format);
+    // 补偿文字最后的回车带来的误差
+    If  IsCRTail(TempString) Then
+    Begin
+        GetTextExtentPoint(hTempDC, 'A', 1, TempSize);
+        TempRect.Bottom := TempRect.Bottom + TempSize.cy;
+    End;
+    result := TempRect.Bottom ;
+  finally
+    SelectObject(hTempDc, hPrevFont);
+    DeleteObject(hTempFont);
+    ReleaseDC(0, hTempDC);
+  end;
+end;
+
 end.

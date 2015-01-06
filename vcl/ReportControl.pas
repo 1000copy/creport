@@ -57,6 +57,7 @@ Const
   LINE_RIGHT3 = $400;                   // right top to bottom
   function RegularPoint(V:Integer):Integer;
   function calcBottom(TempString:string ;TempRect:TRect;AlighFormat :UINT;FLogFont: TLOGFONT):Integer;
+  function BoundValue(Value,Bigger,Smaller:Integer):Integer;
 type
   TReportControl = class ;
   TReportCell =class     ;
@@ -4855,20 +4856,22 @@ Begin
     ReleaseDC(FControl.Handle, hClientDC);
   end;
 End;
+
 procedure MouseDragger.DrawHorzLine(HClientDC:HDC;y :integer);
 var RectBorder:TRect ;
-  function BoundValue(Value,Bigger,Smaller:Integer):Integer;
-  begin
-    Value := Max(Smaller,Value);
-    Value := Min(Bigger,Value);
-    Result := Value ;
-  end;
 
 begin
   RectBorder :=FControl.QueryMaxDragExtent(ThisCell);
   Y  := BoundValue(y,RectBorder.Bottom,RectBorder.Top) ;
   MoveToEx(hClientDC, 0, Y, Nil);
   LineTo(hClientDC, FControl.ClientRect.Right, Y);
+end;
+
+function BoundValue(Value,Bigger,Smaller:Integer):Integer;
+begin
+  Value := Max(Smaller,Value);
+  Value := Min(Bigger,Value);
+  Result := Value ;
 end;
 
 end.
