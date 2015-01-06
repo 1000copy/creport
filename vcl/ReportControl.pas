@@ -59,13 +59,17 @@ Const
 type
   TReportControl = class ;
   TReportCell =class     ;
-  MouseSelector = class
+  MouseBase = class
+  protected
     FControl :TReportControl ;
-  private
+    procedure DoMouseMove(Msg:TMsg);virtual;abstract;
     procedure MsgLoop;
+  end;
+  MouseSelector = class(MouseBase)
+  private
   public
     constructor Create(RC:TReportControl);
-    procedure DoMouseMove(p: TPoint; Shift: Boolean);
+    procedure DoMouseMove(Msg:TMsg); override;
     procedure StartMouseSelect(point: TPoint; Shift: Boolean);
   end;
     StrSlice=class
@@ -77,20 +81,19 @@ type
     function Slice(b:integer):string;overload;
     class function DoSlice(str: String; FromChar:char): string;
   end;
-  MouseDragger = class
-    FControl :TReportControl ;
+  MouseDragger = class(MouseBase)
+    //FControl :TReportControl ;
     //hClientDC: HDC;
     c : Canvas ;
     RectBorder: TRect;
     ThisCell: TReportCell;
   private
-    procedure MsgLoop;
     procedure XorHorz( );
     procedure RegularPointY(var P: TPoint);
     procedure Bound(var Value: Integer);
   public
     constructor Create(RC:TReportControl);
-    procedure DoMouseMove(TempMsg: TMSG);
+    procedure DoMouseMove(Msg: TMSG); override;
     procedure StartMouseDrag_Horz(point: TPoint);
   end;
 
@@ -848,9 +851,6 @@ Begin
 End;
 
 Procedure TReportCell.Own(Cell: TReportCell);
-Var
-  I: Integer;
-  TempCellList: TCellList;
 Begin
   Own(Cell,false,0);
 End;
@@ -1064,8 +1064,8 @@ begin
 end;
 function TReportCell.GetOwnerCellHeight():Integer;
 var
-  BottomCell,ThisCell:TReportCell;
-  I,Top,Height:Integer ;
+  ThisCell:TReportCell;
+  I,Height:Integer ;
 begin
   Height := 0 ;
   For I := 0 To FSlaveCells.Count - 1 Do
@@ -2377,7 +2377,6 @@ Var
   hPaintDC: HDC;
   ps: TPaintStruct;
 Begin
-  // 全部鼠标消息的代码的都舒服了，归一了。现在开始WMPaint....
   hPaintDC := BeginPaint(Handle, ps);
   DoPaint(hPaintDc,Handle,ps);
   EndPaint(Handle, ps);
@@ -4671,29 +4670,8 @@ constructor MouseSelector.Create(RC: TReportControl);
 begin
   FControl := rc;
 end;
-Procedure MouseSelector.MsgLoop;
-var   Msg: TMSG;
-begin
-  While GetCapture = FControl.Handle Do
-  Begin
-    If Not GetMessage(Msg, FControl.Handle, 0, 0) Then
-    Begin
-      PostQuitMessage(0);
-      Break;
-    End;
-    Case Msg.Message Of
-      WM_LBUTTONUP:
-        ReleaseCapture;
-      WM_MOUSEMOVE:
-        DoMouseMove(msg.pt,msg.wParam =5);
-    Else
-      DispatchMessage(Msg);
-    End;
-  End;
-  If GetCapture = FControl.Handle Then
-    ReleaseCapture;
-end;
-Procedure MouseSelector.StartMouseSelect(point: TPoint;Shift: Boolean );
+
+Procedure MouseSelector.StartMouseSelect(point: TPoint;Shift: Boolean );
 Var
   ThisCell: TReportCell;
 
@@ -4707,14 +4685,18 @@ Begin
   MsgLoop;
 End;
 
-Procedure MouseSelector.DoMouseMove(p: TPoint;Shift:Boolean);
+Procedure MouseSelector.DoMouseMove(Msg:TMsg);
 Var
   RectSelection, TempRect: TRect;
   ThisCell: TReportCell;
   I, J: Integer;
   ThisLine: TReportLine;
-
+  p: TPoint;Shift:Boolean ;
 Begin
+
+  p := msg.pt ;
+  Shift := msg.wParam =5 ;
+
   Windows.ScreenToClient(FControl.Handle, p);
   RectSelection := FControl.os.MakeRect(FControl.FMousePoint,p);
   //清除掉不在选中矩形中的CELL ; 除非Shift 按下
@@ -4750,16 +4732,16 @@ constructor MouseDragger.Create(RC: TReportControl);
 begin
   FControl := RC;
 end;
-procedure MouseDragger.DoMouseMove(TempMsg: TMSG);
+procedure MouseDragger.DoMouseMove(Msg: TMSG);
 Begin
   XorHorz();
-  FControl.FMousePoint := TempMsg.pt;
+  FControl.FMousePoint := Msg.pt;
   Windows.ScreenToClient(FControl.Handle, FControl.FMousePoint);
   RegularPointY(FControl.FMousePoint);
   XorHorz();
 End;
 
-procedure MouseDragger.MsgLoop;
+procedure MouseBase.MsgLoop;
 var Msg: TMSG;
 begin
     SetCapture(FControl.Handle);
