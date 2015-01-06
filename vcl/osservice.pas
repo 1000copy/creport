@@ -9,11 +9,16 @@ function  PageFileName(CurrentPage:Integer):string;
 function AppDir:String;
 type
   Canvas = class
+    handle:HWND;
     dc : HDC ;
     hPrevPen, hTempPen: HPEN;
     PrevDrawMode: Integer;
+  private
   public
     constructor Create(dc : HDC);
+    procedure LineTo(x, y: Integer);
+    procedure MoveTo(x, y: Integer);
+    procedure ReleaseDC;
     procedure KillDrawMode;
     procedure ReadyDrawModeInvert;
     procedure ReadyDefaultPen;
@@ -21,6 +26,7 @@ type
     procedure DrawLine(p1, p2: TPoint);
     procedure ReadySolidPen(Width: Integer; Color: ColorREF);
     procedure ReadyDotPen(Width: Integer; Color: ColorREF);
+    constructor CreateWnd(handle: HWND);
   end;
   Rect = class
     FRect:TRect;
@@ -41,7 +47,10 @@ type
     nPixelsPerInch:integer;
     hDesktopDC :THandle;
   public
-
+    procedure SetCursorSizeBEAM;
+    procedure SetCursorSizeNS;
+    procedure  SetCursorSizeWE;
+    procedure  SetCursorArrow;
     procedure ScaleRect(var rectPaint: TRect; FReportScale: Integer);
     procedure InverseScaleRect(var rectPaint: TRect;
       FReportScale: Integer);
@@ -343,6 +352,29 @@ function AppDir:String;
 begin
    result := ExtractFileDir(Application.ExeName)+'\' ;
 end;
+procedure WindowsOS.SetCursorSizeNS;
+begin
+  SetCursor(LoadCursor(0, IDC_SIZENS));
+end;
+
+procedure WindowsOS.SetCursorArrow;
+begin
+  SetCursor(LoadCursor(0, IDC_ARROW));
+end;
+
+procedure WindowsOS.SetCursorSizeBEAM;
+begin
+  SetCursor(LoadCursor(0, IDC_IBEAM));
+end;
+
+procedure WindowsOS.SetCursorSizeWE;
+begin
+  SetCursor(LoadCursor(0, IDC_SIZEWE))
+end;
+
+
+
+
 { Rect }
 
 
@@ -400,6 +432,25 @@ constructor Canvas.Create(dc: HDC);
 begin
   self.dc := dc;
 end;
+constructor Canvas.CreateWnd(Handle: HWND);
+begin
+  self.Handle := Handle;
+  self.dc := GetDC(Handle);
+end;
+procedure Canvas.ReleaseDC;
+begin
+  windows.ReleaseDC(Handle, dc);
+end;
+procedure Canvas.MoveTo(x,y:Integer);
+begin
+  MoveToEx(dc, x,y, Nil);
+end;
+procedure Canvas.LineTo(x,y:Integer);
+begin
+  Windows.LineTo(dc, x,y);
+end;
+
+
 
 procedure Canvas.KillPen;
 begin
@@ -424,7 +475,7 @@ end;
 procedure Canvas.DrawLine(p1,p2:TPoint);
 begin
   MoveToEx(dc,p1.x, p1.y, Nil);
-  LineTo(dc, p2.x, p2.y);
+  Windows.LineTo(dc, p2.x, p2.y);
 end;
 
 
