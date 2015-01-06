@@ -4807,13 +4807,13 @@ Var
   
   hInvertPen, hPrevPen: HPEN;
   PrevDrawMode, PrevCellWidth, Distance: Integer;
-
+  c : Canvas ;
 Begin
   // 设置线形和绘制模式
   hClientDC := GetDC(FControl.Handle);
-  hInvertPen := CreatePen(PS_DOT, 1, cc.Black);
-  hPrevPen := SelectObject(hClientDC, hInvertPen);
-  PrevDrawMode := SetROP2(hClientDC, R2_NOTXORPEN);
+  c := Canvas.Create(hClientDC);
+  c.ReadyDotPen(1, cc.Black);
+  c.ReadyDrawModeInvert();
   try
     ThisCell := FControl.CellFromPoint(point);
     RectCell := ThisCell.CellRect;
@@ -4824,15 +4824,14 @@ Begin
       FControl.FMousePoint.y := trunc(FControl.FMousePoint.y / 5 * 5 + 0.5);
       DrawHorzLine(hClientDC,FControl.FMousePoint.y,RectBorder);
       SetCursor(LoadCursor(0, IDC_SIZENS));
-    End;  
+    End;
     MsgLoop;
     // XOR Last Line
     DrawHorzLine(hClientDC,FControl.FMousePoint.y,RectBorder);
     FControl.UpdateHeight(ThisCell,FControl.FMousePoint.Y);
   finally
-    SelectObject(hClientDC, hPrevPen);
-    DeleteObject(hInvertPen);
-    SetROP2(hClientDc, PrevDrawMode);
+    c.KillPen ;
+    c.KillDrawMode ;
     ReleaseDC(FControl.Handle, hClientDC);
   end;
 End;
