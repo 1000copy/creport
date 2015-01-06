@@ -115,7 +115,7 @@ type
 
    end;
   TOnChanged = procedure(Sender:TObject;str:String) of object;
-   TSimpleFileStream = class(TFileStream)
+  TSimpleFileStream = class(TFileStream)
   private
     procedure ReadIntegerSkip;
    public
@@ -142,7 +142,7 @@ type
     DevMode: PdeviceMode;
     //LCJ: 打印文件的纸张编号：比如 A4，A3，自定义纸张等。
     FprPageNo: integer;
-    // 纸张纵横方向  lzl
+    // 纸张纵横方向
     FprPageXy: integer;
     // 纸张长度（高度）
     fpaperLength: integer;
@@ -3727,19 +3727,11 @@ Begin
 End;
 Procedure TReportControl.SetCellsFocus(row1, col1, row2, col2: integer);  
 Var
-  thiscell: TreportCell;
-  ThisLine: Treportline;
   i, j: integer;
 Begin
   For i := row1 To row2 Do
-  Begin
-    ThisLine := TReportLine(FlineList[i]);
     For j := col1 To col2 Do
-    Begin
-      ThisCell := TreportCell(ThisLine.FCells[j]);
-      AddSelectedCell(ThisCell);
-    End;
-  End;                             
+      AddSelectedCell(FlineList[i].FCells[j]);
 End;
 
 
@@ -3764,7 +3756,7 @@ begin
   result := TReportCell(TReportLine(FLineList[Row ]).FCells[Col]);
 end;
 
-Procedure TReportControl.savebmp(thiscell: Treportcell; filename: String);  // add lzl
+Procedure TReportControl.savebmp(thiscell: Treportcell; filename: String);  
 Var
   Fpicture: Tpicture;
 Begin
@@ -3791,7 +3783,7 @@ Begin
   Fpicture.Free;
 End;
 
-Function TReportControl.LoadBmp(thiscell: Treportcell): TBitmap; // add lzl
+Function TReportControl.LoadBmp(thiscell: Treportcell): TBitmap;
 Begin
   result := thiscell.FBmp;
 End;

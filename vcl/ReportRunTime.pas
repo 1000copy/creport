@@ -1267,6 +1267,7 @@ var
   HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisCell, NewCell: TReportCell;
 begin
+  // google:$Optimization on off insite: delphibasics.co.uk
   {$Optimization on}
   ThisLine := TReportLine(FlineList[HasDataNo]);
   // painful side effects as follow 11 statements
