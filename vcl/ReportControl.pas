@@ -502,14 +502,14 @@ type
     FReportScale: Integer;
     FPageWidth: Integer;
     FPageHeight: Integer;
-
+    // Margin : by pixel
     FLeftMargin: Integer;
     FRightMargin: Integer;
     FTopMargin: Integer;
     FBottomMargin: Integer;
 
     FcellFont: TlogFont;
-
+    // Margin :by mm
     FLeftMargin1: Integer;
     FRightMargin1: Integer;
     FTopMargin1: Integer;
@@ -3632,8 +3632,6 @@ Procedure TReportControl.SetMargin(nLeftMargin, nTopMargin, nRightMargin,
   nBottomMargin: Integer);
 Var
   RectClient: TRect;
-  nPixelsPerInch: Integer;
-  hTempDC: HDC;
 Begin
   // 将毫米数转化为象素点
   If (FLeftMargin1 <> nLeftMargin) Or
@@ -3641,20 +3639,17 @@ Begin
     (FRightMargin1 <> nRightMargin) Or
     (FBottomMargin1 <> nBottomMargin) Then
   Begin
-    hTempDC := GetDC(Handle);
-    nPixelsPerInch := GetDeviceCaps(hTempDC, LOGPIXELSX);
-    ReleaseDC(Handle, hTempDC);
 
     FLeftMargin1 := nLeftMargin;
     FTopMargin1 := nTopMargin;
     FRightMargin1 := nRightMargin;
     FBottomMargin1 := nBottomMargin;
 
-    FLeftMargin := trunc(nLeftMargin * nPixelsPerInch / 25 + 0.5);
-    FTopMargin := trunc(nTopMargin * nPixelsPerInch / 25 + 0.5);
-    FRightMargin := trunc(nRightMargin * nPixelsPerInch / 25 + 0.5);
-    FBottomMargin := trunc(nBottomMargin * nPixelsPerInch / 25 + 0.5);
-
+    FLeftMargin := os.mm2dot(nLeftMargin );
+    FTopMargin := os.mm2dot(nTopMargin);
+    FRightMargin := os.mm2dot(nRightMargin);
+    FBottomMargin := os.mm2dot(nBottomMargin);
+    
     UpdateLines;
     RectClient := ClientRect;
     InvalidateRect(Handle, @RectClient, False);
