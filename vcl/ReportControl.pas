@@ -454,13 +454,14 @@ type
     FEditBrush: HBRUSH;
     FEditFont: HFONT;
   private
-    function CreateEdit(Handle: HWND; Rect: TRect; FEditFont: HFONT;
+    function CreateEdit(Handle: HWND; Rect: TRect;LogFont: TLOGFONT;
       Text: String; FHorzAlign: Integer): HWND;
     function GetText: String;
     procedure MoveRect(TextRect: TRect);
     procedure DestroyIfVisible;
     function IsWindowVisible: Boolean;
     procedure DestroyWindow;
+    function CreateBrush(color: Cardinal): HBRUSH;
   public
     constructor Create(R:TReportControl);
   end;
@@ -523,10 +524,6 @@ type
     // 鼠标操作支持
     FMousePoint: TPoint;
     // 编辑框、以及它的颜色和字体
-    // TODO : encapsulation  
-    FEditWnd: HWND;
-    FEditBrush: HBRUSH;
-    FEditFont: HFONT;
     FOnChanged : TOnChanged;
     Os :WindowsOS ;
     Procedure SetCellSFocus(row1, col1, row2, col2: integer);
@@ -2227,10 +2224,6 @@ Begin
   FMousePoint.x := 0;
   FMousePoint.y := 0;
 
-  // 编辑、颜色及字体
-  FEditWnd := INVALID_HANDLE_VALUE;
-  FEditBrush := INVALID_HANDLE_VALUE;
-  FEditFont := INVALID_HANDLE_VALUE;
   CalcWndSize;
 End;
 
@@ -3252,22 +3245,13 @@ End;
 Procedure TReportControl.WMCtlColor(Var Message: TMessage);
 Var
   hTempDC: HDC;
-  TempLogBrush: TLOGBRUSH;
 Begin
   If FEditCell <> Nil Then
   Begin
     hTempDC := HDC(Message.WParam);
     SetBkColor(hTempDC, FEditCell.BkColor);
     SetTextColor(hTempDC, FEditCell.TextColor);
-
-    If FEditBrush <> INVALID_HANDLE_VALUE Then
-      DeleteObject(FEditBrush);
-
-    TempLogBrush.lbStyle := PS_SOLID;
-    TempLogBrush.lbColor := FEditCell.BkColor;
-    FEditBrush := CreateBrushIndirect(TempLogBrush);
-
-    Message.Result := FEditBrush;
+    Message.Result := FTextEdit.CreateBrush(FEditCell.BkColor);
   End;
 End;
 
@@ -4177,15 +4161,8 @@ begin
 end;
 procedure TReportControl.RecreateEdit(ThisCell:TReportCell);
 begin
-  If FEditFont <> INVALID_HANDLE_VALUE Then
-    DeleteObject(FEditFont);
-  FEditFont := CreateFontIndirect(ThisCell.LogFont);
-  If IsWindow(FEditWnd) Then
-  Begin
-    DestroyWindow(FEditWnd);
-  End;
-  //os.CreateEdit(Handle,ThisCell.TextRect,FEditFont,ThisCell.CellText,ThisCell.FHorzAlign);
-  FEditWnd := FTextEdit.CreateEdit(Handle,ThisCell.TextRect,FEditFont,ThisCell.CellText,ThisCell.FHorzAlign);
+  FTextEdit.DestroyIfVisible ;
+  FTextEdit.CreateEdit(Handle,ThisCell.TextRect,ThisCell.LogFont,ThisCell.CellText,ThisCell.FHorzAlign);
 end;
 procedure TReportControl.DoDoubleClick(p: TPoint);   
 Var
@@ -4839,11 +4816,13 @@ begin
   FEditBrush := INVALID_HANDLE_VALUE;
   FEditFont := INVALID_HANDLE_VALUE;
 end;
-function Edit.CreateEdit(Handle:HWND;Rect: TRect; FEditFont: HFONT;Text: String;FHorzAlign:Integer): HWND;
+function Edit.CreateEdit(Handle:HWND;Rect: TRect; LogFont: TLOGFONT;Text: String;FHorzAlign:Integer): HWND;
 var
   dwStyle: DWORD;
 begin
-  self.FEditFont := FEditFont;
+  If FEditFont <> INVALID_HANDLE_VALUE Then
+    DeleteObject(FEditFont);
+  FEditFont := CreateFontIndirect(LogFont);
   dwStyle :=
       WS_VISIBLE Or
       WS_CHILD Or
@@ -4889,6 +4868,17 @@ end;
 procedure Edit.DestroyWindow();
 begin
   windows.DestroyWindow(FEditWnd);
+end;
+function Edit.CreateBrush(Color:Cardinal):HBRUSH;
+var
+  TempLogBrush: TLOGBRUSH;
+begin
+    If FEditBrush <> INVALID_HANDLE_VALUE Then
+      DeleteObject(FEditBrush);
+    TempLogBrush.lbStyle := PS_SOLID;
+    TempLogBrush.lbColor := Color;
+    FEditBrush := CreateBrushIndirect(TempLogBrush);
+    Result := FEditBrush;
 end;
 
 end.
