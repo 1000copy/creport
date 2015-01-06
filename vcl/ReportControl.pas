@@ -448,9 +448,25 @@ type
   EachCellProc =  procedure (ThisCell:TReportCell) of object;
   EachLineProc =  procedure (ThisLine:TReportLine)of object;
   EachLineIndexProc = procedure (ThisLine:TReportLine;Index:Integer)of object;
-
+  Edit = class
+    FControl : TReportControl;
+    FEditWnd: HWND;
+    FEditBrush: HBRUSH;
+    FEditFont: HFONT;
+  private
+    function CreateEdit(Handle: HWND; Rect: TRect; FEditFont: HFONT;
+      Text: String; FHorzAlign: Integer): HWND;
+    function GetText: String;
+    procedure MoveRect(TextRect: TRect);
+    procedure DestroyIfVisible;
+    function IsWindowVisible: Boolean;
+    procedure DestroyWindow;
+  public
+    constructor Create(R:TReportControl);
+  end;
   TReportControl = Class(TWinControl)
   private
+    FTextEdit:Edit;
     MouseSelect : MouseSelector;
     MouseDrag : MouseDragger;
     hClientDC: HDC;
@@ -2162,6 +2178,7 @@ Var
   nPixelsPerInch: Integer;
 Begin
   Inherited Create(AOwner);
+  FTextEdit:=Edit.Create(self);
   mouseSelect := MouseSelector.Create(Self);
   MouseDrag := MouseDragger.Create(Self);
   Os := WindowsOS.create;
@@ -2237,6 +2254,7 @@ Begin
   Os.Free;
   mouseSelect.Free;
   MouseDrag.Free;
+  FTextEdit.Free;
   Inherited Destroy;
 End;
 
@@ -3212,25 +3230,20 @@ End;
 Procedure TReportControl.WMCOMMAND(Var Message: TMessage);
 Var
   r: TRect;
-  TempChar: Array[0..3000] Of Char;
 Begin
   Case HIWORD(Message.wParam) Of
     EN_UPDATE:
       If FEditCell <> Nil Then
       Begin
         r := FEditCell.TextRect;
-        GetWindowText(FEditWnd, TempChar, 3000);
-        DoEdit ( TempChar);
+        DoEdit ( FTextEdit.GetText());
 
         if Assigned (FOnChanged) then
           FOnChanged(Self,FEditCell.CellText);
-        UpdateLines
-        ;
+        UpdateLines ;
         if not os.RectEquals (r , FEditCell.TextRect) then
         Begin
-          MoveWindow(FEditWnd, FEditCell.TextRect.left, FEditCell.TextRect.Top,
-            FEditCell.TextRect.Right - FEditCell.TextRect.Left,
-            FEditCell.TextRect.Bottom - FEditCell.TextRect.Top, True);
+          FTextEdit.MoveRect(FEditCell.TextRect);
         End;
       End;
   End;
@@ -3397,8 +3410,7 @@ Begin
   InternalLoadFromFile(FileName,Self.FLineList);
   PrintPaper.prDeviceMode;
   PrintPaper.SetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
-  If IsWindowVisible(FEditWnd) Then
-    DestroyWindow(FEditWnd);
+  FTextEdit.DestroyIfVisible;
   FLastPrintPageWidth := FPageWidth;             //1999.1.23
   FLastPrintPageHeight := FPageHeight;
   UpdateLines;
@@ -3694,12 +3706,10 @@ End;
 
 Procedure TReportControl.FreeEdit;
 Begin
-  If IsWindowVisible(FEditWnd) and (FEditCell <> Nil)Then
-  Begin
-    Windows.SetFocus(0);
-    DestroyWindow(FEditWnd);
+  Windows.SetFocus(0);
+  FTextEdit.DestroyIfVisible;
+  If (FEditCell <> Nil)Then
     FEditCell := Nil;
-  End;
 End;
 
 Procedure TReportControl.SetCellDispFormt(mek: String); // lzl add
@@ -4120,7 +4130,7 @@ end;
 
 function TReportControl.IsEditing: boolean;
 begin
-  result := IsWindowVisible(FEditWnd) ;
+  result := FTextEdit.IsWindowVisible() ;
 end;
 
 procedure TReportControl.CancelEditing;
@@ -4129,11 +4139,10 @@ var
 begin
     If FEditCell <> Nil Then
     Begin
-      GetWindowText(FEditWnd, str, 3000);
-      FEditCell.CellText := str;
+      FEditCell.CellText := FTextEdit.GetText ;
     End;
     Windows.SetFocus(0);// 奇怪，ReportControl窗口一旦得到焦点就移动自己
-    DestroyWindow(FEditWnd);
+    FTextEdit.DestroyWindow ;
     FEditCell := Nil;   
 end;
 
@@ -4175,7 +4184,8 @@ begin
   Begin
     DestroyWindow(FEditWnd);
   End;
-  FEditWnd := os.CreateEdit(Handle,ThisCell.TextRect,FEditFont,ThisCell.CellText,ThisCell.FHorzAlign);
+  //os.CreateEdit(Handle,ThisCell.TextRect,FEditFont,ThisCell.CellText,ThisCell.FHorzAlign);
+  FEditWnd := FTextEdit.CreateEdit(Handle,ThisCell.TextRect,FEditFont,ThisCell.CellText,ThisCell.FHorzAlign);
 end;
 procedure TReportControl.DoDoubleClick(p: TPoint);   
 Var
@@ -4818,6 +4828,67 @@ begin
         End;
       End;
   End;
+end;
+
+{ Edit }
+
+constructor Edit.Create(R: TReportControl);
+begin
+  FControl := R;
+  FEditWnd := INVALID_HANDLE_VALUE;
+  FEditBrush := INVALID_HANDLE_VALUE;
+  FEditFont := INVALID_HANDLE_VALUE;
+end;
+function Edit.CreateEdit(Handle:HWND;Rect: TRect; FEditFont: HFONT;Text: String;FHorzAlign:Integer): HWND;
+var
+  dwStyle: DWORD;
+begin
+  self.FEditFont := FEditFont;
+  dwStyle :=
+      WS_VISIBLE Or
+      WS_CHILD Or
+      ES_MULTILINE or
+      ES_AUTOVSCROLL or
+      FControl.os.HAlign2DT(FHorzAlign);
+  FEditWnd := CreateWindow('EDIT', '', dwStyle, 0, 0, 0, 0, Handle, 1,
+    hInstance, Nil);
+  SendMessage(FEditWnd, WM_SETFONT, FEditFont, 1); // 1 means TRUE here.
+  SendMessage(FEditWnd, EM_LIMITTEXT, 3000, 0);
+  MoveWindow(FEditWnd, Rect.left, Rect.Top,
+    Rect.Right - Rect.Left,
+    Rect.Bottom - Rect.Top, True);
+  SetWindowText(FEditWnd, PChar(Text));
+  ShowWindow(FEditWnd, SW_SHOWNORMAL);
+  Windows.SetFocus(FEditWnd);
+  result := FEditWnd ;
+end;
+function Edit.GetText(): String;
+var
+  TempChar: Array[0..3000] Of Char;
+begin
+  GetWindowText(FEditWnd, TempChar, 3000);
+  Result := TempChar;
+end;
+
+procedure Edit.MoveRect(TextRect:TRect);
+begin
+  MoveWindow(FEditWnd, TextRect.left, TextRect.Top,
+    TextRect.Right - TextRect.Left,
+    TextRect.Bottom - TextRect.Top, True);
+end;
+procedure Edit.DestroyIfVisible();
+begin
+  If IsWindowVisible() Then
+    DestroyWindow();
+end;
+
+function Edit.IsWindowVisible():Boolean;
+begin
+  result := windows.IsWindowVisible(FEditWnd) ;
+end;
+procedure Edit.DestroyWindow();
+begin
+  windows.DestroyWindow(FEditWnd);
 end;
 
 end.
