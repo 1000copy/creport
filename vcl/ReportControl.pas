@@ -4119,7 +4119,6 @@ procedure TReportControl.DoMouseDown(P: TPoint; Shift: Boolean);
 var 
   Cell: TReportCell;
 begin
-
   Cell := CellFromPoint(P);
   If  (Cell <> Nil) and Cell.NearRightBottom(P) Then
       StartMouseDrag(P)
@@ -4838,16 +4837,16 @@ Begin
   end;
 End;
 procedure MouseDragger.DrawHorzLine(HClientDC:HDC;y :integer;RectBorder:TRect);
-var  RectClient: TRect;
+  function BoundValue(Value,Bigger,Smaller:Integer):Integer;
+  begin
+    Value := Max(Smaller,Value);
+    Value := Min(Bigger,Value);
+    Result := Value ;
+  end;
 begin
-  If y < RectBorder.Top Then
-    y := RectBorder.Top;
-
-  If y > RectBorder.Bottom Then
-    y := RectBorder.Bottom;
+  Y  := BoundValue(y,RectBorder.Bottom,RectBorder.Top) ;
   MoveToEx(hClientDC, 0, Y, Nil);
-  Windows.GetClientRect(FControl.Handle, RectClient);
-  LineTo(hClientDC, RectClient.Right, Y);
+  LineTo(hClientDC, FControl.ClientRect.Right, Y);
 end;
 
 end.
