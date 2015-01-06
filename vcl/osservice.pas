@@ -3,7 +3,7 @@ unit osservice;
 interface
 
 uses
-   Graphics,windows ,classes,SysUtils,Math,Forms,cc;
+   Graphics,windows ,classes,SysUtils,Math,Forms,cc,messages;
 
 function  PageFileName(CurrentPage:Integer):string;
 function AppDir:String;
@@ -47,6 +47,10 @@ type
     nPixelsPerInch:integer;
     hDesktopDC :THandle;
   public
+    FEditBrush: HBRUSH;
+
+    function CreateEdit(Handle:HWND;Rect:TRect; FEditFont: HFONT;Text:String;FHorzAlign:Integer):HWND;
+    //CreateEdit(ThisCell.TextRect,FEditFont,ThisCell.CellText);
     procedure SetCursorSizeBEAM;
     procedure SetCursorSizeNS;
     procedure  SetCursorSizeWE;
@@ -374,6 +378,31 @@ end;
 
 
 
+
+function WindowsOS.CreateEdit(Handle:HWND;Rect: TRect; FEditFont: HFONT;
+  Text: String;FHorzAlign:Integer): HWND;
+var
+  dwStyle: DWORD;
+  FEditWnd: HWND;
+begin
+  dwStyle :=
+      WS_VISIBLE Or
+      WS_CHILD Or
+      ES_MULTILINE or
+      ES_AUTOVSCROLL or
+      HAlign2DT(FHorzAlign);
+  FEditWnd := CreateWindow('EDIT', '', dwStyle, 0, 0, 0, 0, Handle, 1,
+    hInstance, Nil);  
+  SendMessage(FEditWnd, WM_SETFONT, FEditFont, 1); // 1 means TRUE here.
+  SendMessage(FEditWnd, EM_LIMITTEXT, 3000, 0);
+  MoveWindow(FEditWnd, Rect.left, Rect.Top,
+    Rect.Right - Rect.Left,
+    Rect.Bottom - Rect.Top, True);
+  SetWindowText(FEditWnd, PChar(Text));
+  ShowWindow(FEditWnd, SW_SHOWNORMAL);
+  Windows.SetFocus(FEditWnd);
+  result := FEditWnd ;
+end;
 
 { Rect }
 

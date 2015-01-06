@@ -171,7 +171,10 @@ type
     procedure CheckAllNextCellIsSlave;
   public
     constructor Create(ReportControl:TReportControl);
+    //清除掉不在选中矩形中的CELL  
+    procedure ClearBySelection(R:TRect);
     function IsRegularForCombine():Boolean;
+    procedure MakeInteractWith(R:TRect);
     procedure MakeSelectedCellsFromLine(ThisLine:TReportLine);
     procedure MakeFromSameRight(ThisCell:TReportCell);
     procedure MakeFromSameRightAndInterference(ThisCell:TReportCell);
@@ -469,6 +472,7 @@ type
     procedure DrawIndicatorLine(var x: Integer; RectBorder: TRect);
     procedure MsgLoop(RectBorder:TRect);
     procedure OnMove(TempMsg: TMSG;RectBorder:TRect );
+    function AddSelectedCells(Cells: TCellList): Boolean;
   protected
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
@@ -3115,6 +3119,13 @@ Begin
   End;
 End;
 
+Function TReportControl.AddSelectedCells(Cells: TCellList): Boolean;
+var i :integer;
+Begin
+  for i := 0 to Cells.Count -1 do
+    AddSelectedCell(Cells[i]);
+End;
+
 Function TReportControl.CellFromPoint(point: TPoint): TReportCell;
 Var
   I, J: Integer;
@@ -4156,29 +4167,15 @@ begin
   Result.y := HIWORD(Message.lParam);
 end;
 procedure TReportControl.RecreateEdit(ThisCell:TReportCell);
-var
-  dwStyle: DWORD;
 begin
   If FEditFont <> INVALID_HANDLE_VALUE Then
-      DeleteObject(FEditFont);
-    FEditFont := CreateFontIndirect(ThisCell.LogFont);
-    // 设置编辑窗的字体
-    If IsWindow(FEditWnd) Then
-    Begin
-      DestroyWindow(FEditWnd);
-    End;
-    dwStyle := WS_VISIBLE Or WS_CHILD Or ES_MULTILINE or  ES_AUTOVSCROLL or
-      os.HAlign2DT(ThisCell.FHorzAlign);
-    FEditWnd := CreateWindow('EDIT', '', dwStyle, 0, 0, 0, 0, Handle, 1,
-      hInstance, Nil);  
-    SendMessage(FEditWnd, WM_SETFONT, FEditFont, 1); // 1 means TRUE here.
-    SendMessage(FEditWnd, EM_LIMITTEXT, 3000, 0);
-    MoveWindow(FEditWnd, ThisCell.TextRect.left, ThisCell.TextRect.Top,
-      ThisCell.TextRect.Right - ThisCell.TextRect.Left,
-      ThisCell.TextRect.Bottom - ThisCell.TextRect.Top, True);
-    SetWindowText(FEditWnd, PChar(ThisCell.CellText));
-    ShowWindow(FEditWnd, SW_SHOWNORMAL);
-    Windows.SetFocus(FEditWnd);
+    DeleteObject(FEditFont);
+  FEditFont := CreateFontIndirect(ThisCell.LogFont);
+  If IsWindow(FEditWnd) Then
+  Begin
+    DestroyWindow(FEditWnd);
+  End;
+  FEditWnd := os.CreateEdit(Handle,ThisCell.TextRect,FEditFont,ThisCell.CellText,ThisCell.FHorzAlign);
 end;
 procedure TReportControl.DoDoubleClick(p: TPoint);   
 Var
@@ -4687,44 +4684,23 @@ End;
 
 Procedure MouseSelector.DoMouseMove(Msg:TMsg);
 Var
-  RectSelection, TempRect: TRect;
-  ThisCell: TReportCell;
-  I, J: Integer;
-  ThisLine: TReportLine;
+  RectSelection: TRect;
   p: TPoint;Shift:Boolean ;
+  Cells : TCellList;
 Begin
-
   p := msg.pt ;
   Shift := msg.wParam =5 ;
-
   Windows.ScreenToClient(FControl.Handle, p);
   RectSelection := FControl.os.MakeRect(FControl.FMousePoint,p);
-  //清除掉不在选中矩形中的CELL ; 除非Shift 按下
   If not Shift  Then
-    For I := FControl.FSelectCells.Count - 1 Downto 0 Do
-    Begin
-      ThisCell := TReportCell(FControl.FSelectCells[I]);
-      if not FControl.os.IsIntersect(ThisCell.CellRect, RectSelection) then
-          FControl.RemoveSelectedCell(ThisCell);
-    End;
-  // 查找选中的Cell
-  For I := 0 To FControl.FLineList.Count - 1 Do
-  Begin
-    ThisLine := TReportLine(FControl.FLineList[I]);
-    If FControl.os.IsIntersect(RectSelection, ThisLine.LineRect) Then
-    Begin
-      For J := 0 To ThisLine.FCells.Count - 1 Do
-      Begin
-        ThisCell := TReportCell(ThisLine.FCells[J]);
-        if FControl.os.IsIntersect(ThisCell.CellRect, RectSelection) Then
-        Begin
-          If ThisCell.IsSlave Then
-            ThisCell :=  ThisCell.OwnerCell ;
-          FControl.AddSelectedCell(ThisCell);
-        End;
-      End;
-    End;
-  End;
+    FControl.FSelectCells.ClearBySelection(RectSelection);
+  Cells := TCellList.Create(self.FControl);
+  try
+    Cells.MakeInteractWith(RectSelection);
+    FControl.AddSelectedCells(Cells);
+  finally
+    Cells.Free;
+  end;
 End;
 { MouseDragger }
 
@@ -4808,5 +4784,41 @@ procedure MouseDragger.RegularPointY(var P:TPoint);
 begin
    p.y := RegularPoint(p.y);
 end;                             
+procedure TCellList.ClearBySelection(R: TRect);
+var
+  i : integer;
+  ThisCell:TReportCell;
+begin
+  For I := Count - 1 Downto 0 Do
+  Begin
+    ThisCell := TReportCell(ReportControl.FSelectCells[I]);
+    if not ReportControl.os.IsIntersect(ThisCell.CellRect, R) then
+        ReportControl.RemoveSelectedCell(ThisCell);
+  End;
+end;
+
+procedure TCellList.MakeInteractWith(R: TRect);
+var i,j :Integer;
+Var
+  ThisCell: TReportCell;
+  ThisLine: TReportLine;
+begin
+  For I := 0 To self.ReportControl.FLineList.Count - 1 Do
+  Begin
+    ThisLine := ReportControl.FLineList[I];
+    If ReportControl.os.IsIntersect(R, ThisLine.LineRect) Then
+      For J := 0 To ThisLine.FCells.Count - 1 Do
+      Begin
+        ThisCell := ThisLine.FCells[J];
+        if ReportControl.os.IsIntersect(ThisCell.CellRect, R) Then
+        Begin
+          If ThisCell.IsSlave Then
+            ThisCell :=  ThisCell.OwnerCell ;
+          Add(ThisCell);
+        End;
+      End;
+  End;
+end;
+
 end.
 
