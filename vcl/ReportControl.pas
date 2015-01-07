@@ -2378,14 +2378,16 @@ Var
 
   rectPaint: TRect;
   Cells : TCellList;
+  c : Canvas;
 begin
-  SetMapMode(hPaintDC, MM_ISOTROPIC);
-
-  os.SetWindowExtent(hPaintDc,FPageWidth, FPageHeight);
-  os.SetViewportExtent(hPaintDC, Width, Height);
   rectPaint := ps.rcPaint;
+  //
+  c := Canvas.Create(hPaintDC);
+  c.SetMapMode();
+  c.SetWindowExtent(FPageWidth, FPageHeight);
+  c.SetViewportExtent(Width, Height);
   os.InverseScaleRect(rectPaint,FReportScale);
-  Rectangle(hPaintDC, 0, 0, FPageWidth, FPageHeight);
+  c.Rectangle(0, 0, FPageWidth, FPageHeight);
   DrawCornice(hPaintDC);
   Cells := TCellList.Create(self);
   try
@@ -2398,6 +2400,7 @@ begin
     end;
   finally
     Cells.Free;
+    c.Free;
   end;
   if not FPreviewStatus then
     For I := 0 To FSelectCells.Count - 1 Do

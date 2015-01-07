@@ -16,6 +16,9 @@ type
   private
   public
     constructor Create(dc : HDC);
+    procedure Rectangle(x1, y1, x2, y2: integer);
+    procedure SetViewportExtent(x, y: integer);
+    procedure SetWindowExtent(x, y: integer);
     procedure LineTo(x, y: Integer);
     procedure MoveTo(x, y: Integer);
     procedure ReleaseDC;
@@ -27,6 +30,8 @@ type
     procedure ReadySolidPen(Width: Integer; Color: ColorREF);
     procedure ReadyDotPen(Width: Integer; Color: ColorREF);
     constructor CreateWnd(handle: HWND);
+    procedure SetMapMode();
+
   end;
   Rect = class
     FRect:TRect;
@@ -519,4 +524,23 @@ begin
   PrevDrawMode := SetROP2(dc, R2_NOTXORPEN);
 end;
 
+procedure Canvas.SetMapMode;
+begin
+  windows.SetMapMode(dc, MM_ISOTROPIC);
+end;
+
+procedure Canvas.SetViewportExtent(x, y: integer);
+begin
+  windows.SetViewportExtEx(dc,x,y,0);
+end;
+
+procedure Canvas.SetWindowExtent( x, y: integer);
+begin
+  Windows.SetWindowExtEx(dc,x ,y,0);
+
+end;
+procedure Canvas.Rectangle(x1,y1,x2,y2:integer);
+begin
+  windows.Rectangle(dc,x1,y1,x2,y2);
+end;
 end.
