@@ -48,6 +48,8 @@ type
     function Dataset(): TDataset;
     procedure DataPage(Dataset: TDataset);
     procedure FreeList;
+    function RenderBlobOnly(NewCell, ThisCell: TReportCell): String;
+    function RenderTextOnly(NewCell, ThisCell: TReportCell): String;
   public
     FpageAll: integer ;
     FFileName: Tfilename;
@@ -857,7 +859,13 @@ begin
     cf.Free;
   end;
 end;
+
 function TReportRunTime.RenderCellText(NewCell,ThisCell:TReportCell):String;
+begin
+  RenderBlobOnly(NewCell,ThisCell);
+  Result := RenderTextOnly(NewCell,ThisCell);
+end;
+function TReportRunTime.RenderTextOnly(NewCell,ThisCell:TReportCell):String;
 var
    cellText :string;
    cf: CellField ;
@@ -874,7 +882,6 @@ begin
             cellText := ThisCell.FormatValue(cf.DataValue());
       End
       Else If cf.IsBlobField then begin
-         NewCell.LoadCF(cf);
          CellText := '';
       end;
     End
@@ -890,7 +897,6 @@ begin
         End
       End
       Else If cf.IsBlobField then begin
-         NewCell.LoadCF(cf);
          CellText := '';
       end
       Else
@@ -899,6 +905,32 @@ begin
     Else If ThisCell.IsFormula Then
         CellText := GetVarValue(thiscell.FCellText) ;
     result := CellText;
+  finally
+    cf.Free;
+  end;
+end;
+function TReportRunTime.RenderBlobOnly(NewCell,ThisCell:TReportCell):String;
+var
+   cellText :string;
+   cf: CellField ;
+begin
+  CellText := ThisCell.FCellText;
+  cf:= CellField.Create(ThisCell.CellText,GetDataset(thisCell.CellText)) ;
+  try
+    If ThisCell.IsHeadField and (not cf.IsNullField) Then
+    Begin
+      If cf.IsBlobField then
+      begin
+         NewCell.LoadCF(cf);
+      end;
+    End
+    Else If  thisCell.IsDetailField Then
+    Begin
+      If cf.IsBlobField then
+      begin
+         NewCell.LoadCF(cf);
+      end
+    End
   finally
     cf.Free;
   end;
