@@ -1182,48 +1182,76 @@ end;
 
 var R1:Rect;
   c : Canvas;
+  function IsDragonLeft1:Boolean;
+  begin
+    result := (FDiagonal And LINE_LEFT1) > 0 ;
+  end;
+  function IsDragonLeft2:Boolean;
+  begin
+    result := (FDiagonal And LINE_LEFT2) > 0 ;
+  end;
+  function IsDragonLeft3:Boolean;
+  begin
+    result := (FDiagonal And LINE_LEFT3) > 0 ;
+  end;
+  function IsDragonRight1:Boolean;
+  begin
+    result := (FDiagonal And LINE_RIGHT1) > 0 ;
+  end;
+  function IsDragonRight2:Boolean;
+  begin
+    result := (FDiagonal And LINE_RIGHT2) > 0 ;
+  end;
+  function IsDragonRight3:Boolean;
+  begin
+    result := (FDiagonal And LINE_RIGHT3) > 0 ;
+  end;
+  function IsDragonSet:Boolean;
+  begin
+    result := FDiagonal > 0 ;
+  end;
 begin
-  If FDiagonal <= 0 Then exit;
+  If not IsDragonSet Then exit;
   c := Canvas.Create(hPaintDC);
   c.ReadyDefaultPen;
   R1 := Rect.Create(self.ReportControl.os.Inflate(FCellRect,-1,-1));
   try
-    If ((FDiagonal And LINE_LEFT1) > 0) Then
+    If IsDragonLeft1 Then
     Begin
       p1 := R1.TopLeft ;
       p2 := R1.BottomRight;
       c.DrawLine(p1,p2);
     End;
 
-    If ((FDiagonal And LINE_LEFT2) > 0) Then
+    If IsDragonLeft2  Then
     Begin
       p1 := R1.TopLeft ;
       p2 := R1.RightMid;
       c.DrawLine(p1,p2);
     End;
 
-    If ((FDiagonal And LINE_LEFT3) > 0) Then
+    If IsDragonLeft3 Then
     Begin
       p1 := R1.TopLeft ;
       p2 := R1.BottomMid;
       c.DrawLine(p1,p2);
     End;
 
-    If ((FDiagonal And LINE_RIGHT1) > 0) Then
+    If IsDragonRight1 Then
     Begin
       p1 := R1.RightTop;
       p2 := R1.LeftBottom;
       c.DrawLine(p1,p2);
     End;
 
-    If ((FDiagonal And LINE_RIGHT2) > 0) Then
+    If IsDragonRight2 Then
     Begin
       p1 := R1.RightTop;
       p2 := R1.LeftMid;
       c.DrawLine(p1,p2);
     End;
 
-    If ((FDiagonal And LINE_RIGHT3) > 0) Then
+    If IsDragonRight3 Then
     Begin
       p1 := R1.RightTop;
       p2 := R1.BottomMid;
