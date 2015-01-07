@@ -837,11 +837,21 @@ end;
 // TODO :以下代码都得好好改下。
 function TReportRunTime.GetValue(ThisCell:TReportCell):String;
 var
-   cellText :string;
-   cf: CellField ;
+    cellText ,FieldName:string;
+    cf: DataField ;
+    Dataset:TDataset;
+    function IsDataField(s:String):Boolean;
+    begin
+      result :=  (Length(s) < 2) or
+       ((s[1] <> '@') And (s[1] <> '#'));
+       result := not result ;
+    end;
+
 begin
   CellText := ThisCell.FCellText;
-  cf:= CellField.Create(ThisCell.CellText,GetDataset(thisCell.CellText)) ;
+  FieldName := GetFieldName(CellText);
+  Dataset := GetDataset(thisCell.CellText);
+  cf:= DataField.Create(Dataset,FieldName) ;
   try
     If ThisCell.IsHeadField and (not cf.IsNullField) Then
     Begin
@@ -867,55 +877,59 @@ begin
 end;
 function TReportRunTime.RenderTextOnly(NewCell,ThisCell:TReportCell):String;
 var
-   cellText :string;
-   cf: CellField ;
+    Value,cellText ,FieldName:string;
+    cf: DataField ;
+    Dataset:TDataset;
+   function IsFormatable:Boolean;
+   begin
+     Result := cf.IsAvailableNumberField and (ThisCell.CellDispformat <> '' )  
+   end;
 begin
-  CellText := ThisCell.FCellText;
-  cf:= CellField.Create(ThisCell.CellText,GetDataset(thisCell.CellText)) ;
+  CellText := ThisCell.FCellText ;
+  if (Thiscell.IsSimpleField ) then
+  begin
+    Result := CellText;
+    exit;
+  end;
+  If ThisCell.IsFormula Then
+  begin
+    Result := GetVarValue(CellText) ;
+    Exit;
+  end;
+  if GetDataset(CellText) = nil then
+  begin
+    Result := CellText;
+    exit;
+  end;
+  FieldName := GetFieldName(CellText);
+  Dataset := GetDataset(thisCell.CellText);
+  cf:= DataField.Create(Dataset,FieldName) ;
+  If  cf.IsBlobField  and (not cf.IsNullField) then
+  begin
+     Result := '';
+     exit;
+  end;
   try
-    If ThisCell.IsHeadField and (not cf.IsNullField) Then
-    Begin
-      CellText := cf.GetField().displaytext ;
-      If cf.isNumberField  Then
-      Begin
-        If ThisCell.CellDispformat <> '' Then
-            cellText := ThisCell.FormatValue(cf.DataValue());
-      End
-      Else If cf.IsBlobField then begin
-         CellText := '';
-      end;
-    End
-    Else If  thisCell.IsDetailField Then
-    Begin
-      If cf.IsNumberField Then
-      Begin
-        CellText := cf.GetField.displaytext;
-        If thiscell.CellDispformat <> '' Then
-        Begin
-          If Not cf.IsNullField  Then
-            cellText := Thiscell.FormatValue(cf.DataValue);
-        End
-      End
-      Else If cf.IsBlobField then begin
-         CellText := '';
-      end
-      Else
-        CellText := cf.GetField.displaytext;
-    End
-    Else If ThisCell.IsFormula Then
-        CellText := GetVarValue(thiscell.FCellText) ;
-    result := CellText;
+    Value :=cf.GetField.AsString ;
+    If IsFormatable Then
+      Value :=  ThisCell.FormatValue(cf.DataValue()) ;
+    result := Value;
+    if '(Graphic)' =  CellText then
+      raise Exception.create('');
   finally
     cf.Free;
   end;
 end;
 function TReportRunTime.RenderBlobOnly(NewCell,ThisCell:TReportCell):String;
 var
-   cellText :string;
-   cf: CellField ;
+    Value,cellText ,FieldName:string;
+    cf: DataField ;
+    Dataset:TDataset;
 begin
   CellText := ThisCell.FCellText;
-  cf:= CellField.Create(ThisCell.CellText,GetDataset(thisCell.CellText)) ;
+  FieldName := GetFieldName(CellText);
+  Dataset := GetDataset(thisCell.CellText);
+  cf:= DataField.Create(Dataset,FieldName) ;
   try
     If ThisCell.IsHeadField and (not cf.IsNullField) Then
     Begin

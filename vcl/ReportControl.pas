@@ -98,20 +98,21 @@ type
   end;
 
 // Mappings From CellText to Data end :TDataset ,TField,Value
-   CellField = class
-     FCellText : string;
+   DataField = class
+     FFieldName : String;
      Fds:TDataset;
   private
     function GetFieldName: String;
     function IsDataField(s: String): Boolean;
    public
-    constructor Create(CellText:String;ds:TDataset);
+    constructor Create(ds:TDataset;FFieldName : String);
     function DataValue(): Extended;
     function ds: TDataset;
     function GetField(): TField;
     function IsNullField(): Boolean;
     function IsNumberField(): Boolean;
     function IsBlobField:Boolean;
+    function IsAvailableNumberField:Boolean;
 
    end;
   TOnChanged = procedure(Sender:TObject;str:String) of object;
@@ -243,6 +244,7 @@ type
       FBackGroundColor: COLORREF);
     procedure DrawContentText(hPaintDC: HDC);
   public
+    function IsSimpleField: Boolean;
     procedure DrawImage;
     function IsSlave:Boolean;
     function Calc_RequiredCellHeight: Integer;
@@ -264,7 +266,7 @@ type
     function IsFormula:Boolean;
     procedure CloneFrom(ThisCell:TReportCell);
     function FormatValue(DataValue:Extended):string;
-    procedure LoadCF(cf:CellField);
+    procedure LoadCF(cf:DataField);
   public
     FLeftMargin: Integer;               // ×ó±ßµÄ¿Õ¸ñ
     FOwnerLine: TReportLine;            // Á¥ÊôÐÐ
@@ -2075,6 +2077,14 @@ function TReportCell.IsDetailField: Boolean;
 begin
   result := (Length(CellText) > 0) And (FCellText[1] = '#') 
 end;
+function TReportCell.IsSimpleField: Boolean;
+begin
+  result := (Length(CellText) =  0) or
+      (
+        (Length(CellText) > 0) And (FCellText[1] <> '#')
+        And (FCellText[1] <> '`')
+      )
+end;
 
 function TReportCell.IsSumAllField: Boolean;
 begin
@@ -2165,7 +2175,7 @@ begin
       (FCellText[1] = '`') ;
 end;
 
-procedure TReportCell.LoadCF(cf: CellField);
+procedure TReportCell.LoadCF(cf: DataField);
 begin
      If Not cf.IsNullField Then begin
       fbmp := TBitmap.create;
@@ -4484,53 +4494,49 @@ begin
    For i := 0 To FCells.Count - 1 Do
      Result := Result + TReportCell(FCells[i]).CellText;
 end;
-function CellField.ds : TDataset ;
+function DataField.ds : TDataset ;
 begin
  result := FDs;
 end;
-function CellField.GetField() : TField ;
+function DataField.GetField() : TField ;
 begin
  result := ds.fieldbyname(GetFieldName())
 end;
-function CellField.IsDataField(s:String):Boolean;
+function DataField.IsDataField(s:String):Boolean;
 begin
   result :=  (Length(s) < 2) or
    ((s[1] <> '@') And (s[1] <> '#'));
    result := not result ;
 end;
 
-Function CellField.GetFieldName(): String;
-Var
-  I: Integer;
-  bFlag: Boolean;
-  s:StrSlice;
+Function DataField.GetFieldName(): String;
 Begin
-  If isDataField(FCellText) Then
-    Result := StrSlice.DoSlice(FCellText,'.')
-  else
-    Result := '';
+    Result := Self.FFieldName;
 End;
 
-function CellField.IsNumberField():Boolean;
+function DataField.IsNumberField():Boolean;
 begin
   result := ds.fieldbyname(GetFieldName()) Is tnumericField
 end;
-function CellField.IsNullField( ):Boolean;
+function DataField.IsNullField( ):Boolean;
 begin
   result := ds.fieldbyname(GetFieldName()).isnull;
 end;
-function CellField.DataValue():Extended;
+function DataField.DataValue():Extended;
 begin
     result := ds.fieldbyname(GetFieldName()).value ;
 end;
-constructor CellField.Create(CellText:String;ds:TDataset);
+constructor DataField.Create(ds:TDataset;FFieldName : String);
 begin
-  FCellText:= CellText;
-  FDs :=ds
+  Self.FFieldName := FFieldName ;
+  FDs := ds ;
 end;
 
-function CellField.IsBlobField: Boolean;
+function DataField.IsBlobField: Boolean;
 begin
+   result := False ;
+   if ds = nil then exit;
+   if nil = ds.fieldbyname(GetFieldName()) then  exit; 
    result := ds.fieldbyname(GetFieldName()) Is Tblobfield
 end;
 
@@ -4898,6 +4904,11 @@ end;
 
 { Combinator }
 
+
+function DataField.IsAvailableNumberField: Boolean;
+begin
+  result := isNumberField  and (not IsNullField) 
+end;
 
 end.
 
