@@ -2373,11 +2373,11 @@ end;
 //  SetViewPortExtEx(hPaintDC, Width, Height, @WndSize);
 procedure TReportControl.DoPaint(hPaintDC:HDC;Handle:HWND;ps:TPaintStruct);
 Var
-  I, J: Integer;
-  TempRect: TRect;
-  ThisLine: TReportLine;
-  ThisCell: TReportCell;
+  I: Integer;
+  Rect: TRect;
+
   rectPaint: TRect;
+  Cells : TCellList;
 begin
   SetMapMode(hPaintDC, MM_ISOTROPIC);
 
@@ -2387,31 +2387,43 @@ begin
   os.InverseScaleRect(rectPaint,FReportScale);
   Rectangle(hPaintDC, 0, 0, FPageWidth, FPageHeight);
   DrawCornice(hPaintDC);
-  For I := 0 To FLineList.Count - 1 Do
-  Begin
-    ThisLine := FLineList[I];
-    For J := 0 To FLineList[i].FCells.Count - 1 Do
-    Begin
-      ThisCell := ThisLine.FCells[J]; 
-      If ThisCell.CellRect.Left > rectPaint.Right Then
-        Break;
-      If ThisCell.CellRect.Right < rectPaint.Left Then
-        Continue;
-      If ThisCell.CellRect.Top > rectPaint.Bottom Then
-        Break;                                        
-      If ThisCell.CellRect.Bottom < rectPaint.Top Then
-        Continue;
-      ThisCell.DrawImage ;
-      If not ThisCell.IsSlave Then
-        ThisCell.PaintCell(hPaintDC, FPreviewStatus);
-    End;
-  End;
+  Cells := TCellList.Create(self);
+  try
+    Cells.MakeInteractWith(rectPaint);
+    for i:= 0 to Cells.Count - 1 do
+    begin
+        Cells[i].DrawImage ;
+        If not Cells[i].IsSlave Then
+          Cells[i].PaintCell(hPaintDC, FPreviewStatus);
+    end;
+  finally
+    Cells.Free;
+  end;
+//  For I := 0 To FLineList.Count - 1 Do
+//  Begin
+//    ThisLine := FLineList[I];
+//    For J := 0 To FLineList[i].FCells.Count - 1 Do
+//    Begin
+//      ThisCell := ThisLine.FCells[J];
+//      If ThisCell.CellRect.Left > rectPaint.Right Then
+//        Break;
+//      If ThisCell.CellRect.Right < rectPaint.Left Then
+//        Continue;
+//      If ThisCell.CellRect.Top > rectPaint.Bottom Then
+//        Break;
+//      If ThisCell.CellRect.Bottom < rectPaint.Top Then
+//        Continue;
+//      ThisCell.DrawImage ;
+//      If not ThisCell.IsSlave Then
+//        ThisCell.PaintCell(hPaintDC, FPreviewStatus);
+//    End;
+//  End;
   if not FPreviewStatus then
     For I := 0 To FSelectCells.Count - 1 Do
     Begin
-      TempRect := os.IntersectRect( ps.rcPaint,FSelectCells[I].CellRect);
-      if not os.IsRectEmpty(TempRect) then
-        InvertRect(hPaintDC, TempRect);
+      Rect := os.IntersectRect( ps.rcPaint,FSelectCells[I].CellRect);
+      if not os.IsRectEmpty(Rect) then
+        InvertRect(hPaintDC, Rect);
     End;     
 end;
 
