@@ -2399,25 +2399,6 @@ begin
   finally
     Cells.Free;
   end;
-//  For I := 0 To FLineList.Count - 1 Do
-//  Begin
-//    ThisLine := FLineList[I];
-//    For J := 0 To FLineList[i].FCells.Count - 1 Do
-//    Begin
-//      ThisCell := ThisLine.FCells[J];
-//      If ThisCell.CellRect.Left > rectPaint.Right Then
-//        Break;
-//      If ThisCell.CellRect.Right < rectPaint.Left Then
-//        Continue;
-//      If ThisCell.CellRect.Top > rectPaint.Bottom Then
-//        Break;
-//      If ThisCell.CellRect.Bottom < rectPaint.Top Then
-//        Continue;
-//      ThisCell.DrawImage ;
-//      If not ThisCell.IsSlave Then
-//        ThisCell.PaintCell(hPaintDC, FPreviewStatus);
-//    End;
-//  End;
   if not FPreviewStatus then
     For I := 0 To FSelectCells.Count - 1 Do
     Begin
