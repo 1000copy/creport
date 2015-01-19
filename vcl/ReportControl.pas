@@ -116,6 +116,7 @@ type
 
    end;
   TOnChanged = procedure(Sender:TObject;str:String) of object;
+
   TSimpleFileStream = class(TFileStream)
   private
     procedure ReadIntegerSkip;
@@ -135,6 +136,32 @@ type
      procedure WriteString(a:String);
      procedure WriteTLOGFONT(a:TLOGFONT);
 
+   end;
+   TSimpleWriter = class
+     FStream :TSimpleFileStream;
+   public
+     function Int(a:Integer):TSimpleWriter;
+     function Word(a:Word):TSimpleWriter;
+     function Bool(a:Boolean):TSimpleWriter;
+     function Rect(a:TRect):TSimpleWriter;
+     function Cardinal(a:Cardinal):TSimpleWriter;
+     function Str(a:String):TSimpleWriter;
+     function LOGFONT(a:TLOGFONT):TSimpleWriter;
+     constructor Create(sfs :TSimpleFileStream);
+   end;
+   TSimpleReader = class
+     FStream :TSimpleFileStream;
+  private
+    function IntSkip: TSimpleReader;
+   public
+     function Int(var a:Integer):TSimpleReader;
+     function Word(var a:Word):TSimpleReader;
+     function Bool(var a:Boolean):TSimpleReader;
+     function Rect(var a:TRect):TSimpleReader;
+     function Cardinal(var a:Cardinal):TSimpleReader;
+     function Str(var a:String):TSimpleReader;
+     function LOGFONT(var a:TLOGFONT):TSimpleReader;
+     constructor Create(sfs :TSimpleFileStream);
    end;
   CellType = (ctOwnerCell,ctSlaveCell,ctNormalCell);
   TPrinterPaper = class
@@ -243,6 +270,7 @@ type
     procedure FillBg(hPaintDC: HDC; FCellRect: TRect;
       FBackGroundColor: COLORREF);
     procedure DrawContentText(hPaintDC: HDC);
+    procedure Save1(s: TSimpleFileStream; PageNumber, Fpageall: integer);
   public
     function IsSimpleField: Boolean;
     procedure DrawImage;
@@ -1686,6 +1714,58 @@ begin
    end;
 end;
 
+procedure TReportCell.Save1(s: TSimpleFileStream;PageNumber, Fpageall:integer);
+var k :  integer;
+    w : TSimpleWriter;
+begin
+  w := TSimpleWriter.Create(s);
+  w.Int(FLeftMargin)
+   .Int(FCellIndex)
+   .Int(FCellLeft)
+   .Int(FCellWidth)
+   .Rect(FCellRect)
+   .Rect(FTextrect)
+   .Int(FCellHeight)
+   .Int(FCellHeight)
+   .Int(FRequiredCellHeight)
+   .Bool(FLeftLine)
+   .Int(FLeftLineWidth)
+   .Bool(FTopLine)
+   .Int(FTopLineWidth)
+   .Bool(FRightLine)
+   .Int(FRightLineWidth)
+   .Bool(FBottomLine)
+   .Int(FBottomLineWidth)
+   .Cardinal(FDiagonal)
+   .Cardinal(FTextColor )
+   .Cardinal(FBackGroundColor )
+   .Int(FHorzAlign)
+   .Int(FVertAlign)
+   .Str(Self.ReportControl.renderText(Self, PageNumber,  Fpageall))
+   .Str(FCellDispformat)
+   .Bool(Fbmpyn) ;
+    If FbmpYn Then
+      FBmp.SaveToStream(s);
+    w.LogFont(FLogFont);
+
+    // 属主CELL的行，列索引
+    If FOwnerCell <> Nil Then
+    Begin
+      w.Int(FOwnerCell.OwnerLine.FIndex)
+      .Int(FOwnerCell.FCellIndex);
+    End
+    Else
+    Begin
+      w.Int(-1).Int(-1);
+    End;
+    w.Int(FSlaveCells.Count);
+    For K := 0 To FSlaveCells.Count - 1 Do
+    Begin
+      w.Int(FSlaveCells[K].OwnerLine.FIndex);
+      w.Int(FSlaveCells[K].FCellIndex);
+    End;
+  w.free;
+end;
 procedure TReportCell.Save(s: TSimpleFileStream;PageNumber, Fpageall:integer);
 var k :  integer;
 begin
@@ -4904,6 +4984,110 @@ end;
 function DataField.IsAvailableNumberField: Boolean;
 begin
   result := isNumberField  and (not IsNullField) 
+end;
+
+{ TSimpleReader }
+
+function TSimpleReader.Bool(var a: Boolean): TSimpleReader;
+begin
+     FStream.ReadBoolean(a);
+  result := Self;
+end;
+
+function TSimpleReader.Cardinal(var a: Cardinal): TSimpleReader;
+begin
+   FStream.ReadCardinal(a);
+  result := Self;
+end;
+
+constructor TSimpleReader.Create(sfs: TSimpleFileStream);
+begin
+  FStream := sfs;
+end;
+
+function TSimpleReader.Int(var a: Integer): TSimpleReader;
+begin
+    FStream.ReadInteger(a);
+  result := Self;
+end;
+
+function TSimpleReader.LOGFONT(var a: TLOGFONT): TSimpleReader;
+begin
+    FStream.ReadTLOGFONT(a);
+  result := Self;
+end;
+
+function TSimpleReader.Rect(var a: TRect): TSimpleReader;
+begin
+    FStream.ReadRect(a);
+  result := Self;
+end;
+
+function TSimpleReader.Str(var a: String): TSimpleReader;
+begin
+    FStream.ReadString(a);
+  result := Self;
+end;
+
+function TSimpleReader.Word(var a: Word): TSimpleReader;
+begin
+    FStream.ReadWord(a);
+  result := Self;
+end;
+
+{ TSimpleWriter }
+
+function TSimpleWriter.Bool(a: Boolean): TSimpleWriter;
+begin
+    FStream.WriteBoolean(a);
+  result := Self;
+end;
+
+function TSimpleWriter.Cardinal(a: Cardinal): TSimpleWriter;
+begin
+    FStream.WriteCardinal(a);
+  result := Self;
+end;
+
+constructor TSimpleWriter.Create(sfs: TSimpleFileStream);
+begin
+  FStream := sfs;
+end;
+
+function TSimpleWriter.Int(a: Integer): TSimpleWriter;
+begin
+  FStream.WriteInteger(a);
+  result := Self;
+end;
+
+function TSimpleReader.IntSkip:TSimpleReader;
+begin
+  FStream.ReadIntegerSkip;
+  result := Self;
+end;
+
+function TSimpleWriter.LOGFONT(a: TLOGFONT): TSimpleWriter;
+begin
+  FStream.WriteTLOGFONT(a);
+  result := Self;
+end;
+
+function TSimpleWriter.Rect(a: TRect): TSimpleWriter;
+begin
+  FStream.WriteRect(a);
+  result := Self;
+end;
+
+function TSimpleWriter.Str(a: String): TSimpleWriter;
+begin
+  FStream.WriteString(a);
+  result := Self;
+end;
+
+function TSimpleWriter.Word(a: Word): TSimpleWriter;
+begin
+   FStream.WriteWord(a);
+  result := Self;
 end;
 
 end.
