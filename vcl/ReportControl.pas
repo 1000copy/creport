@@ -1714,7 +1714,7 @@ begin
    end;
 end;
 
-procedure TReportCell.Save1(s: TSimpleFileStream;PageNumber, Fpageall:integer);
+procedure TReportCell.Save(s: TSimpleFileStream;PageNumber, Fpageall:integer);
 var k :  integer;
     w : TSimpleWriter;
 begin
@@ -1766,71 +1766,7 @@ begin
     End;
   w.free;
 end;
-procedure TReportCell.Save(s: TSimpleFileStream;PageNumber, Fpageall:integer);
-var k :  integer;
-begin
-  with s do begin
-    WriteInteger(FLeftMargin);
-    WriteInteger(FCellIndex);
 
-    WriteInteger(FCellLeft);
-    WriteInteger(FCellWidth);
-
-    WriteRect(FCellRect);
-    WriteRect(FTextrect);
-    // LCJ :DELETE on the road 
-    WriteInteger(FCellHeight);
-    WriteInteger(FCellHeight);
-    WriteInteger(FRequiredCellHeight);
-
-    WriteBoolean(FLeftLine);
-    WriteInteger(FLeftLineWidth);
-
-    WriteBoolean(FTopLine);
-    WriteInteger(FTopLineWidth);
-
-    WriteBoolean(FRightLine);
-    WriteInteger(FRightLineWidth);
-
-    WriteBoolean(FBottomLine);
-    WriteInteger(FBottomLineWidth);
-
-    WriteCardinal(FDiagonal);
-
-    WriteCardinal(FTextColor );
-    WriteCardinal(FBackGroundColor );
-
-    WriteInteger(FHorzAlign);
-    WriteInteger(FVertAlign);
-
-
-    WriteString(Self.ReportControl.renderText(Self, PageNumber,  Fpageall));
-    WriteString(FCellDispformat);
-
-    WriteBoolean(Fbmpyn); 
-    If FbmpYn Then
-      FBmp.SaveToStream(s);
-    WriteTLogFont(FLogFont);
-
-    // 属主CELL的行，列索引
-    If FOwnerCell <> Nil Then
-    Begin
-      WriteInteger(FOwnerCell.OwnerLine.FIndex);
-      WriteInteger(FOwnerCell.FCellIndex);
-    End
-    Else
-    Begin
-      WriteInteger(-1);
-      WriteInteger(-1);
-    End;                              
-    WriteInteger(FSlaveCells.Count);
-    For K := 0 To FSlaveCells.Count - 1 Do
-    Begin
-      WriteInteger(FSlaveCells[K].OwnerLine.FIndex);
-      WriteInteger(FSlaveCells[K].FCellIndex);
-    End;
-  end;
-end;
 
 procedure TReportCell.Sibling(Cell: TReportCell);
 begin
