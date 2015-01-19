@@ -270,7 +270,6 @@ type
     procedure FillBg(hPaintDC: HDC; FCellRect: TRect;
       FBackGroundColor: COLORREF);
     procedure DrawContentText(hPaintDC: HDC);
-    procedure Save1(s: TSimpleFileStream; PageNumber, Fpageall: integer);
   public
     function IsSimpleField: Boolean;
     procedure DrawImage;
