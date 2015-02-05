@@ -48,7 +48,7 @@ type
     function Dataset(): TDataset;
     procedure DataPage(Dataset: TDataset);
     procedure FreeList;
-    function RenderBlobOnly(NewCell, ThisCell: TReportCell): String;
+    function RenderBlobOnly(NewCell, ThisCell: TReportCell): boolean;
     function RenderTextOnly(NewCell, ThisCell: TReportCell): String;
   public
     FpageAll: integer ;
@@ -872,8 +872,9 @@ end;
 
 function TReportRunTime.RenderCellText(NewCell,ThisCell:TReportCell):String;
 begin
-  RenderBlobOnly(NewCell,ThisCell);
   Result := RenderTextOnly(NewCell,ThisCell);
+  if RenderBlobOnly(NewCell,ThisCell) then
+    result := '' ;
 end;
 function TReportRunTime.RenderTextOnly(NewCell,ThisCell:TReportCell):String;
 var
@@ -920,12 +921,13 @@ begin
     cf.Free;
   end;
 end;
-function TReportRunTime.RenderBlobOnly(NewCell,ThisCell:TReportCell):String;
+function TReportRunTime.RenderBlobOnly(NewCell,ThisCell:TReportCell):boolean;
 var
     Value,cellText ,FieldName:string;
     cf: DataField ;
     Dataset:TDataset;
 begin
+  result := false;
   CellText := ThisCell.FCellText;
   FieldName := GetFieldName(CellText);
   Dataset := GetDataset(thisCell.CellText);
@@ -936,6 +938,7 @@ begin
       If cf.IsBlobField then
       begin
          NewCell.LoadCF(cf);
+         result := true;
       end;
     End
     Else If  thisCell.IsDetailField Then
@@ -943,6 +946,7 @@ begin
       If cf.IsBlobField then
       begin
          NewCell.LoadCF(cf);
+         result := true;
       end
     End
   finally
@@ -1410,7 +1414,7 @@ Begin
     FpageCount := 1;
     If DetailLineIndex = -1 Then
     begin
-      FRender.FillHead();
+       FRender.FillHead();
       FRender.SaveHeadPage()
     end
     else
