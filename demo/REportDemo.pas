@@ -12,22 +12,18 @@ type
   TCReportDemoForm = class(TForm)
     DBGrid1: TDBGrid;
     ReportRunTime1: TReportRunTime;
-    Panel1: TPanel;
-    Panel2: TPanel;
-    Panel4: TPanel;
-    Button3: TButton;
-    Button4: TButton;
-    Button5: TButton;
     opbm1: TOpenPictureDialog;
-    CheckBox1: TCheckBox;
     SaveDialog1: TSaveDialog;
-    Button1: TButton;
-    btnVertSplite: TSpeedButton;
-    btnVertSplit2: TSpeedButton;
     PrinterSetupDialog1: TPrinterSetupDialog;
     ClientDataSet1: TClientDataSet;
     dbimg1: TDBImage;
     ReportControl1: TReportControl;
+    Button4: TButton;
+    Button1: TButton;
+    Button3: TButton;
+    Button5: TButton;
+    CheckBox1: TCheckBox;
+    btnCSV: TButton;
     procedure Button4Click(Sender: TObject);
     //procedure Button3Click(Sender: TObject);
     procedure Button5Click(Sender: TObject);
@@ -36,8 +32,7 @@ type
     procedure CheckBox1Click(Sender: TObject);
     procedure FormPaint(Sender: TObject);
     procedure Button1Click(Sender: TObject);
-    procedure btnVertSpliteClick(Sender: TObject);
-    procedure btnVertSplit2Click(Sender: TObject);
+    procedure btnCSVClick(Sender: TObject);
   private
     { Private declarations }
   public
@@ -97,11 +92,7 @@ begin
   dataform.table1.open;
   dataform.table2.open;
   dataform.table1.Last ;
-end;
-
-
-
-
+end;              
 
 procedure TCReportDemoForm.CheckBox1Click(Sender: TObject);
 begin
@@ -114,7 +105,7 @@ end;
 
 procedure TCReportDemoForm.FormPaint(Sender: TObject);
 begin
-  CheckBox1.Checked:= ReportRunTime1.AddSpace;   
+  CheckBox1.Checked:= ReportRunTime1.AddSpace;
 end;
 
 procedure TCReportDemoForm.Button1Click(Sender: TObject);
@@ -124,62 +115,72 @@ begin
   self.ReportRunTime1.EditReport(strFileDir+'\'+filename);
 
 end;
-
-procedure TCReportDemoForm.btnVertSpliteClick(Sender: TObject);
-var j:integer;
-    CellFont: TLogFont;
-    cf: TFont;
-    Filename : string;
-    ThisCell:TReportCell;
-    R: TReportControl;
+type
+  TGraphicHeader = record
+    Count: Word;                { Fixed at 1 }
+    HType: Word;                { Fixed at $0100 }
+    Size: Longint;              { Size not including header }
+  end;
+procedure saveBlob (t:TTable;fname:string);
+Var
+  Blob: TBlobStream;
+const
+  HeaderSize = sizeof(TGraphicHeader);
+Begin
+  Blob:= TBLOBStream.Create(TBlobField(T.FieldByName(fname)),bmRead);
+  Try
+    Blob.Seek(0, soFromBeginning);
+    With TFileStream.Create(fname +'.jpg', fmCreate) do
+    Try
+      Seek(+HeaderSize,soFromCurrent);
+      CopyFrom(blob, blob.Size)
+    finally
+      free;
+    end;
+  finally
+    Blob.Free;
+  end;
+End;
+procedure TCReportDemoForm.btnCSVClick(Sender: TObject);
+var
+  Stream: TFileStream;
+  i: Integer;
+  OutLine: string;
+  sTemp: string;
+  table1 : TTable;
+  fbmp : TBitmap ;
 begin
-    R := ReportControl1;
-    //FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
-    FileName := ExtractFilepath(application.ExeName)+'creport_demo1.ept';
-    ReportRunTime1.EditReport(FileName);
-end;
-
-
-//procedure TCReportDemoForm.btnVertSpliteClick(Sender: TObject);
-//var j:integer;
-//    CellFont: TLogFont;
-//    cf: TFont;
-//    Filename : string;
-//    ThisCell:TReportCell;
-//    R: TReportControl;
-//begin
-//    R := ReportControl1;
-//    //FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
-//    FileName := ExtractFilepath(application.ExeName)+'creport_demo.ept';
-//    r.SetWndSize(1058,748);
-//    r.NewTable(3 ,2);
-//    r.Lines[0].Select;
-//    r.CombineCell;
-//    ThisCell := ReportControl1.Cells[0,0] ;
-//    ReportControl1.DoVertSplitCell(ThisCell,4);
-//    r.UpdateLines;
-//    r.SaveToFile(Filename);
-//    r.ResetContent;
-//    ReportRunTime1.EditReport(FileName);
-//end;
-
-procedure TCReportDemoForm.btnVertSplit2Click(Sender: TObject);
-var Filename : string;
-    ThisCell:TReportCell;
-    R: TReportControl;
-begin
-    R := ReportControl1;
-    FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
-    r.SetWndSize(1058,748);
-    r.NewTable(3 ,2);
-    r.AddSelectedCell(r.Cells[0,0]);
-    r.AddSelectedCell(r.Cells[1,0]);
-    r.CombineCell;
-    ThisCell := ReportControl1.Cells[0,0] ;
-    ReportControl1.DoVertSplitCell(ThisCell,4);
-    r.UpdateLines;
-    r.SaveToFile(Filename);
-    r.ResetContent;
-    ReportRunTime1.EditReport(FileName);
+  table1 := dataform.table1;
+  Stream := TFileStream.Create('YourFile.csv', fmCreate);
+  table1.first;
+  try
+    while not table1.Eof do
+    begin
+      // You'll need to add your special handling here where OutLine is built
+      OutLine := '';
+      for i := 0 to table1.FieldCount - 1 do
+      begin
+        if not table1.Fields[i].IsBlob then begin
+          sTemp := table1.Fields[i].AsString;
+          OutLine := OutLine + sTemp + ',';
+        end else if not table1.Fields[0].isnull then
+        begin
+          fbmp := TBitmap.create;
+          FBmp.Assign( table1.Fields[i]);
+          if 0 <> fbmp.Height then
+            fbMP.SaveToFile(table1.Fields[0].ASSTRING+'.BMP');
+        end;
+      end;
+      // Remove final unnecessary ','
+      SetLength(OutLine, Length(OutLine) - 1);
+      // Write line to file
+      Stream.Write(OutLine[1], Length(OutLine) * SizeOf(Char));
+      // Write line ending
+      Stream.Write(sLineBreak, Length(sLineBreak));
+      table1.Next;
+    end;
+  finally
+    Stream.Free;  // Saves the file
+  end;
 end;
 end.
