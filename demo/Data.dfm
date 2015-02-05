@@ -12,7 +12,7 @@ object Dataform: TDataform
   end
   object Table2: TTable
     TableName = 'T2.db'
-    Left = 144
+    Left = 160
     Top = 16
   end
   object DataSource1: TDataSource
@@ -22,7 +22,7 @@ object Dataform: TDataform
   end
   object DataSource2: TDataSource
     DataSet = Table2
-    Left = 128
-    Top = 88
+    Left = 240
+    Top = 24
   end
 end

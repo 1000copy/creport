@@ -933,7 +933,7 @@ begin
   Dataset := GetDataset(thisCell.CellText);
   cf:= DataField.Create(Dataset,FieldName) ;
   try
-    If ThisCell.IsHeadField and (not cf.IsNullField) Then
+    If ThisCell.IsHeadField Then
     Begin
       If cf.IsBlobField then
       begin
@@ -1373,10 +1373,11 @@ procedure TReportRunTime.DataPage(Dataset:TDataset);
 Var
   I:Integer;
 Begin
-  Dataset.First;
+
   FRender.FillFixParts;
   FDataLineHeight := 0;
   i := 0;
+  Dataset.First;
   While (i < Dataset.RecordCount) Do
   Begin
     i := FRender.FillPage (i);

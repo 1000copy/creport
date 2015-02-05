@@ -59,7 +59,8 @@ procedure TCReportDemoForm.Button4Click(Sender: TObject);
 begin
 close;
 end;
-
+const filename = 'creport_demo.ept' ; 
+//const filename = 'ut_bmpfield_showtext_why.ept' ;
 
 procedure TCReportDemoForm.Button5Click(Sender: TObject);
 begin
@@ -67,10 +68,11 @@ begin
   ReportRunTime1.SetDataSet('t1',dataform.table1);
   ReportRunTime1.SetDataSet('t2',dataform.table2);
   dataform.Table1.DisableControls;
-  ReportRunTime1.ReportFile:=ExtractFilepath(application.ExeName)+'ut_bmpfield_showtext_why.ept';
+  ReportRunTime1.ReportFile:=ExtractFilepath(application.ExeName)+ filename;
   ReportRunTime1.Setvarvalue('jgtw','1');
   ReportRunTime1.Setvarvalue('head','2');
   ReportRunTime1.Setvarvalue('name','3');
+  dataform.table1.Last ;
   ReportRunTime1.PrintPreview(true);
   dataform.Table1.EnableControls;
 end;
@@ -82,7 +84,7 @@ begin
   ReportRunTime1.SetDataSet('t1',dataform.table1);
   ReportRunTime1.SetDataSet('t2',dataform.table2);
 
-  ReportRunTime1.ReportFile:=ExtractFilepath(application.ExeName)+'creport_demo.ept';
+  ReportRunTime1.ReportFile:=ExtractFilepath(application.ExeName)+filename;
   ReportRunTime1.Setvarvalue('jgtw','1');
   ReportRunTime1.Setvarvalue('head','2');
   ReportRunTime1.Setvarvalue('name','3');
@@ -119,7 +121,7 @@ procedure TCReportDemoForm.Button1Click(Sender: TObject);
 var strFileDir : string;
 begin
   strFileDir := ExtractFileDir(Application.ExeName);
-  self.ReportRunTime1.EditReport(strFileDir+'\'+'ut_bmpfield_showtext_why.ept');
+  self.ReportRunTime1.EditReport(strFileDir+'\'+filename);
 
 end;
 

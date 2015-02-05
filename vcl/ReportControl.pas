@@ -4531,7 +4531,7 @@ begin
 end;
 function DataField.IsNullField( ):Boolean;
 begin
-  result := ds.fieldbyname(GetFieldName()).isnull;
+  result := FDs.fieldbyname(GetFieldName()).isnull;
 end;
 function DataField.DataValue():Extended;
 begin
