@@ -6,7 +6,7 @@ interface
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
   ReportControl, StdCtrls, Db, DBTables, Grids, DBGrids,printers, Buttons,
-  ExtCtrls, ExtDlgs,ReportRunTime,osservice, DBClient;
+  ExtCtrls, ExtDlgs,ReportRunTime,osservice, DBClient, DBCtrls;
 
 type
   TCReportDemoForm = class(TForm)
@@ -20,13 +20,14 @@ type
     Button5: TButton;
     opbm1: TOpenPictureDialog;
     CheckBox1: TCheckBox;
-    ReportControl1: TReportControl;
     SaveDialog1: TSaveDialog;
     Button1: TButton;
     btnVertSplite: TSpeedButton;
     btnVertSplit2: TSpeedButton;
     PrinterSetupDialog1: TPrinterSetupDialog;
     ClientDataSet1: TClientDataSet;
+    dbimg1: TDBImage;
+    ReportControl1: TReportControl;
     procedure Button4Click(Sender: TObject);
     //procedure Button3Click(Sender: TObject);
     procedure Button5Click(Sender: TObject);
@@ -66,7 +67,7 @@ begin
   ReportRunTime1.SetDataSet('t1',dataform.table1);
   ReportRunTime1.SetDataSet('t2',dataform.table2);
   dataform.Table1.DisableControls;
-  ReportRunTime1.ReportFile:=ExtractFilepath(application.ExeName)+'creport_demo.ept';//??̬??дģ??????ѡcreport_demo1.ept
+  ReportRunTime1.ReportFile:=ExtractFilepath(application.ExeName)+'ut_bmpfield_showtext_why.ept';
   ReportRunTime1.Setvarvalue('jgtw','1');
   ReportRunTime1.Setvarvalue('head','2');
   ReportRunTime1.Setvarvalue('name','3');
@@ -93,6 +94,7 @@ procedure TCReportDemoForm.FormCreate(Sender: TObject);
 begin
   dataform.table1.open;
   dataform.table2.open;
+  dataform.table1.Last ;
 end;
 
 
@@ -117,7 +119,7 @@ procedure TCReportDemoForm.Button1Click(Sender: TObject);
 var strFileDir : string;
 begin
   strFileDir := ExtractFileDir(Application.ExeName);
-  self.ReportRunTime1.EditReport(strFileDir+'\'+'xxx.ept');
+  self.ReportRunTime1.EditReport(strFileDir+'\'+'ut_bmpfield_showtext_why.ept');
 
 end;
 
@@ -130,18 +132,34 @@ var j:integer;
     R: TReportControl;
 begin
     R := ReportControl1;
-    FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
-    r.SetWndSize(1058,748);
-    r.NewTable(3 ,2);
-    r.Lines[0].Select;
-    r.CombineCell;
-    ThisCell := ReportControl1.Cells[0,0] ;
-    ReportControl1.DoVertSplitCell(ThisCell,4);
-    r.UpdateLines;
-    r.SaveToFile(Filename);
-    r.ResetContent;
+    //FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
+    FileName := ExtractFilepath(application.ExeName)+'creport_demo1.ept';
     ReportRunTime1.EditReport(FileName);
 end;
+
+
+//procedure TCReportDemoForm.btnVertSpliteClick(Sender: TObject);
+//var j:integer;
+//    CellFont: TLogFont;
+//    cf: TFont;
+//    Filename : string;
+//    ThisCell:TReportCell;
+//    R: TReportControl;
+//begin
+//    R := ReportControl1;
+//    //FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
+//    FileName := ExtractFilepath(application.ExeName)+'creport_demo.ept';
+//    r.SetWndSize(1058,748);
+//    r.NewTable(3 ,2);
+//    r.Lines[0].Select;
+//    r.CombineCell;
+//    ThisCell := ReportControl1.Cells[0,0] ;
+//    ReportControl1.DoVertSplitCell(ThisCell,4);
+//    r.UpdateLines;
+//    r.SaveToFile(Filename);
+//    r.ResetContent;
+//    ReportRunTime1.EditReport(FileName);
+//end;
 
 procedure TCReportDemoForm.btnVertSplit2Click(Sender: TObject);
 var Filename : string;

@@ -1,8 +1,8 @@
 object CReportDemoForm: TCReportDemoForm
   Left = 315
   Top = 238
-  Width = 675
-  Height = 510
+  Width = 752
+  Height = 536
   Caption = 'creport '#31034#20363' ( '#26446#27901#20262'  lzl-self@sohu.com)'
   Color = clBtnFace
   Font.Charset = DEFAULT_CHARSET
@@ -19,8 +19,8 @@ object CReportDemoForm: TCReportDemoForm
   object DBGrid1: TDBGrid
     Left = 40
     Top = 56
-    Width = 513
-    Height = 345
+    Width = 489
+    Height = 209
     Color = clWhite
     DataSource = Dataform.DataSource1
     ImeName = #20116#31508#30011
@@ -102,28 +102,21 @@ object CReportDemoForm: TCReportDemoForm
       TabOrder = 0
       OnClick = CheckBox1Click
     end
-    object ReportControl1: TReportControl
-      Left = 488
-      Top = 8
-      Width = 25
-      Height = 33
-      Visible = False
-    end
   end
   object Panel2: TPanel
     Left = 0
     Top = 0
     Width = 33
-    Height = 472
+    Height = 498
     Align = alLeft
     BevelOuter = bvNone
     TabOrder = 2
   end
   object Panel4: TPanel
-    Left = 557
+    Left = 634
     Top = 0
     Width = 102
-    Height = 472
+    Height = 498
     Align = alRight
     BevelOuter = bvNone
     TabOrder = 3
@@ -226,26 +219,42 @@ object CReportDemoForm: TCReportDemoForm
     end
   end
   object ReportRunTime1: TReportRunTime
-    Left = 519
-    Top = 8
+    Left = 487
+    Top = 424
     Width = 20
     Height = 33
     Visible = False
     AddSpace = True
+  end
+  object dbimg1: TDBImage
+    Left = 40
+    Top = 272
+    Width = 489
+    Height = 105
+    DataField = 'bm'
+    DataSource = Dataform.DataSource1
+    TabOrder = 5
+  end
+  object ReportControl1: TReportControl
+    Left = 360
+    Top = 416
+    Width = 25
+    Height = 33
+    Visible = False
   end
   object opbm1: TOpenPictureDialog
     Filter = 
       'All (*.jpg;*.jpeg;*.bmp;*.ico)|*.jpg;*.jpeg;*.bmp;*.ico|JPEG Ima' +
       'ge File (*.jpg)|*.jpg|JPEG Image File (*.jpeg)|*.jpeg|Bitmaps (*' +
       '.bmp)|*.bmp|Icons (*.ico)|*.ico'
-    Left = 448
-    Top = 8
+    Left = 312
+    Top = 416
   end
   object SaveDialog1: TSaveDialog
     DefaultExt = 'XLS'
     Filter = 'Excl'#25991#20214'|*.XLS'
-    Left = 408
-    Top = 8
+    Left = 272
+    Top = 424
   end
   object PrinterSetupDialog1: TPrinterSetupDialog
     Left = 432

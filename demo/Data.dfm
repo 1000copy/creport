@@ -3,8 +3,8 @@ object Dataform: TDataform
   OnCreate = DataModuleCreate
   Left = 361
   Top = 225
-  Height = 150
-  Width = 215
+  Height = 168
+  Width = 372
   object Table1: TTable
     TableName = 't1.DB'
     Left = 32
