@@ -1049,7 +1049,7 @@ begin
 try
   if OpenPictureDialog1.Execute then
   begin
-    RC.SaveBmp(celldisp,OpenPictureDialog1.FileName);
+    RC.DoLoadBmp(celldisp,OpenPictureDialog1.FileName);
         savebz:=false;
   end;
 except

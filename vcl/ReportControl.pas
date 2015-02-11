@@ -271,6 +271,8 @@ type
       FBackGroundColor: COLORREF);
     procedure DrawContentText(hPaintDC: HDC);
   public
+    procedure LoadBmp(FileName:String);
+    procedure FreeBmp();
     function IsSimpleField: Boolean;
     procedure DrawImage;
     function IsSlave:Boolean;
@@ -2202,6 +2204,34 @@ begin
 
 end;
 
+procedure TReportCell.LoadBmp(FileName: String);
+Var
+  Fpicture: Tpicture;
+Begin
+  Fpicture := Tpicture.Create;
+  try
+    Fpicture.LoadFromFile(filename);
+    fbmp := TBitmap.Create;
+    If Not (Fpicture.Graphic Is Ticon) Then
+      fbmp.Assign(Fpicture.Graphic)
+    Else
+    Begin
+      fbmp.Width := Fpicture.Icon.Width;
+      fbmp.Height := Fpicture.Icon.Height;
+      fbmp.Canvas.Draw(0, 0, Fpicture.Icon);
+    End;
+    FbmpYn := true;
+  finally
+    FreeAndNil(FPicture);
+  end;
+end;
+
+procedure TReportCell.FreeBmp;
+begin              
+  FreeAndNil(FBmp);
+  FbmpYn := false;
+end;
+
 {TReportControl}
 
 Procedure TReportControl.CreateWnd;
@@ -3795,34 +3825,16 @@ begin
   result := TReportCell(TReportLine(FLineList[Row ]).FCells[Col]);
 end;
 
-Procedure TReportControl.DoLoadBmp(Cell: Treportcell; filename: String);  
-Var
-  Fpicture: Tpicture;
-Begin                             
-  Fpicture := Tpicture.Create;
-  Fpicture.LoadFromFile(filename);
-  Cell.fbmp := TBitmap.Create;
-  If Not (Fpicture.Graphic Is Ticon) Then
-    Cell.fbmp.Assign(Fpicture.Graphic)
-  Else
-  Begin
-    Cell.fbmp.Width := Fpicture.Icon.Width;
-    Cell.fbmp.Height := Fpicture.Icon.Height;
-    Cell.fbmp.Canvas.Draw(0, 0, Fpicture.Icon);
-  End;
-  Cell.FbmpYn := true;
-  ShowWindow(Handle, SW_HIDE);
-  ShowWindow(Handle, SW_SHOW);
-  Fpicture := Nil;
-  Fpicture.Free;
+Procedure TReportControl.DoLoadBmp(Cell: Treportcell; filename: String);
+begin
+  Cell.LoadBmp(filename);
+  InvalidateRect(Handle,@Cell.FCellRect,false);
 End;
 
 
 Procedure TReportControl.FreeBmp(Cell: Treportcell);
 Begin
-  Cell.FBmp := Nil;
-  Cell.FBmp.Free;
-  Cell.FbmpYn := false;
+  Cell.FreeBmp;
 End;
 
 
@@ -3854,6 +3866,7 @@ begin
     z2:=trunc(((width-WConst) / FLastPrintPageWidth)*100)
   else
     z2:=100;
+  
   if z1 <= z2 then
     result :=z1
   else
