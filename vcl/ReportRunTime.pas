@@ -32,9 +32,21 @@ type
   private
     FRender:RenderParts ;
     FSummer:TSummer;
+    FpageAll: integer ;
+    FFileName: Tfilename;
+    FAddSpace: boolean;
+    FSetData: TstringList;
+    FVarList: TVarList;
+    FPrintLineList: TList;
+    FDRMap: TDRMappings;
+    FNamedDatasets: TDataList;
+    FHeaderHeight: Integer;
+    Fallprint: Boolean;
+    FPageCount: Integer;
+    FDataLineHeight: Integer;
+  private
     function GetHeaderHeight: Integer;
     procedure CloneLine(ThisLine, Line: TReportLine);
-
     function PageMinHeight: Integer;
     //function HeaderHeight: integer;
     function FooterHeight():integer;
@@ -51,18 +63,6 @@ type
     function RenderBlobOnly(NewCell, ThisCell: TReportCell): boolean;
     function RenderTextOnly(NewCell, ThisCell: TReportCell): String;
   public
-    FpageAll: integer ;
-    FFileName: Tfilename;
-    FAddSpace: boolean;
-    FSetData: TstringList;
-    FVarList: TVarList;
-    FPrintLineList: TList;
-    FDRMap: TDRMappings;
-    FNamedDatasets: TDataList;
-    FHeaderHeight: Integer;         
-    Fallprint: Boolean;
-    FPageCount: Integer;
-    FDataLineHeight: Integer;
     function CloneNewLine(ThisLine: TReportLine): TReportLine;
     Procedure UpdateLines;
     Procedure UpdatePrintLines;
@@ -129,7 +129,6 @@ type
   Published
     Property ReportFile: TFilename Read FFileName Write SetRptFileName;
     Property AddSpace: boolean Read FAddSpace Write SetAddSpace;
-
   End;
   RenderParts = class
   private

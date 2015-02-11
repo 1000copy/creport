@@ -601,8 +601,7 @@ type
     Procedure SaveToFile(FileName: String);overload;
     Procedure SaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);overload;
     Procedure LoadFromFile(FileName: String);
-    Procedure SaveBmp(thiscell: Treportcell; filename: String);
-    Function LoadBmp(thiscell: Treportcell): TBitmap;  
+    Procedure DoLoadBmp(thiscell: Treportcell; filename: String);
     Procedure FreeBmp(thiscell: Treportcell);
     Procedure PrintIt;
     Procedure ResetContent;
@@ -2074,7 +2073,8 @@ begin
       R := FCellRect;
       ReportControl.Os.ScaleRect(R, ReportControl.FReportScale);
       ReportControl.Os.InflateRect(R,-3,-3);
-      acanvas.StretchDraw(R, ReportControl.loadbmp(self));
+      //acanvas.StretchDraw(R, ReportControl.loadbmp(self));
+      acanvas.StretchDraw(R, self.FBmp);
       finally
       ReleaseDC(ReportControl.Handle, ACanvas.Handle);
       ACanvas.Free;
@@ -3795,7 +3795,7 @@ begin
   result := TReportCell(TReportLine(FLineList[Row ]).FCells[Col]);
 end;
 
-Procedure TReportControl.savebmp(thiscell: Treportcell; filename: String);  
+Procedure TReportControl.DoLoadBmp(thiscell: Treportcell; filename: String);  
 Var
   Fpicture: Tpicture;
 Begin
@@ -3822,17 +3822,12 @@ Begin
   Fpicture.Free;
 End;
 
-Function TReportControl.LoadBmp(thiscell: Treportcell): TBitmap;
-Begin
-  result := thiscell.FBmp;
-End;
 
-Procedure TReportControl.FreeBmp(thiscell: Treportcell);
+Procedure TReportControl.FreeBmp(Cell: Treportcell);
 Begin
-  thiscell.FBmp := Nil;
-  thiscell.FBmp.Free;
-
-  thiscell.FbmpYn := false;
+  Cell.FBmp := Nil;
+  Cell.FBmp.Free;
+  Cell.FbmpYn := false;
 End;
 
 
