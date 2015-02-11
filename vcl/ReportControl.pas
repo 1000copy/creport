@@ -572,6 +572,8 @@ type
   Public
     FLastPrintPageWidth, FLastPrintPageHeight: integer;
     PrintPaper:TPrinterPaper;
+        function ZoomRate(height, width: integer): Integer;
+
     property     LeftMargin: Integer read FLeftMargin ;
     property     RightMargin: Integer read FRightMargin ;
     property     TopMargin: Integer read FTopMargin ;
@@ -592,7 +594,6 @@ type
     procedure EachLine_CalcLineHeight(c:TReportLine);
 
     procedure DoVertSplitCell(ThisCell : TReportCell;SplitCount: Integer);
-    function ZoomRate(height,width,HConst, WConst: integer): Integer;
     property SelectedCells: TCellList read FSelectCells ;
     { Public declarations }
     Procedure SetSelectedCellFont(cf: TFont);
@@ -3727,9 +3728,12 @@ End;
 
 Procedure TReportControl.SetScale(Const Value: Integer);
 Begin
-  FReportScale := Value;
-  CalcWndSize;
-  Refresh;
+  if FReportScale <>  Value then
+  begin
+    FReportScale := Value;
+    CalcWndSize;
+    Refresh;
+  end;
 End;
 
 Procedure TReportControl.ResetContent;
@@ -3855,7 +3859,7 @@ begin
     SetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
 end;
 
-function TReportControl.ZoomRate(height,width,HConst,WConst:integer):Integer;
+function TReportControl.ZoomRate(height,width:integer):Integer;
   function PercentRate (a,b:Integer):integer;
   begin
     if  a  < b then
@@ -3864,7 +3868,7 @@ function TReportControl.ZoomRate(height,width,HConst,WConst:integer):Integer;
       result :=100;
   end;
 begin
-  result := min(PercentRate(height-HConst ,FLastPrintPageHeight),PercentRate(width-WConst ,FLastPrintPageWidth));
+  result := min(PercentRate(height ,FLastPrintPageHeight),PercentRate(width ,FLastPrintPageWidth));
 end;
 
 { TSelectedCells }

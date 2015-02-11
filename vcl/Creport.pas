@@ -871,7 +871,8 @@ end;
 // LCJ : ×î¼ÑËõ·Å±ÈÀý
 procedure TCreportForm.SpeedButton8Click(Sender: TObject); // add  
 begin
-  zoomxxx:=RC.ZoomRate (Height,Width,cc.VertMargin_ZoomFit_For_Design,cc.HorzMargin_ZoomFit);
+  //zoomxxx:=RC.ZoomRate (Height,Self.Width,cc.VertMargin_ZoomFit_For_Design,cc.HorzMargin_ZoomFit);
+  zoomxxx:=RC.ZoomRate (Self.ScrollBox1.Height,Self.ScrollBox1.Width);
   RC.FreeEdit;
   ShowWindow(RC.Handle, SW_HIDE);
   RC.ReportScale := zoomxxx;
@@ -966,7 +967,8 @@ end;
 
 procedure TCreportForm.FormResize(Sender: TObject); 
 begin               
-  zoomxxx:= RC.ZoomRate(Height,Width, cc.VertMargin_ZoomFit_For_Design,cc.HorzMargin_ZoomFit);
+  //zoomxxx:= RC.ZoomRate(Height,Width, cc.VertMargin_ZoomFit_For_Design,cc.HorzMargin_ZoomFit);
+  zoomxxx:= RC.ZoomRate(self.ScrollBox1.Height,self.ScrollBox1.Width);
   ShowWindow(RC.Handle, SW_HIDE);
   RC.ReportScale := zoomxxx;
   ScrollBox1Resize(Self);

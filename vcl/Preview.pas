@@ -48,7 +48,6 @@ type
     procedure PrintBtnClick(Sender: TObject);
     procedure FormActivate(Sender: TObject);
   private
-     zoomxxx:integer;
      // LCJ : ×î¼ÑËõ·Å±ÈÀý
     procedure DoFit;
     procedure GoLastPage;
@@ -145,9 +144,8 @@ procedure TPreviewForm.SpeedButton5Click(Sender: TObject);
 begin
   //add  
   RC.FreeEdit;
-  zoomxxx:=zoomxxx-10;
   ShowWindow(RC.Handle, SW_HIDE);
-  RC.ReportScale := zoomxxx;
+  RC.ReportScale := RC.ReportScale -10;
   ScrollBox1Resize(Self);
   ShowWindow(RC.Handle, SW_SHOW);
 
@@ -161,7 +159,6 @@ begin
   width:= 715;
   PageCount := 1;
   CurrentPage := 1;
-  zoomxxx:=75;
   strFileDir := ExtractFileDir(Application.ExeName);
   if copy(strfiledir, length(strfiledir), 1) <> '\' then strFileDir := strFileDir + '\';
 
@@ -175,9 +172,8 @@ procedure TPreviewForm.SpeedButton4Click(Sender: TObject);
 begin
 
   RC.FreeEdit;
-  zoomxxx:=zoomxxx+10;
   ShowWindow(RC.Handle, SW_HIDE);
-  RC.ReportScale := zoomxxx;
+  RC.ReportScale := RC.ReportScale + 10;
   ScrollBox1Resize(Self);
   ShowWindow(RC.Handle, SW_SHOW);
 
@@ -194,7 +190,7 @@ end;
 procedure TPreviewForm.RCMouseUp(Sender: TObject;
   Button: TMouseButton; Shift: TShiftState; X, Y: Integer);
 begin
-  zoomxxx:=100;
+  RC.ReportScale := 100;
 end;
 
 
@@ -212,9 +208,8 @@ end;
 procedure TPreviewForm.DoFit();
 begin
   RC.FreeEdit;
-  zoomxxx := RC.ZoomRate(Height,Width,cc.VertMargin_ZoomFit_ForPreview,cc.HorzMargin_ZoomFit);
   ShowWindow(RC.Handle, SW_HIDE);
-  RC.ReportScale := zoomxxx;
+  RC.ReportScale := RC.ZoomRate(Self.ScrollBox1.Height,self.ScrollBox1.Width);
   ScrollBox1Resize(Self);
   ShowWindow(RC.Handle, SW_SHOW);
 end;
