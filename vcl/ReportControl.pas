@@ -3856,17 +3856,15 @@ begin
 end;
 
 function TReportControl.ZoomRate(height,width,HConst,WConst:integer):Integer;
-var z1,z2:integer;
+  function Percent (a,b:Integer):integer;
+  begin
+    if  a  < b then
+      result :=trunc((a / b)*100)
+    else
+      result :=100;
+  end;
 begin
-  if (height-HConst) < FLastPrintPageHeight then
-    z1:=trunc(((height-HConst) / FLastPrintPageHeight)*100)
-  else
-    z1:=100;
-  if (width-WConst) < FLastPrintPageWidth then
-    z2:=trunc(((width-WConst) / FLastPrintPageWidth)*100)
-  else
-    z2:=100;
-  result := min(z1,z2);
+  result := min(Percent(height-HConst ,FLastPrintPageHeight),Percent(width-WConst ,FLastPrintPageWidth));
 end;
 
 { TSelectedCells }
