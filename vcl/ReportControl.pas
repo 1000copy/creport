@@ -601,8 +601,8 @@ type
     Procedure SaveToFile(FileName: String);overload;
     Procedure SaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);overload;
     Procedure LoadFromFile(FileName: String);
-    Procedure DoLoadBmp(thiscell: Treportcell; filename: String);
-    Procedure FreeBmp(thiscell: Treportcell);
+    Procedure DoLoadBmp(Cell: Treportcell; filename: String);
+    Procedure FreeBmp(Cell: Treportcell);
     Procedure PrintIt;
     Procedure ResetContent;
     Procedure SetScale(Const Value: Integer);
@@ -3795,27 +3795,22 @@ begin
   result := TReportCell(TReportLine(FLineList[Row ]).FCells[Col]);
 end;
 
-Procedure TReportControl.DoLoadBmp(thiscell: Treportcell; filename: String);  
+Procedure TReportControl.DoLoadBmp(Cell: Treportcell; filename: String);  
 Var
   Fpicture: Tpicture;
-Begin
-
+Begin                             
   Fpicture := Tpicture.Create;
-
   Fpicture.LoadFromFile(filename);
-
-  thiscell.fbmp := TBitmap.Create;
-
+  Cell.fbmp := TBitmap.Create;
   If Not (Fpicture.Graphic Is Ticon) Then
-    thiscell.fbmp.Assign(Fpicture.Graphic)
+    Cell.fbmp.Assign(Fpicture.Graphic)
   Else
   Begin
-    thiscell.fbmp.Width := Fpicture.Icon.Width;
-    thiscell.fbmp.Height := Fpicture.Icon.Height;
-    thiscell.fbmp.Canvas.Draw(0, 0, Fpicture.Icon);
+    Cell.fbmp.Width := Fpicture.Icon.Width;
+    Cell.fbmp.Height := Fpicture.Icon.Height;
+    Cell.fbmp.Canvas.Draw(0, 0, Fpicture.Icon);
   End;
-
-  thiscell.FbmpYn := true;
+  Cell.FbmpYn := true;
   ShowWindow(Handle, SW_HIDE);
   ShowWindow(Handle, SW_SHOW);
   Fpicture := Nil;
