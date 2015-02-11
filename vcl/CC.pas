@@ -15,6 +15,10 @@ const
   TwoCellSelectedAtLeast = '请至少选择两个单元格' ;
   IsRegularForCombine  = '选择矩形不够规整，请重选' ;
   NewTableError = '关闭正在编辑的文件后，才能建立新表格。' ;
+  HorzMargin_ZoomFit = 170 ;
+  VertMargin_ZoomFit_ForPreview = 110 ;
+  VertMargin_ZoomFit_For_Design = 160 ;
+  
 function Grey :COLORREF;
 function White :COLORREF;
 function Black :COLORREF;

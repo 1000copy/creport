@@ -5,7 +5,7 @@ interface
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
   ReportControl, StdCtrls, Buttons, Menus, IniFiles,ExtCtrls, ToolWin,
-  ComCtrls, Spin,  printers ,TB97, TB97Tlwn,db, TB97Tlbr, ExtDlgs;
+  ComCtrls, Spin,  printers ,TB97, TB97Tlwn,db, TB97Tlbr, ExtDlgs,cc;
 
 type
   TCreportForm = class(TForm)
@@ -871,7 +871,7 @@ end;
 // LCJ : ×î¼ÑËõ·Å±ÈÀý
 procedure TCreportForm.SpeedButton8Click(Sender: TObject); // add  
 begin
-  zoomxxx:=RC.ZoomRate (Height,Width,160,171);
+  zoomxxx:=RC.ZoomRate (Height,Width,cc.VertMargin_ZoomFit_For_Design,cc.HorzMargin_ZoomFit);
   RC.FreeEdit;
   ShowWindow(RC.Handle, SW_HIDE);
   RC.ReportScale := zoomxxx;
@@ -966,7 +966,7 @@ end;
 
 procedure TCreportForm.FormResize(Sender: TObject); 
 begin               
-  zoomxxx:= RC.ZoomRate(Height,Width, 160,171);
+  zoomxxx:= RC.ZoomRate(Height,Width, cc.VertMargin_ZoomFit_For_Design,cc.HorzMargin_ZoomFit);
   ShowWindow(RC.Handle, SW_HIDE);
   RC.ReportScale := zoomxxx;
   ScrollBox1Resize(Self);

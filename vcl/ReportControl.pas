@@ -3866,11 +3866,7 @@ begin
     z2:=trunc(((width-WConst) / FLastPrintPageWidth)*100)
   else
     z2:=100;
-  
-  if z1 <= z2 then
-    result :=z1
-  else
-    result :=z2;
+  result := min(z1,z2);
 end;
 
 { TSelectedCells }

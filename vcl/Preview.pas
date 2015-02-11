@@ -43,11 +43,10 @@ type
     procedure SpeedButton1Click(Sender: TObject);
     procedure RCMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
-    procedure FormResize(Sender: TObject);
     procedure SpeedButton3Click(Sender: TObject);
     procedure EditEptkClick(Sender: TObject);
-    procedure FormActivate(Sender: TObject);
     procedure PrintBtnClick(Sender: TObject);
+    procedure FormActivate(Sender: TObject);
   private
      zoomxxx:integer;
      // LCJ : ×î¼ÑËõ·Å±ÈÀý
@@ -168,8 +167,8 @@ begin
 
   if FileExists( osservice.PageFileName(1)) then
     RC.LoadFromFile(osservice.PageFileName(1));
-  Setpage;                                     
-  SpeedButton3.OnClick(sender);                
+  Setpage;
+
 end;
 
 procedure TPreviewForm.SpeedButton4Click(Sender: TObject);
@@ -202,15 +201,7 @@ end;
 
 
 
-procedure TPreviewForm.FormResize(Sender: TObject);
-var z1,z2:integer;
-begin
-  zoomxxx:=RC.ZoomRate(Height,Width,110,170);
-  ShowWindow(RC.Handle, SW_HIDE);
-  RC.ReportScale := zoomxxx;
-  ScrollBox1Resize(Self);
-  ShowWindow(RC.Handle, SW_SHOW);
-end;
+
 
 procedure TPreviewForm.SpeedButton3Click(Sender: TObject); 
 begin
@@ -219,15 +210,13 @@ end;
 
 
 procedure TPreviewForm.DoFit();
-
 begin
-  RC.FreeEdit;  
-  zoomxxx := RC.ZoomRate(Height,Width,110,170);
+  RC.FreeEdit;
+  zoomxxx := RC.ZoomRate(Height,Width,cc.VertMargin_ZoomFit_ForPreview,cc.HorzMargin_ZoomFit);
   ShowWindow(RC.Handle, SW_HIDE);
   RC.ReportScale := zoomxxx;
   ScrollBox1Resize(Self);
   ShowWindow(RC.Handle, SW_SHOW);
-
 end;
 
 procedure TPreviewForm.EditEptkClick(Sender: TObject);
@@ -238,10 +227,7 @@ begin
   GoFirstPage;
 end;
 
-procedure TPreviewForm.FormActivate(Sender: TObject);
-begin
-  RC.AllowPreviewEdit:=EditEptk.Visible; 
-end;
+
 
 procedure TPreviewForm.PrintBtnClick(Sender: TObject);
 begin
@@ -336,6 +322,11 @@ begin
   PreviewForm.filename.Caption := ReportFile;
   PreviewForm.ShowModal;
   PreviewForm.Free;
+end;
+
+procedure TPreviewForm.FormActivate(Sender: TObject);
+begin
+  DoFit;
 end;
 
 end.
