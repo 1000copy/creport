@@ -165,6 +165,7 @@ Procedure TReportRunTime.LoadPage(I:integer);
 Var
   FileName: String;
 Begin
+   FileName := osservice.PageFileName(I);
    If FileExists(FileName) Then
         LoadTempFile(FileName);
 End;
@@ -352,15 +353,7 @@ Begin
 End;
 
 Procedure TReportRunTime.LoadReport;
-Var
-  TargetFile: TFileStream;
-  FileFlag: WORD;
-  Count1, Count2, Count3: Integer;
-  ThisLine: TReportLine;
-  ThisCell: TReportCell;
-  I, J, K: Integer;
-  TempPChar: Array[0..3000] Of Char;
-  bHasDataSet: Boolean;
+
 Begin
   try
     InternalLoadFromFile(FFileName,FLineList);
