@@ -2224,6 +2224,7 @@ Begin
     FbmpYn := true;
   finally
     FreeAndNil(FPicture);
+    //http://stackoverflow.com/questions/3159376/which-is-preferable-free-or-freeandnil
   end;
 end;
 
