@@ -35,7 +35,6 @@ type
     FpageAll: integer ;
     FFileName: Tfilename;
     FAddSpace: boolean;
-    FSetData: TstringList;
     FVarList: TVarList;
     FPrintLineList: TList;
     FDRMap: TDRMappings;
@@ -263,7 +262,6 @@ Begin
   FReportScale := 100;
   Width := 0;
   Height := 0;
-  FSetData := Tstringlist.Create;
   FNamedDatasets := TDataList.Create;
   FVarList := TVarList.Create;
   FPrintLineList := TList.Create;
