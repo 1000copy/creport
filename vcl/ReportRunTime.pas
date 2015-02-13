@@ -32,7 +32,6 @@ type
   private
     FRender:RenderParts ;
     FSummer:TSummer;
-    FpageAll: integer ;
     FFileName: Tfilename;
     FAddSpace: boolean;
     FVarList: TVarList;
@@ -41,6 +40,7 @@ type
     FNamedDatasets: TDataList;
     //FHeaderHeight: Integer;
     FPageCount: Integer;
+    FpageAll: integer ;
     FDataLineHeight: Integer;
   private
 //    function GetHeaderHeight: Integer;
