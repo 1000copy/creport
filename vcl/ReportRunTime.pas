@@ -41,7 +41,6 @@ type
     FDRMap: TDRMappings;
     FNamedDatasets: TDataList;
     FHeaderHeight: Integer;
-    Fallprint: Boolean;
     FPageCount: Integer;
     FDataLineHeight: Integer;
   private
@@ -113,7 +112,6 @@ type
     Destructor Destroy; Override;
     Procedure SetDataset(strDatasetName: String; pDataSet: TDataSet);
     Procedure SetVarValue(strVarName, strVarValue: String);
-    Property allprint: boolean Read Fallprint Write Fallprint Default true;
     Procedure PrintPreview(bPreviewMode: Boolean);
     function  EditReport :TReportControl;overload;
     function  EditReport (FileName:String):TReportControl;overload;
@@ -266,7 +264,6 @@ Begin
   FReportScale := 100;
   Width := 0;
   Height := 0;
-  fallprint := true;
   FSetData := Tstringlist.Create;
   FNamedDatasets := TDataList.Create;
   FVarList := TVarList.Create;
