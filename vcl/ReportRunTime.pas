@@ -1419,7 +1419,7 @@ Var
   I :Integer;
 Begin
   try
-    FpageCount := 1;
+    Result := 1;
     If DetailLineIndex <> -1 Then
     Begin
       Dataset.First;
@@ -1430,7 +1430,7 @@ Begin
         inc(FDataLineHeight ,ExpandDataHeight(DetailLineIndex)) ;
         If isPageFull  Then
         Begin
-          inc(FPagecount);
+          inc(Result);
           FDataLineHeight := 0;
         End else begin
           Dataset.Next;
@@ -1438,7 +1438,6 @@ Begin
         end;
       End;
     End ;
-    result := FPagecount;
   except
     on E:Exception do MessageDlg(e.Message,mtInformation,[mbOk], 0);
   end;
