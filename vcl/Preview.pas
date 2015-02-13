@@ -36,7 +36,6 @@ type
     procedure btnFirstClick(Sender: TObject);
     procedure btnLastClick(Sender: TObject);
     procedure SpeedButton2Click(Sender: TObject);
-  //  procedure SpeedButton4Click(Sender: TObject);
     procedure SpeedButton5Click(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure SpeedButton4Click(Sender: TObject);
@@ -46,7 +45,6 @@ type
     procedure SpeedButton3Click(Sender: TObject);
     procedure EditEptkClick(Sender: TObject);
     procedure PrintBtnClick(Sender: TObject);
-    procedure FormActivate(Sender: TObject);
   private
      // LCJ : ×î¼ÑËõ·Å±ÈÀý
     procedure DoFit;
@@ -81,7 +79,7 @@ uses margin, REPmess
 procedure TPreviewForm.ScrollBox1Resize(Sender: TObject);
 begin
 
-///////////////////////////// add  
+///////////////////////////// add
   if ClientRect.Right > RC.Width + 20 then
     RC.Left := (ClientRect.Right - RC.Width-20) div 2
   else
@@ -142,7 +140,7 @@ end;
 
 procedure TPreviewForm.SpeedButton5Click(Sender: TObject);
 begin
-  //add  
+  //add
   RC.FreeEdit;
   ShowWindow(RC.Handle, SW_HIDE);
   RC.ReportScale := RC.ReportScale -10;
@@ -157,9 +155,7 @@ begin
   width:= 715;
   PageCount := 1;
   CurrentPage := 1;
-  if FileExists( osservice.PageFileName(1)) then
-    RC.LoadFromFile(osservice.PageFileName(1));
-  Setpage; 
+  GoPage(1);
 end;
 
 procedure TPreviewForm.SpeedButton4Click(Sender: TObject);
@@ -186,12 +182,6 @@ procedure TPreviewForm.RCMouseUp(Sender: TObject;
 begin
   RC.ReportScale := 100;
 end;
-
-
-
-
-
-
 
 procedure TPreviewForm.SpeedButton3Click(Sender: TObject); 
 begin
@@ -257,6 +247,7 @@ begin
 end;
 procedure TPreviewForm.GoPage(CurrentPage:Integer);
 var
+  fn : string;
   nPrevScale: Integer;
   procedure RuleApply;
   begin
@@ -280,17 +271,14 @@ begin
   nPrevScale := RC.ReportScale;
   SetPage;
   LockWindowUpdate(Handle);
-  ReloadPageFile(CurrentPage);
+  fn := osservice.PageFileName(CurrentPage) ;
+  RC.LoadFromFile(fn);
   RC.ReportScale := nPrevScale;
   LockWindowUpdate(0);
   RuleApply ;
-
 end;
 procedure TPreviewForm.ReloadPageFile(CurrentPage:Integer);
 begin
-  RC.LoadFromFile(
-    osservice.PageFileName(CurrentPage)
-  );
 end;
 
 
@@ -309,11 +297,6 @@ begin
   PreviewForm.filename.Caption := ReportFile;
   PreviewForm.ShowModal;
   PreviewForm.Free;
-end;
-
-procedure TPreviewForm.FormActivate(Sender: TObject);
-begin
-  DoFit;
 end;
 
 end.
