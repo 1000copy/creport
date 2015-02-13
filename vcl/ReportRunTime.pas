@@ -38,12 +38,10 @@ type
     FPrintLineList: TList;
     FDRMap: TDRMappings;
     FNamedDatasets: TDataList;
-    //FHeaderHeight: Integer;
     FPageIndex: Integer;
     FpageAll: integer ;
     FDataLineHeight: Integer;
   private
-//    function GetHeaderHeight: Integer;
     procedure CloneLine(ThisLine, Line: TReportLine);
     function PageMinHeight: Integer;
     function FooterHeight():integer;
