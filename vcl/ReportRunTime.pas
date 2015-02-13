@@ -127,12 +127,14 @@ type
     Procedure Print(IsDirectPrint: Boolean);
     Procedure Resetself;
     Function Cancelprint: boolean;
-  // TEST section
-  Published
     Property ReportFile: TFilename Read FFileName Write SetReportFileName;
+
+    Published
     Property AddSpace: boolean Read FAddSpace Write SetAddSpace;
-    function FillHeadList: TList;     
-  End;
+    // TEST section
+    Published
+    function FillHeadList: TList;
+    End;
   RenderParts = class
   private
     FRC:TReportRuntime;
