@@ -43,7 +43,6 @@ type
     FDataLineHeight: Integer;
   private
     procedure CloneLine(ThisLine, Line: TReportLine);
-    function PageMinHeight: Integer;
     function FooterHeight():integer;
     function SumHeight():integer;
     function ExpandLine(HasDataNo:integer):TReportLine;
@@ -370,10 +369,6 @@ end;
 function TReportRunTime.isPageFull:boolean;
 begin
   result := (FtopMargin + getHeadHeight + FDataLineHeight + FooterHeight + FBottomMargin >height);
-end;
-function TReportRunTime.PageMinHeight:Integer;
-begin
-  result := FtopMargin + getHeadHeight + FooterHeight + FBottomMargin ;
 end;
 function TReportRunTime.HasEmptyRoomLastPage:Boolean;
 begin
