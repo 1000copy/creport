@@ -297,7 +297,6 @@ procedure TPreviewForm.ReloadPageFile(CurrentPage:Integer);
 begin
   RC.LoadFromFile(
     osservice.PageFileName(CurrentPage)
-
   );
 end;
 

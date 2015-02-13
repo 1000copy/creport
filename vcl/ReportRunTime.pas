@@ -40,14 +40,13 @@ type
     FPrintLineList: TList;
     FDRMap: TDRMappings;
     FNamedDatasets: TDataList;
-    FHeaderHeight: Integer;
+    //FHeaderHeight: Integer;
     FPageCount: Integer;
     FDataLineHeight: Integer;
   private
-    function GetHeaderHeight: Integer;
+//    function GetHeaderHeight: Integer;
     procedure CloneLine(ThisLine, Line: TReportLine);
     function PageMinHeight: Integer;
-    //function HeaderHeight: integer;
     function FooterHeight():integer;
     function SumHeight():integer;
     function ExpandLine(HasDataNo:integer):TReportLine;
@@ -270,7 +269,7 @@ Begin
   FPrintLineList := TList.Create;
   FDRMap := TDRMappings.Create;
   repmessForm := TrepmessForm.Create(Self);
-  FHeaderHeight := 0;            
+  //FHeaderHeight := 0;
   If FFileName <> '' Then
     LoadReport;
 End;
@@ -355,7 +354,7 @@ Begin
     InternalLoadFromFile(FFileName,FLineList);
     PrintPaper.Batch(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
     UpdateLines;
-    FHeaderHeight := GetHeaderHeight;
+    //FHeaderHeight := GetHeaderHeight;
   except
     on E:Exception do ShowMessage(e.message);
     end;
@@ -956,30 +955,30 @@ Begin
   FDRMap.RuntimeMapping(NewCell, ThisCell);
   NewCell.CalcHeight;
 End;
-function TReportRunTime.GetHeaderHeight:Integer;
-var I,J,FHeaderHeight :Integer; ThisLine:TReportLine;bHasDataSet:boolean;  ThisCell :TReportCell;
-begin
-    FHeaderHeight := 0;
-
-  For I := 0 To FLineList.Count - 1 Do
-  Begin
-    ThisLine := TReportLine(FLineList[I]);
-    bHasDataSet := False;
-    For J := 0 To ThisLine.FCells.Count - 1 Do
-    Begin
-      ThisCell := TReportCell(ThisLine.FCells[J]);
-
-      If Length(ThisCell.FCellText) > 0 Then  //如果当前CELL有字符，判断是否有数据集
-      Begin
-        If ThisCell.FCellText[1] = '#' Then
-          bHasDataSet := True;
-      End;
-    End;
-    If Not bHasDataSet Then
-      FHeaderHeight := FHeaderHeight + ThisLine.LineHeight;
-  End;
-  result := FHeaderHeight;
-end;
+//function TReportRunTime.GetHeaderHeight:Integer;
+//var I,J,FHeaderHeight :Integer; ThisLine:TReportLine;bHasDataSet:boolean;  ThisCell :TReportCell;
+//begin
+//    FHeaderHeight := 0;
+//
+//  For I := 0 To FLineList.Count - 1 Do
+//  Begin
+//    ThisLine := TReportLine(FLineList[I]);
+//    bHasDataSet := False;
+//    For J := 0 To ThisLine.FCells.Count - 1 Do
+//    Begin
+//      ThisCell := TReportCell(ThisLine.FCells[J]);
+//
+//      If Length(ThisCell.FCellText) > 0 Then  //如果当前CELL有字符，判断是否有数据集
+//      Begin
+//        If ThisCell.FCellText[1] = '#' Then
+//          bHasDataSet := True;
+//      End;
+//    End;
+//    If Not bHasDataSet Then
+//      FHeaderHeight := FHeaderHeight + ThisLine.LineHeight;
+//  End;
+//  result := FHeaderHeight;
+//end;
 function TReportRunTime.CloneEmptyLine(thisLine:TReportLine):TReportLine;
 var j:integer; templine:treportline;
 Var
