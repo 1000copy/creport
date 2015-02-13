@@ -39,7 +39,7 @@ type
     FDRMap: TDRMappings;
     FNamedDatasets: TDataList;
     //FHeaderHeight: Integer;
-    FPageCount: Integer;
+    FPageIndex: Integer;
     FpageAll: integer ;
     FDataLineHeight: Integer;
   private
@@ -115,7 +115,7 @@ type
     function  EditReport (FileName:String):TReportControl;overload;
     Function shpreview: boolean;
     Function PrintSET(prfile: String): boolean; 
-    Procedure updatepage;           
+    Procedure updatepage;
     procedure PreparePrintk();
     Procedure loadfile(value: tfilename);
     Procedure Print(IsDirectPrint: Boolean);
@@ -404,9 +404,9 @@ var
 begin
   PrintDlg := TPrintDialog.Create(Self);
   PrintDlg.MinPage := 1;
-  PrintDlg.MaxPage := FPageCount;
+  PrintDlg.MaxPage := FPageAll;
   PrintDlg.FromPage := 1;
-  PrintDlg.ToPage := FPageCount;
+  PrintDlg.ToPage := FPageAll;
   PrintDlg.Options := [poPageNums];
   If Not PrintDlg.Execute Then
     Begin
@@ -462,7 +462,7 @@ Begin
         REPmessform.Hide;
 			End;
 			FromPage := 1;
-			ToPage  := FPageCount;
+			ToPage  := FPageAll;
 			if not GetPrintRange(frompage,topage) then exit;
       PrintRange('C_Report',Frompage,ToPage);
 		Except
@@ -555,7 +555,7 @@ Begin
         FpageAll := DoPageCount;
         REPmessform.show;
         PreparePrintk( );
-        TPreviewForm.Action(ReportFile,FPageCount,bPreviewMode);
+        TPreviewForm.Action(ReportFile,FPageAll,bPreviewMode);
       End;
     Except
       MessageDlg(cc.ErrorRendering, mtInformation, [mbOk], 0);
@@ -579,7 +579,7 @@ Begin
     REPmessform.show;
     PreparePrintk( );
     REPmessform.Hide;
-    PreviewForm.PageCount := FPageCount;
+    PreviewForm.PageCount := FPageAll;
     PreviewForm.SetPage;
     result := true;
   End
@@ -762,7 +762,7 @@ Begin
   REPmessform.show;
   PreparePrintk();
   REPmessform.Hide;
-  PreviewForm.PageCount := FPageCount;
+  PreviewForm.PageCount := FPageAll;
   PreviewForm.SetPage;
 End;
 Procedure Register;
@@ -1370,9 +1370,9 @@ Begin
     If isPageFull Then
     Begin
       CheckError(FRender.FData.Count = 0,cc.RenderException);
-      FRender.SavePage(fpagecount, FpageAll);
+      FRender.SavePage(FPageIndex, FpageAll);
       FRender.Reset;
-      inc(Fpagecount);
+      inc(FPageIndex);
     End;
     application.ProcessMessages;
   End;
@@ -1381,7 +1381,7 @@ Begin
     If (Faddspace) And (HasEmptyRoomLastPage) Then begin
       PaddingEmptyLine(DetailLineIndex,FRender.FData );
     end;
-    FRender.SaveLastPage(fpagecount, FpageAll);
+    FRender.SaveLastPage(FPageIndex, FpageAll);
   end; 
 End ;
 procedure TReportRunTime.FreeList;
@@ -1398,7 +1398,7 @@ Var
 Begin
   try
     FSummer.ResetAll;
-    FpageCount := 1;
+    FPageIndex := 1;
     If DetailLineIndex = -1 Then
     begin
        FRender.FillHead();
