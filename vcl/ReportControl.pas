@@ -2195,14 +2195,13 @@ end;
 
 procedure TReportCell.LoadCF(cf: DataField);
 begin
-     If Not cf.IsNullField Then begin
-      fbmp := TBitmap.create;
-      FBmp.Assign(cf.GetField);
-      FbmpYn := true;
-      // 图片的话，默认的文字就不必显示了。(GRAPHIC)之类的
-      CellText := '';
-     end;
-
+   If Not cf.IsNullField Then begin
+    fbmp := TBitmap.create;
+    FBmp.Assign(cf.GetField);
+    FbmpYn := true;
+    // 图片的话，默认的文字就不必显示了。(GRAPHIC)之类的
+    CellText := '';
+   end;
 end;
 
 procedure TReportCell.LoadBmp(FileName: String);

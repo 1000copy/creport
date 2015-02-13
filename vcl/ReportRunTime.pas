@@ -28,6 +28,7 @@ type
   public
     constructor Create;
   end;
+  //bridge for LineList -> PrintLineList
   TReportRunTime = Class(TReportControl)
   private
     FRender:RenderParts ;
@@ -41,71 +42,80 @@ type
     FPageIndex: Integer;
     FpageAll: integer ;
     FDataLineHeight: Integer;
-  private
-    procedure CloneLine(ThisLine, Line: TReportLine);
-    function FooterHeight():integer;
-    function SumHeight():integer;
-    function ExpandLine(HasDataNo:integer):TReportLine;
-    function RenderCellText(NewCell,ThisCell:TReportCell):String;
-    function IsDataField(s: String): Boolean;
-    function GetValue(ThisCell: TReportCell): String;
-    function ExpandDataHeight(HasDataNo:integer): integer;
-    function DetailCellIndex(NO:integer) :Integer;
+    //dataset concerns
+    procedure ClearDataset;
     function Dataset(): TDataset;
-    procedure DataPage(Dataset: TDataset);
-    procedure FreeList;
-    function RenderBlobOnly(NewCell, ThisCell: TReportCell): boolean;
-    function RenderTextOnly(NewCell, ThisCell: TReportCell): String;
-  public
-    function CloneNewLine(ThisLine: TReportLine): TReportLine;
-    Procedure UpdateLines;
-    Procedure UpdatePrintLines;
-    Procedure PrintOnePage;
-    Procedure LoadReport;
     Function GetDatasetName(strCellText: String): String;
     Function GetDataset(strCellText: String): TDataset;
     Function DatasetByName(strDatasetName: String): TDataset;
+    function GetDataSetFromCell(HasDataNo,CellIndex:Integer):TDataset;
+    Procedure SetDataset(strDatasetName: String; pDataSet: TDataSet);
+    // Line copy
+    procedure CloneLine(ThisLine, Line: TReportLine);
+    function ExpandLine(HasDataNo:integer):TReportLine;
+    function CloneEmptyLine(thisLine: TReportLine): TReportLine;
+    function CloneNewLine(ThisLine: TReportLine): TReportLine;
+    // height calc..er
+    function FooterHeight():integer;
+    function SumHeight():integer;
+    function IsLastPageFull: Boolean;
+    function isPageFull: boolean;
+    function GetHeadHeight: integer;
+    // var
+    function GetValue(ThisCell: TReportCell): String;
     Function GetVarValue(strVarName: String): String;
-    Function GetFieldName(strCellText: String): String;
+    // file
     Procedure SetReportFileName(Const Value: TFilename);
     Procedure SaveTempFile(FileName:string;PageNumber, Fpageall: Integer);overload;
     Procedure SaveTempFile(PageNumber, Fpageall: Integer);overload;
+    Procedure LoadReport;
+    Procedure LoadTempFile(strFileName: String);
+    function ReadyFileName(PageNumber, Fpageall: Integer): String;
+    Procedure DeleteAllTempFiles;
+    procedure LoadPage(I: integer);
+    // sum
     Function setSumAllYg(fm, ss: String): String;
     Function setSumpageYg(fm, ss: String): String;
-    Procedure LoadTempFile(strFileName: String);
-    Procedure DeleteAllTempFiles;
-    Procedure SetNewCell(spyn: boolean; NewCell, ThisCell: TReportCell);
-    Procedure SetAddSpace(Const Value: boolean);
-    procedure SetEmptyCell(NewCell, ThisCell: TReportCell);
-    function HasEmptyRoomLastPage: Boolean;
-    function IsLastPageFull: Boolean;
-    function isPageFull: boolean;
-    function CloneEmptyLine(thisLine: TReportLine): TReportLine;
-    function FillHeadList(): TList;
-    function DetailLineIndex:Integer;
-    function GetHasDataPosition(var HasDataNo,
-      cellIndex: integer): Boolean;
+    procedure SumCell(ThisCell: TReportCell; j: Integer);
+    procedure SumLine(HasDataNo: integer);
+    // list
     function AppendList(l1, l2: TList): Boolean;
     function FillFootList(): TList;
     function FillSumList(): TLineList;
     procedure JoinAllList(FPrintLineList, HandLineList, dataLineList,
-      SumAllList, HootLineList: TList;IsLastPage:Boolean);
+    SumAllList, HootLineList: TList;IsLastPage:Boolean);
+
+      
+    function RenderCellText(NewCell,ThisCell:TReportCell):String;
+    function IsDataField(s: String): Boolean;
+    function ExpandDataHeight(HasDataNo:integer): integer;
+    function DetailCellIndex(NO:integer) :Integer;
+    procedure DataPage(Dataset: TDataset);
+    procedure FreeList;
+    function RenderBlobOnly(NewCell, ThisCell: TReportCell): boolean;
+    function RenderTextOnly(NewCell, ThisCell: TReportCell): String;
+    Procedure UpdateLines;
+    Procedure UpdatePrintLines;
+    Procedure PrintOnePage;
+    Function GetFieldName(strCellText: String): String;
+
+    Procedure SetNewCell(spyn: boolean; NewCell, ThisCell: TReportCell);
+    Procedure SetAddSpace(Const Value: boolean);
+    procedure SetEmptyCell(NewCell, ThisCell: TReportCell);
+    function HasEmptyRoomLastPage: Boolean;
+    function DetailLineIndex:Integer;
+    function GetHasDataPosition(var HasDataNo,
+      cellIndex: integer): Boolean;
     procedure PaddingEmptyLine(hasdatano: integer; var dataLineList: TLineList);overload;
-    procedure SumCell(ThisCell: TReportCell; j: Integer);
-    procedure SumLine(HasDataNo: integer);
-    function DoPageCount(): integer;
-    function GetDataSetFromCell(HasDataNo,CellIndex:Integer):TDataset;
     function GetPrintRange(var A, Z: Integer): boolean;
-    procedure LoadPage(I: integer);
+
     procedure PrintRange(Title: String; FromPage, ToPage: Integer);
-    function ReadyFileName(PageNumber, Fpageall: Integer): String;
   Protected
     function RenderText(ThisCell: TReportCell;PageNumber, Fpageall: Integer): String;override;
   Public
-    procedure ClearDataset;
+    function DoPageCount(): integer;
     Constructor Create(AOwner: TComponent); Override;
     Destructor Destroy; Override;
-    Procedure SetDataset(strDatasetName: String; pDataSet: TDataSet);
     Procedure SetVarValue(strVarName, strVarValue: String);
     Procedure PrintPreview(bPreviewMode: Boolean);
     function  EditReport :TReportControl;overload;
@@ -117,10 +127,11 @@ type
     Procedure Print(IsDirectPrint: Boolean);
     Procedure Resetself;
     Function Cancelprint: boolean;
-    function GetHeadHeight: integer;
+  // TEST section
   Published
     Property ReportFile: TFilename Read FFileName Write SetReportFileName;
     Property AddSpace: boolean Read FAddSpace Write SetAddSpace;
+    function FillHeadList: TList;     
   End;
   RenderParts = class
   private
@@ -998,29 +1009,7 @@ begin
   Line.UpdateLineHeight;
   result := Line;
 end;
-function TReportRunTime.FillHeadList():TList;
-var
-  LineList:TLineList;
-  ThisLine, Line: TReportLine;
-  i:Integer;
-begin
-   LineList := TLineList.Create(self);
-   try
-     For i := 0 To FLineList.Count - 1 Do
-     Begin
-      ThisLine := FlineList[i];
-      if Not ThisLine.IsDetailLine then
-      begin
-        Line := TReportLine.Create;
-        LineList.Add(Line);
-        CloneLine(ThisLine,Line);
-      end else
-        break;
-     End;
-   finally
-     result :=   LineList ;
-   end;
-end;
+
 
 function TReportRunTime.GetHeadHeight:integer;
 var
@@ -1435,6 +1424,12 @@ begin
      FHead :=  R ;
    end;
 end;
+function TReportRunTime.FillHeadList():TList;
+begin
+  FRender.FillHead;
+  result :=   FRender.FLineList;
+end;
+
 procedure RenderParts.FillFoot;
   Var
   I :Integer;
