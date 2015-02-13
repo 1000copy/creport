@@ -1707,9 +1707,6 @@ begin
       T1.free;
     end;
 end;
-//begin
-//  // 再写一个单纯的GetheadHeight，替代FillHeadList ,但是不管何时，必须保证两者获得的Height相等。
-//end;
 
 initialization
   RegisterTests('Report',[

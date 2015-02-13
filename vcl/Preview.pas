@@ -16,8 +16,8 @@ type
     PrevPageBtn: TSpeedButton;
     NextPageBtn: TSpeedButton;
     CloseBtn: TSpeedButton;
-    But1: TSpeedButton;
-    But2: TSpeedButton;
+    btnFirst: TSpeedButton;
+    btnLast: TSpeedButton;
     SpeedButton2: TSpeedButton;
     SpeedButton4: TSpeedButton;
     SpeedButton5: TSpeedButton;
@@ -33,8 +33,8 @@ type
     procedure NextPageBtnClick(Sender: TObject);
     procedure PrevPageBtnClick(Sender: TObject);
     procedure CloseBtnClick(Sender: TObject);
-    procedure But1Click(Sender: TObject);
-    procedure But2Click(Sender: TObject);
+    procedure btnFirstClick(Sender: TObject);
+    procedure btnLastClick(Sender: TObject);
     procedure SpeedButton2Click(Sender: TObject);
   //  procedure SpeedButton4Click(Sender: TObject);
     procedure SpeedButton5Click(Sender: TObject);
@@ -123,13 +123,13 @@ begin
   RC.Refresh;
 end;
 
-procedure TPreviewForm.But1Click(Sender: TObject);
+procedure TPreviewForm.btnFirstClick(Sender: TObject);
 begin
   GoFirstPage;
 end;
 
 
-procedure TPreviewForm.But2Click(Sender: TObject);
+procedure TPreviewForm.btnLastClick(Sender: TObject);
 begin
   GoLastPage;
 end;
@@ -152,20 +152,14 @@ begin
 end;
 
 procedure TPreviewForm.FormCreate(Sender: TObject);
-var
-  strFileDir: TFileName;
 begin
   height:=550;
   width:= 715;
   PageCount := 1;
   CurrentPage := 1;
-  strFileDir := ExtractFileDir(Application.ExeName);
-  if copy(strfiledir, length(strfiledir), 1) <> '\' then strFileDir := strFileDir + '\';
-
   if FileExists( osservice.PageFileName(1)) then
     RC.LoadFromFile(osservice.PageFileName(1));
-  Setpage;
-
+  Setpage; 
 end;
 
 procedure TPreviewForm.SpeedButton4Click(Sender: TObject);
@@ -269,22 +263,21 @@ var
     if CurrentPage >= PageCount then
     begin
       NextPageBtn.Enabled := False;
-      but2.enabled := false;
+      btnLast.enabled := false;
+      btnFirst.Enabled := True;
       PrevPageBtn.Enabled := True;
-      but1.Enabled := True;
     end;
     if CurrentPage <= 1 then
     begin
       PrevPageBtn.Enabled := False;
-      but1.enabled := false;
       NextPageBtn.Enabled := True;
-      but2.Enabled := true;
+      btnLast.enabled := True;
+      btnFirst.Enabled := False;
     end;
   end;
 begin
   RuleApply  ;
   nPrevScale := RC.ReportScale;
-
   SetPage;
   LockWindowUpdate(Handle);
   ReloadPageFile(CurrentPage);

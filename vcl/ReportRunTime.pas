@@ -68,7 +68,7 @@ type
     Function DatasetByName(strDatasetName: String): TDataset;
     Function GetVarValue(strVarName: String): String;
     Function GetFieldName(strCellText: String): String;
-    Procedure SetRptFileName(Const Value: TFilename);
+    Procedure SetReportFileName(Const Value: TFilename);
     Procedure SaveTempFile(FileName:string;PageNumber, Fpageall: Integer);overload;
     Procedure SaveTempFile(PageNumber, Fpageall: Integer);overload;
     Function setSumAllYg(fm, ss: String): String;
@@ -115,13 +115,12 @@ type
     Function PrintSET(prfile: String): boolean; 
     Procedure updatepage;
     procedure PreparePrintk();
-    Procedure loadfile(value: tfilename);
     Procedure Print(IsDirectPrint: Boolean);
     Procedure Resetself;
     Function Cancelprint: boolean;
     function GetHeadHeight: integer;
   Published
-    Property ReportFile: TFilename Read FFileName Write SetRptFileName;
+    Property ReportFile: TFilename Read FFileName Write SetReportFileName;
     Property AddSpace: boolean Read FAddSpace Write SetAddSpace;
   End;
   RenderParts = class
@@ -595,7 +594,7 @@ Begin
   FNamedDatasets.Add(TempItem);
 End;
 
-Procedure TReportRunTime.SetRptFileName(Const Value: TFilename);
+Procedure TReportRunTime.SetReportFileName(Const Value: TFilename);
 Begin
   FFileName := Value;
   If Value <> '' Then
@@ -684,12 +683,6 @@ Begin
 End;
 
 
-Procedure TReportRunTime.loadfile(value: tfilename);
-Begin
-  FFileName := Value;
-  If Value <> '' Then
-    LoadReport;
-End;
 
 Function treportruntime.cancelprint: boolean;
 Begin
