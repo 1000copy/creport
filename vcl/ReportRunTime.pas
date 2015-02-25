@@ -43,25 +43,28 @@ type
     FPageIndex: Integer;
     FpageAll: integer ;
     FDataLineHeight: Integer;
-    //dataset concerns
-    procedure ClearDataset;
+        //dataset concerns
     function Dataset(): TDataset;
     Function GetDatasetName(strCellText: String): String;
     Function GetDataset(strCellText: String): TDataset;
     Function DatasetByName(strDatasetName: String): TDataset;
     function GetDataSetFromCell(HasDataNo,CellIndex:Integer):TDataset;
+  public
     Procedure SetDataset(strDatasetName: String; pDataSet: TDataSet);
-    // Line copy
-    procedure CloneLine(ThisLine, Line: TReportLine);
-    function ExpandLine(HasDataNo:integer):TReportLine;
-    function CloneEmptyLine(thisLine: TReportLine): TReportLine;
-    function CloneNewLine(ThisLine: TReportLine): TReportLine;
-    // height calc..er
+    procedure ClearDataset;
+  private
+        // height calc..er
     function FooterHeight():integer;
     function SumHeight():integer;
     function IsLastPageFull: Boolean;
     function isPageFull: boolean;
     function GetHeadHeight: integer;
+    // Line copy
+    procedure CloneLine(ThisLine, Line: TReportLine);
+    function ExpandLine(HasDataNo:integer):TReportLine;
+    function CloneEmptyLine(thisLine: TReportLine): TReportLine;
+    function CloneNewLine(ThisLine: TReportLine): TReportLine;
+
     // var
     function GetValue(ThisCell: TReportCell): String;
     Function GetVarValue(strVarName: String): String;
@@ -86,7 +89,7 @@ type
     procedure JoinAllList(FPrintLineList, HandLineList, dataLineList,
     SumAllList, HootLineList: TList;IsLastPage:Boolean);
 
-      
+    // todo
     function RenderCellText(NewCell,ThisCell:TReportCell):String;
     function IsDataField(s: String): Boolean;
     function ExpandDataHeight(HasDataNo:integer): integer;
@@ -100,7 +103,7 @@ type
     Procedure PrintOnePage;
     Function GetFieldName(strCellText: String): String;
 
-    Procedure SetNewCell(spyn: boolean; NewCell, ThisCell: TReportCell);
+    Procedure SetNewCell(NewCell, ThisCell: TReportCell);
     Procedure SetAddSpace(Const Value: boolean);
     procedure SetEmptyCell(NewCell, ThisCell: TReportCell);
     function HasEmptyRoomLastPage: Boolean;
@@ -135,6 +138,7 @@ type
     // TEST section
     Published
     function FillHeadList: TList;
+
     End;
   RenderParts = class
   private
@@ -370,7 +374,11 @@ End;
 
 Procedure TReportRunTime.SetEmptyCell(NewCell, ThisCell:TReportCell);
 Begin
-  setNewCell(true,NewCell,ThisCell);
+  NewCell.CloneFrom(ThisCell);
+  NewCell.CellText := '';
+  NewCell.FLogFont := ThisCell.FLogFont;
+  FDRMap.RuntimeMapping(NewCell, ThisCell);
+  NewCell.CalcHeight;
 End;
 
 //  增加 ,完全重写的 PreparePrint,并增加了用空行补满一页 统计等功能
@@ -939,15 +947,11 @@ begin
   end;
 end;
 
-Procedure TReportRunTime.SetNewCell(spyn: boolean; NewCell, ThisCell:
+Procedure TReportRunTime.SetNewCell(NewCell, ThisCell:
   TReportCell);
-
 Begin
   NewCell.CloneFrom(ThisCell);
-  If Not spyn Then
-    NewCell.CellText:= RenderCellText(newCell,ThisCell)
-  Else
-    NewCell.CellText := '';
+  NewCell.CellText:= RenderCellText(newCell,ThisCell);
   NewCell.FLogFont := ThisCell.FLogFont;
   FDRMap.RuntimeMapping(NewCell, ThisCell);
   NewCell.CalcHeight;
@@ -987,7 +991,7 @@ begin
     NewCell := TReportCell.Create(Self);
     Line.FCells.Add(NewCell);
     NewCell.FOwnerLine := Line;
-    SetNewCell(False, newcell, thiscell);
+    SetNewCell(newcell, thiscell);
   End;
   Line.UpdateLineHeight;  
 end;
@@ -1007,7 +1011,7 @@ begin
     NewCell := TReportCell.Create(Self);
     Line.FCells.Add(NewCell);
     NewCell.FOwnerLine := Line;
-    SetNewCell(False, newcell, thiscell);
+    SetNewCell( newcell, thiscell);
   End;
   Line.UpdateLineHeight;
   result := Line;
@@ -1122,7 +1126,7 @@ begin
       NewCell := TReportCell.Create(Self);
       TempLine.FCells.Add(NewCell);
       NewCell.FOwnerLine := TempLine;
-      setnewcell(false, newcell, thiscell);
+      SetNewCell( newcell, thiscell);
     End;
     If (UpperCase(copy(ThisCell.FCellText, 1, 7)) <> '`SUMALL') Then
       TempLine.UpdateLineHeight;
@@ -1164,7 +1168,7 @@ begin
       NewCell := TReportCell.Create(Self);
       TempLine.FCells.Add(NewCell);
       NewCell.FOwnerLine := TempLine;
-      setnewcell(false, newcell, thiscell);
+      SetNewCell( newcell, thiscell);
     End;                              //for j
     TempLine.UpdateLineHeight;
   End;
@@ -1241,7 +1245,7 @@ begin
     NewCell := TReportCell.Create(Self);
     TempLine.FCells.Add(NewCell);
     NewCell.FOwnerLine := TempLine;
-    setnewcell(false, newcell, thiscell);
+    SetNewCell(newcell, thiscell);
   End; //for j
   TempLine.UpdateLineHeight;
   result := TempLine;
