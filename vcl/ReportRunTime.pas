@@ -49,6 +49,7 @@ type
     Function GetDataset(strCellText: String): TDataset;
     Function DatasetByName(strDatasetName: String): TDataset;
     function GetDataSetFromCell(HasDataNo,CellIndex:Integer):TDataset;
+    function RenderTextOnly1(NewCell, ThisCell: TReportCell): String;
   public
     Procedure SetDataset(strDatasetName: String; pDataSet: TDataSet);
     procedure ClearDataset;
@@ -97,7 +98,7 @@ type
     procedure DataPage(Dataset: TDataset);
     procedure FreeList;
     function RenderBlobOnly(NewCell, ThisCell: TReportCell): boolean;
-    function RenderTextOnly(NewCell, ThisCell: TReportCell): String;
+    procedure RenderTextOnly(NewCell, ThisCell: TReportCell);
     Procedure UpdateLines;
     Procedure UpdatePrintLines;
     Procedure PrintOnePage;
@@ -866,10 +867,60 @@ end;
 procedure TReportRunTime.RenderCellText(NewCell,ThisCell:TReportCell);
 begin
 //  Result := RenderTextOnly(NewCell,ThisCell);
-  NewCell.CellText:= RenderTextOnly(NewCell,ThisCell);
+  RenderTextOnly(NewCell,ThisCell);
   RenderBlobOnly(NewCell,ThisCell);
 end;
-function TReportRunTime.RenderTextOnly(NewCell,ThisCell:TReportCell):String;
+procedure TReportRunTime.RenderTextOnly(NewCell,ThisCell:TReportCell);
+var
+    Result,Value,cellText ,FieldName:string;
+    cf: DataField ;
+    Dataset:TDataset;
+   function IsFormatable:Boolean;
+   begin
+     Result := cf.IsAvailableNumberField and (ThisCell.CellDispformat <> '' )  
+   end;
+begin
+  try
+    CellText := ThisCell.FCellText ;
+    if (Thiscell.IsSimpleField ) then
+    begin
+      Result := CellText;
+      exit;
+    end;
+    If ThisCell.IsFormula Then
+    begin
+      Result := GetVarValue(CellText) ;
+      Exit;
+    end;
+    if GetDataset(CellText) = nil then
+    begin
+      Result := CellText;
+      exit;
+    end;
+    FieldName := GetFieldName(CellText);
+    Dataset := GetDataset(thisCell.CellText);
+    cf:= DataField.Create(Dataset,FieldName) ;
+    If  cf.IsBlobField  and (not cf.IsNullField) then
+    begin
+       Result := '';
+       exit;
+    end;
+    try
+      Value :=cf.GetField.AsString ;
+      If IsFormatable Then
+        Value :=  ThisCell.FormatValue(cf.DataValue()) ;
+      result := Value;
+      if '(Graphic)' =  CellText then
+        raise Exception.create('');
+    finally
+      cf.Free;
+
+    end;
+  finally
+  NewCell.CellText:= Result ;
+  end;
+end;
+function TReportRunTime.RenderTextOnly1(NewCell,ThisCell:TReportCell):String;
 var
     Value,cellText ,FieldName:string;
     cf: DataField ;
