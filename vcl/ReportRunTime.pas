@@ -94,9 +94,6 @@ type
     SumAllList, HootLineList: TList;IsLastPage:Boolean);
   private
     // todo
-    procedure RenderCell(NewCell,ThisCell:TReportCell);
-    procedure RenderBlobOnly(NewCell, ThisCell: TReportCell);
-    procedure RenderTextOnly(NewCell, ThisCell: TReportCell);
     function IsDataField(s: String): Boolean;
     function ExpandDataHeight(HasDataNo:integer): integer;
     function DetailCellIndex(NO:integer) :Integer;
@@ -112,10 +109,15 @@ type
     function DetailLineIndex:Integer;
     procedure PaddingEmptyLine(hasdatano: integer; var dataLineList: TLineList);overload;
     function GetPrintRange(var A, Z: Integer): boolean;
-
     procedure PrintRange(Title: String; FromPage, ToPage: Integer);
+  // render : what 's diference on RenderText vs . RenderTextOnly vs. RenderCell ?
   Protected
     function RenderText(ThisCell: TReportCell;PageNumber, Fpageall: Integer): String;override;
+  private
+    procedure RenderCell(NewCell,ThisCell:TReportCell);
+    procedure RenderBlobOnly(NewCell, ThisCell: TReportCell);
+    procedure RenderTextOnly(NewCell, ThisCell: TReportCell);
+
   Public
     function DoPageCount(): integer;
     Constructor Create(AOwner: TComponent); Override;
