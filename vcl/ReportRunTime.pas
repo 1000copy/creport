@@ -104,9 +104,8 @@ type
     Procedure PrintOnePage;
     Function GetFieldName(strCellText: String): String;
 
-    Procedure RenderCell(NewCell, ThisCell: TReportCell);
-    Procedure SetAddSpace(Const Value: boolean);
-    procedure SetEmptyCell(NewCell, ThisCell: TReportCell);
+    Procedure CloneCell(NewCell, ThisCell: TReportCell);
+    procedure CloneEmptyCell(NewCell, ThisCell: TReportCell);
     function HasEmptyRoomLastPage: Boolean;
     function DetailLineIndex:Integer;
     function GetHasDataPosition(var HasDataNo,
@@ -135,7 +134,7 @@ type
     Property ReportFile: TFilename Read FFileName Write SetReportFileName;
 
     Published
-    Property AddSpace: boolean Read FAddSpace Write SetAddSpace;
+    Property AddSpace: boolean Read FAddSpace Write FAddSpace;
     // TEST section
     Published
     function FillHeadList: TList;
@@ -373,7 +372,7 @@ Begin
 End;
 
 
-Procedure TReportRunTime.SetEmptyCell(NewCell, ThisCell:TReportCell);
+Procedure TReportRunTime.CloneEmptyCell(NewCell, ThisCell:TReportCell);
 Begin
   NewCell.CloneFrom(ThisCell);
   NewCell.CellText := '';
@@ -748,10 +747,6 @@ Begin
  end;
 
 
-Procedure TReportRunTime.SetAddSpace(Const Value: boolean);
-Begin
-  FAddSpace := Value;
-End;
 
 function TReportRunTime.EditReport:TReportControl;
 begin
@@ -996,7 +991,7 @@ begin
   end;
 end;
 
-Procedure TReportRunTime.RenderCell(NewCell, ThisCell:
+Procedure TReportRunTime.CloneCell(NewCell, ThisCell:
   TReportCell);
 Begin
   NewCell.CloneFrom(ThisCell);
@@ -1009,7 +1004,6 @@ End;
 function TReportRunTime.CloneEmptyLine(thisLine:TReportLine):TReportLine;
 var j:integer; templine:treportline;
 Var
-  HandLineList, datalinelist, HootLineList, sumAllList: TList;
   ThisCell, NewCell: TReportCell;
 begin
   templine := Treportline.Create;
@@ -1021,7 +1015,7 @@ begin
     NewCell := TReportCell.Create(Self);
     TempLine.FCells.Add(NewCell);
     NewCell.FOwnerLine := TempLine;
-    SetEmptyCell(newcell, thiscell);
+    CloneEmptyCell(newcell, thiscell);
   End;
   result := templine;
 end;
@@ -1040,7 +1034,7 @@ begin
     NewCell := TReportCell.Create(Self);
     Line.FCells.Add(NewCell);
     NewCell.FOwnerLine := Line;
-    RenderCell(newcell, thiscell);
+    CloneCell(newcell, thiscell);
   End;
   Line.UpdateLineHeight;  
 end;
@@ -1060,7 +1054,7 @@ begin
     NewCell := TReportCell.Create(Self);
     Line.FCells.Add(NewCell);
     NewCell.FOwnerLine := Line;
-    RenderCell( newcell, thiscell);
+    CloneCell( newcell, thiscell);
   End;
   Line.UpdateLineHeight;
   result := Line;
@@ -1175,7 +1169,7 @@ begin
       NewCell := TReportCell.Create(Self);
       TempLine.FCells.Add(NewCell);
       NewCell.FOwnerLine := TempLine;
-      RenderCell( newcell, thiscell);
+      CloneCell( newcell, thiscell);
     End;
     If (UpperCase(copy(ThisCell.FCellText, 1, 7)) <> '`SUMALL') Then
       TempLine.UpdateLineHeight;
@@ -1217,7 +1211,7 @@ begin
       NewCell := TReportCell.Create(Self);
       TempLine.FCells.Add(NewCell);
       NewCell.FOwnerLine := TempLine;
-      RenderCell( newcell, thiscell);
+      CloneCell( newcell, thiscell);
     End;                              //for j
     TempLine.UpdateLineHeight;
   End;
@@ -1294,7 +1288,7 @@ begin
     NewCell := TReportCell.Create(Self);
     TempLine.FCells.Add(NewCell);
     NewCell.FOwnerLine := TempLine;
-    RenderCell(newcell, thiscell);
+    CloneCell(newcell, thiscell);
   End; 
   TempLine.UpdateLineHeight;
   result := TempLine;
