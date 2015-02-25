@@ -52,21 +52,24 @@ type
     function GetDetailDataset(): TDataset;
     Function GetDataset(strCellText: String): TDataset;
   private
-        // height calc..er
+    // height calc..er
     function FooterHeight():integer;
     function SumHeight():integer;
+    function HeadHeight: integer;
     function IsLastPageFull: Boolean;
     function isPageFull: boolean;
-    function GetHeadHeight: integer;
+    function HasEmptyRoomLastPage: Boolean;
+  private
     // Line copy
     procedure CloneLine(ThisLine, Line: TReportLine);
     function ExpandLine(HasDataNo:integer):TReportLine;
     function CloneEmptyLine(thisLine: TReportLine): TReportLine;
     function CloneNewLine(ThisLine: TReportLine): TReportLine;
-
+  private
     // var
     function GetValue(ThisCell: TReportCell): String;
     Function GetVarValue(strVarName: String): String;
+  private
     // file
     Procedure SetReportFileName(Const Value: TFilename);
     Procedure SaveTempFile(FileName:string;PageNumber, Fpageall: Integer);overload;
@@ -76,27 +79,29 @@ type
     function ReadyFileName(PageNumber, Fpageall: Integer): String;
     Procedure DeleteAllTempFiles;
     procedure LoadPage(I: integer);
+  private
     // sum
     Function setSumAllYg(fm, ss: String): String;
     Function setSumpageYg(fm, ss: String): String;
     procedure SumCell(ThisCell: TReportCell; j: Integer);
     procedure SumLine(HasDataNo: integer);
+  private
     // list
     function AppendList(l1, l2: TList): Boolean;
     function FillFootList(): TList;
     function FillSumList(): TLineList;
     procedure JoinAllList(FPrintLineList, HandLineList, dataLineList,
     SumAllList, HootLineList: TList;IsLastPage:Boolean);
-
+  private
     // todo
-    procedure RenderCellText(NewCell,ThisCell:TReportCell);
+    procedure RenderCell(NewCell,ThisCell:TReportCell);
+    procedure RenderBlobOnly(NewCell, ThisCell: TReportCell);
+    procedure RenderTextOnly(NewCell, ThisCell: TReportCell);
     function IsDataField(s: String): Boolean;
     function ExpandDataHeight(HasDataNo:integer): integer;
     function DetailCellIndex(NO:integer) :Integer;
     procedure DataPage(Dataset: TDataset);
     procedure FreeList;
-    function RenderBlobOnly(NewCell, ThisCell: TReportCell): boolean;
-    procedure RenderTextOnly(NewCell, ThisCell: TReportCell);
     Procedure UpdateLines;
     Procedure UpdatePrintLines;
     Procedure PrintOnePage;
@@ -104,10 +109,7 @@ type
 
     Procedure CloneCell(NewCell, ThisCell: TReportCell);
     procedure CloneEmptyCell(NewCell, ThisCell: TReportCell);
-    function HasEmptyRoomLastPage: Boolean;
     function DetailLineIndex:Integer;
-    function GetHasDataPosition(var HasDataNo,
-      cellIndex: integer): Boolean;
     procedure PaddingEmptyLine(hasdatano: integer; var dataLineList: TLineList);overload;
     function GetPrintRange(var A, Z: Integer): boolean;
 
@@ -369,16 +371,16 @@ End;
 //返回数用于在预览中确定代＃字头数据库是在模板的第几行
 function TReportRunTime.IsLastPageFull:Boolean ;
 begin
-  result := (FtopMargin + getHeadHeight + FDataLineHeight + SumHeight +
+  result := (FtopMargin + HeadHeight + FDataLineHeight + SumHeight +
           FBottomMargin) > height;
 end;
 function TReportRunTime.isPageFull:boolean;
 begin
-  result := (FtopMargin + getHeadHeight + FDataLineHeight + FooterHeight + FBottomMargin >height);
+  result := (FtopMargin + HeadHeight + FDataLineHeight + FooterHeight + FBottomMargin >height);
 end;
 function TReportRunTime.HasEmptyRoomLastPage:Boolean;
 begin
-  result := FtopMargin + getHeadHeight +
+  result := FtopMargin + HeadHeight +
       FDataLineHeight +
       SumHeight + FBottomMargin < height;
 end;
@@ -839,7 +841,7 @@ begin
   end;
 end;
 
-procedure TReportRunTime.RenderCellText(NewCell,ThisCell:TReportCell);
+procedure TReportRunTime.RenderCell(NewCell,ThisCell:TReportCell);
 begin
   RenderTextOnly(NewCell,ThisCell);
   RenderBlobOnly(NewCell,ThisCell);
@@ -894,13 +896,12 @@ begin
   end;
 end;
 
-function TReportRunTime.RenderBlobOnly(NewCell,ThisCell:TReportCell):boolean;
+procedure TReportRunTime.RenderBlobOnly(NewCell,ThisCell:TReportCell);
 var
     Value,cellText ,FieldName:string;
     cf: DataField ;
     Dataset:TDataset;
 begin
-  result := false;
   CellText := ThisCell.FCellText;
   FieldName := GetFieldName(CellText);
   Dataset := GetDataset(thisCell.CellText);
@@ -911,7 +912,6 @@ begin
       If cf.IsBlobField then
       begin
          NewCell.LoadCF(cf);
-         result := true;
       end;
     End
     Else If  thisCell.IsDetailField Then
@@ -919,7 +919,6 @@ begin
       If cf.IsBlobField then
       begin
          NewCell.LoadCF(cf);
-         result := true;
       end
     End
   finally
@@ -931,7 +930,7 @@ Procedure TReportRunTime.CloneCell(NewCell, ThisCell:
   TReportCell);
 Begin
   NewCell.CloneFrom(ThisCell);
-  RenderCellText(newCell,ThisCell);
+  RenderCell(newCell,ThisCell);
   NewCell.FLogFont := ThisCell.FLogFont;
   FDRMap.RuntimeMapping(NewCell, ThisCell);
   NewCell.CalcHeight;
@@ -997,7 +996,7 @@ begin
 end;
 
 
-function TReportRunTime.GetHeadHeight:integer;
+function TReportRunTime.HeadHeight:integer;
 var
    i:integer;
 begin
@@ -1012,29 +1011,7 @@ end;
 
 
 
-function TReportRunTime.GetHasDataPosition(var HasDataNo,cellIndex:integer):Boolean;
-Var
-  I, J, n:Integer;
-  HandLineList, datalinelist, HootLineList, sumAllList: TList;
-  ThisLine, TempLine: TReportLine;
-  ThisCell, NewCell: TReportCell;
-begin
-  HasDataNo := -1 ;
-  For i := 0 To FlineList.Count - 1 Do
-  Begin
-    ThisLine := TReportLine(FlineList[i]);
-    For j := 0 To ThisLine.FCells.Count - 1 Do
-    Begin
-        ThisCell := TreportCell(ThisLine.FCells[j]);
-        If (Length(ThisCell.CellText) > 0) And (ThisCell.FCellText[1] = '#') Then
-        Begin
-          HasDataNo := i;
-          cellIndex := j ;
-          exit;
-        End;
-    End;                             
-  End;
-end;
+
 function TReportRunTime.DetailLineIndex:Integer;
 Var
   I, J:Integer;
