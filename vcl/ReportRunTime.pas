@@ -1,4 +1,4 @@
-// holiday of Spring Day is coming . workmate is playing ,so noise . so now it is time to go home 
+// holiday of Spring Day is coming . workmate is playing ,so noise . so now it is time to go home
 unit ReportRunTime;
 
 interface
@@ -90,7 +90,7 @@ type
     SumAllList, HootLineList: TList;IsLastPage:Boolean);
 
     // todo
-    function RenderCellText(NewCell,ThisCell:TReportCell):String;
+    procedure RenderCellText(NewCell,ThisCell:TReportCell);
     function IsDataField(s: String): Boolean;
     function ExpandDataHeight(HasDataNo:integer): integer;
     function DetailCellIndex(NO:integer) :Integer;
@@ -863,11 +863,11 @@ begin
   end;
 end;
 
-function TReportRunTime.RenderCellText(NewCell,ThisCell:TReportCell):String;
+procedure TReportRunTime.RenderCellText(NewCell,ThisCell:TReportCell);
 begin
-  Result := RenderTextOnly(NewCell,ThisCell);
-  if RenderBlobOnly(NewCell,ThisCell) then
-    result := '' ;
+//  Result := RenderTextOnly(NewCell,ThisCell);
+  NewCell.CellText:= RenderTextOnly(NewCell,ThisCell);
+  RenderBlobOnly(NewCell,ThisCell);
 end;
 function TReportRunTime.RenderTextOnly(NewCell,ThisCell:TReportCell):String;
 var
@@ -951,7 +951,7 @@ Procedure TReportRunTime.SetNewCell(NewCell, ThisCell:
   TReportCell);
 Begin
   NewCell.CloneFrom(ThisCell);
-  NewCell.CellText:= RenderCellText(newCell,ThisCell);
+  RenderCellText(newCell,ThisCell);
   NewCell.FLogFont := ThisCell.FLogFont;
   FDRMap.RuntimeMapping(NewCell, ThisCell);
   NewCell.CalcHeight;
