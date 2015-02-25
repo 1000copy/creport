@@ -104,7 +104,7 @@ type
     Procedure PrintOnePage;
     Function GetFieldName(strCellText: String): String;
 
-    Procedure SetNewCell(NewCell, ThisCell: TReportCell);
+    Procedure RenderCell(NewCell, ThisCell: TReportCell);
     Procedure SetAddSpace(Const Value: boolean);
     procedure SetEmptyCell(NewCell, ThisCell: TReportCell);
     function HasEmptyRoomLastPage: Boolean;
@@ -866,7 +866,6 @@ end;
 
 procedure TReportRunTime.RenderCellText(NewCell,ThisCell:TReportCell);
 begin
-//  Result := RenderTextOnly(NewCell,ThisCell);
   RenderTextOnly(NewCell,ThisCell);
   RenderBlobOnly(NewCell,ThisCell);
 end;
@@ -913,11 +912,10 @@ begin
       if '(Graphic)' =  CellText then
         raise Exception.create('');
     finally
-      cf.Free;
-
+      cf.Free;      
     end;
   finally
-  NewCell.CellText:= Result ;
+   NewCell.CellText:= Result ;
   end;
 end;
 function TReportRunTime.RenderTextOnly1(NewCell,ThisCell:TReportCell):String;
@@ -998,7 +996,7 @@ begin
   end;
 end;
 
-Procedure TReportRunTime.SetNewCell(NewCell, ThisCell:
+Procedure TReportRunTime.RenderCell(NewCell, ThisCell:
   TReportCell);
 Begin
   NewCell.CloneFrom(ThisCell);
@@ -1042,7 +1040,7 @@ begin
     NewCell := TReportCell.Create(Self);
     Line.FCells.Add(NewCell);
     NewCell.FOwnerLine := Line;
-    SetNewCell(newcell, thiscell);
+    RenderCell(newcell, thiscell);
   End;
   Line.UpdateLineHeight;  
 end;
@@ -1062,7 +1060,7 @@ begin
     NewCell := TReportCell.Create(Self);
     Line.FCells.Add(NewCell);
     NewCell.FOwnerLine := Line;
-    SetNewCell( newcell, thiscell);
+    RenderCell( newcell, thiscell);
   End;
   Line.UpdateLineHeight;
   result := Line;
@@ -1177,7 +1175,7 @@ begin
       NewCell := TReportCell.Create(Self);
       TempLine.FCells.Add(NewCell);
       NewCell.FOwnerLine := TempLine;
-      SetNewCell( newcell, thiscell);
+      RenderCell( newcell, thiscell);
     End;
     If (UpperCase(copy(ThisCell.FCellText, 1, 7)) <> '`SUMALL') Then
       TempLine.UpdateLineHeight;
@@ -1219,7 +1217,7 @@ begin
       NewCell := TReportCell.Create(Self);
       TempLine.FCells.Add(NewCell);
       NewCell.FOwnerLine := TempLine;
-      SetNewCell( newcell, thiscell);
+      RenderCell( newcell, thiscell);
     End;                              //for j
     TempLine.UpdateLineHeight;
   End;
@@ -1296,8 +1294,8 @@ begin
     NewCell := TReportCell.Create(Self);
     TempLine.FCells.Add(NewCell);
     NewCell.FOwnerLine := TempLine;
-    SetNewCell(newcell, thiscell);
-  End; //for j
+    RenderCell(newcell, thiscell);
+  End; 
   TempLine.UpdateLineHeight;
   result := TempLine;
 end;
