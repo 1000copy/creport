@@ -49,7 +49,6 @@ type
     Function GetDataset(strCellText: String): TDataset;
     Function DatasetByName(strDatasetName: String): TDataset;
     function GetDataSetFromCell(HasDataNo,CellIndex:Integer):TDataset;
-    function RenderTextOnly1(NewCell, ThisCell: TReportCell): String;
   public
     Procedure SetDataset(strDatasetName: String; pDataSet: TDataSet);
     procedure ClearDataset;
@@ -913,51 +912,7 @@ begin
    NewCell.CellText:= Result ;
   end;
 end;
-function TReportRunTime.RenderTextOnly1(NewCell,ThisCell:TReportCell):String;
-var
-    Value,cellText ,FieldName:string;
-    cf: DataField ;
-    Dataset:TDataset;
-   function IsFormatable:Boolean;
-   begin
-     Result := cf.IsAvailableNumberField and (ThisCell.CellDispformat <> '' )  
-   end;
-begin
-  CellText := ThisCell.FCellText ;
-  if (Thiscell.IsSimpleField ) then
-  begin
-    Result := CellText;
-    exit;
-  end;
-  If ThisCell.IsFormula Then
-  begin
-    Result := GetVarValue(CellText) ;
-    Exit;
-  end;
-  if GetDataset(CellText) = nil then
-  begin
-    Result := CellText;
-    exit;
-  end;
-  FieldName := GetFieldName(CellText);
-  Dataset := GetDataset(thisCell.CellText);
-  cf:= DataField.Create(Dataset,FieldName) ;
-  If  cf.IsBlobField  and (not cf.IsNullField) then
-  begin
-     Result := '';
-     exit;
-  end;
-  try
-    Value :=cf.GetField.AsString ;
-    If IsFormatable Then
-      Value :=  ThisCell.FormatValue(cf.DataValue()) ;
-    result := Value;
-    if '(Graphic)' =  CellText then
-      raise Exception.create('');
-  finally
-    cf.Free;
-  end;
-end;
+
 function TReportRunTime.RenderBlobOnly(NewCell,ThisCell:TReportCell):boolean;
 var
     Value,cellText ,FieldName:string;
