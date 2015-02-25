@@ -39,19 +39,17 @@ type
     FVarList: TVarList;
     FPrintLineList: TList;
     FDRMap: TDRMappings;
-    FNamedDatasets: TDataList;
     FPageIndex: Integer;
     FpageAll: integer ;
     FDataLineHeight: Integer;
-        //dataset concerns
-    function Dataset(): TDataset;
-    Function GetDatasetName(strCellText: String): String;
+    //dataset concerns
+    FNamedDatasets: TDataList;
+    function GetDetailDataset(): TDataset;
     Function GetDataset(strCellText: String): TDataset;
-    Function DatasetByName(strDatasetName: String): TDataset;
-    function GetDataSetFromCell(HasDataNo,CellIndex:Integer):TDataset;
-  public
     Procedure SetDataset(strDatasetName: String; pDataSet: TDataSet);
     procedure ClearDataset;
+  public
+    procedure SetData(M,D:TDataSet);
   private
         // height calc..er
     function FooterHeight():integer;
@@ -306,22 +304,34 @@ Begin
   Inherited Destroy;
 End;
 
-Function TReportRunTime.DatasetByName(strDatasetName: String): TDataset;
-Var
-  I: Integer;
-Begin
-  Result := Nil;
-
-  For I := 0 To FNamedDatasets.Count - 1 Do
-  Begin
-    If TDatasetItem(FNamedDatasets[I]).strName = strDatasetName Then
-    Begin
-      Result := TDatasetItem(FNamedDatasets[I]).pDataset;
-    End;
-  End;
-End;
 
 Function TReportRunTime.GetDataset(strCellText: String): TDataset;
+  Function GetDatasetName(strCellText: String): String;
+  Var
+    I: Integer;
+    s:StrSlice;
+  Begin
+    If isDataField(strCellText) Then begin
+      s:=StrSlice.Create(strCellText);
+      Result := UpperCase(s.Slice(2,s.GoUntil('.')-1));
+      s.Free ;
+    end else
+      Result := '';
+  End;
+  Function DatasetByName(strDatasetName: String): TDataset;
+  Var
+    I: Integer;
+  Begin
+    Result := Nil;
+
+    For I := 0 To FNamedDatasets.Count - 1 Do
+    Begin
+      If TDatasetItem(FNamedDatasets[I]).strName = strDatasetName Then
+      Begin
+        Result := TDatasetItem(FNamedDatasets[I]).pDataset;
+      End;
+    End;
+  End;
 Begin
   Result := DatasetByName(GetDatasetName(strCellText));
 End;
@@ -333,18 +343,6 @@ begin
 end;
 
 //testcase  t1.lb ->  t1
-Function TReportRunTime.GetDatasetName(strCellText: String): String;
-Var
-  I: Integer;
-  s:StrSlice;
-Begin
-  If isDataField(strCellText) Then begin
-    s:=StrSlice.Create(strCellText);
-    Result := UpperCase(s.Slice(2,s.GoUntil('.')-1));
-    s.Free ;
-  end else
-    Result := '';
-End;
 
 Function TReportRunTime.GetFieldName(strCellText: String): String;
 Var
@@ -405,10 +403,6 @@ function TReportRunTime.AppendList( l1, l2:TList):Boolean;var n :integer; begin
 end;
 
 
-function TReportRunTime.GetDataSetFromCell(HasDataNo,CellIndex:Integer):TDataset;
-begin
-  result := GetDataSet(TReportCell(TReportLine(FlineList[HasDataNo]).FCells[CellIndex]).FCellText);
-end;
 
 function TReportRunTime.GetPrintRange(var A,Z:Integer):boolean;
 var
@@ -1207,8 +1201,8 @@ procedure TReportRunTime.SumCell(ThisCell:TReportCell;j:Integer);
   function IsFieldNumric(FieldName:String):Boolean;
   begin
     result :=
-      (Not Dataset.fieldbyname(FieldName).IsNull)
-       and (Dataset.fieldbyname(FieldName) Is TNumericField) ;
+      (Not GetDetailDataset().fieldbyname(FieldName).IsNull)
+       and (GetDetailDataset().fieldbyname(FieldName) Is TNumericField) ;
   end;
 Var
   FieldName : string;
@@ -1218,7 +1212,7 @@ begin
     FieldName := GetFieldName(ThisCell.CellText) ;
     if ThisCell.IsDetailField and IsFieldNumric(FieldName) then
     Begin
-      value := Dataset.fieldbyname(FieldName).Value ;
+      value := GetDetailDataset().fieldbyname(FieldName).Value ;
       FSummer.Acc(j,Value);
     End;
   Except
@@ -1303,7 +1297,7 @@ begin
     Else
       AppendList(  FPrintLineList, HootLineList);
 end;
-function TReportRunTime.DataSet ():TDataset;
+function TReportRunTime.GetDetailDataset() :TDataset;
 var
    t : string;
 begin
@@ -1362,7 +1356,7 @@ Begin
     end
     else
     begin
-     DataPage(Dataset);
+     DataPage(GetDetailDataset());
     end;
     FreeList;
   except
@@ -1378,10 +1372,10 @@ Begin
     Result := 1;
     If DetailLineIndex <> -1 Then
     Begin
-      Dataset.First;
+      GetDetailDataset().First;
       FDataLineHeight := 0;
       i := 0;
-      While (i < Dataset.RecordCount)  Do
+      While (i < GetDetailDataset().RecordCount)  Do
       Begin
         inc(FDataLineHeight ,ExpandDataHeight(DetailLineIndex)) ;
         If isPageFull  Then
@@ -1389,7 +1383,7 @@ Begin
           inc(Result);
           FDataLineHeight := 0;
         End else begin
-          Dataset.Next;
+          GetDetailDataset().Next;
           inc(I);
         end;
       End;
@@ -1482,14 +1476,14 @@ var i :integer;tempLine:TReportLine;
 begin
   i := FromIndex;
   FData := TLineList.Create(FRC);
-  while (i < FRC.Dataset.RecordCount) do
+  while (i < FRC.GetDetailDataset().RecordCount) do
   begin
     TempLine := FRC.ExpandLine(FRC.DetailLineIndex);
     inc(FRC.FDataLineHeight,FRC.ExpandDataHeight(FRC.DetailLineIndex));
     if not FRC.isPageFull then begin
       FData.add(tempLine);
       FRC.SumLine(FRC.DetailLineIndex);
-      FRC.Dataset.Next;
+      FRC.GetDetailDataset().Next;
       i := i + 1;
     end else
       break;
@@ -1540,6 +1534,13 @@ begin
   FRC.FPrintLineList.Clear;
   ResetData;
   FRC.FDataLineHeight := 0;
+end;
+
+procedure TReportRunTime.SetData(M, D: TDataSet);
+begin
+  ClearDataset ;
+  SetDataSet('t1',M);
+  SetDataSet('t2',D);
 end;
 
 end.

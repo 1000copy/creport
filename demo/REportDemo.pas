@@ -59,9 +59,10 @@ const filename = 'creport_demo.ept' ;
 
 procedure TCReportDemoForm.Button5Click(Sender: TObject);
 begin
-  ReportRunTime1.ClearDataset ;
-  ReportRunTime1.SetDataSet('t1',dataform.table1);
-  ReportRunTime1.SetDataSet('t2',dataform.table2);
+  ReportRunTime1.SetData(dataform.table1,dataform.table2);
+//  ReportRunTime1.ClearDataset ;
+//  ReportRunTime1.SetDataSet('t1',dataform.table1);
+//  ReportRunTime1.SetDataSet('t2',dataform.table2);
   dataform.Table1.DisableControls;
   ReportRunTime1.ReportFile:=ExtractFilepath(application.ExeName)+ filename;
   ReportRunTime1.Setvarvalue('jgtw','1');
@@ -75,9 +76,10 @@ end;
 procedure TCReportDemoForm.Button3Click(Sender: TObject);
 begin
   dataform.Table1.DisableControls;
-  ReportRunTime1.ClearDataset ;
-  ReportRunTime1.SetDataSet('t1',dataform.table1);
-  ReportRunTime1.SetDataSet('t2',dataform.table2);
+  ReportRunTime1.SetData(dataform.table1,dataform.table2);
+//  ReportRunTime1.ClearDataset ;
+//  ReportRunTime1.SetDataSet('t1',dataform.table1);
+//  ReportRunTime1.SetDataSet('t2',dataform.table2);
 
   ReportRunTime1.ReportFile:=ExtractFilepath(application.ExeName)+filename;
   ReportRunTime1.Setvarvalue('jgtw','1');
