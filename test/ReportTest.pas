@@ -126,7 +126,6 @@ begin
   try
       R:=TReportRunTime.Create(Application.MainForm);
       R.Visible := False;
-      R.ClearDataSet;
       t1 := TClientDataset.Create(nil);
       t1.FieldDefs.Add('f1',ftString,20,true);
       t1.FieldDefs.Add('f2',ftString,20,true);
@@ -135,8 +134,7 @@ begin
 
       t1.CreateDataSet;
       t2.CreateDataSet;
-      R.SetDataSet('t1',t1);
-      R.SetDataSet('t2',t2);
+      R.SetData(t1,t2);
       t1.Open;
       t2.Open;
       t1.AppendRecord([1,2]);
@@ -1465,7 +1463,6 @@ begin
   try
       R:=TReportRunTime.Create(Application.MainForm);
       R.Visible := False;
-      R.ClearDataSet;
       t1 := TClientDataset.Create(nil);
       t1.FieldDefs.Add('f1',ftString,20,true);
       t1.FieldDefs.Add('f2',ftString,20,true);
@@ -1473,8 +1470,7 @@ begin
       t2.FieldDefs.Add('f1',ftString,20,true);
       t1.CreateDataSet;
       t2.CreateDataSet;
-      R.SetDataSet('t1',t1);
-      R.SetDataSet('t2',t2);
+      R.SetData(t1,t2);
       t1.Open;
       t2.Open;
       for I:= 0 to 100 do
@@ -1591,7 +1587,6 @@ begin
   try
     R:=TReportRunTime.Create(Application.MainForm);
     R.Visible := False;
-    R.ClearDataSet;
     FileName :=osservice.AppDir+'xxx.ept';
     with  R do
     begin

@@ -22,6 +22,11 @@ type
      function GetSumPage(i:integer):Real;
    end;
   TDataList = class(TList)
+  private
+    procedure ClearDataset;
+    procedure SetDataset(strDatasetName: String; pDataSet: TDataSet);
+    procedure SetData(M, D: TDataSet);
+    function DatasetByName(strDatasetName: String): TDataset;
   public
    procedure FreeItems;
   end;
@@ -46,10 +51,6 @@ type
     FNamedDatasets: TDataList;
     function GetDetailDataset(): TDataset;
     Function GetDataset(strCellText: String): TDataset;
-    Procedure SetDataset(strDatasetName: String; pDataSet: TDataSet);
-    procedure ClearDataset;
-  public
-    procedure SetData(M,D:TDataSet);
   private
         // height calc..er
     function FooterHeight():integer;
@@ -135,7 +136,7 @@ type
     // TEST section
     Published
     function FillHeadList: TList;
-
+    procedure SetData(M,D:TDataSet);
     End;
   RenderParts = class
   private
@@ -317,23 +318,9 @@ Function TReportRunTime.GetDataset(strCellText: String): TDataset;
       s.Free ;
     end else
       Result := '';
-  End;
-  Function DatasetByName(strDatasetName: String): TDataset;
-  Var
-    I: Integer;
-  Begin
-    Result := Nil;
-
-    For I := 0 To FNamedDatasets.Count - 1 Do
-    Begin
-      If TDatasetItem(FNamedDatasets[I]).strName = strDatasetName Then
-      Begin
-        Result := TDatasetItem(FNamedDatasets[I]).pDataset;
-      End;
-    End;
-  End;
+  End;  
 Begin
-  Result := DatasetByName(GetDatasetName(strCellText));
+  Result := FNamedDatasets.DatasetByName(GetDatasetName(strCellText));
 End;
 function TReportRunTime.IsDataField(s:String):Boolean;
 begin
@@ -425,13 +412,13 @@ begin
   end;
   PrintDlg.Free;
 end;
-Procedure TReportRunTime.ClearDataset();
+Procedure TDataList.ClearDataset();
 Var
   I: Integer;
 begin
-   For I := FNamedDatasets.Count - 1 Downto 0 Do
-    TDataSetItem(FNamedDatasets[I]).Free;
-   FNamedDatasets.clear;
+   For I := Count - 1 Downto 0 Do
+    TDataSetItem(Self[I]).Free;
+   Self.clear;
 end;
 procedure TReportRunTime.PrintRange(Title:String;FromPage,ToPage:Integer);
 Var
@@ -593,7 +580,7 @@ Begin
     result := false;
 End;
 
-Procedure TReportRunTime.SetDataset(strDatasetName: String; pDataSet: TDataSet);
+Procedure TDataList.SetDataset(strDatasetName: String; pDataSet: TDataSet);
 Var
   TempItem: TDatasetItem;
   dk, i: integer;
@@ -601,7 +588,7 @@ Begin
   TempItem := TDatasetItem.Create;
   TempItem.pDataset := pDataSet;
   TempItem.strName := UpperCase(strDataSetName);
-  FNamedDatasets.Add(TempItem);
+  Self.Add(TempItem);
 End;
 
 Procedure TReportRunTime.SetReportFileName(Const Value: TFilename);
@@ -1538,11 +1525,28 @@ end;
 
 procedure TReportRunTime.SetData(M, D: TDataSet);
 begin
+  FNamedDatasets.SEtData(M,D);
+end;
+procedure TDataList.SetData(M, D: TDataSet);
+begin
   ClearDataset ;
   SetDataSet('t1',M);
   SetDataSet('t2',D);
 end;
+Function TDataList.DatasetByName(strDatasetName: String): TDataset;
+Var
+  I: Integer;
+Begin
+  Result := Nil;
 
+  For I := 0 To Count - 1 Do
+  Begin
+    If TDatasetItem(Self[I]).strName = strDatasetName Then
+    Begin
+      Result := TDatasetItem(Self[I]).pDataset;
+    End;
+  End;
+End;
 end.
 
 
