@@ -523,6 +523,7 @@ type
     procedure MsgLoop(RectBorder:TRect);
     procedure OnMove(TempMsg: TMSG;RectBorder:TRect );
     function AddSelectedCells(Cells: TCellList): Boolean;
+
   protected
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
@@ -580,7 +581,7 @@ type
     property     RightMargin: Integer read FRightMargin ;
     property     TopMargin: Integer read FTopMargin ;
     property     BottomMargin: Integer read FBottomMargin ;
-
+    procedure LoadPage(I: Integer);
     function IsEditing :boolean;
     procedure CancelEditing;
     procedure EachCell(EachProc: EachCellProc);
@@ -3433,6 +3434,7 @@ Begin
       WriteInteger(FLineList.Count);
       For I := 0 To FLineList.Count - 1 Do
         WriteInteger(TReportLine(FLineList[I]).FCells.Count);
+      //  {$Optimization off}
       For I := 0 To FLineList.Count - 1 Do
       Begin
         TReportLine(FLineList[I]).Save(TargetFile);
@@ -3440,9 +3442,10 @@ Begin
         begin
           ccc := TReportCell(TReportLine(FLineList[I]).FCells[J]);
           ccc.Save(TargetFile);
-          // Cells[I,J].Save(TargetFile,IsDesign);
-        end;                    
+          // Cells[I,J].Save(TargetFile);
+        end;
       End;
+      // {$Optimization on}
       WriteInteger(FprPageNo);
       WriteInteger(FprPageXy);
       WriteInteger(fPaperLength);
@@ -3450,6 +3453,7 @@ Begin
       WriteInteger(0);//FHootNo
     End;
   Finally
+    // Free will call File.close before destroy finally
     TargetFile.Free;
   End;
 End;
@@ -3460,6 +3464,13 @@ Begin
   PrintPaper.GetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
   InternalSavetoFile(FLineList,FileName,PageNumber, Fpageall);
 End;
+
+Procedure TReportControl.LoadPage(I:Integer);
+var FileName: String;
+begin
+  fileName := osservice.PageFileName(I) ;
+  LoadFromFile(FileName);
+end;
 
 Procedure TReportControl.LoadFromFile(FileName: String);
 Var

@@ -249,7 +249,6 @@ begin
 end;
 procedure TPreviewForm.GoPage(CurrentPage:Integer);
 var
-  fn : string;
   nPrevScale: Integer;
   procedure RuleApply;
   begin
@@ -272,11 +271,9 @@ begin
   RuleApply  ;
   nPrevScale := RC.ReportScale;
   SetPage;
-  LockWindowUpdate(Handle);
-  fn := osservice.PageFileName(CurrentPage) ;
-  RC.LoadFromFile(fn);
+  RC.LoadPage(CurrentPage);
   RC.ReportScale := nPrevScale;
-  LockWindowUpdate(0);
+  RC.Invalidate;
   RuleApply ;
 end;
 procedure TPreviewForm.ReloadPageFile(CurrentPage:Integer);
