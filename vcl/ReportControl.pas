@@ -1718,7 +1718,6 @@ begin
 end;
 procedure TReportCell.Save(s: TSimpleFileStream);
 begin
-  //if not IsDesign then
   FCellText := Self.ReportControl.renderText(Self);
   Self.SaveInternal(s);
 end;
@@ -1774,60 +1773,7 @@ begin
     End;
   w.free;
 end;
-//procedure TReportCell.SaveInternal(s: TSimpleFileStream;PageNumber, Fpageall:integer);
-//var k :  integer;
-//    w : TSimpleWriter;
-//begin
-//  //if not IsDesign then
-//    FCellText := Self.ReportControl.renderText(Self, PageNumber,  Fpageall);
-//  w := TSimpleWriter.Create(s);
-//  w.Int(FLeftMargin)
-//   .Int(FCellIndex)
-//   .Int(FCellLeft)
-//   .Int(FCellWidth)
-//   .Rect(FCellRect)
-//   .Rect(FTextrect)
-//   .Int(FCellHeight)
-//   .Int(FCellHeight)
-//   .Int(FRequiredCellHeight)
-//   .Bool(FLeftLine)
-//   .Int(FLeftLineWidth)
-//   .Bool(FTopLine)
-//   .Int(FTopLineWidth)
-//   .Bool(FRightLine)
-//   .Int(FRightLineWidth)
-//   .Bool(FBottomLine)
-//   .Int(FBottomLineWidth)
-//   .Cardinal(FDiagonal)
-//   .Cardinal(FTextColor )
-//   .Cardinal(FBackGroundColor )
-//   .Int(FHorzAlign)
-//   .Int(FVertAlign)
-//   .Str(FCellText)
-//   .Str(FCellDispformat)
-//   .Bool(Fbmpyn) ;
-//    If FbmpYn Then
-//      FBmp.SaveToStream(s);
-//    w.LogFont(FLogFont);
-//
-//    // 属主CELL的行，列索引
-//    If FOwnerCell <> Nil Then
-//    Begin
-//      w.Int(FOwnerCell.OwnerLine.FIndex)
-//      .Int(FOwnerCell.FCellIndex);
-//    End
-//    Else
-//    Begin
-//      w.Int(-1).Int(-1);
-//    End;
-//    w.Int(FSlaveCells.Count);
-//    For K := 0 To FSlaveCells.Count - 1 Do
-//    Begin
-//      w.Int(FSlaveCells[K].OwnerLine.FIndex);
-//      w.Int(FSlaveCells[K].FCellIndex);
-//    End;
-//  w.free;
-//end;
+
 
 procedure TReportCell.Sibling(Cell: TReportCell);
 begin
