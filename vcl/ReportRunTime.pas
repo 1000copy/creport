@@ -246,7 +246,7 @@ begin
 end;
 Procedure TReportRunTime.SaveTempFile(FileName: String;PageNumber, Fpageall: Integer);
 begin
-  SaveToFile(FPrintLineList,FileName,PageNumber,Fpageall);
+  SaveToFile(FPrintLineList,FileName,PageNumber,Fpageall,False);
 end;
 
 Procedure TReportRunTime.LoadTempFile(strFileName: String);
@@ -843,7 +843,7 @@ begin
   end;
 end;
 
-procedure TReportRunTime.RenderCell(NewCell,ThisCell:TReportCell);
+  procedure TReportRunTime.RenderCell(NewCell,ThisCell:TReportCell);
 begin
   RenderTextOnly(NewCell,ThisCell);
   RenderBlobOnly(NewCell,ThisCell);

@@ -88,6 +88,7 @@ type
     procedure TearDown; override;
   published
     procedure TestCombineVertical;
+    procedure RenderTextVSSave;
   end;
 
 implementation
@@ -294,6 +295,25 @@ begin
 end;
 { TReportUITest }
 
+procedure TReportUITest.RenderTextVSSave;
+var Filename : string;
+    ThisCell:TReportCell;
+    R: TReportRunTime;
+begin
+    R := TReportRunTime.Create(Application.MainForm);
+    try
+      FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
+      r.SetWndSize(1058,748);
+      r.NewTable(1,1);
+      r.Cells[0,0].CellText := 'RenderText';
+      Check(R.Lines[0].FCells.count = 1);
+      r.SaveToFile(Filename);
+      r.ResetContent;
+      R.EditReport(FileName);
+    finally
+      R.Free;
+    end;
+end;
 procedure TReportUITest.SetUp;
 begin
   inherited;

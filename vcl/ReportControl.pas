@@ -270,6 +270,8 @@ type
     procedure FillBg(hPaintDC: HDC; FCellRect: TRect;
       FBackGroundColor: COLORREF);
     procedure DrawContentText(hPaintDC: HDC);
+    //procedure SaveInternal(s: TSimpleFileStream; PageNumber,Fpageall: integer);
+    procedure SaveInternal(s: TSimpleFileStream; PageNumber,Fpageall: integer; IsDesign: Boolean);
   public
     procedure LoadBmp(FileName:String);
     procedure FreeBmp();
@@ -368,7 +370,7 @@ type
     Procedure SetTextColor(TextColor: COLORREF);
   Public
     procedure Load(stream:TSimpleFileStream;FileFlag:Word);
-    procedure Save(s:TSimpleFileStream;PageNumber, Fpageall:integer);
+    procedure Save(s:TSimpleFileStream;PageNumber, Fpageall:integer;IsDesign:Boolean);
     function GetCellType:CellType;
     function DefaultHeight(): integer;
     procedure Select;
@@ -503,7 +505,7 @@ type
     MouseDrag : MouseDragger;
     hClientDC: HDC;
     procedure InternalSaveToFile(
-      FLineList: TList; FileName: String;PageNumber, Fpageall: integer);
+      FLineList: TList; FileName: String;PageNumber, Fpageall: integer;IsDesign:Boolean);
     procedure DoInvalidateRect(Rect:TRect);
     procedure RecreateEdit(ThisCell: TReportCell);
     procedure DoPaint(hPaintDC: HDC; Handle: HWND; ps: TPaintStruct);
@@ -602,7 +604,7 @@ type
     Constructor Create(AOwner: TComponent); Override;
     Destructor Destroy; Override;
     Procedure SaveToFile(FileName: String);overload;
-    Procedure SaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);overload;
+    Procedure SaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer;IsDesign:Boolean);overload;
     Procedure LoadFromFile(FileName: String);
     Procedure DoLoadBmp(Cell: Treportcell; filename: String);
     Procedure FreeBmp(Cell: Treportcell);
@@ -1714,11 +1716,16 @@ begin
     End;
    end;
 end;
-
-procedure TReportCell.Save(s: TSimpleFileStream;PageNumber, Fpageall:integer);
+procedure TReportCell.Save(s: TSimpleFileStream;PageNumber, Fpageall:integer;IsDesign:Boolean);
+begin
+  Self.SaveInternal(s,PageNumber,FPageAll,IsDesign);
+end;
+procedure TReportCell.SaveInternal(s: TSimpleFileStream;PageNumber, Fpageall:integer;IsDesign:Boolean);
 var k :  integer;
     w : TSimpleWriter;
 begin
+  if not IsDesign then
+    FCellText := Self.ReportControl.renderText(Self, PageNumber,  Fpageall);
   w := TSimpleWriter.Create(s);
   w.Int(FLeftMargin)
    .Int(FCellIndex)
@@ -1742,7 +1749,7 @@ begin
    .Cardinal(FBackGroundColor )
    .Int(FHorzAlign)
    .Int(FVertAlign)
-   .Str(Self.ReportControl.renderText(Self, PageNumber,  Fpageall))
+   .Str(FCellText)
    .Str(FCellDispformat)
    .Bool(Fbmpyn) ;
     If FbmpYn Then
@@ -1767,7 +1774,60 @@ begin
     End;
   w.free;
 end;
-
+//procedure TReportCell.SaveInternal(s: TSimpleFileStream;PageNumber, Fpageall:integer);
+//var k :  integer;
+//    w : TSimpleWriter;
+//begin
+//  //if not IsDesign then
+//    FCellText := Self.ReportControl.renderText(Self, PageNumber,  Fpageall);
+//  w := TSimpleWriter.Create(s);
+//  w.Int(FLeftMargin)
+//   .Int(FCellIndex)
+//   .Int(FCellLeft)
+//   .Int(FCellWidth)
+//   .Rect(FCellRect)
+//   .Rect(FTextrect)
+//   .Int(FCellHeight)
+//   .Int(FCellHeight)
+//   .Int(FRequiredCellHeight)
+//   .Bool(FLeftLine)
+//   .Int(FLeftLineWidth)
+//   .Bool(FTopLine)
+//   .Int(FTopLineWidth)
+//   .Bool(FRightLine)
+//   .Int(FRightLineWidth)
+//   .Bool(FBottomLine)
+//   .Int(FBottomLineWidth)
+//   .Cardinal(FDiagonal)
+//   .Cardinal(FTextColor )
+//   .Cardinal(FBackGroundColor )
+//   .Int(FHorzAlign)
+//   .Int(FVertAlign)
+//   .Str(FCellText)
+//   .Str(FCellDispformat)
+//   .Bool(Fbmpyn) ;
+//    If FbmpYn Then
+//      FBmp.SaveToStream(s);
+//    w.LogFont(FLogFont);
+//
+//    // 属主CELL的行，列索引
+//    If FOwnerCell <> Nil Then
+//    Begin
+//      w.Int(FOwnerCell.OwnerLine.FIndex)
+//      .Int(FOwnerCell.FCellIndex);
+//    End
+//    Else
+//    Begin
+//      w.Int(-1).Int(-1);
+//    End;
+//    w.Int(FSlaveCells.Count);
+//    For K := 0 To FSlaveCells.Count - 1 Do
+//    Begin
+//      w.Int(FSlaveCells[K].OwnerLine.FIndex);
+//      w.Int(FSlaveCells[K].FCellIndex);
+//    End;
+//  w.free;
+//end;
 
 procedure TReportCell.Sibling(Cell: TReportCell);
 begin
@@ -3399,7 +3459,7 @@ begin
     Result := ThisCell.FCellText;
 end;
 
-Procedure TReportControl.InternalSaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);
+Procedure TReportControl.InternalSaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer;IsDesign:Boolean);
 Var
   TargetFile: TSimpleFileStream;
   I,j: Integer;
@@ -3430,7 +3490,7 @@ Begin
       Begin
         TReportLine(FLineList[I]).Save(TargetFile);
         For J := 0 To TReportLine(FLineList[I]).FCells.Count - 1 Do
-          TReportCell(TReportLine(FLineList[I]).FCells[J]).Save(TargetFile,PageNumber, Fpageall);
+          TReportCell(TReportLine(FLineList[I]).FCells[J]).Save(TargetFile,PageNumber, Fpageall,IsDesign);
           //Cells[I,J].Save(TargetFile,PageNumber, Fpageall);
       End;
       WriteInteger(FprPageNo);
@@ -3444,11 +3504,11 @@ Begin
   End;
 End;
 
-Procedure TReportControl.SaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);
+Procedure TReportControl.SaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer;IsDesign:Boolean);
 Begin
   PrintPaper.prDeviceMode;
   PrintPaper.GetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
-  InternalSavetoFile(FLineList,FileName,PageNumber, Fpageall);
+  InternalSavetoFile(FLineList,FileName,PageNumber, Fpageall,IsDesign);
 End;
 
 Procedure TReportControl.LoadFromFile(FileName: String);
@@ -3844,7 +3904,7 @@ End;
 
 procedure TReportControl.SaveToFile(FileName: String);
 begin
-  SaveToFile(FLineList,FileName,0,0);
+  SaveToFile(FLineList,FileName,0,0,True);
 end;
 
 procedure TPrinterPaper.Batch;

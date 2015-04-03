@@ -151,6 +151,8 @@ end;
 
 procedure TPreviewForm.FormCreate(Sender: TObject);
 begin
+  // disable template
+  Self.PrintBtn.Visible := False;
   height:=550;
   width:= 715;
   PageCount := 1;
@@ -210,9 +212,9 @@ end;
 
 procedure TPreviewForm.PrintBtnClick(Sender: TObject);
 begin
-  SpeedButton2.Enabled:=True;
-  TReportRunTime(Owner).Print(false);
-  SpeedButton2.Enabled:=false;
+//  SpeedButton2.Enabled:=True;
+//  TReportRunTime(Owner).Print(false);
+//  SpeedButton2.Enabled:=false;
 end;
 
 function TPreviewForm.RR: TReportRuntime;
