@@ -271,7 +271,7 @@ type
       FBackGroundColor: COLORREF);
     procedure DrawContentText(hPaintDC: HDC);
     //procedure SaveInternal(s: TSimpleFileStream; PageNumber,Fpageall: integer);
-    procedure SaveInternal(s: TSimpleFileStream; PageNumber,Fpageall: integer; IsDesign: Boolean);
+    procedure SaveInternal(s: TSimpleFileStream);
   public
     procedure LoadBmp(FileName:String);
     procedure FreeBmp();
@@ -1718,14 +1718,14 @@ begin
 end;
 procedure TReportCell.Save(s: TSimpleFileStream;PageNumber, Fpageall:integer;IsDesign:Boolean);
 begin
-  Self.SaveInternal(s,PageNumber,FPageAll,IsDesign);
+  if not IsDesign then
+    FCellText := Self.ReportControl.renderText(Self, PageNumber,  Fpageall);
+  Self.SaveInternal(s);
 end;
-procedure TReportCell.SaveInternal(s: TSimpleFileStream;PageNumber, Fpageall:integer;IsDesign:Boolean);
+procedure TReportCell.SaveInternal(s: TSimpleFileStream);
 var k :  integer;
     w : TSimpleWriter;
 begin
-  if not IsDesign then
-    FCellText := Self.ReportControl.renderText(Self, PageNumber,  Fpageall);
   w := TSimpleWriter.Create(s);
   w.Int(FLeftMargin)
    .Int(FCellIndex)
