@@ -566,7 +566,7 @@ type
     procedure DoEdit(str:string);
     procedure DoMouseDown(P:TPoint;Shift:Boolean);
   Protected
-    function RenderText(ThisCell: TReportCell; PageNumber,Fpageall: Integer): String;virtual ;
+    function RenderText(ThisCell: TReportCell; PageNumber: Integer): String;virtual ;
     Procedure CreateWnd; Override;
     procedure InternalLoadFromFile(FileName:string;FLineList:TList);
 
@@ -1719,7 +1719,7 @@ end;
 procedure TReportCell.Save(s: TSimpleFileStream;PageNumber, Fpageall:integer;IsDesign:Boolean);
 begin
   if not IsDesign then
-    FCellText := Self.ReportControl.renderText(Self, PageNumber,  Fpageall);
+    FCellText := Self.ReportControl.renderText(Self, PageNumber);
   Self.SaveInternal(s);
 end;
 procedure TReportCell.SaveInternal(s: TSimpleFileStream);
@@ -3454,7 +3454,7 @@ Begin
   FSelectCells[0].OwnerLine.InsertCell (FSelectCells[0]);
   UpdateLines;
 End;
-function TReportControl.RenderText(ThisCell:TReportCell;PageNumber, Fpageall: Integer):String;
+function TReportControl.RenderText(ThisCell:TReportCell;PageNumber: Integer):String;
 begin
     Result := ThisCell.FCellText;
 end;
