@@ -72,8 +72,8 @@ type
   private
     // file
     Procedure SetReportFileName(Const Value: TFilename);
-    Procedure SaveTempFile(FileName:string;PageNumber, Fpageall: Integer);overload;
-    Procedure SaveTempFile(PageNumber, Fpageall: Integer);overload;
+    Procedure SaveTempFile(FileName:string;PageNumber: Integer);overload;
+    Procedure SaveCurrentPage();overload;
     Procedure LoadReport;
     Procedure LoadTempFile(strFileName: String);
     function ReadyFileName(PageNumber, Fpageall: Integer): String;
@@ -112,7 +112,7 @@ type
     procedure PrintRange(Title: String; FromPage, ToPage: Integer);
   // render : what 's diference on RenderText vs . RenderTextOnly vs. RenderCell ?
   Protected
-    function RenderText(ThisCell: TReportCell;PageNumber, Fpageall: Integer): String;override;
+    function RenderText(ThisCell: TReportCell): String;override;
   private
     procedure RenderCell(NewCell,ThisCell:TReportCell);
     procedure RenderBlobOnly(NewCell, ThisCell: TReportCell);
@@ -127,7 +127,7 @@ type
     function  EditReport :TReportControl;overload;
     function  EditReport (FileName:String):TReportControl;overload;
     Function shpreview: boolean;
-    Function PrintSET(prfile: String): boolean; 
+    Function PrintSET(prfile: String): boolean;
     Procedure updatepage;
     procedure PreparePrintk();
     Procedure Print(IsDirectPrint: Boolean);
@@ -216,11 +216,12 @@ begin
 end;
 // call this function OnSave
 // todo: Sum Lines 's @t1.lb why not render ?
-function TReportRunTime.RenderText(ThisCell:TReportCell;PageNumber, Fpageall: Integer):String;
+function TReportRunTime.RenderText(ThisCell:TReportCell):String;
 var
   R : String;
-
+  PageNumber: Integer ;
 begin
+  PageNumber := FPageIndex;
   If  ThisCell.IsPageNumFormula Then
     R :=Format(cc.PageFormat1,[PageNumber])
   Else If ThisCell.IsPageNumFormula1  Then
@@ -238,15 +239,16 @@ begin
   Result := R;
 end;
 
-Procedure TReportRunTime.SaveTempFile(PageNumber, Fpageall: Integer);
-var f :string;
+Procedure TReportRunTime.SaveCurrentPage();
+var f :string;PageNumber: Integer;
 begin
+   PageNumber:= FPageIndex;
    f:= ReadyFileName(PageNumber, Fpageall);
-   SaveTempFile(f,PageNumber, Fpageall);
+   SaveTempFile(f,PageNumber);
 end;
-Procedure TReportRunTime.SaveTempFile(FileName: String;PageNumber, Fpageall: Integer);
+Procedure TReportRunTime.SaveTempFile(FileName: String;PageNumber: Integer);
 begin
-  SaveToFile(FPrintLineList,FileName,PageNumber,Fpageall,False);
+  SaveToFile(FPrintLineList,FileName,PageNumber,Fpageall);
 end;
 
 Procedure TReportRunTime.LoadTempFile(strFileName: String);
@@ -1460,20 +1462,20 @@ procedure RenderParts.SaveLastPage(fpagecount, FpageAll:Integer);
 begin
    JoinList(FRC.FPrintLineList,True);
    FRC.UpdatePrintLines;
-   FRC.SaveTempFile(fpagecount, FpageAll);
+   FRC.SaveCurrentPage();
 end;
 
 procedure RenderParts.SavePage(fpagecount, FpageAll:Integer);
 begin
    JoinList(FRC.FPrintLineList,false);
    FRC.UpdatePrintLines;
-   FRC.SaveTempFile(fpagecount, FpageAll);
+   FRC.SaveCurrentPage();
 end;
 procedure RenderParts.SaveHeadPage();
 begin
     FRC.AppendList(FRC.FPrintLineList, FHead);
     FRC.UpdatePrintLines;
-    FRC.SaveTempFile(1,1);
+    FRC.SaveCurrentPage();
 end;
 
 procedure  RenderParts.JoinList(FPrintLineList:TList;IsLastPage:Boolean);

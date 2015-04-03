@@ -370,7 +370,7 @@ type
     Procedure SetTextColor(TextColor: COLORREF);
   Public
     procedure Load(stream:TSimpleFileStream;FileFlag:Word);
-    procedure Save(s:TSimpleFileStream;PageNumber, Fpageall:integer;IsDesign:Boolean);
+    procedure Save(s:TSimpleFileStream);
     function GetCellType:CellType;
     function DefaultHeight(): integer;
     procedure Select;
@@ -505,7 +505,7 @@ type
     MouseDrag : MouseDragger;
     hClientDC: HDC;
     procedure InternalSaveToFile(
-      FLineList: TList; FileName: String;PageNumber, Fpageall: integer;IsDesign:Boolean);
+      FLineList: TList; FileName: String;PageNumber, Fpageall: integer);
     procedure DoInvalidateRect(Rect:TRect);
     procedure RecreateEdit(ThisCell: TReportCell);
     procedure DoPaint(hPaintDC: HDC; Handle: HWND; ps: TPaintStruct);
@@ -566,7 +566,7 @@ type
     procedure DoEdit(str:string);
     procedure DoMouseDown(P:TPoint;Shift:Boolean);
   Protected
-    function RenderText(ThisCell: TReportCell; PageNumber: Integer): String;virtual ;
+    function RenderText(ThisCell: TReportCell): String;virtual ;
     Procedure CreateWnd; Override;
     procedure InternalLoadFromFile(FileName:string;FLineList:TList);
 
@@ -604,7 +604,7 @@ type
     Constructor Create(AOwner: TComponent); Override;
     Destructor Destroy; Override;
     Procedure SaveToFile(FileName: String);overload;
-    Procedure SaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer;IsDesign:Boolean);overload;
+    Procedure SaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);overload;
     Procedure LoadFromFile(FileName: String);
     Procedure DoLoadBmp(Cell: Treportcell; filename: String);
     Procedure FreeBmp(Cell: Treportcell);
@@ -1716,10 +1716,10 @@ begin
     End;
    end;
 end;
-procedure TReportCell.Save(s: TSimpleFileStream;PageNumber, Fpageall:integer;IsDesign:Boolean);
+procedure TReportCell.Save(s: TSimpleFileStream);
 begin
-  if not IsDesign then
-    FCellText := Self.ReportControl.renderText(Self, PageNumber);
+  //if not IsDesign then
+  FCellText := Self.ReportControl.renderText(Self);
   Self.SaveInternal(s);
 end;
 procedure TReportCell.SaveInternal(s: TSimpleFileStream);
@@ -3454,15 +3454,16 @@ Begin
   FSelectCells[0].OwnerLine.InsertCell (FSelectCells[0]);
   UpdateLines;
 End;
-function TReportControl.RenderText(ThisCell:TReportCell;PageNumber: Integer):String;
+function TReportControl.RenderText(ThisCell:TReportCell):String;
 begin
     Result := ThisCell.FCellText;
 end;
 
-Procedure TReportControl.InternalSaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer;IsDesign:Boolean);
+Procedure TReportControl.InternalSaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);
 Var
   TargetFile: TSimpleFileStream;
   I,j: Integer;
+  ccc : TReportCell;
 Begin
   TargetFile := TSimpleFileStream.Create(FileName, fmOpenWrite Or fmCreate);
   Try
@@ -3490,8 +3491,11 @@ Begin
       Begin
         TReportLine(FLineList[I]).Save(TargetFile);
         For J := 0 To TReportLine(FLineList[I]).FCells.Count - 1 Do
-          TReportCell(TReportLine(FLineList[I]).FCells[J]).Save(TargetFile,PageNumber, Fpageall,IsDesign);
-          //Cells[I,J].Save(TargetFile,PageNumber, Fpageall);
+        begin
+          ccc := TReportCell(TReportLine(FLineList[I]).FCells[J]);
+          ccc.Save(TargetFile);
+          // Cells[I,J].Save(TargetFile,IsDesign);
+        end;                    
       End;
       WriteInteger(FprPageNo);
       WriteInteger(FprPageXy);
@@ -3504,11 +3508,11 @@ Begin
   End;
 End;
 
-Procedure TReportControl.SaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer;IsDesign:Boolean);
+Procedure TReportControl.SaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);
 Begin
   PrintPaper.prDeviceMode;
   PrintPaper.GetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
-  InternalSavetoFile(FLineList,FileName,PageNumber, Fpageall,IsDesign);
+  InternalSavetoFile(FLineList,FileName,PageNumber, Fpageall);
 End;
 
 Procedure TReportControl.LoadFromFile(FileName: String);
@@ -3904,7 +3908,7 @@ End;
 
 procedure TReportControl.SaveToFile(FileName: String);
 begin
-  SaveToFile(FLineList,FileName,0,0,True);
+  SaveToFile(FLineList,FileName,0,0);
 end;
 
 procedure TPrinterPaper.Batch;
