@@ -13,7 +13,9 @@ uses
   ReportControl in '..\vcl\ReportControl.pas',
   ReportRunTime in '..\vcl\ReportRunTime.pas',
   osservice in '..\vcl\osservice.pas',
-  uHornCartesian in '..\vcl\uHornCartesian.pas';
+  uHornCartesian in '..\vcl\uHornCartesian.pas',
+  RitaRestart in 'RitaRestart.pas',
+  jp in 'jp.pas';
 
 {$R *.res}
 

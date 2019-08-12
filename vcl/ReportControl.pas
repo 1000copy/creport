@@ -542,7 +542,7 @@ type
     FEditCell: TReportCell;
 
     FReportScale: Integer;
-    FPageWidth: Integer;
+    //FPageWidth: Integer;
     FPageHeight: Integer;
     // Margin : by pixel
     FLeftMargin: Integer;
@@ -2289,7 +2289,7 @@ Begin
   FLastPrintPageHeight := 0;
 
   FReportScale := 100;
-  FPageWidth := 0;
+  s.FPageWidth := 0;
   FPageHeight := 0;
 
   // 以毫米为单位
@@ -2350,7 +2350,7 @@ Begin
   Begin
     If FLastPrintPageWidth <> 0 Then
     Begin
-      FPageWidth := FLastPrintPageWidth;
+      s.FPageWidth := FLastPrintPageWidth;
       FPageHeight := FLastPrintPageHeight;
     End;
   End;
@@ -2361,23 +2361,23 @@ Begin
   Begin
     If printer.Printers.Count <= 0 Then
     Begin
-      FPageWidth := 768;
+      s.FPageWidth := 768;
       FPageHeight := 1058;
     End
     Else
     Begin
       hClientDC := GetDC(0);
       try
-        FPageWidth :=os.MapDots(Printer.Handle, hClientDC,Printer.PageWidth);
+        s.FPageWidth :=os.MapDots(Printer.Handle, hClientDC,Printer.PageWidth);
         FPageHeight :=os.MapDots(Printer.Handle, hClientDC,Printer.PageHeight);
       finally
         ReleaseDC(0, hClientDC);
       end;
     End;
   End;
-  FLastPrintPageWidth := FPageWidth;
+  FLastPrintPageWidth := s.FPageWidth;
   FLastPrintPageHeight := FPageHeight;
-  Width := trunc(FPageWidth * FReportScale / 100 + 0.5);   
+  Width := trunc(s.FPageWidth * FReportScale / 100 + 0.5);
   Height := trunc(FPageHeight * FReportScale / 100 + 0.5);
 End;
 //   cornice 飞檐     horn 犄角
@@ -2398,11 +2398,11 @@ begin
     LineTo(hPaintDC, FLeftMargin - 25, FTopMargin);
 
     // 右上
-    MoveToEx(hPaintDC, FPageWidth - FRightMargin, FTopMargin, Nil);
-    LineTo(hPaintDC, FPageWidth - FRightMargin, FTopMargin - 25);
+    MoveToEx(hPaintDC, s.FPageWidth - FRightMargin, FTopMargin, Nil);
+    LineTo(hPaintDC, s.FPageWidth - FRightMargin, FTopMargin - 25);
 
-    MoveToEx(hPaintDC, FPageWidth - FRightMargin, FTopMargin, Nil);
-    LineTo(hPaintDC, FPageWidth - FRightMargin + 25, FTopMargin);
+    MoveToEx(hPaintDC, s.FPageWidth - FRightMargin, FTopMargin, Nil);
+    LineTo(hPaintDC, s.FPageWidth - FRightMargin + 25, FTopMargin);
 
     // 左下
     MoveToEx(hPaintDC, FLeftMargin, FPageHeight - FBottomMargin, Nil);
@@ -2412,13 +2412,13 @@ begin
     LineTo(hPaintDC, FLeftMargin - 25, FPageHeight - FBottomMargin);
 
     // 右下
-    MoveToEx(hPaintDC, FPageWidth - FRightMargin, FPageHeight - FBottomMargin,
+    MoveToEx(hPaintDC, s.FPageWidth - FRightMargin, FPageHeight - FBottomMargin,
       Nil);
-    LineTo(hPaintDC, FPageWidth - FRightMargin, FPageHeight - FBottomMargin + 25);
+    LineTo(hPaintDC, s.FPageWidth - FRightMargin, FPageHeight - FBottomMargin + 25);
 
-    MoveToEx(hPaintDC, FPageWidth - FRightMargin, FPageHeight - FBottomMargin,
+    MoveToEx(hPaintDC, s.FPageWidth - FRightMargin, FPageHeight - FBottomMargin,
       Nil);
-    LineTo(hPaintDC, FPageWidth - FRightMargin + 25, FPageHeight - FBottomMargin);
+    LineTo(hPaintDC, s.FPageWidth - FRightMargin + 25, FPageHeight - FBottomMargin);
   finally
     SelectObject(hPaintDC, hPrevPen);
     DeleteObject(hGrayPen);
@@ -2445,10 +2445,10 @@ begin
   //
   c := Canvas.Create(hPaintDC);
   c.SetMapMode();
-  c.SetWindowExtent(FPageWidth, FPageHeight);
+  c.SetWindowExtent(s.FPageWidth, FPageHeight);
   c.SetViewportExtent(Width, Height);
   os.InverseScaleRect(rectPaint,FReportScale);
-  c.Rectangle(0, 0, FPageWidth, FPageHeight);
+  c.Rectangle(0, 0, s.FPageWidth, FPageHeight);
   DrawCornice(hPaintDC);
   Cells := TCellList.Create(self);
   try
@@ -3425,7 +3425,8 @@ Begin
     Begin  
       WriteWord($AA57);
       WriteInteger(FReportScale);
-      WriteInteger(FPageWidth);
+      //WriteInteger(FPageWidth);
+      WriteInteger(s.FPageWidth);
       WriteInteger(FPageHeight);
       WriteInteger(FLeftMargin);
       WriteInteger(FTopMargin);
@@ -3476,7 +3477,7 @@ Begin
     Begin
       WriteWord($AA57);
       WriteInteger(FReportScale);
-      WriteInteger(FPageWidth);
+      WriteInteger(s.FPageWidth);
       WriteInteger(FPageHeight);
       WriteInteger(FLeftMargin);
       WriteInteger(FTopMargin);
@@ -3543,7 +3544,7 @@ Begin
   PrintPaper.prDeviceMode;
   PrintPaper.SetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
   FTextEdit.DestroyIfVisible;
-  FLastPrintPageWidth := FPageWidth;             //1999.1.23
+  FLastPrintPageWidth := s.FPageWidth;             //1999.1.23
   FLastPrintPageHeight := FPageHeight;
   UpdateLines;
 
@@ -3571,7 +3572,7 @@ Var
   end;
   procedure After;
   begin
-      Width := FPageWidth;
+      Width := s.FPageWidth;
       Height := FPageHeight;
   end;
 Begin
@@ -3586,7 +3587,7 @@ Begin
       Before ;      
 
       ReadInteger(FReportScale);
-      ReadInteger(FPageWidth);
+      ReadInteger(s.FPageWidth);
       ReadInteger(FPageHeight);
 
       ReadInteger(FLeftMargin);
@@ -3888,11 +3889,11 @@ End;
 
 Procedure TReportControl.SetWndSize(w, h: integer);  
 Begin
-  FPageWidth := w;
+  s.FPageWidth := w;
   FPageHeight := h;
-  FLastPrintPageWidth := FPageWidth;
+  FLastPrintPageWidth := s.FPageWidth;
   FLastPrintPageHeight := FPageHeight;
-  Width := trunc(FPageWidth * FReportScale / 100 + 0.5); //width,heght用于显示
+  Width := trunc(s.FPageWidth * FReportScale / 100 + 0.5); //width,heght用于显示
   Height := trunc(FPageHeight * FReportScale / 100 + 0.5);
 End;
 
