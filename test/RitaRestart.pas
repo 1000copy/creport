@@ -48,6 +48,7 @@ var j:integer;
     R:TReportRunTime;
     t1 ,t2: TClientDataset;
     F : TStringField;
+    i : integer ;
 begin
   try
       R:=TReportRunTime.Create(Application.MainForm);
@@ -63,12 +64,9 @@ begin
       R.SetData(t1,t2);
       t1.Open;
       t2.Open;
-      t1.AppendRecord([1,2]);
-      t1.AppendRecord([1,2]);
-      t1.AppendRecord([1,2]);
-      t1.AppendRecord([1,2]);
-      t1.AppendRecord([1,2]);
-      t1.AppendRecord([1,2]);
+      for i := 0 to 100 do begin
+        t1.AppendRecord([i,2]);
+      end;
       t2.Append;
       t2.FieldByName('f1').asstring:= '2' ;
       t2.Post;
@@ -76,7 +74,7 @@ begin
       with  R do
       begin
         CalcWndSize; 
-        NewTable(6 ,3);
+        NewTable(2 ,3);
         Lines[0].Select;
         CombineCell;
         Lines[0].LineHeight := 80;
