@@ -36,6 +36,10 @@ Uses
    Classes, Graphics, Controls,
   Forms, Dialogs, Printers, Menus, Db,
   DesignEditors, ExtCtrls,osservice;
+type
+  SS = record
+    FPageWidth: Integer;
+  end;
 Const
   // Horz Align
   TEXT_ALIGN_LEFT = 0;
@@ -523,8 +527,12 @@ type
     procedure MsgLoop(RectBorder:TRect);
     procedure OnMove(TempMsg: TMSG;RectBorder:TRect );
     function AddSelectedCells(Cells: TCellList): Boolean;
+    procedure InternalSavetoJSON(FLineList: TList; FileName: String;
+      PageNumber, Fpageall: integer);
+
 
   protected
+    s : SS ;
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
     FPreviewStatus: Boolean;
@@ -3405,8 +3413,7 @@ function TReportControl.RenderText(ThisCell:TReportCell):String;
 begin
     Result := ThisCell.FCellText;
 end;
-
-Procedure TReportControl.InternalSaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);
+Procedure TReportControl.InternalSavetoJSON(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);
 Var
   TargetFile: TSimpleFileStream;
   I,j: Integer;
@@ -3457,6 +3464,57 @@ Begin
     TargetFile.Free;
   End;
 End;
+Procedure TReportControl.InternalSaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);
+Var
+  TargetFile: TSimpleFileStream;
+  I,j: Integer;
+  ccc : TReportCell;
+Begin
+  TargetFile := TSimpleFileStream.Create(FileName, fmOpenWrite Or fmCreate);
+  Try
+    With TargetFile Do
+    Begin
+      WriteWord($AA57);
+      WriteInteger(FReportScale);
+      WriteInteger(FPageWidth);
+      WriteInteger(FPageHeight);
+      WriteInteger(FLeftMargin);
+      WriteInteger(FTopMargin);
+      WriteInteger(FRightMargin);
+      WriteInteger(FBottomMargin);
+      WriteInteger(FLeftMargin1);
+      WriteInteger(FTopMargin1);
+      WriteInteger(FRightMargin1);
+      WriteInteger(FBottomMargin1);
+      WriteBoolean(FNewTable);
+      WriteInteger(FDataLine);
+      WriteInteger(FTablePerPage);  
+      WriteInteger(FLineList.Count);
+      For I := 0 To FLineList.Count - 1 Do
+        WriteInteger(TReportLine(FLineList[I]).FCells.Count);
+      //  {$Optimization off}
+      For I := 0 To FLineList.Count - 1 Do
+      Begin
+        TReportLine(FLineList[I]).Save(TargetFile);
+        For J := 0 To TReportLine(FLineList[I]).FCells.Count - 1 Do
+        begin
+          ccc := TReportCell(TReportLine(FLineList[I]).FCells[J]);
+          ccc.Save(TargetFile);
+          // Cells[I,J].Save(TargetFile);
+        end;
+      End;
+      // {$Optimization on}
+      WriteInteger(FprPageNo);
+      WriteInteger(FprPageXy);
+      WriteInteger(fPaperLength);
+      WriteInteger(fPaperWidth);
+      WriteInteger(0);//FHootNo
+    End;
+  Finally
+    // Free will call File.close before destroy finally
+    TargetFile.Free;
+  End;
+End;
 
 Procedure TReportControl.SaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);
 Begin
@@ -3464,7 +3522,6 @@ Begin
   PrintPaper.GetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
   InternalSavetoFile(FLineList,FileName,PageNumber, Fpageall);
 End;
-
 Procedure TReportControl.LoadPage(I:Integer);
 var FileName: String;
 begin

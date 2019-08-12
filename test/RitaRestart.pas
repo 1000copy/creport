@@ -10,20 +10,23 @@ uses
   ReportControl,
   ReportRunTime,creport,
   // sys
+  forms,
   messages,
-  Classes,
-   Math,DBClient,  db,  DBTables,  Graphics,  forms,  Windows,  SysUtils,  TestFramework,Printers;
+  Classes,    jp,
+   Math,DBClient,  db,  DBTables,  Graphics, dialogs,   Windows,  SysUtils,  TestFramework,Printers;
 
 type
 
   TRitaRestartTest = class(TTestCase)
   private
+
   protected
     procedure SetUp; override;
     procedure TearDown; override;
   published
     procedure TestRuntime;
-
+    procedure TestSimpleJson;
+        procedure Test1;
   end;
 
 implementation
@@ -38,6 +41,60 @@ procedure TRitaRestartTest.TearDown;
 begin
   inherited;
 
+end;
+procedure TRitaRestartTest.TestSimpleJson;
+var
+  Source, Lines: TStringList;
+  JsonParser: TJsonParser;
+  I, J: Integer;
+  pairs : TJsonObject;
+  key:string;
+  value : TJsonValue;
+  c : Integer;
+begin
+    c := 0 ;
+    Source := TStringList.Create;
+    Source.Add('{"PageWidth":"100","PageHeight":"300"}');
+    ClearJsonParser(JsonParser);
+    ParseJson(JsonParser, Source.Text);
+    Source.Free;
+    for J := 0 to Length(JsonParser.Output.Errors) - 1 do
+      WriteLn(JsonParser.Output.Errors[J]);
+    Lines := TStringList.Create;
+    PrintJsonParserOutput(JsonParser.Output, Lines);
+    pairs := JsonParser.Output.Objects[0] ;
+    for I := 0 to length(pairs) -1 do
+    begin
+        key := pairs[i].key ;
+        value := pairs[i].value ;
+        if (value.Kind = JVKString)then
+          c := c + strtoint(JsonParser.Output.strings[value.index])
+    end;
+    Lines.Free;
+    check(c = 400,'not equals 400' + inttostr(c));
+end;
+
+procedure TRitaRestartTest.Test1;
+var
+  Source, Lines: TStringList;
+  JsonParser: TJsonParser;
+  I, J: Integer;
+
+begin
+  for I := 1 to 1 do
+  begin
+    Source := TStringList.Create;
+    Source.LoadFromFile(Format('Test%d.json', [I]));
+    ClearJsonParser(JsonParser);
+    ParseJson(JsonParser, Source.Text);
+    Source.Free;
+    for J := 0 to Length(JsonParser.Output.Errors) - 1 do
+      WriteLn(JsonParser.Output.Errors[J]);
+    Lines := TStringList.Create;
+    PrintJsonParserOutput(JsonParser.Output, Lines);
+    Lines.SaveToFile(Format('Test%d.txt', [I]));
+    Lines.Free;
+  end;
 end;
 
 procedure TRitaRestartTest.TestRuntime;
@@ -92,11 +149,12 @@ begin
            Cells[1,j].CellText := t1.FieldDefs[j].Name;
            Cells[2,j].CellText := '#T1.'+t1.FieldDefs[j].Name;
         end;
-        SaveToFile(strFileDir+'\'+'xxx.ept');
+        SaveToFile(strFileDir+'\'+'1.ept');
         ResetContent;
         cf.Free;
       end;
-      R.ReportFile:=strFileDir+'\'+'xxx.ept';
+      R.ReportFile:=strFileDir+'\'+'1.ept';
+      R.SaveToJson(strFileDir+'\'+'1.json');
       R.PrintPreview(true);
     finally
       T1.free;

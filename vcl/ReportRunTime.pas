@@ -119,6 +119,7 @@ type
     procedure RenderTextOnly(NewCell, ThisCell: TReportCell);
 
   Public
+    function SaveToJson(fileName: String):boolean;
     function DoPageCount(): integer;
     Constructor Create(AOwner: TComponent); Override;
     Destructor Destroy; Override;
@@ -371,8 +372,8 @@ Begin
   NewCell.CalcHeight;
 End;
 
-//  Ôö¼Ó ,ÍêÈ«ÖØÐ´µÄ PreparePrint,²¢Ôö¼ÓÁËÓÃ¿ÕÐÐ²¹ÂúÒ»Ò³ Í³¼ÆµÈ¹¦ÄÜ
-//·µ»ØÊýÓÃÓÚÔÚÔ¤ÀÀÖÐÈ·¶¨´ú££×ÖÍ·Êý¾Ý¿âÊÇÔÚÄ£°åµÄµÚ¼¸ÐÐ
+//  ï¿½ï¿½ï¿½ï¿½ ,ï¿½ï¿½È«ï¿½ï¿½Ð´ï¿½ï¿½ PreparePrint,ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¿ï¿½ï¿½Ð²ï¿½ï¿½ï¿½Ò»Ò³ Í³ï¿½ÆµÈ¹ï¿½ï¿½ï¿½
+//ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ô¤ï¿½ï¿½ï¿½ï¿½È·ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Í·ï¿½ï¿½ï¿½Ý¿ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ÄµÚ¼ï¿½ï¿½ï¿½
 function TReportRunTime.IsLastPageFull:Boolean ;
 begin
   result := (FtopMargin + HeadHeight + FDataLineHeight + SumHeight +
@@ -442,7 +443,7 @@ begin
 			Printer.EndDoc;
 
 end;
-//IsDirectPrint  £ºtrue , ´ú±íÊÇ·ñÖ±½Ó´òÓ¡ ,false ±íÊ¾´ÓÔ¤ÀÀUIÖÐµ÷ÓÃ´òÓ¡
+//IsDirectPrint  ï¿½ï¿½true , ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½Ö±ï¿½Ó´ï¿½Ó¡ ,false ï¿½ï¿½Ê¾ï¿½ï¿½Ô¤ï¿½ï¿½UIï¿½Ðµï¿½ï¿½Ã´ï¿½Ó¡
 Procedure TReportRunTime.Print(IsDirectPrint: Boolean);
 Var
   I: Integer;
@@ -452,7 +453,7 @@ Begin
 	try
 		Try
 			CheckError(printer.Printers.Count = 0 ,cc.ErrorPrinterSetupRequired);
-			// °®ÉÏ»áÕ¹£º½ðË¿éªÊá£¬ÄþµÂÀÏÊÙÃ¼£¬Áù°²¹ÏÆ¬£¬Ì«Æ½ºï¿ý£¬Èê´É 2014-11-7 ²è²©»á
+			// ï¿½ï¿½ï¿½Ï»ï¿½Õ¹ï¿½ï¿½ï¿½ï¿½Ë¿ï¿½ï¿½á£¬ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã¼ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Æ¬ï¿½ï¿½Ì«Æ½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ 2014-11-7 ï¿½è²©ï¿½ï¿½
 			If IsDirectPrint Then
 			Begin
 			  REPmessform.show;
@@ -528,7 +529,7 @@ Begin
 
   FDRMap.Clear;
 End;
- //LCJ: ¿ÉÖ±½Ó»òÔÚÔ¤ÀÀÖÐµ÷ÓÃÉèÖÃ´òÓ¡²ÎÊý
+ //LCJ: ï¿½ï¿½Ö±ï¿½Ó»ï¿½ï¿½ï¿½Ô¤ï¿½ï¿½ï¿½Ðµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ã´ï¿½Ó¡ï¿½ï¿½ï¿½ï¿½
 Function TReportRunTime.PrintSET(prfile: String): boolean;
 Begin
   Application.CreateForm(TMarginForm, MarginForm);
@@ -621,7 +622,7 @@ Var
   ThisLine: TReportLine;
   ThisCell: TReportCell;
 Begin
-  // Ê×ÏÈ¼ÆËãºÏ²¢ºóµÄµ¥Ôª¸ñ
+  // ï¿½ï¿½ï¿½È¼ï¿½ï¿½ï¿½Ï²ï¿½ï¿½ï¿½Äµï¿½Ôªï¿½ï¿½
   For I := 0 To FPrintLineList.Count - 1 Do
   Begin
     ThisLine := TReportLine(FPrintLineList[I]);
@@ -635,7 +636,7 @@ Begin
     End;
   End;
 
-  // ¼ÆËãÃ¿ÐÐµÄ¸ß¶È
+  // ï¿½ï¿½ï¿½ï¿½Ã¿ï¿½ÐµÄ¸ß¶ï¿½
   For I := 0 To FPrintLineList.Count - 1 Do
   Begin
     ThisLine := TReportLine(FPrintLineList[I]);
@@ -809,7 +810,7 @@ begin
       TDataSetItem(Items[I]).Free;
 end;
 
-// TODO :ÒÔÏÂ´úÂë¶¼µÃºÃºÃ¸ÄÏÂ¡£
+// TODO :ï¿½ï¿½ï¿½Â´ï¿½ï¿½ë¶¼ï¿½ÃºÃºÃ¸ï¿½ï¿½Â¡ï¿½
 function TReportRunTime.GetValue(ThisCell:TReportCell):String;
 var
     cellText ,FieldName:string;
@@ -1106,7 +1107,7 @@ begin
    end;
 end;
 
-//½«ÓÐºÏ¼ÆµÄÐÐ(`SumAll)´æÈëÒ»¸öÁÐ±íÖÐ
+//ï¿½ï¿½ï¿½ÐºÏ¼Æµï¿½ï¿½ï¿½(`SumAll)ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½ï¿½Ð±ï¿½ï¿½ï¿½
 function TReportRunTime.FillSumList():TLineList;
 Var
   I, J, n,  TempDataSetCount:Integer;
@@ -1184,7 +1185,7 @@ begin
       FSummer.Acc(j,Value);
     End;
   Except
-    raise Exception.create('Í³¼ÆÊ±·¢Éú´íÎó£¬Çë¼ì²éÄ£°åÉèÖÃÊÇ·ñÕýÈ·');
+    raise Exception.create('Í³ï¿½ï¿½Ê±ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ä£ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç·ï¿½ï¿½ï¿½È·');
   End;
 end;
 function TReportRunTime.ExpandLine(HasDataNo:integer):TReportLine;
@@ -1528,6 +1529,29 @@ Begin
     End;
   End;
 End;
+function TReportRunTime.SaveToJson(fileName: String): boolean;
+begin
+      // self.FReportScale;
+      // self.FPageWidth;
+      // self.FPageHeight;
+
+      // self.FLeftMargin;
+      // self.FTopMargin;
+      // self.FRightMargin;
+      // self.FBottomMargin;
+
+      // self.FLeftMargin1;
+      // self.FTopMargin1;
+      // self.FRightMargin1;
+      // self.FBottomMargin1;
+
+      // ReadBoolean(FNewTable);
+      // self.FDataLine;
+      // self.FTablePerPage;
+
+      // self.Count1;
+end;
+
 end.
 
 
