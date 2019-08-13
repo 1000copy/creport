@@ -35,7 +35,8 @@ requires
   vcljpg,
   rtl,
   dbrtl,
-  vclactnband;
+  vclactnband,
+  xmlrtl;
 
 contains
   ReportControl in 'ReportControl.pas',
@@ -50,14 +51,13 @@ contains
   About in 'About.pas' {frm_About},
   Border in 'Border.pas' {BorderForm},
   Color in 'Color.pas' {ColorForm},
-  creport in 'Creport.pas' {CreportForm},
+  Creport in 'Creport.pas' {CreportForm},
   diagonal in 'diagonal.PAS' {DiagonalForm},
   margin in 'margin.pas' {MarginForm},
   NewDialog in 'NewDialog.pas' {frmNewTable},
   Preview in 'Preview.pas' {PreviewForm},
-  REPMESS in 'repmess.PAS' {REPmessform},
+  repmess in 'repmess.PAS' {REPmessform},
   vsplit in 'vsplit.PAS' {VSplitForm},
   ReportRunTime in 'ReportRunTime.pas',
-  CC in 'CC.pas';
-
+  CC in 'CC.pas';
 end.

@@ -16,7 +16,10 @@ uses
   uHornCartesian in '..\vcl\uHornCartesian.pas',
   RitaRestart in 'RitaRestart.pas',
   jp in 'jp.pas',
-  ritaToJson in 'ritaToJson.pas';
+  ritaToJson in 'ritaToJson.pas',
+  uObjProp in 'uObjProp.pas',
+  FastMMMemLeakMonitor in '..\dunit\src\FastMMMemLeakMonitor.pas',
+  CC in '..\vcl\CC.pas';
 
 {$R *.res}
 

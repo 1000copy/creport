@@ -35,7 +35,7 @@ Uses
   {$WARNINGS OFF}FileCtrl,{$WARNINGS ON}
    Classes, Graphics, Controls,
   Forms, Dialogs, Printers, Menus, Db,
-  DesignEditors, ExtCtrls,osservice;
+  ExtCtrls,osservice;
 type
   SS = record
     FPageWidth: Integer;

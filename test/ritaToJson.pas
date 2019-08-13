@@ -4,6 +4,7 @@ interface
 
 uses
   // user
+  uobjprop,
  jp,TestFramework,sysutils,classes;
 
 type
@@ -192,54 +193,6 @@ begin
     check(cc.lineindex = 5,inttostr(r.pagewidth)) ;
 end;
 
-type ObjProp = class
-  private
-    JsonParser: TJsonParser;
-    output:TJsonParserOutput;
-    currentObject:TJsonObject;
-//    function getArrayLength(p: string): Integer;
-    function getArrayPropery(p: string): TJsonArray;
-    function getIntProperty(p: string): Integer;
-    function getObjectFromArray(index: integer; obj: TJsonArray): TJsonObject;
-    procedure setCurrentObject(obj:TJSonObject);
-  public
-    constructor create(JsonParser: TJsonParser);
-end;
-    function ObjProp.getIntProperty(p:string):Integer;
-    var i : integer;obj:TJsonObject;
-    begin
-    obj:= currentObject;
-    result := 0 ;
-    for i:= 0 to length(obj)-1 do begin
-        if (obj[i].key = p) and (obj[i].Value.Kind = JVKNumber) then begin
-        result :=  trunc( output.Numbers[obj[i].value.Index]);
-        break;
-        end;
-    end;
-    end;
-
-    function ObjProp.getArrayPropery(p:string):TJsonArray;
-    var i : integer;v : TJsonValue;
-    obj:TJsonObject;
-    begin
-    obj:= currentObject;
-    result := nil ;
-    for i:= 0 to length(obj)-1 do begin
-        if (obj[i].key = p) and (obj[i].Value.Kind = JVKArray) then begin
-        result :=  (output.Arrays[obj[i].value.Index]);
-        break;
-        end;
-    end;
-    end;
-    function ObjProp.getObjectFromArray(index:integer;obj:TJsonArray):TJsonObject;
-    var i : integer;v : TJsonValue;
-    begin
-        result := nil ;
-        v :=  obj[index];
-        if v.kind = JVKObject then
-            result := output.Objects[v.Index];
-    end;
-
 procedure TRitaToJson.TestReverseObject;
 var
   Source, Lines: TStringList;
@@ -262,31 +215,21 @@ begin
       WriteLn(JsonParser.Output.Errors[J]);
     r := TReport.create;
     obbjp := ObjProp.create(JsonParser);
-    obbjp.setCurrentObject(JsonParser.output.Objects[0]);
-    r.PageWidth := obbjp.getIntProperty('PageWidth');
-    setlength(r.lines,length(obbjp.getArrayPropery('lines')));
-    arr := obbjp.getArrayPropery('lines',0);
-    cellObject := obbjp.getObjectFromArray(0,arr);
+    obbjp.setCurrent(JsonParser.output.Objects[0]);
+    r.PageWidth := obbjp._int('PageWidth');
+    setlength(r.lines,length(obbjp._array('lines')));
+    arr := obbjp._array('lines');
+    cellObject := obbjp.objFrom(0,arr);
     check(length(r.lines)=2);
     cc := TLine.create();
-    obbjp.setCurrentObject(cellObject);
-    cc.lineTop :=  obbjp.getIntProperty('lineTop');
-    cc.lineIndex := obbjp.getIntProperty('lineIndex');
+    obbjp.setCurrent(cellObject);
+    cc.lineTop :=  obbjp._int('lineTop');
+    cc.lineIndex := obbjp._int('lineIndex');
     check(r.PageWidth = 1);
     check(cc.linetop = 10) ;
     check(cc.lineindex = 5) ;
 end;
 
-constructor ObjProp.create(JsonParser: TJsonParser);
-begin
-  self.JsonParser := JsonParser;
-  self.output := self.JsonParser.Output; 
-end;
-
-procedure ObjProp.setCurrentObject(obj: TJSonObject);
-begin
-  self.currentObject := obj;
-end;
 
 initialization
   RegisterTests('RitaRestart',[
