@@ -3,7 +3,6 @@ program ReportTests;
 uses
   SysUtils,
   Forms,
-  UnitTestFramework in 'UnitTestFramework.pas',
   TestFramework in '..\dunit\src\TestFramework.pas',
   TestExtensions in '..\dunit\src\TestExtensions.pas',
   GUITestRunner in '..\dunit\src\GUITestRunner.pas',
@@ -19,7 +18,8 @@ uses
   ritaToJson in 'ritaToJson.pas',
   uObjProp in 'uObjProp.pas',
   FastMMMemLeakMonitor in '..\dunit\src\FastMMMemLeakMonitor.pas',
-  CC in '..\vcl\CC.pas';
+  CC in '..\vcl\CC.pas',
+  UnitTestFramework in 'UnitTestFramework.pas';
 
 {$R *.res}
 

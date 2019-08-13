@@ -205,9 +205,9 @@ var
   var a:string;
 var r : TReport ;cc : TLine;line :TLine;s:string;
 
-var cellObject : TJsonObject;arr : TJsonArray;obbjp : ObjProp;
+var lineObject : TJsonObject;arr : TJsonArray;obbjp : ObjProp;
 begin
-    a := '{"PageWidth":1,"lines":[{"lineTop":10,"lineIndex":5},{"lineTop":10,"lineIndex":5}]}';
+    a := '{"PageWidth":1,"lines":[{"lineTop":10,"lineIndex":5,"cells":[]}]}';
     c := 0 ;
     ClearJsonParser(JsonParser);
     ParseJson(JsonParser, a);
@@ -219,10 +219,9 @@ begin
     r.PageWidth := obbjp._int('PageWidth');
     setlength(r.lines,length(obbjp._array('lines')));
     arr := obbjp._array('lines');
-    cellObject := obbjp.objFrom(0,arr);
-    check(length(r.lines)=2);
+    lineObject := obbjp.objFrom(0,arr);
     cc := TLine.create();
-    obbjp.setCurrent(cellObject);
+    obbjp.setCurrent(lineObject);
     cc.lineTop :=  obbjp._int('lineTop');
     cc.lineIndex := obbjp._int('lineIndex');
     check(r.PageWidth = 1);
