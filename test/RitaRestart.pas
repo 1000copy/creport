@@ -26,6 +26,8 @@ type
   published
     procedure TestRuntime;
     procedure TestSimpleJson;
+    procedure TestArray;
+    procedure TestDeepLevel;
         procedure Test1;
   end;
 
@@ -162,6 +164,121 @@ begin
     end;
 end;
 
+
+procedure TRitaRestartTest.TestArray;
+var
+  Source, Lines: TStringList;
+  JsonParser: TJsonParser;
+  I, J: Integer;
+  pairs : TJsonObject;
+  key:string;
+  value : TJsonValue;
+  c : Integer;
+begin
+    c := 0 ;
+    Source := TStringList.Create;
+    Source.Add('[{"PageWidth":"100"},{"PageWidth":"101"}]');
+    ClearJsonParser(JsonParser);
+    ParseJson(JsonParser, Source.Text);
+    Source.Free;
+    for J := 0 to Length(JsonParser.Output.Errors) - 1 do
+      WriteLn(JsonParser.Output.Errors[J]);
+    Lines := TStringList.Create;
+    for i := 0 to length(JsonParser.Output.Objects)-1 do begin
+        pairs := JsonParser.Output.Objects[i] ;
+        key := pairs[0].key;
+        value := pairs[0].value ;
+        if (value.Kind = JVKString)then
+          c := c + strtoint(JsonParser.Output.strings[value.index])
+    end;
+    Lines.Free;
+    check(c = 201,'not equals 201' + inttostr(c));
+end;
+procedure TRitaRestartTest.TestDeepLevel;
+var
+  Source, Lines: TStringList;
+  JsonParser: TJsonParser;
+  I, J: Integer;
+  pairs : TJsonObject;
+  key:string;
+  value : TJsonValue;
+  c : Integer;
+  function ParseCell(arr : TJsonObject): Integer;
+  var
+    I, J: Integer;
+    pairs : TJsonObject;
+  begin
+     result := 0;
+      for i := 0 to length(arr)-1 do begin
+        pairs := arr ;
+        key := pairs[i].key;
+        value := pairs[i].value ;
+        if (value.Kind = JVKString)then
+          result := result + strtoint(JsonParser.Output.strings[value.index]);
+    end;
+  end;
+  function ParseCells(arr : TJsonArray): Integer;
+  var
+    I, J: Integer;
+  begin
+      result := 0;
+      for i := 0 to length(arr)-1 do begin
+        value := arr[0];
+        if (value.Kind = JVKObject)then
+          result := result + parseCell(JsonParser.Output.Objects[value.index]);
+    end;
+  end;
+  function ParseLine(arr :TJsonObject): Integer;
+  var
+    I, J: Integer;
+    pairs : TJsonObject;
+  begin
+     result := 0;
+     for i := 0 to length(arr)-1 do begin
+        key := arr[i].key ;
+        value := arr[i].Value ;
+        if (value.Kind = JVKstring)then
+          result := result + strtoint(JsonParser.Output.strings[value.index]);
+        if (key = 'Cells') then
+          result := result + parseCells(JsonParser.Output.Arrays[value.index])
+    end;
+  end;
+  function ParseLines(arr :TJsonArray): Integer;
+  var
+    I, J: Integer;
+    pairs : TJsonValue;
+  begin
+     result := 0;
+      for i := 0 to length(arr)-1 do begin
+        value := arr[i] ;
+        if (value.Kind = JVKObject)then
+          result := result + ParseLine(JsonParser.Output.Objects[value.index]);
+    end;
+  end;
+ var report :  TJsonObject;
+begin
+    c := 0 ;
+    Source := TStringList.Create;
+    Source.Add('{"PageWidth":"100","Lines":[{"Index":"0","LineTop":"10","LineHeight":"20","Cells":[{"CellIndex":"0","CellLeft":"210"}]}]}');
+    ClearJsonParser(JsonParser);
+    ParseJson(JsonParser, Source.Text);
+    Source.Free;
+    for J := 0 to Length(JsonParser.Output.Errors) - 1 do
+      WriteLn(JsonParser.Output.Errors[J]);
+    Lines := TStringList.Create;
+    report := JsonParser.Output.Objects[0];
+    for i := 0 to length(report)-1 do begin
+        //pairs :=  report[i];
+        key := report[i].key;
+        value := report[i].value ;
+        if (value.Kind = JVKString)then
+          c := c + strtoint(JsonParser.Output.strings[value.index]);
+        if ((key = 'Lines') and (value.Kind = JVKArray)) then
+          c := c + ParseLines(JsonParser.Output.Arrays[value.Index])
+    end;
+    Lines.Free;
+    check(c = 340,'not equals 201' + inttostr(c));
+end;
 
 initialization
   RegisterTests('RitaRestart',[
