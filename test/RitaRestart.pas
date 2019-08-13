@@ -29,6 +29,7 @@ type
     procedure TestArray;
     procedure TestDeepLevel;
         procedure Test1;
+        procedure TestJson;
   end;
 
 implementation
@@ -278,6 +279,29 @@ begin
     end;
     Lines.Free;
     check(c = 340,'not equals 201' + inttostr(c));
+end;
+
+procedure TRitaRestartTest.TestJson;
+var
+  Source, Lines: TStringList;
+  JsonParser: TJsonParser;
+  I, J: Integer;
+  pairs : TJsonObject;
+  key:string;
+  value : TJsonValue;
+  c : Integer;
+  var a:string;
+
+begin
+    a := '{"lineIndex":0,"cells":[{"cellLeft":10,"cellIndex":5},{"cellLeft":10,"cellIndex":5}]}';
+    c := 0 ;
+    ClearJsonParser(JsonParser);
+    ParseJson(JsonParser, a);
+    for J := 0 to Length(JsonParser.Output.Errors) - 1 do
+      WriteLn(JsonParser.Output.Errors[J]);
+    Lines := TStringList.Create;
+    PrintJsonParserOutput(JsonParser.Output, Lines);
+    check(a = Lines.Text,Lines.text);
 end;
 
 initialization

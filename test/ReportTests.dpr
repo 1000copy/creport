@@ -15,7 +15,8 @@ uses
   osservice in '..\vcl\osservice.pas',
   uHornCartesian in '..\vcl\uHornCartesian.pas',
   RitaRestart in 'RitaRestart.pas',
-  jp in 'jp.pas';
+  jp in 'jp.pas',
+  ritaToJson in 'ritaToJson.pas';
 
 {$R *.res}
 
