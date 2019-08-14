@@ -36,10 +36,6 @@ Uses
    Classes, Graphics, Controls,
   Forms, Dialogs, Printers, Menus, Db,
   ExtCtrls,osservice;
-type
-  SS = record
-    FPageWidth: Integer;
-  end;
 Const
   // Horz Align
   TEXT_ALIGN_LEFT = 0;
@@ -503,6 +499,8 @@ type
     constructor Create(R:TReportControl);
   end;
   TReportControl = Class(TWinControl)
+  public
+    function toJson:String;
   private
     FTextEdit:Edit;
     MouseSelect : MouseSelector;
@@ -532,7 +530,6 @@ type
 
 
   protected
-    s : SS ;
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
     FPreviewStatus: Boolean;
@@ -542,7 +539,7 @@ type
     FEditCell: TReportCell;
 
     FReportScale: Integer;
-    //FPageWidth: Integer;
+    FPageWidth: Integer;
     FPageHeight: Integer;
     // Margin : by pixel
     FLeftMargin: Integer;
@@ -2289,7 +2286,7 @@ Begin
   FLastPrintPageHeight := 0;
 
   FReportScale := 100;
-  s.FPageWidth := 0;
+  FPageWidth := 0;
   FPageHeight := 0;
 
   // 以毫米为单位
@@ -2350,7 +2347,7 @@ Begin
   Begin
     If FLastPrintPageWidth <> 0 Then
     Begin
-      s.FPageWidth := FLastPrintPageWidth;
+      FPageWidth := FLastPrintPageWidth;
       FPageHeight := FLastPrintPageHeight;
     End;
   End;
@@ -2361,23 +2358,23 @@ Begin
   Begin
     If printer.Printers.Count <= 0 Then
     Begin
-      s.FPageWidth := 768;
+      FPageWidth := 768;
       FPageHeight := 1058;
     End
     Else
     Begin
       hClientDC := GetDC(0);
       try
-        s.FPageWidth :=os.MapDots(Printer.Handle, hClientDC,Printer.PageWidth);
+        FPageWidth :=os.MapDots(Printer.Handle, hClientDC,Printer.PageWidth);
         FPageHeight :=os.MapDots(Printer.Handle, hClientDC,Printer.PageHeight);
       finally
         ReleaseDC(0, hClientDC);
       end;
     End;
   End;
-  FLastPrintPageWidth := s.FPageWidth;
+  FLastPrintPageWidth := FPageWidth;
   FLastPrintPageHeight := FPageHeight;
-  Width := trunc(s.FPageWidth * FReportScale / 100 + 0.5);
+  Width := trunc(FPageWidth * FReportScale / 100 + 0.5);
   Height := trunc(FPageHeight * FReportScale / 100 + 0.5);
 End;
 //   cornice 飞檐     horn 犄角
@@ -2398,11 +2395,11 @@ begin
     LineTo(hPaintDC, FLeftMargin - 25, FTopMargin);
 
     // 右上
-    MoveToEx(hPaintDC, s.FPageWidth - FRightMargin, FTopMargin, Nil);
-    LineTo(hPaintDC, s.FPageWidth - FRightMargin, FTopMargin - 25);
+    MoveToEx(hPaintDC, FPageWidth - FRightMargin, FTopMargin, Nil);
+    LineTo(hPaintDC, FPageWidth - FRightMargin, FTopMargin - 25);
 
-    MoveToEx(hPaintDC, s.FPageWidth - FRightMargin, FTopMargin, Nil);
-    LineTo(hPaintDC, s.FPageWidth - FRightMargin + 25, FTopMargin);
+    MoveToEx(hPaintDC, FPageWidth - FRightMargin, FTopMargin, Nil);
+    LineTo(hPaintDC, FPageWidth - FRightMargin + 25, FTopMargin);
 
     // 左下
     MoveToEx(hPaintDC, FLeftMargin, FPageHeight - FBottomMargin, Nil);
@@ -2412,13 +2409,13 @@ begin
     LineTo(hPaintDC, FLeftMargin - 25, FPageHeight - FBottomMargin);
 
     // 右下
-    MoveToEx(hPaintDC, s.FPageWidth - FRightMargin, FPageHeight - FBottomMargin,
+    MoveToEx(hPaintDC, FPageWidth - FRightMargin, FPageHeight - FBottomMargin,
       Nil);
-    LineTo(hPaintDC, s.FPageWidth - FRightMargin, FPageHeight - FBottomMargin + 25);
+    LineTo(hPaintDC, FPageWidth - FRightMargin, FPageHeight - FBottomMargin + 25);
 
-    MoveToEx(hPaintDC, s.FPageWidth - FRightMargin, FPageHeight - FBottomMargin,
+    MoveToEx(hPaintDC, FPageWidth - FRightMargin, FPageHeight - FBottomMargin,
       Nil);
-    LineTo(hPaintDC, s.FPageWidth - FRightMargin + 25, FPageHeight - FBottomMargin);
+    LineTo(hPaintDC, FPageWidth - FRightMargin + 25, FPageHeight - FBottomMargin);
   finally
     SelectObject(hPaintDC, hPrevPen);
     DeleteObject(hGrayPen);
@@ -2445,10 +2442,10 @@ begin
   //
   c := Canvas.Create(hPaintDC);
   c.SetMapMode();
-  c.SetWindowExtent(s.FPageWidth, FPageHeight);
+  c.SetWindowExtent(FPageWidth, FPageHeight);
   c.SetViewportExtent(Width, Height);
   os.InverseScaleRect(rectPaint,FReportScale);
-  c.Rectangle(0, 0, s.FPageWidth, FPageHeight);
+  c.Rectangle(0, 0, FPageWidth, FPageHeight);
   DrawCornice(hPaintDC);
   Cells := TCellList.Create(self);
   try
@@ -2810,6 +2807,70 @@ begin
   MouseSelect.StartMouseSelect(point,shift);
 end;
 
+function TReportControl.toJson: String;
+const
+  a =  'ReportScale,FPageWidth,FPageHeight,FLeftMargin,FTopMargin,FRightMargin,FBottomMargin,FNewTable,FDataLine,FTablePerPage';
+  b ='FLeftMargin1,FTopMargin1,FRightMargin1,FBottomMargin1';
+var
+  c : string;
+begin
+  c:= '"PageWidth":%d,"PageHeight":%d,"LeftMargin":%d,"TopMargin":%d,"RightMargin":%d,"BottomMargin":%d,"NewTable":%d,"DataLine:%d,"FTablePerPage":%d';
+  result := Format(c,[ReportScale,FPageWidth
+    ,FPageHeight,FLeftMargin,FTopMargin,FRightMargin,FBottomMargin,Integer(FNewTable),FDataLine,FTablePerPage]);
+  result := '{'+result +'}';
+end;
+Procedure TReportControl.InternalSavetoJSON(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);
+Var
+  TargetFile: TSimpleFileStream;
+  I,j: Integer;
+  ccc : TReportCell;
+Begin
+  TargetFile := TSimpleFileStream.Create(FileName, fmOpenWrite Or fmCreate);
+  Try
+    With TargetFile Do
+    Begin  
+      WriteWord($AA57);
+      WriteInteger(FReportScale);
+      //WriteInteger(FPageWidth);
+      WriteInteger(FPageWidth);
+      WriteInteger(FPageHeight);
+      WriteInteger(FLeftMargin);
+      WriteInteger(FTopMargin);
+      WriteInteger(FRightMargin);
+      WriteInteger(FBottomMargin);
+      WriteInteger(FLeftMargin1);
+      WriteInteger(FTopMargin1);
+      WriteInteger(FRightMargin1);
+      WriteInteger(FBottomMargin1);
+      WriteBoolean(FNewTable);
+      WriteInteger(FDataLine);
+      WriteInteger(FTablePerPage);
+      WriteInteger(FLineList.Count);
+      For I := 0 To FLineList.Count - 1 Do
+        WriteInteger(TReportLine(FLineList[I]).FCells.Count);
+      //  {$Optimization off}
+      For I := 0 To FLineList.Count - 1 Do
+      Begin
+        TReportLine(FLineList[I]).Save(TargetFile);
+        For J := 0 To TReportLine(FLineList[I]).FCells.Count - 1 Do
+        begin
+          ccc := TReportCell(TReportLine(FLineList[I]).FCells[J]);
+          ccc.Save(TargetFile);
+          // Cells[I,J].Save(TargetFile);
+        end;
+      End;
+      // {$Optimization on}
+      WriteInteger(FprPageNo);
+      WriteInteger(FprPageXy);
+      WriteInteger(fPaperLength);
+      WriteInteger(fPaperWidth);
+      WriteInteger(0);//FHootNo
+    End;
+  Finally
+    // Free will call File.close before destroy finally
+    TargetFile.Free;
+  End;
+End;
 Procedure TReportControl.AddLine;
 Var
   TempLine: TReportLine;
@@ -3413,58 +3474,7 @@ function TReportControl.RenderText(ThisCell:TReportCell):String;
 begin
     Result := ThisCell.FCellText;
 end;
-Procedure TReportControl.InternalSavetoJSON(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);
-Var
-  TargetFile: TSimpleFileStream;
-  I,j: Integer;
-  ccc : TReportCell;
-Begin
-  TargetFile := TSimpleFileStream.Create(FileName, fmOpenWrite Or fmCreate);
-  Try
-    With TargetFile Do
-    Begin  
-      WriteWord($AA57);
-      WriteInteger(FReportScale);
-      //WriteInteger(FPageWidth);
-      WriteInteger(s.FPageWidth);
-      WriteInteger(FPageHeight);
-      WriteInteger(FLeftMargin);
-      WriteInteger(FTopMargin);
-      WriteInteger(FRightMargin);
-      WriteInteger(FBottomMargin);
-      WriteInteger(FLeftMargin1);
-      WriteInteger(FTopMargin1);
-      WriteInteger(FRightMargin1);
-      WriteInteger(FBottomMargin1);
-      WriteBoolean(FNewTable);
-      WriteInteger(FDataLine);
-      WriteInteger(FTablePerPage);  
-      WriteInteger(FLineList.Count);
-      For I := 0 To FLineList.Count - 1 Do
-        WriteInteger(TReportLine(FLineList[I]).FCells.Count);
-      //  {$Optimization off}
-      For I := 0 To FLineList.Count - 1 Do
-      Begin
-        TReportLine(FLineList[I]).Save(TargetFile);
-        For J := 0 To TReportLine(FLineList[I]).FCells.Count - 1 Do
-        begin
-          ccc := TReportCell(TReportLine(FLineList[I]).FCells[J]);
-          ccc.Save(TargetFile);
-          // Cells[I,J].Save(TargetFile);
-        end;
-      End;
-      // {$Optimization on}
-      WriteInteger(FprPageNo);
-      WriteInteger(FprPageXy);
-      WriteInteger(fPaperLength);
-      WriteInteger(fPaperWidth);
-      WriteInteger(0);//FHootNo
-    End;
-  Finally
-    // Free will call File.close before destroy finally
-    TargetFile.Free;
-  End;
-End;
+
 Procedure TReportControl.InternalSaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);
 Var
   TargetFile: TSimpleFileStream;
@@ -3477,7 +3487,7 @@ Begin
     Begin
       WriteWord($AA57);
       WriteInteger(FReportScale);
-      WriteInteger(s.FPageWidth);
+      WriteInteger(FPageWidth);
       WriteInteger(FPageHeight);
       WriteInteger(FLeftMargin);
       WriteInteger(FTopMargin);
@@ -3544,7 +3554,7 @@ Begin
   PrintPaper.prDeviceMode;
   PrintPaper.SetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
   FTextEdit.DestroyIfVisible;
-  FLastPrintPageWidth := s.FPageWidth;             //1999.1.23
+  FLastPrintPageWidth := FPageWidth;             //1999.1.23
   FLastPrintPageHeight := FPageHeight;
   UpdateLines;
 
@@ -3572,7 +3582,7 @@ Var
   end;
   procedure After;
   begin
-      Width := s.FPageWidth;
+      Width := FPageWidth;
       Height := FPageHeight;
   end;
 Begin
@@ -3587,7 +3597,7 @@ Begin
       Before ;      
 
       ReadInteger(FReportScale);
-      ReadInteger(s.FPageWidth);
+      ReadInteger(FPageWidth);
       ReadInteger(FPageHeight);
 
       ReadInteger(FLeftMargin);
@@ -3889,11 +3899,11 @@ End;
 
 Procedure TReportControl.SetWndSize(w, h: integer);  
 Begin
-  s.FPageWidth := w;
+  FPageWidth := w;
   FPageHeight := h;
-  FLastPrintPageWidth := s.FPageWidth;
+  FLastPrintPageWidth := FPageWidth;
   FLastPrintPageHeight := FPageHeight;
-  Width := trunc(s.FPageWidth * FReportScale / 100 + 0.5); //width,heght用于显示
+  Width := trunc(FPageWidth * FReportScale / 100 + 0.5); //width,heght用于显示
   Height := trunc(FPageHeight * FReportScale / 100 + 0.5);
 End;
 
