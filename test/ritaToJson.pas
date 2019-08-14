@@ -203,30 +203,26 @@ var
   value : TJsonValue;
   c : Integer;
   var a:string;
-var r : TReport ;cc : TLine;line :TLine;s:string;
+var s:string;
 
-var lineObject : TJsonObject;arr : TJsonArray;obbjp : ObjProp;
+var lineObject : TJsonObject;
+//    arr : TJsonArray;
+    op : ObjProp;
 begin
-    a := '{"PageWidth":1,"lines":[{"lineTop":10,"lineIndex":5,"cells":[]}]}';
+    a := '{"PageWidth":1,"lines":[{"lineTop":10,"lineIndex":5,"cells":[{"CellIndex":1}]}]}';
     c := 0 ;
-    ClearJsonParser(JsonParser);
-    ParseJson(JsonParser, a);
-    for J := 0 to Length(JsonParser.Output.Errors) - 1 do
-      WriteLn(JsonParser.Output.Errors[J]);
-    r := TReport.create;
-    obbjp := ObjProp.create(JsonParser);
-    obbjp.setCurrent(JsonParser.output.Objects[0]);
-    r.PageWidth := obbjp._int('PageWidth');
-    setlength(r.lines,length(obbjp._array('lines')));
-    arr := obbjp._array('lines');
-    lineObject := obbjp.objFrom(0,arr);
-    cc := TLine.create();
-    obbjp.setCurrent(lineObject);
-    cc.lineTop :=  obbjp._int('lineTop');
-    cc.lineIndex := obbjp._int('lineIndex');
-    check(r.PageWidth = 1);
-    check(cc.linetop = 10) ;
-    check(cc.lineindex = 5) ;
+    op := ObjProp.create(a);
+    op.parse;
+    check(op._int('PageWidth') = 1);
+    op.locateArray('lines');
+    // line
+    op.locateObject(0);
+    check( op._int('lineTop') = 10) ;
+    check(op._int('lineIndex') = 5) ;
+    // cell
+    op.locateArray('cells');
+    op.locateObject(0);
+    check(1 = op._int('CellIndex'));
 end;
 
 

@@ -39,7 +39,111 @@ type
   procedure ClearJsonParser(var JsonParser: TJsonParser);
   procedure ParseJson(var JsonParser: TJsonParser; const Source: WideString);
 procedure PrintJsonParserOutput(const Output: TJsonParserOutput; Lines: TStringList);
+
+type Json = class
+  private
+    a : string;
+    arr: TJsonArray;
+    JsonParser: TJsonParser;
+    output:TJsonParserOutput;
+    currentObject:TJsonObject;
+    procedure check;
+
+
+//    function getArrayLength(p: string): Integer;
+public
+    function _array(p: string): TJsonArray;
+    function _int(p: string): Integer;
+    function locateObject(index: integer): TJsonObject;
+    procedure setCurrent(obj:TJSonObject);
+    procedure locateArray(a:string);
+    function getCurrentArray:TJsonArray;
+    function getCurrentArrayLength: Integer;
+  public
+    constructor create(a:string);
+    procedure parse;
+end;
+
 implementation
+ function Json._int(p:string):Integer;
+    var i : integer;obj:TJsonObject;
+    begin
+    obj:= currentObject;
+    result := 0 ;
+    for i:= 0 to length(obj)-1 do begin
+        if (obj[i].key = p) and (obj[i].Value.Kind = JVKNumber) then begin
+        result :=  trunc( output.Numbers[obj[i].value.Index]);
+        break;
+        end;
+    end;
+    end;
+
+    function Json._array(p:string):TJsonArray;
+    var i : integer;v : TJsonValue;
+    obj:TJsonObject;
+    begin
+    obj:= currentObject;
+    result := nil ;
+    for i:= 0 to length(obj)-1 do begin
+        if (obj[i].key = p) and (obj[i].Value.Kind = JVKArray) then begin
+        result :=  (output.Arrays[obj[i].value.Index]);
+        break;
+        end;
+    end;
+    end;
+    function Json.getCurrentArray:TJsonArray;
+begin
+  result := self.arr;
+end;
+      function Json.getCurrentArrayLength:Integer;
+begin
+  result := length(self.arr);
+end;
+function Json.locateObject(index:integer):TJsonObject;
+    var i : integer;v : TJsonValue;
+    begin
+        result := nil ;
+        v :=  arr[index];
+        if v.kind = JVKObject then
+            result := output.Objects[v.Index];
+        setCurrent(result);
+    end;
+    procedure Json.setCurrent(obj: TJSonObject);
+begin
+  self.currentObject := obj;
+end;
+procedure Json.locateArray(a:string);
+begin
+
+  self.arr := _array(a);
+end;
+
+constructor Json.create(a:string);
+begin
+self.a := a;
+end;
+procedure Json.check;
+var J : Integer;s : string;
+begin
+  for J := 0 to Length(JsonParser.Output.Errors) - 1 do
+      s := s + JsonParser.Output.Errors[J];
+  if s <> '' then
+    raise Exception.create(s);
+end;
+
+
+procedure Json.parse;
+var
+  JsonParser: TJsonParser;
+begin
+  ClearJsonParser(JsonParser);
+  ParseJson(JsonParser, a);
+  check;
+  self.JsonParser := JsonParser;
+  self.output := self.JsonParser.Output;
+  self.setCurrent(self.JsonParser.output.Objects[0]);
+end;
+
 // Call error when something is wrong.
 procedure Error(var JsonParser: TJsonParser; Msg: TJsonString);
 var

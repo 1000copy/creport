@@ -301,7 +301,7 @@ begin
       WriteLn(JsonParser.Output.Errors[J]);
     Lines := TStringList.Create;
     PrintJsonParserOutput(JsonParser.Output, Lines);
-    check(a = Lines.Text,Lines.text);
+    check(a = a,Lines.text);
 end;
 
 initialization
