@@ -232,6 +232,7 @@ type
     procedure MakeSelectedLines(FLineList:TLineList);
     function CombineVert:TReportCell;
     function TotalHeight:Integer;
+    function ToJson:String;
   published
     {
     G:How do I force the linker to include a function I need during debugging?
@@ -2814,9 +2815,11 @@ const
 var
   c : string;
 begin
-  c:= '"PageWidth":%d,"PageHeight":%d,"LeftMargin":%d,"TopMargin":%d,"RightMargin":%d,"BottomMargin":%d,"NewTable":%d,"DataLine:%d,"FTablePerPage":%d';
+  c:= '"ReportScale":%d"PageWidth":%d,"PageHeight":%d,"LeftMargin":%d,"TopMargin":%d,"RightMargin":%d,"BottomMargin":%d,"NewTable":%d,"DataLine:%d,"FTablePerPage":%d';
   result := Format(c,[ReportScale,FPageWidth
     ,FPageHeight,FLeftMargin,FTopMargin,FRightMargin,FBottomMargin,Integer(FNewTable),FDataLine,FTablePerPage]);
+  c := '"ReportScale":%d,"Lines":%s';
+  result := Format(c,[ReportScale,self.LineList.toJson]);
   result := '{'+result +'}';
 end;
 Procedure TReportControl.InternalSavetoJSON(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);
@@ -4565,6 +4568,23 @@ begin
   m.DesignMasterCell := ThisCell;
   m.RuntimeMasterCell := NewCell;
   Add(m);
+end;
+
+function TLineList.ToJson: String;
+var
+  i : integer;
+  line:TReportLine;r:string;
+begin
+  Result := '[]';
+  exit;
+  R := '';
+  for i := 0 to Count -1 do
+  begin
+    line := Items[i];
+    if '' <> line.ToString then
+      R := R + line.ToString +#13#10;
+  end;
+  Result := R;
 end;
 
 function TLineList.ToString: String;

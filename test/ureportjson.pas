@@ -45,7 +45,10 @@ begin
     r.Visible := false;
     r.CalcWndSize;
     r.NewTable(2,2);
-    check(s = r.toJson(),r.toJson())
+//    check(s = r.toJson(),r.toJson())
+    check('{"ReportScale":100,"Lines":[]}' = r.toJson(),r.toJson())
+
+
 end;
 
 procedure TReportJsonTest.TestJson;
