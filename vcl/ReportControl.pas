@@ -36,7 +36,7 @@ Uses
    Classes, Graphics, Controls,
   Forms, Dialogs, Printers, Menus, Db,
   ExtCtrls,osservice;
-Const
+  Const
   // Horz Align
   TEXT_ALIGN_LEFT = 0;
   TEXT_ALIGN_CENTER = 1;
@@ -247,6 +247,8 @@ type
     function ToString:String ;
   end;
   TReportCell = Class(TObject)
+  public
+    function toJson:String;
   private
 
     NearResolution : integer;
@@ -432,6 +434,8 @@ type
     property IsSelected :Boolean read GetSelected;
   End;
   TReportLine = Class(TObject)
+  public
+    function toJson():string;
   private
     function GetSelected: Boolean;
     procedure DoInvalidate;
@@ -767,7 +771,13 @@ Implementation
 
 {$R ReportControl.dcr}
 Uses Preview, REPmess, margin,Creport;
-
+function chop(r:string):string;
+  begin
+    if length(r)>0 then
+    delete(r,length(r),1);
+    result := r;
+  end;
+  
 
 Procedure TPrinterPaper.prDeviceMode;
 var
@@ -1728,6 +1738,10 @@ begin
   FCellText := Self.ReportControl.renderText(Self);
   Self.SaveInternal(s);
 end;
+function TReportCell.toJson: String;
+begin
+  result := format('{"CellIndex":%d}',[FCellIndex]);
+end;
 procedure TReportCell.SaveInternal(s: TSimpleFileStream);
 var k :  integer;
     w : TSimpleWriter;
@@ -1786,6 +1800,7 @@ procedure TReportCell.Sibling(Cell: TReportCell);
 begin
   OwnerCell.Own(Cell,true,OwnerCell.FSlaveCells.IndexOf(Self));
 end;
+
 
 function TReportCell.MaxSplitNum: integer;
 var   MinCellWidth : Integer;
@@ -1957,6 +1972,19 @@ Begin
     TReportCell(FCells[I]).CalcCellTextRect;
   End;
 End;
+
+function TReportLine.toJson: string;
+var cell : TReportcell;i:integer;s:string;
+begin
+  s:= '';
+  for I := 0 to self.FCells.Count - 1 do begin
+    cell := TReportCell(self.FCells.Items[i]);
+    s := s + cell.toJson +',';
+  end;
+  if length(s)>0 then
+    delete(s,length(s),1);
+  result := format('{"Index":%d,"Cells":[%s]}',[self.FIndex,s]);
+end;
 
 ///////////////////////////////////////////////////////////////////////////
 // TReportControl
@@ -2809,17 +2837,14 @@ begin
 end;
 
 function TReportControl.toJson: String;
-const
-  a =  'ReportScale,FPageWidth,FPageHeight,FLeftMargin,FTopMargin,FRightMargin,FBottomMargin,FNewTable,FDataLine,FTablePerPage';
-  b ='FLeftMargin1,FTopMargin1,FRightMargin1,FBottomMargin1';
 var
   c : string;
 begin
-  c:= '"ReportScale":%d"PageWidth":%d,"PageHeight":%d,"LeftMargin":%d,"TopMargin":%d,"RightMargin":%d,"BottomMargin":%d,"NewTable":%d,"DataLine:%d,"FTablePerPage":%d';
+  c:= '"ReportScale":%d,"PageWidth":%d,"PageHeight":%d,"LeftMargin":%d,"TopMargin":%d,"RightMargin":%d,"BottomMargin":%d,"NewTable":%d,"DataLine":%d,"TablePerPage":%d,"Lines":%s';
   result := Format(c,[ReportScale,FPageWidth
-    ,FPageHeight,FLeftMargin,FTopMargin,FRightMargin,FBottomMargin,Integer(FNewTable),FDataLine,FTablePerPage]);
-  c := '"ReportScale":%d,"Lines":%s';
-  result := Format(c,[ReportScale,self.LineList.toJson]);
+    ,FPageHeight,FLeftMargin,FTopMargin,FRightMargin,FBottomMargin,Integer(FNewTable),FDataLine,FTablePerPage,self.linelist.tojson()]);
+//  c := '"ReportScale":%d,"Lines":%s';
+//  result := Format(c,[ReportScale,self.LineList.toJson]);
   result := '{'+result +'}';
 end;
 Procedure TReportControl.InternalSavetoJSON(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);
@@ -4575,16 +4600,14 @@ var
   i : integer;
   line:TReportLine;r:string;
 begin
-  Result := '[]';
-  exit;
   R := '';
   for i := 0 to Count -1 do
   begin
     line := Items[i];
-    if '' <> line.ToString then
-      R := R + line.ToString +#13#10;
+    R := R + line.ToJson + ',';
   end;
-  Result := R;
+  r := chop(r);
+  Result := format('[%s]',[R]);
 end;
 
 function TLineList.ToString: String;

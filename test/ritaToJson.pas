@@ -4,8 +4,7 @@ interface
 
 uses
   // user
-  uobjprop,
- jp,TestFramework,sysutils,classes;
+ ujson,TestFramework,sysutils,classes;
 
 type
   TCell = class
@@ -207,11 +206,11 @@ var s:string;
 
 var lineObject : TJsonObject;
 //    arr : TJsonArray;
-    op : ObjProp;
+    op : Json;
 begin
     a := '{"PageWidth":1,"lines":[{"lineTop":10,"lineIndex":5,"cells":[{"CellIndex":1}]}]}';
     c := 0 ;
-    op := ObjProp.create(a);
+    op := Json.create(a);
     op.parse;
     check(op._int('PageWidth') = 1);
     op.locateArray('lines');

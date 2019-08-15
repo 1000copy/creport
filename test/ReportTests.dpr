@@ -14,12 +14,12 @@ uses
   osservice in '..\vcl\osservice.pas',
   uHornCartesian in '..\vcl\uHornCartesian.pas',
   RitaRestart in 'RitaRestart.pas',
-  jp in 'jp.pas',
   ritaToJson in 'ritaToJson.pas',
-  uObjProp in 'uObjProp.pas',
   FastMMMemLeakMonitor in '..\dunit\src\FastMMMemLeakMonitor.pas',
   CC in '..\vcl\CC.pas',
-  UnitTestFramework in 'UnitTestFramework.pas';
+  UnitTestFramework in 'UnitTestFramework.pas',
+  ujson in '..\vcl\ujson.pas',
+  ureportjson in 'ureportjson.pas';
 
 {$R *.res}
 

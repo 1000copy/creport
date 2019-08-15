@@ -20,8 +20,10 @@ type
     procedure SetUp; override;
     procedure TearDown; override;
   published
-        procedure TestJson;
-        procedure Test;
+    procedure TestJson;
+    procedure TestCell;
+    procedure Test;
+    procedure TestLine;
   end;
 
 implementation
@@ -38,19 +40,38 @@ begin
 
 end;
 procedure TReportJsonTest.Test;
-var r : TReportControl;
-const s = '{"PageWidth":100,"PageHeight":1123,"LeftMargin":794,"TopMargin":77,"RightMargin":77,"BottomMargin":38,"NewTable":58,"DataLine:1,"FTablePerPage":2000}';
+var r : TReportControl;a:string;
+const s = '"ReportScale":100,"PageWidth":1123,"PageHeight":794,"LeftMargin":77,"TopMargin":77,"RightMargin":38,"BottomMargin":58,"NewTable":1,"DataLine":2000,"TablePerPage":1';
 begin
     r := TReportControl.Create(Application.mainform);
     r.Visible := false;
     r.CalcWndSize;
     r.NewTable(2,2);
-//    check(s = r.toJson(),r.toJson())
-    check('{"ReportScale":100,"Lines":[]}' = r.toJson(),r.toJson())
-
-
+    a := format('{%s,"Lines":[{"Index":0,"Cells":[{"CellIndex":0},{"CellIndex":1}]},{"Index":1,"Cells":[{"CellIndex":0},{"CellIndex":1}]}]}',[s]);
+    check(a = r.toJson(),r.toJson());
 end;
-
+procedure TReportJsonTest.TestLine;
+var r : TReportControl;
+const s = '{"CellLeft":0}';var j:string;
+begin
+    r := TReportControl.Create(Application.mainform);
+    r.Visible := false;
+    r.CalcWndSize;
+    r.NewTable(2,2);
+    j := r.LineList.Items[0].toJson();
+    check('{"Index":0,"Cells":[{"CellIndex":0},{"CellIndex":1}]}' = j,j);
+end;
+procedure TReportJsonTest.TestCell;
+var r : TReportControl;
+const s = '{"CellLeft":0}';var j:string;
+begin
+    r := TReportControl.Create(Application.mainform);
+    r.Visible := false;
+    r.CalcWndSize;
+    r.NewTable(2,2);
+    j := TReportCell(r.LineList.Items[0].FCells[0]).toJson();
+    check('{"CellIndex":0}' = j,j);
+end;
 procedure TReportJsonTest.TestJson;
 var
   Source, Lines: TStringList;
