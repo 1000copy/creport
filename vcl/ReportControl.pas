@@ -1747,7 +1747,7 @@ begin
   +'"TextColor" :%d,"BackGroundColor" :%d,'
   +'"HorzAlign":%d,"VertAlign":%d,"CellText":"%s","Bmpyn":%d'
   ;
-
+//dword - integer is OK?
 result := format(s,[FCellIndex,FCellLeft,FCellWidth,FLeftMargin,integer(FLeftLine)
     ,FLeftLineWidth,integer(FTopLine),FTopLineWidth,integer(FRightLine),FRightLineWidth,
     integer(FBottomLine),FBottomLineWidth,FDiagonal,Integer(FTextColor) ,Integer(FBackGroundColor) ,FHorzAlign,FVertAlign,FCellText,Integer(Fbmpyn)]);
