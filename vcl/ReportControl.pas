@@ -31,6 +31,7 @@ Unit ReportControl;
 Interface
 
 Uses
+  ujson,
   Windows, Messages, SysUtils,Math,cc,
   {$WARNINGS OFF}FileCtrl,{$WARNINGS ON}
    Classes, Graphics, Controls,
@@ -506,6 +507,7 @@ type
   TReportControl = Class(TWinControl)
   public
     function toJson:String;
+    procedure fromJson(json:Json);
   private
     FTextEdit:Edit;
     MouseSelect : MouseSelector;
@@ -3891,6 +3893,11 @@ Begin
   If (FEditCell <> Nil)Then
     FEditCell := Nil;
 End;
+
+procedure TReportControl.fromJson(json: Json);
+begin
+  self.FReportScale := json._int('ReportScale')
+end;
 
 Procedure TReportControl.SetCellDispFormt(mek: String);  
 Var

@@ -19,7 +19,8 @@ uses
   CC in '..\vcl\CC.pas',
   UnitTestFramework in 'UnitTestFramework.pas',
   ujson in '..\vcl\ujson.pas',
-  ureportjson in 'ureportjson.pas';
+  ureportjson in 'ureportjson.pas',
+  ujson2rita in 'ujson2rita.pas';
 
 {$R *.res}
 

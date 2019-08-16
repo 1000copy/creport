@@ -51,6 +51,7 @@
     <DCCReference Include="ReportTest.pas" />
     <DCCReference Include="RitaRestart.pas" />
     <DCCReference Include="ritaToJson.pas" />
+    <DCCReference Include="ujson2rita.pas" />
     <DCCReference Include="UnitTestFramework.pas" />
     <DCCReference Include="ureportjson.pas" />
   </ItemGroup>
