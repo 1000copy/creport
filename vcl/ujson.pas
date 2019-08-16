@@ -48,9 +48,6 @@ type Json = class
     output:TJsonParserOutput;
     currentObject:TJsonObject;
     procedure check;
-
-
-//    function getArrayLength(p: string): Integer;
 public
     function _array(p: string): TJsonArray;
     function _int(p: string): Integer;
@@ -59,6 +56,7 @@ public
     procedure locateArray(a:string);
     function getCurrentArray:TJsonArray;
     function getCurrentArrayLength: Integer;
+    function _string(p: string): String;
   public
     constructor create(a:string);
     procedure parse;
@@ -77,7 +75,18 @@ implementation
         end;
     end;
     end;
-
+    function Json._string(p:string):String;
+    var i : integer;obj:TJsonObject;
+    begin
+    obj:= currentObject;
+    result := '' ;
+    for i:= 0 to length(obj)-1 do begin
+        if (obj[i].key = p) and (obj[i].Value.Kind = JVKString) then begin
+        result :=  output.strings[obj[i].value.Index];
+        break;
+        end;
+    end;
+    end;
     function Json._array(p:string):TJsonArray;
     var i : integer;v : TJsonValue;
     obj:TJsonObject;

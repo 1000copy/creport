@@ -1738,10 +1738,21 @@ begin
   FCellText := Self.ReportControl.renderText(Self);
   Self.SaveInternal(s);
 end;
-function TReportCell.toJson: String;
+function TReportCell.toJson: String;var
+ s :string;
 begin
-  result := format('{"CellIndex":%d}',[FCellIndex]);
-end;
+  s := '"CellIndex":%d,"CellLeft":%d,'
+  +'"CellWidth":%d,"LeftMargin":%d,"LeftLine":%d,"LeftLineWidth":%d'+',"TopLine":%d,'
+  +'"TopLineWidth":%d,"RightLine":%d,"RightLineWidth":%d,"BottomLine":%d,"BottomLineWidth":%d,"Diagonal":%d,'
+  +'"TextColor" :%d,"BackGroundColor" :%d,'
+  +'"HorzAlign":%d,"VertAlign":%d,"CellText":"%s","Bmpyn":%d'
+  ;
+
+result := format(s,[FCellIndex,FCellLeft,FCellWidth,FLeftMargin,integer(FLeftLine)
+    ,FLeftLineWidth,integer(FTopLine),FTopLineWidth,integer(FRightLine),FRightLineWidth,
+    integer(FBottomLine),FBottomLineWidth,FDiagonal,Integer(FTextColor) ,Integer(FBackGroundColor) ,FHorzAlign,FVertAlign,FCellText,Integer(Fbmpyn)]);
+    result := '{'+result+'}';
+  end;
 procedure TReportCell.SaveInternal(s: TSimpleFileStream);
 var k :  integer;
     w : TSimpleWriter;
@@ -1983,7 +1994,7 @@ begin
   end;
   if length(s)>0 then
     delete(s,length(s),1);
-  result := format('{"Index":%d,"Cells":[%s]}',[self.FIndex,s]);
+  result := format('{"Index":%d,"MinHeight":%d,"DragHeight":%d,"LineTop":%d,"Cells":[%s]}',[self.FIndex,self.FMinHeight,self.FDragHeight,self.FLineTop,s]);
 end;
 
 ///////////////////////////////////////////////////////////////////////////
