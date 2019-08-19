@@ -31,7 +31,6 @@ type
     procedure VarList;
     procedure HeightHowtoConsumed;
     procedure Rita;
-    procedure Reco;
 
   end;
   TReportTest = class(TTestCase)
@@ -1725,63 +1724,7 @@ begin
 //      T1.free;
 //    end;
 end;
-procedure TReportRunTimeTest.Reco;
-var i,j:integer;
-    strFileDir:string;
-    CellFont: TLogFont;
-    cf: TFont;
-    R:TReportRunTime;
-    Rc : TReportControl;
-    t1 ,t2: TClientDataset;
-    F : TStringField;
-begin
-    Rc := TReportControl.Create(Application.MainForm);
-    rc.Visible := false;
-    t1 := TClientDataset.Create(nil);
-    t1.FieldDefs.Add('f1',ftString,20,true);
-    t1.FieldDefs.Add('f2',ftString,20,true);
-    t2 := TClientDataset.Create(nil);
-    t2.FieldDefs.Add('f1',ftString,20,true);
-    t1.CreateDataSet;
-    t2.CreateDataSet;
-    try
-        RC.Visible := False;
-        strFileDir := ExtractFileDir(Application.ExeName);
-        with  RC do
-        begin
-            calcwndsize;
-            NewTable(2 ,3);
-            Lines[0].Select;
-            CombineCell;
-            Cells[0,0].CellText := 'bill';
-            for j:=0 to t1.FieldDefs.Count -1  do
-            begin
-            Cells[1,j].CellText := t1.FieldDefs[j].Name;
-            Cells[2,j].CellText := '#T1.'+t1.FieldDefs[j].Name;
-            end;
-            SaveToJson(strFileDir+'\'+'1.json');
-            ResetContent;
-        end;
-    finally
-        rc.free;
-    end;
-    R:=TReportRunTime.Create(Application.MainForm);
-    try
-        r.CalcWndSize;
-        R.SetData(t1,t2);
-        t1.Open;
-        t2.Open;
-        for I:= 0 to 100 do begin
-            t1.AppendRecord([I,(cos(I)*1000)]);
-            t2.AppendRecord([2]);
-        end;
-        R.ReportFile:=strFileDir+'\'+'1.json';
-        R.PrintPreview(true);    // Ready for  Test Page_count
-    finally
-    T1.free;
-    T2.Free;
-    end;
-end;
+
 initialization
   RegisterTests('Report',[
       TReportRuntimeTest.Suite
