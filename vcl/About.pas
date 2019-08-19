@@ -8,12 +8,8 @@ uses
 
 type
   Tfrm_About = class(TForm)
-    Panel1: TPanel;
-    Button1: TButton;
     Image6: TImage;
-    Label5: TLabel;
-    Image7: TImage;
-    Label6: TLabel;
+    Button1: TButton;
     Memo1: TMemo;
     procedure Button1Click(Sender: TObject);
   private

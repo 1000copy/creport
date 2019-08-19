@@ -66,6 +66,7 @@ public
     function _string(p: string): String;
     procedure push;
     procedure pop;
+    procedure format(sl:Tstringlist);
   public
     constructor create(a:string);
     destructor destroy;
@@ -145,6 +146,11 @@ end;
 destructor Json.destroy;
 begin
   self.FStack.free;
+end;
+
+procedure Json.format(sl:TStringList);
+begin
+  PrintJsonParserOutput(self.JsonParser.output,sl);
 end;
 
 procedure Json.check;

@@ -4,8 +4,6 @@ interface
 uses
   // user
   osservice,
-  ReportControl,
-  ReportRunTime,creport,
   // sys
   messages,
   Classes,

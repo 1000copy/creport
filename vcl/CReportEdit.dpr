@@ -5,10 +5,10 @@ uses
   Border in 'Border.pas' {BorderForm},
   Color in 'Color.pas' {ColorForm},
   diagonal in 'diagonal.pas' {DiagonalForm},
-  creport in 'creport.pas' {CreportForm},
   NewDialog in 'NewDialog.pas' {frmNewTable},
   vsplit in 'vsplit.pas' {VSplitForm},
-  about in 'about.pas' {AboutBox};
+  about in 'about.pas' {AboutBox},
+  Creport in 'Creport.pas' {CreportForm};
 
 {$R *.RES}
 

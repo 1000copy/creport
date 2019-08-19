@@ -1,0 +1,52 @@
+package creport4;
+
+{$R *.res}
+{$R 'TB97Reg.dcr'}
+{$ALIGN 8}
+{$ASSERTIONS ON}
+{$BOOLEVAL OFF}
+{$DEBUGINFO ON}
+{$EXTENDEDSYNTAX ON}
+{$IMPORTEDDATA ON}
+{$IOCHECKS ON}
+{$LOCALSYMBOLS ON}
+{$LONGSTRINGS ON}
+{$OPENSTRINGS ON}
+{$OPTIMIZATION ON}
+{$OVERFLOWCHECKS OFF}
+{$RANGECHECKS OFF}
+{$REFERENCEINFO ON}
+{$SAFEDIVIDE OFF}
+{$STACKFRAMES OFF}
+{$TYPEDADDRESS OFF}
+{$VARSTRINGCHECKS ON}
+{$WRITEABLECONST ON}
+{$MINENUMSIZE 1}
+{$IMAGEBASE $400000}
+{$IMPLICITBUILD OFF}
+
+requires
+  vcl,
+  vclx,
+  vcldb,
+  vclsmp,
+  designide,
+  bdertl,
+  vcljpg,
+  rtl,
+  dbrtl,
+  vclactnband,
+  xmlrtl,
+  dsnap;
+
+contains
+  ureport in 'ureport.pas',
+  osservice in 'osservice.pas',
+  CC in 'CC.pas' {/,  DesignEditors in 'C: Program Files (x86)\CodeGear\RAD Studio\5.0\source\ToolsAPI\DesignEditors.pas'},
+  uHornCartesian in 'uHornCartesian.pas',
+  ReportRunTime in 'ReportRunTime.pas',
+  Preview in 'Preview.pas',
+  repmess in 'repmess.PAS',
+  margin in 'margin.pas';
+
+end.

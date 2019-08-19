@@ -4,7 +4,7 @@ interface
 
 uses
   // user
-  reportcontrol,
+  ureport,
  ujson,TestFramework,sysutils,classes,forms;
 
 type
@@ -57,8 +57,6 @@ begin
 end;
 
 procedure TJsonToRita.TestJsonFile2Report;
-var s:string;
-  c : Integer;
   var a:string;
 
 //    arr : TJsonArray;
@@ -67,12 +65,8 @@ var s:string;
     report : TReportControl;
 begin
     report := TReportControl.create(Application.MainForm);
-    sl := TStringList.create;
-    sl.LoadFromFile('remember.me.txt');
-    a := sl.Text;
-    c := 0 ;
-    op := Json.create(a);
-    op.parse;
+    report.Visible := false;
+    report.loadFromJson('remember.me.txt');
     check(op._int('ReportScale') = 100);
     report.fromJson(op);
     check(report.ReportScale = 100,inttostr(report.ReportScale));
@@ -83,8 +77,6 @@ end;
 
 
 procedure TJsonToRita.TestJsonFile;
-var s:string;
-  c : Integer;
   var a:string;
 
 //    arr : TJsonArray;
@@ -94,10 +86,10 @@ begin
     sl := TStringList.create;
     sl.LoadFromFile('remember.me.txt');
     a := sl.Text;
-    c := 0 ;
     op := Json.create(a);
     op.parse;
     check(op._int('ReportScale') = 100);
+    sl.free;
 end;
 
 

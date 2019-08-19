@@ -1,12 +1,12 @@
-// holiday of Spring Day is coming . workmate is playing ,so noise . so now it is time to go home
+﻿// holiday of Spring Day is coming . workmate is playing ,so noise . so now it is time to go home
 unit ReportRunTime;
 
 interface
-uses ReportControl,  Windows, Messages, SysUtils,
+uses ureport,  Windows, Messages, SysUtils,
   {$WARNINGS OFF}FileCtrl,{$WARNINGS ON}
    Classes, Graphics, Controls,
   Forms, Dialogs, Printers, Menus, Db,
-  DesignEditors, ExtCtrls,osservice,margin,cc;
+  DesignEditors, ExtCtrls,osservice,cc;
 Procedure Register;
 
 
@@ -171,8 +171,8 @@ type
 implementation
 
 Uses
-  Preview, REPmess, Creport;
-  
+  Preview, REPmess, Creport,margin;
+
 Procedure TReportRunTime.LoadPage(I:integer);
 Var
   FileName: String;

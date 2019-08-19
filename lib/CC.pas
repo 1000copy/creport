@@ -25,7 +25,13 @@ function Black :COLORREF;
 function RegularPoint(V:Integer):Integer;
 function calcBottom(TempString:string ;TempRect:TRect;AlighFormat :UINT;FLogFont: TLOGFONT):Integer;
 function BoundValue(Value,Bigger,Smaller:Integer):Integer;
+function endsWith(s:string;ext:string):boolean;
 implementation
+function endsWith(s:string;ext:string):boolean;
+begin
+  result := copy(s,length(s) - length(ext)+1,length(ext)) = ext
+end;
+
 function Black :COLORREF;
 begin
  result:= Windows.RGB(0,0,0);

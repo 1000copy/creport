@@ -26,7 +26,7 @@
 //#
 
 
-Unit ReportControl;
+Unit ureport;
 
 Interface
 
@@ -513,6 +513,8 @@ type
   public
     function toJson:String;
     procedure fromJson(json:Json);
+    procedure loadFromJson(fn:string);
+    procedure savetoJson(fn:string);
   private
     FTextEdit:Edit;
     MouseSelect : MouseSelector;
@@ -777,7 +779,7 @@ Procedure Register;
 Implementation
 
 {$R ReportControl.dcr}
-Uses Preview, REPmess, margin,Creport;
+//Uses Preview, REPmess, margin,Creport;
 function chop(r:string):string;
   begin
     if length(r)>0 then
@@ -3641,6 +3643,34 @@ Begin
   PrintPaper.GetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
   InternalSavetoFile(FLineList,FileName,PageNumber, Fpageall);
 End;
+procedure TReportControl.loadFromJson(fn: string);var sl : TStringList;op:Json;
+begin
+    sl := TStringList.create;
+    try
+    sl.LoadFromFile(fn);
+    op := Json.create(sl.Text);
+    op.parse;
+    self.fromJson(op);
+    finally
+    op.free;
+    sl.free;
+    end;
+
+end;
+procedure TReportControl.savetoJson(fn: string);
+var
+  sl : TstringList;
+  j:Json;
+begin
+   sl := TstringList.Create;
+   sl.Text := self.toJson ;
+   j := Json.create(sl.Text);
+   j.parse;
+   sl.Clear;
+   j.format(sl);
+   sl.SaveToFile(fn);
+end;
+
 Procedure TReportControl.LoadPage(I:Integer);
 var FileName: String;
 begin

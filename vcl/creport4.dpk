@@ -39,25 +39,12 @@ requires
   xmlrtl;
 
 contains
-  ReportControl in 'ReportControl.pas',
-  TB97Tlwn in 'TB97Tlwn.pas',
-  TB97 in 'TB97.pas',
-  TB97Cmn in 'TB97Cmn.pas',
-  TB97Cnst in 'TB97Cnst.pas',
-  TB97Ctls in 'TB97Ctls.pas',
-  TB97Reg in 'TB97Reg.pas',
-  TB97Tlbr in 'TB97Tlbr.pas',
   osservice in 'osservice.pas',
-  About in 'About.pas' {frm_About},
-  Border in 'Border.pas' {BorderForm},
-  Color in 'Color.pas' {ColorForm},
   Creport in 'Creport.pas' {CreportForm},
-  diagonal in 'diagonal.PAS' {DiagonalForm},
-  margin in 'margin.pas' {MarginForm},
-  NewDialog in 'NewDialog.pas' {frmNewTable},
-  Preview in 'Preview.pas' {PreviewForm},
-  repmess in 'repmess.PAS' {REPmessform},
   vsplit in 'vsplit.PAS' {VSplitForm},
   ReportRunTime in 'ReportRunTime.pas',
-  CC in 'CC.pas';
+  CC in 'CC.pas',
+  ujson,
+  ureport in '..\lib\ureport.pas';
+
 end.

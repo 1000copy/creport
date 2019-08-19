@@ -7,7 +7,7 @@ uses
   cc,
   uHornCartesian,
   osservice,
-  ReportControl,
+  ureport,
   ReportRunTime,creport,
   // sys
   forms,

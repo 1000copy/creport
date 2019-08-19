@@ -9,7 +9,7 @@ uses
   TextTestRunner in '..\dunit\src\TextTestRunner.pas',
   GUITesting in '..\dunit\src\GUITesting.pas',
   ReportTest in 'ReportTest.pas',
-  ReportControl in '..\vcl\ReportControl.pas',
+  ureport in '..\vcl\ReportControl.pas',
   ReportRunTime in '..\vcl\ReportRunTime.pas',
   osservice in '..\vcl\osservice.pas',
   uHornCartesian in '..\vcl\uHornCartesian.pas',
@@ -20,7 +20,8 @@ uses
   UnitTestFramework in 'UnitTestFramework.pas',
   ujson in '..\vcl\ujson.pas',
   ureportjson in 'ureportjson.pas',
-  ujson2rita in 'ujson2rita.pas';
+  ujson2rita in 'ujson2rita.pas',
+  ustringtest in 'ustringtest.pas';
 
 {$R *.res}
 

@@ -8,7 +8,7 @@ uses
   cc,
   uHornCartesian,
   osservice,
-  ReportControl,
+  ureport,
   ReportRunTime,creport,
   // sys
   messages,
@@ -999,7 +999,7 @@ begin
   Try
     With TargetFile Do
     Begin
-      ReadWord(FileFlag);CheckEquals($AA57,FileFlag);
+      ReadWord(FileFlag);Check($AA57=FileFlag);
     end;
   finally
     targetFile.Free;

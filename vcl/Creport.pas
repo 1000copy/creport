@@ -4,8 +4,8 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  ReportControl, StdCtrls, Buttons, Menus, IniFiles,ExtCtrls, ToolWin,
-  ComCtrls, Spin,  printers ,TB97, TB97Tlwn,db, TB97Tlbr, ExtDlgs,cc;
+  ureport, StdCtrls, Buttons, Menus, IniFiles,ExtCtrls, ToolWin,
+  ComCtrls, Spin,  printers , ExtDlgs,cc,db;
 
 type
   TCreportForm = class(TForm)
@@ -116,11 +116,9 @@ type
     Bevel8: TBevel;
     SpeedButton9: TSpeedButton;
     Bevel9: TBevel;
-    ComboBox1: TComboBox;
     SpeedButton10: TSpeedButton;
     OpenPictureDialog1: TOpenPictureDialog;
     SpeedButton16: TSpeedButton;
-    Label3: TLabel;
     SpeedButton17: TSpeedButton;
     StatusBar1: TStatusBar;
     RC: TReportControl;
@@ -185,8 +183,8 @@ type
     savebz:boolean;
     procedure ListBoxDragOver(Sender, Source: TObject; X,Y: Integer; State: TDragState; var Accept: Boolean);
 
-    function  LFindComponent(Owner: TComponent; Name: String): TComponent;
-    procedure LEnumComponents(F:TComponent);
+//    function  LFindComponent(Owner: TComponent; Name: String): TComponent;
+//    procedure LEnumComponents(F:TComponent);
 
     { Private declarations }
   public
@@ -278,31 +276,31 @@ begin
   End;
   RC.CalcWndSize;
 
- combobox1.Clear;
- for i:=0 to Screen.FormCount-1 do
-   for j:=0 to Screen.Forms[i].ComponentCount-1 do
-     if Screen.Forms[i].Components[j] is TDataSet then
-     begin
-       with TDataSet(Screen.Forms[i].Components[j]) do
-            combobox1.Items.Add(Screen.Forms[i].Name+'.'+TDataSet(Screen.Forms[i].Components[j]).Name);
-     end;
+// combobox1.Clear;
+// for i:=0 to Screen.FormCount-1 do
+//   for j:=0 to Screen.Forms[i].ComponentCount-1 do
+//     if Screen.Forms[i].Components[j] is TDataSet then
+//     begin
+//       with TDataSet(Screen.Forms[i].Components[j]) do
+//            combobox1.Items.Add(Screen.Forms[i].Name+'.'+TDataSet(Screen.Forms[i].Components[j]).Name);
+//     end;
 
  //if Screen.DataModuleCount>0 then
- for i:=0 to Screen.DataModuleCount-1 do
-   for j:=0 to Screen.DataModules[i].ComponentCount-1 do
-     if Screen.DataModules[i].Components[j] is TDataSet then
-     begin
-       with TDataSet(Screen.DataModules[i].Components[j]) do
-            combobox1.Items.Add(Screen.DataModules[i].Name+'.'+TDataSet(Screen.DataModules[i].Components[j]).Name);
-     end;
-
-    for i := 0 to Screen.CustomFormCount - 1 do
-      if (Screen.CustomForms[i].ClassName = 'TDataModuleForm')  then
-        for j := 0 to Screen.CustomForms[i].ComponentCount - 1 do
-        begin
-          if (Screen.CustomForms[i].Components[j] is TDataModule) then
-            LEnumComponents(Screen.CustomForms[i].Components[j]);
-        end;
+// for i:=0 to Screen.DataModuleCount-1 do
+//   for j:=0 to Screen.DataModules[i].ComponentCount-1 do
+//     if Screen.DataModules[i].Components[j] is TDataSet then
+//     begin
+//       with TDataSet(Screen.DataModules[i].Components[j]) do
+//            combobox1.Items.Add(Screen.DataModules[i].Name+'.'+TDataSet(Screen.DataModules[i].Components[j]).Name);
+//     end;
+//
+//    for i := 0 to Screen.CustomFormCount - 1 do
+//      if (Screen.CustomForms[i].ClassName = 'TDataModuleForm')  then
+//        for j := 0 to Screen.CustomForms[i].ComponentCount - 1 do
+//        begin
+//          if (Screen.CustomForms[i].Components[j] is TDataModule) then
+//            LEnumComponents(Screen.CustomForms[i].Components[j]);
+//        end;
 end;
 
 procedure TCreportForm.FileExitClick(Sender: TObject);
@@ -316,7 +314,11 @@ begin
   if OpenDialog1.Execute then
   begin
     thefile := OpenDialog1.Filename;
-    RC.LoadFromFile(theFile);
+    if endsWith(thefile,'.json') or endsWith(thefile,'.txt') then begin
+      rc.LoadFromJson(thefile);
+    end
+    else
+      RC.LoadFromFile(theFile);
     Creportform.caption := thefile ;
     savefilename := thefile;
     updateOldies(thefile, sender);
@@ -549,6 +551,8 @@ var
 begin
  
   MarginRect := RC.GetMargin;
+  if MarginForm = nil then
+    MarginForm := TMarginForm.Create(Application);
   MarginForm.LeftMargin.Value := MarginRect.Left;
   MarginForm.TopMargin.Value := MarginRect.Top;
   MarginForm.RightMargin.Value := MarginRect.Right;
@@ -759,7 +763,10 @@ begin
   end
   else
   begin
-    RC.SaveToFile(SaveFilename);
+    if endsWith(saveFileName,'.json') or endsWith(saveFileName,'.txt')then
+       RC.savetoJson(saveFileName)
+    else
+      RC.SaveToFile(SaveFilename);
     thefile := SaveFilename;
     updateOldies(thefile, sender);
     thefile := '';
@@ -1004,42 +1011,6 @@ begin
 end;
 end;
 
-procedure TCreportForm.LEnumComponents(F:TComponent); // lzl
-var i:integer;
-    c: TComponent;
-begin
-    for i := 0 to f.ComponentCount - 1 do
-    begin
-      c := f.Components[i];
-      //if (f is TDataModule) then
-      if (c is TDataset) then
-      //List.Add(f.Name + '.' + c.Name)
-       combobox1.Items.Add(f.name+'.'+c.name);
-    end;
-
-end;
-
-function TCreportForm.LFindComponent(Owner: TComponent; Name: String): TComponent;  
-var
-  n: Integer;
-  s1, s2: String;
-begin
-  Result := nil;
-  n := Pos('.', Name);
-  try
-    if n = 0 then
-      Result := Owner.FindComponent(Name)
-    else
-    begin
-      s1 := Copy(Name, 1, n - 1);
-      s2 := Copy(Name, n + 1, 255);
-      Owner := FindGlobalComponent(s1);
-      if Owner <> nil then
-        Result := Owner.FindComponent(s2);
-    end;
-  except
-  end;
-end;
 
 
 procedure TCreportForm.SpeedButton10Click(Sender: TObject);
@@ -1080,39 +1051,39 @@ end
 else
   MessageDlg('请先选择单元格', mtInformation,[mbOk], 0);
 end;
-procedure TCreportForm.ComboBox1Change(Sender: TObject); // add  
-var ss:string;
-    Dbar:TToolWindow97;
-    Dlist:tlistbox;
+procedure TCreportForm.ComboBox1Change(Sender: TObject); // add
+//var ss:string;
+//    Dbar:TToolWindow97;
+//    Dlist:tlistbox;
 begin
-   if ComboBox1.Items[ComboBox1.ItemIndex] = '' then
-      exit;
-   Dbar:= TToolWindow97.Create(self);
-   Dlist:=tlistbox.Create(self);
-   Dbar.Parent:=Creportform;
-   Dbar.Height:=140;
-   Dbar.Width:=120;
-   Dlist.Parent:=DBar;
-   Dlist.Align:=alClient;
-   Dlist.DragMode:= dmAutomatic;
-   Dlist.OnDragOver:=ListBoxDragOver;
-   Dbar.Left:=dbarleft*120+2;
-   dbar.top:= dbartop*140+2;
-   if dbar.left>780 then
-   begin
-      dbartop:=dbartop+1;
-      dbarleft:=0;
-   end
-   else
-    dbarleft:=dbarleft+1;
-   ss:=ComboBox1.Items[ComboBox1.itemindex];
-   Dbar.Caption:='表名:'+ss;
-    savebz:=false;
-   try
-     TDataSet(LFindComponent(Owner, ss)).GetFieldNames(dlist.Items);
-   except
-     MessageDlg('此表打不开或属性设置不正确', mtInformation,[mbOk], 0);
-   end;
+//   if ComboBox1.Items[ComboBox1.ItemIndex] = '' then
+//      exit;
+//   Dbar:= TToolWindow97.Create(self);
+//   Dlist:=tlistbox.Create(self);
+//   Dbar.Parent:=Creportform;
+//   Dbar.Height:=140;
+//   Dbar.Width:=120;
+//   Dlist.Parent:=DBar;
+//   Dlist.Align:=alClient;
+//   Dlist.DragMode:= dmAutomatic;
+//   Dlist.OnDragOver:=ListBoxDragOver;
+//   Dbar.Left:=dbarleft*120+2;
+//   dbar.top:= dbartop*140+2;
+//   if dbar.left>780 then
+//   begin
+//      dbartop:=dbartop+1;
+//      dbarleft:=0;
+//   end
+//   else
+//    dbarleft:=dbarleft+1;
+//   ss:=ComboBox1.Items[ComboBox1.itemindex];
+//   Dbar.Caption:='表名:'+ss;
+//    savebz:=false;
+//   try
+//     TDataSet(LFindComponent(Owner, ss)).GetFieldNames(dlist.Items);
+//   except
+//     MessageDlg('此表打不开或属性设置不正确', mtInformation,[mbOk], 0);
+//   end;
 end;
 
 

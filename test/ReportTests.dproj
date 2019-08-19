@@ -21,6 +21,13 @@
     <Version>7.0</Version>
     <DCC_Define>DEBUG</DCC_Define>
     <DCC_ExeOutput>c:\dcu</DCC_ExeOutput>
+    <DCC_DcuOutput>c:\dcu</DCC_DcuOutput>
+    <DCC_ObjOutput>c:\dcu</DCC_ObjOutput>
+    <DCC_HppOutput>c:\dcu</DCC_HppOutput>
+    <DCC_UnitSearchPath>f:\rp\lib</DCC_UnitSearchPath>
+    <DCC_ResourcePath>f:\rp\lib</DCC_ResourcePath>
+    <DCC_ObjPath>f:\rp\lib</DCC_ObjPath>
+    <DCC_IncludePath>f:\rp\lib</DCC_IncludePath>
   </PropertyGroup>
   <ProjectExtensions>
     <Borland.Personality>Delphi.Personality</Borland.Personality>
@@ -44,6 +51,9 @@
     <DCCReference Include="..\dunit\src\TextTestRunner.pas" />
     <DCCReference Include="..\vcl\CC.pas" />
     <DCCReference Include="..\vcl\osservice.pas" />
+    <DCCReference Include="..\vcl\ReportControl.pas">
+      <ModuleName>urepor</ModuleName>
+    </DCCReference>
     <DCCReference Include="..\vcl\ReportControl.pas" />
     <DCCReference Include="..\vcl\ReportRunTime.pas" />
     <DCCReference Include="..\vcl\uHornCartesian.pas" />
@@ -54,5 +64,6 @@
     <DCCReference Include="ujson2rita.pas" />
     <DCCReference Include="UnitTestFramework.pas" />
     <DCCReference Include="ureportjson.pas" />
+    <DCCReference Include="ustringtest.pas" />
   </ItemGroup>
 </Project>
