@@ -510,9 +510,10 @@ type
     constructor Create(R:TReportControl);
   end;
   TReportControl = Class(TWinControl)
+  private
+      procedure fromJson(json:Json);
   public
     function toJson:String;
-    procedure fromJson(json:Json);
     procedure loadFromJson(fn:string);
     procedure savetoJson(fn:string);
   private
@@ -3647,13 +3648,13 @@ procedure TReportControl.loadFromJson(fn: string);var sl : TStringList;op:Json;
 begin
     sl := TStringList.create;
     try
-    sl.LoadFromFile(fn);
-    op := Json.create(sl.Text);
-    op.parse;
-    self.fromJson(op);
+      sl.LoadFromFile(fn);
+      op := Json.create(sl.Text);
+      op.parse;
+      self.fromJson(op);
     finally
-    op.free;
-    sl.free;
+      op.free;
+      sl.free;
     end;
 
 end;

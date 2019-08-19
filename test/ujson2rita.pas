@@ -58,17 +58,12 @@ end;
 
 procedure TJsonToRita.TestJsonFile2Report;
   var a:string;
-
-//    arr : TJsonArray;
-    op : Json;
     sl : TStringList;
     report : TReportControl;
 begin
     report := TReportControl.create(Application.MainForm);
     report.Visible := false;
     report.loadFromJson('remember.me.txt');
-    check(op._int('ReportScale') = 100);
-    report.fromJson(op);
     check(report.ReportScale = 100,inttostr(report.ReportScale));
     check(report.LineList.Count = 2);
     check(report.Lines[0].CellCount = 2);

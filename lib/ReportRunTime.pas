@@ -354,7 +354,10 @@ Procedure TReportRunTime.LoadReport;
 
 Begin
   try
-    InternalLoadFromFile(FFileName,FLineList);
+    if endsWith(FFileName,'.json') then
+      loadFromJson(FFileName)
+    else
+      InternalLoadFromFile(FFileName,FLineList);
     PrintPaper.Batch(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
     UpdateLines;
   except
