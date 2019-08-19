@@ -5,7 +5,7 @@ interface
 uses
   // user
   reportcontrol,
- ujson,TestFramework,sysutils,classes;
+ ujson,TestFramework,sysutils,classes,forms;
 
 type
   TCell = class
@@ -66,7 +66,7 @@ var s:string;
     sl : TStringList;
     report : TReportControl;
 begin
-    report := TReportControl.create(nil);
+    report := TReportControl.create(Application.MainForm);
     sl := TStringList.create;
     sl.LoadFromFile('remember.me.txt');
     a := sl.Text;
@@ -76,6 +76,9 @@ begin
     check(op._int('ReportScale') = 100);
     report.fromJson(op);
     check(report.ReportScale = 100,inttostr(report.ReportScale));
+    check(report.LineList.Count = 2);
+    check(report.Lines[0].CellCount = 2);
+    check(report.Lines[1].CellCount = 2);
 end;
 
 

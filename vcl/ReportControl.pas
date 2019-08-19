@@ -36,7 +36,7 @@ Uses
   {$WARNINGS OFF}FileCtrl,{$WARNINGS ON}
    Classes, Graphics, Controls,
   Forms, Dialogs, Printers, Menus, Db,
-  ExtCtrls,osservice;
+  ExtCtrls,osservice,Contnrs;
   Const
   // Horz Align
   TEXT_ALIGN_LEFT = 0;
@@ -195,7 +195,7 @@ type
   TCellList = class(TList)
   private
     ReportControl:TReportControl;
-    function Get(Index: Integer): TReportCell;
+    function GetCell(Index: Integer): TReportCell;
     procedure CheckAllNextCellIsBiggerBottom;
     procedure CheckAllNextCellIsSlave;
   public
@@ -211,7 +211,7 @@ type
     function TotalWidth:Integer;
     // How to implement indexed [] default property
     // http://stackoverflow.com/questions/10796417/how-to-implement-indexed-default-property
-    property Items[Index: Integer]: TReportCell read Get ;default;
+    property Items[Index: Integer]: TReportCell read GetCell ;default;
     procedure DeleteCells;
     procedure ColumnSelectedCells(FLineList:TLineList);
     procedure Fill(Cells :TCellList);
@@ -223,7 +223,7 @@ type
     function ToString: String;
   end;
   TLineList = class(TList)
-  private                     
+  private
     R:TReportControl;
     function Get(Index: Integer): TReportLine;
   public
@@ -234,6 +234,7 @@ type
     function CombineVert:TReportCell;
     function TotalHeight:Integer;
     function ToJson:String;
+    procedure fromJson(json:Json);
   published
     {
     G:How do I force the linker to include a function I need during debugging?
@@ -250,6 +251,7 @@ type
   TReportCell = Class(TObject)
   public
     function toJson:String;
+    procedure fromJson(json:Json);
   private
 
     NearResolution : integer;
@@ -437,11 +439,13 @@ type
   TReportLine = Class(TObject)
   public
     function toJson():string;
+    procedure fromJson(json:Json);
   private
     function GetSelected: Boolean;
     procedure DoInvalidate;
     procedure AddCell;
     procedure InsertCell(RefCell:TReportCell);
+    function getCellCount: Integer;
   public
     { Private declarations }
     FReportControl: TReportControl;     // Report ControlµÄÖ¸Õë
@@ -470,6 +474,7 @@ type
     Property LineTop: Integer Read FLineTop Write SetLineTop;
     Property LineRect: TRect Read GetLineRect;
     Property PrevLineRect: TRect Read FLineRect;
+    Property CellCount: Integer Read getCellCount;
     property IsSelected : Boolean read GetSelected;
     Procedure CreateLine(LineLeft, CellNumber, PageWidth: Integer);
     Procedure CopyLine(Line: TReportLine; bInsert: Boolean);
@@ -1740,21 +1745,6 @@ begin
   FCellText := Self.ReportControl.renderText(Self);
   Self.SaveInternal(s);
 end;
-function TReportCell.toJson: String;var
- s :string;
-begin
-  s := '"CellIndex":%d,"CellLeft":%d,'
-  +'"CellWidth":%d,"LeftMargin":%d,"LeftLine":%d,"LeftLineWidth":%d'+',"TopLine":%d,'
-  +'"TopLineWidth":%d,"RightLine":%d,"RightLineWidth":%d,"BottomLine":%d,"BottomLineWidth":%d,"Diagonal":%d,'
-  +'"TextColor" :%d,"BackGroundColor" :%d,'
-  +'"HorzAlign":%d,"VertAlign":%d,"CellText":"%s","Bmpyn":%d'
-  ;
-//dword - integer is OK?
-result := format(s,[FCellIndex,FCellLeft,FCellWidth,FLeftMargin,integer(FLeftLine)
-    ,FLeftLineWidth,integer(FTopLine),FTopLineWidth,integer(FRightLine),FRightLineWidth,
-    integer(FBottomLine),FBottomLineWidth,FDiagonal,Integer(FTextColor) ,Integer(FBackGroundColor) ,FHorzAlign,FVertAlign,FCellText,Integer(Fbmpyn)]);
-    result := '{'+result+'}';
-  end;
 procedure TReportCell.SaveInternal(s: TSimpleFileStream);
 var k :  integer;
     w : TSimpleWriter;
@@ -1986,18 +1976,6 @@ Begin
   End;
 End;
 
-function TReportLine.toJson: string;
-var cell : TReportcell;i:integer;s:string;
-begin
-  s:= '';
-  for I := 0 to self.FCells.Count - 1 do begin
-    cell := TReportCell(self.FCells.Items[i]);
-    s := s + cell.toJson +',';
-  end;
-  if length(s)>0 then
-    delete(s,length(s),1);
-  result := format('{"Index":%d,"MinHeight":%d,"DragHeight":%d,"LineTop":%d,"Cells":[%s]}',[self.FIndex,self.FMinHeight,self.FDragHeight,self.FLineTop,s]);
-end;
 
 ///////////////////////////////////////////////////////////////////////////
 // TReportControl
@@ -2285,6 +2263,44 @@ procedure TReportCell.FreeBmp;
 begin              
   FreeAndNil(FBmp);
   FbmpYn := false;
+end;
+function TReportCell.toJson: String;var
+ s :string;
+begin
+  s := '"CellIndex":%d,"CellLeft":%d,'
+  +'"CellWidth":%d,"LeftMargin":%d,"LeftLine":%d,"LeftLineWidth":%d'+',"TopLine":%d,'
+  +'"TopLineWidth":%d,"RightLine":%d,"RightLineWidth":%d,"BottomLine":%d,"BottomLineWidth":%d,"Diagonal":%d,'
+  +'"TextColor" :%d,"BackGroundColor" :%d,'
+  +'"HorzAlign":%d,"VertAlign":%d,"CellText":"%s","Bmpyn":%d'
+  ;
+//dword - integer is OK?
+result := format(s,[FCellIndex,FCellLeft,FCellWidth,FLeftMargin,integer(FLeftLine)
+    ,FLeftLineWidth,integer(FTopLine),FTopLineWidth,integer(FRightLine),FRightLineWidth,
+    integer(FBottomLine),FBottomLineWidth,FDiagonal,Integer(FTextColor) ,Integer(FBackGroundColor) ,FHorzAlign,FVertAlign,FCellText,Integer(Fbmpyn)]);
+    result := '{'+result+'}';
+  end;
+
+procedure TReportCell.fromJson(json: Json);
+begin
+    FCellIndex:= json._int('CellIndex');
+    FCellLeft:= json._int('CellLeft');
+    FCellWidth:= json._int('CellWidth');
+    FLeftMargin:= json._int('LeftMargin');
+    FLeftLine := Boolean(json._int('LeftLine'));
+    FLeftLineWidth:= json._int('LeftLineWidth');
+    FTopLine:= Boolean(json._int('TopLine'));
+    FTopLineWidth:= json._int('TopLineWidth');
+    FRightLine:= Boolean(json._int('RightLine'));
+    FRightLineWidth:= json._int('RightLineWidth');
+    BottomLine:= Boolean(json._int('BottomLine'));
+    FBottomLineWidth:= json._int('BottomLineWidth');
+    FDiagonal:= json._int('Diagonal');
+    FTextColor := json._int('TextColor');
+    FBackGroundColor := json._int('BackGroundColor');
+    FHorzAlign:= json._int('HorzAlign');
+    FVertAlign:= json._int('VertAlign');
+    FCellText:= json._string('CellText');
+    Fbmpyn:= Boolean(json._int('bmpyn'));
 end;
 
 {TReportControl}
@@ -2849,6 +2865,22 @@ begin
   MouseSelect.StartMouseSelect(point,shift);
 end;
 
+procedure TReportControl.fromJson(json: Json);
+begin
+    self.FReportScale := json._int('ReportScale');
+    self.FReportScale := json._int('ReportScale');
+    self.FPageWidth := json._int('PageWidth');
+    self.FPageHeight := json._int('PageHeight');
+    self.FLeftMargin := json._int('LeftMargin');
+    self.FTopMargin := json._int('TopMargin');
+    self.FRightMargin := json._int('RightMargin');
+    self.FBottomMargin := json._int('BottomMargin');
+    self.FNewTable := Boolean(json._int('NewTable'));
+    self.FDataLine := json._int('DataLine');
+    self.FTablePerPage := json._int('TablePerPage');
+    self.LineList.fromJson(json);
+end;
+
 function TReportControl.toJson: String;
 var
   c : string;
@@ -3280,6 +3312,41 @@ begin
   End;
   InvalidateRect(Reportcontrol.Handle, @R, False);
 end;
+function TReportLine.toJson: string;
+var cell : TReportcell;i:integer;s:string;
+begin
+  s:= '';
+  for I := 0 to self.FCells.Count - 1 do begin
+    cell := TReportCell(self.FCells.Items[i]);
+    s := s + cell.toJson +',';
+  end;
+  if length(s)>0 then
+    delete(s,length(s),1);
+  result := format('{"Index":%d,"MinHeight":%d,"DragHeight":%d,"LineTop":%d,"Cells":[%s]}',[self.FIndex,self.FMinHeight,self.FDragHeight,self.FLineTop,s]);
+end;
+procedure TReportLine.fromJson(json:Json);
+var cell : TReportcell;i:integer;s:string;
+begin
+  self.FIndex := json._int('Index');
+  self.FMinHeight := json._int('MinHeight');
+  self.FDragHeight:= json._int('DragHeight');
+  self.FLineTop := json._int('LineTop');
+//  s:= '';
+  json.locateArray('Cells');
+  for I := 0 to json.getCurrentArrayLength - 1 do begin
+    cell := TReportCell.Create(self.FReportControl);
+    cell.OwnerLine := self;
+    json.locateObject(i);
+    cell.fromJson(json);
+    self.FCells.Add(cell)
+  end;
+end;
+
+function TReportLine.getCellCount: Integer;
+begin
+  result := FCells.count;
+end;
+
 Procedure TReportControl.UpdateLines;
 var
   I, J: Integer;
@@ -3894,10 +3961,6 @@ Begin
     FEditCell := Nil;
 End;
 
-procedure TReportControl.fromJson(json: Json);
-begin
-  self.FReportScale := json._int('ReportScale')
-end;
 
 Procedure TReportControl.SetCellDispFormt(mek: String);  
 Var
@@ -4074,9 +4137,9 @@ begin
       Cells.Add(TReportCell(Self[J]));
 end;
 
-function TCellList.Get(Index: Integer): TReportCell;
+function TCellList.GetCell(Index: Integer): TReportCell;
 begin
-  Result := TReportCell(inherited Get(Index));
+  Result := TReportCell(get(Index));
 end;
 constructor Combinator.Create(R: TReportControl;CellList:TCellList);
 begin
@@ -4382,6 +4445,24 @@ begin
   self.R := R; 
 end;
 
+procedure TLineList.fromJson(json: Json);
+var
+  i : integer;
+  line:TReportLine;r:string;
+begin
+  R := '';
+  json.locateArray('Lines');
+  for i := 0 to json.getCurrentArrayLength -1 do
+  begin
+    line := TReportLine.Create;
+    line.ReportControl := self.R;
+    json.locateObject(i);
+    json.push;
+    line.FromJson(json);
+    json.pop;
+    self.Add(line);
+  end;
+end;
 function TLineList.Get(Index: Integer): TReportLine;
 begin
   Result := TReportLine(inherited Get(Index));

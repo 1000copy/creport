@@ -3,7 +3,7 @@
 //--------------
 unit ujson;
 interface
-uses classes,forms,sysutils;
+uses classes,forms,sysutils,Contnrs;
 
 type
   TJsonNumber = Double;
@@ -39,6 +39,12 @@ type
   procedure ClearJsonParser(var JsonParser: TJsonParser);
   procedure ParseJson(var JsonParser: TJsonParser; const Source: WideString);
 procedure PrintJsonParserOutput(const Output: TJsonParserOutput; Lines: TStringList);
+{ TStack }
+
+type
+  tstack = class(TObjectStack)
+
+  end;
 
 type Json = class
   private
@@ -47,6 +53,7 @@ type Json = class
     JsonParser: TJsonParser;
     output:TJsonParserOutput;
     currentObject:TJsonObject;
+    FStack : Tstack ;
     procedure check;
 public
     function _array(p: string): TJsonArray;
@@ -57,8 +64,11 @@ public
     function getCurrentArray:TJsonArray;
     function getCurrentArrayLength: Integer;
     function _string(p: string): String;
+    procedure push;
+    procedure pop;
   public
     constructor create(a:string);
+    destructor destroy;
     procedure parse;
 end;
 
@@ -130,7 +140,13 @@ end;
 constructor Json.create(a:string);
 begin
 self.a := a;
+self.FStack := TStack.create;
 end;
+destructor Json.destroy;
+begin
+  self.FStack.free;
+end;
+
 procedure Json.check;
 var J : Integer;s : string;
 begin
@@ -151,6 +167,18 @@ begin
   self.JsonParser := JsonParser;
   self.output := self.JsonParser.Output;
   self.setCurrent(self.JsonParser.output.Objects[0]);
+end;
+
+procedure Json.pop;
+begin
+  self.currentObject := TJsonObject(self.FStack.pop);
+  self.arr := TJsonArray(self.FStack.pop);
+end;
+
+procedure Json.push;
+begin
+  self.FStack.push(TObject(self.arr));
+  self.FStack.push(TObject(self.currentobject));
 end;
 
 // Call error when something is wrong.
@@ -585,5 +613,8 @@ procedure PrintJsonParserOutput(const Output: TJsonParserOutput; Lines: TStringL
 begin
   PrintJsonObject(Output, 0, 0, Lines, '');
 end;
+{ tstack }
+
+
 end.
 
