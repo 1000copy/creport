@@ -189,8 +189,8 @@ Begin
     tempDir := Format('%s\temp\',[AppDir]);
     If Not DirectoryExists(tempDir) Then
       Exit;
-//    os.DeleteFiles(tempDir, '*.tmp');
-//    RmDir(tempDir);
+    os.DeleteFiles(tempDir, '*.tmp.json');
+    RmDir(tempDir);
   Except
   End;
 End;
