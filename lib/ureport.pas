@@ -3682,8 +3682,16 @@ end;
 Procedure TReportControl.LoadPage(I:Integer);
 var FileName: String;
 begin
-  fileName := osservice.PageFileName(I) ;
-  LoadFromFile(FileName);
+  self.LineList.Clear;
+  fileName := osservice.PageFileName(I)+'.json' ;
+//  LoadFromFile(FileName);
+  loadfromJson(fileName);
+  PrintPaper.prDeviceMode;
+  PrintPaper.SetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
+  FTextEdit.DestroyIfVisible;
+  FLastPrintPageWidth := FPageWidth;             //1999.1.23
+  FLastPrintPageHeight := FPageHeight;
+  UpdateLines;
 end;
 
 Procedure TReportControl.LoadFromFile(FileName: String);

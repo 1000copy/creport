@@ -34,6 +34,7 @@ type
     procedure pageCount;
     procedure drawtext;
     procedure dyndrawtext;
+    procedure drawtext1;
 
   end;
 
@@ -70,6 +71,19 @@ begin
 //    r.Visible := false;
 //    r.CalcWndSize;
     R.loadfromjson('1.tmp.json');
+//    ShowWindow(R.Handle, SW_SHOW);
+end;
+procedure TReportRunTimeTest.drawtext1;
+var i,j:integer;
+    CellFont: TLogFont;
+    cf: TFont;
+    F : TStringField;
+    R:TReportControl;
+begin
+    R:=TReportControl.Create(Application.MainForm);
+//    r.Visible := false;
+//    r.CalcWndSize;
+    R.loadfromjson('temp\1.tmp.json');
 //    ShowWindow(R.Handle, SW_SHOW);
 end;
 procedure TReportRunTimeTest.dyndrawtext;

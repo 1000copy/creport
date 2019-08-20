@@ -78,7 +78,7 @@ type
     Procedure LoadTempFile(strFileName: String);
     function ReadyFileName(PageNumber, Fpageall: Integer): String;
     Procedure DeleteAllTempFiles;
-    procedure LoadPage(I: integer);
+//    procedure LoadPage(I: integer);
   private
     // sum
     Function setSumAllYg(fm, ss: String): String;
@@ -172,14 +172,14 @@ implementation
 Uses
   Preview, REPmess, Creport,margin;
 
-Procedure TReportRunTime.LoadPage(I:integer);
-Var
-  FileName: String;
-Begin
-   FileName := osservice.PageFileName(I);
-   If FileExists(FileName) Then
-        LoadTempFile(FileName);
-End;
+//Procedure TReportRunTime.LoadPage(I:integer);
+//Var
+//  FileName: String;
+//Begin
+//   FileName := osservice.PageFileName(I)+'.json';
+//   If FileExists(FileName) Then
+//        LoadTempFile(FileName);
+//End;
 
 Procedure TReportRunTime.DeleteAllTempFiles;
 Var
@@ -253,14 +253,6 @@ begin
 end;
 
 Procedure TReportRunTime.LoadTempFile(strFileName: String);
-Var
-  TargetFile: TFileStream;
-  FileFlag: WORD;
-  Count1, Count2, Count3: Integer;
-  ThisLine: TReportLine;
-  ThisCell: TReportCell;
-  I, J, K: Integer;
-  TempPChar: Array[0..3000] Of Char;
 Begin
   try
     InternalLoadFromFile(strFileName,FPrintLineList);
@@ -582,7 +574,7 @@ Begin
     PreparePrintk( );
     REPmessform.Hide;
     PreviewForm.PageCount := FPageAll;
-    PreviewForm.SetPage;
+    PreviewForm.updateStatus;
     result := true;
   End
   Else
@@ -755,7 +747,7 @@ Begin
   PreparePrintk();
   REPmessform.Hide;
   PreviewForm.PageCount := FPageAll;
-  PreviewForm.SetPage;
+  PreviewForm.updateStatus;
 End;
 Procedure Register;
 Begin

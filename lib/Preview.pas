@@ -45,6 +45,7 @@ type
     procedure SpeedButton3Click(Sender: TObject);
     procedure EditEptkClick(Sender: TObject);
     procedure PrintBtnClick(Sender: TObject);
+    procedure FormShow(Sender: TObject);
   private
      // LCJ : ×î¼ÑËõ·Å±ÈÀý
     procedure DoFit;
@@ -62,7 +63,7 @@ type
     procedure PrintFile(strFileName: string);
     procedure SetPreviewMode(bPreview: Boolean);
     function RR:TReportRuntime;
-    procedure SetPage;
+    procedure updateStatus;
     class procedure Action(ReportFile:string;FPageCount:Integer;bPreviewMode:Boolean);
   end;
 
@@ -157,6 +158,11 @@ begin
   width:= 715;
   PageCount := 1;
   CurrentPage := 1;
+  
+end;
+
+procedure TPreviewForm.FormShow(Sender: TObject);
+begin
   GoPage(1);
 end;
 
@@ -248,31 +254,17 @@ begin
   GoPage(currentPage);
 end;
 procedure TPreviewForm.GoPage(CurrentPage:Integer);
-var
-  nPrevScale: Integer;
   procedure RuleApply;
   begin
-    if CurrentPage >= PageCount then
-    begin
-      NextPageBtn.Enabled := False;
-      btnLast.enabled := false;
-      btnFirst.Enabled := True;
-      PrevPageBtn.Enabled := True;
-    end;
-    if CurrentPage <= 1 then
-    begin
-      PrevPageBtn.Enabled := False;
-      NextPageBtn.Enabled := True;
-      btnLast.enabled := True;
-      btnFirst.Enabled := False;
-    end;
+      NextPageBtn.Enabled := CurrentPage < PageCount;
+      btnLast.enabled := CurrentPage < PageCount;
+      btnFirst.Enabled := CurrentPage > 1;
+      PrevPageBtn.Enabled := CurrentPage > 1;
   end;
 begin
-  RuleApply  ;
-  nPrevScale := RC.ReportScale;
-  SetPage;
+  updateStatus;
   RC.LoadPage(CurrentPage);
-  RC.ReportScale := nPrevScale;
+  rc.CalcWndSize;
   RC.Invalidate;
   RuleApply ;
 end;
@@ -282,7 +274,7 @@ end;
 
 
 
-procedure TPreviewForm.SetPage;
+procedure TPreviewForm.updateStatus;
 begin
   StatusBar1.Panels[0].Text :=Format(cc.PageFormat,[CurrentPage,PageCount]);
 end;
@@ -292,12 +284,13 @@ begin
   PreviewForm := TPreviewForm.Create(nil);
   PreviewForm.SetPreviewMode(bPreviewMode);
   PreviewForm.PageCount := FPageCount;
-  PreviewForm.SetPage();
+  PreviewForm.updateStatus();
   PreviewForm.filename.Caption := ReportFile;
   PreviewForm.ShowModal;
   PreviewForm.Free;
 end;
 
 end.
+
 
 
