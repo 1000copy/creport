@@ -42,7 +42,7 @@ type
     FFileName: Tfilename;
     FAddSpace: boolean;
     FVarList: TVarList;
-    FPrintLineList: TList;
+    FPrintLineList: TLineList;
     FDRMap: TDRMappings;
     FPageIndex: Integer;
     FpageAll: integer ;
@@ -57,7 +57,7 @@ type
     function SumHeight():integer;
     function HeadHeight: integer;
     function IsLastPageFull: Boolean;
-    function isPageFull: boolean;
+    function isPageFull(DataLineHeight:Integer): boolean;
     function HasEmptyRoomLastPage: Boolean;
   private
     // Line copy
@@ -95,7 +95,7 @@ type
   private
     // todo
     function IsDataField(s: String): Boolean;
-    function ExpandDataHeight(HasDataNo:integer): integer;
+    function getDataLineHeight(): integer;
     function DetailCellIndex(NO:integer) :Integer;
     procedure DataPage(Dataset: TDataset);
     procedure FreeList;
@@ -119,7 +119,6 @@ type
     procedure RenderTextOnly(NewCell, ThisCell: TReportCell);
 
   Public
-    function SaveToJson(fileName: String):boolean;
     function DoPageCount(): integer;
     Constructor Create(AOwner: TComponent); Override;
     Destructor Destroy; Override;
@@ -190,8 +189,8 @@ Begin
     tempDir := Format('%s\temp\',[AppDir]);
     If Not DirectoryExists(tempDir) Then
       Exit;
-    os.DeleteFiles(tempDir, '*.tmp');
-    RmDir(tempDir);
+//    os.DeleteFiles(tempDir, '*.tmp');
+//    RmDir(tempDir);
   Except
   End;
 End;
@@ -250,6 +249,7 @@ end;
 Procedure TReportRunTime.SaveTempFile(FileName: String;PageNumber: Integer);
 begin
   SaveToFile(FPrintLineList,FileName,PageNumber,Fpageall);
+  SaveToJson1(FileName+'.json',FPrintLineList);
 end;
 
 Procedure TReportRunTime.LoadTempFile(strFileName: String);
@@ -283,7 +283,7 @@ Begin
   Height := 0;
   FNamedDatasets := TDataList.Create;
   FVarList := TVarList.Create;
-  FPrintLineList := TList.Create;
+  FPrintLineList := TLineList.Create(self);
   FDRMap := TDRMappings.Create;
   repmessForm := TrepmessForm.Create(Self);
   //FHeaderHeight := 0;
@@ -382,9 +382,9 @@ begin
   result := (FtopMargin + HeadHeight + FDataLineHeight + SumHeight +
           FBottomMargin) > height;
 end;
-function TReportRunTime.isPageFull:boolean;
+function TReportRunTime.isPageFull(DataLineHeight:Integer):boolean;
 begin
-  result := (FtopMargin + HeadHeight + FDataLineHeight + FooterHeight + FBottomMargin >height);
+  result := (FtopMargin + HeadHeight + DataLineHeight + FooterHeight + FBottomMargin >height);
 end;
 function TReportRunTime.HasEmptyRoomLastPage:Boolean;
 begin
@@ -549,17 +549,16 @@ Procedure TReportRunTime.PrintPreview(bPreviewMode: Boolean);
 Var
   i: integer;
 Begin
+  If printer.Printers.Count <= 0 Then begin
+    Application.Messagebox(cc.ErrorPrinterSetupRequired, '', MB_OK + MB_iconwarning);
+    exit;
+  end;
   try
     Try
-      If printer.Printers.Count <= 0 Then
-        Application.Messagebox(cc.ErrorPrinterSetupRequired, '', MB_OK + MB_iconwarning)
-      Else
-      Begin
         FpageAll := DoPageCount;
         REPmessform.show;
         PreparePrintk( );
         TPreviewForm.Action(ReportFile,FPageAll,bPreviewMode);
-      End;
     Except
       MessageDlg(cc.ErrorRendering, mtInformation, [mbOk], 0);
     End;
@@ -1218,7 +1217,7 @@ end;
 
 
 
-function TReportRunTime.ExpandDataHeight(HasDataNo:integer):integer;
+function TReportRunTime.getDataLineHeight():integer;
 var
   thisLine ,TempLine: TReportLine;
   I, J, n,  TempDataSetCount:Integer;
@@ -1226,8 +1225,9 @@ var
 begin
   // google:$Optimization on off insite: delphibasics.co.uk
   {$Optimization on}
-  ThisLine := TReportLine(FlineList[HasDataNo]);
+  ThisLine := FlineList[DetailLineIndex];
   // painful side effects as follow 11 statements
+  {*
   TempLine := TReportLine.Create;
   TempLine.FMinHeight := ThisLine.FMinHeight;
   TempLine.FDragHeight := ThisLine.FDragHeight;
@@ -1240,7 +1240,7 @@ begin
     NewCell.CloneFrom(ThisCell);
     FDRMap.RuntimeMapping(NewCell, ThisCell);
   End;
-
+  *}
   Result := ThisLine.GetLineHeight;
   {$Optimization off}
 end;
@@ -1281,7 +1281,6 @@ procedure TReportRunTime.DataPage(Dataset:TDataset);
 Var
   I:Integer;
 Begin
-
   FRender.FillFixParts;
   FDataLineHeight := 0;
   i := 0;
@@ -1289,7 +1288,7 @@ Begin
   While (i < Dataset.RecordCount) Do
   Begin
     i := FRender.FillPage (i);
-    If isPageFull Then
+    If isPageFull(FDataLineHeight) Then
     Begin
       CheckError(FRender.FData.Count = 0,cc.RenderException);
       FRender.SavePage(FPageIndex, FpageAll);
@@ -1298,7 +1297,7 @@ Begin
     End;
     application.ProcessMessages;
   End;
-  if not IsPageFull then
+  if not IsPageFull(FDataLineHeight) then
   begin
     If (Faddspace) And (HasEmptyRoomLastPage) Then begin
       PaddingEmptyLine(DetailLineIndex,FRender.FData );
@@ -1318,52 +1317,41 @@ procedure TReportRunTime.PreparePrintk();
 Var
   CellIndex:Integer;
 Begin
-  try
     FSummer.ResetAll;
     FPageIndex := 1;
     If DetailLineIndex = -1 Then
     begin
        FRender.FillHead();
-      FRender.SaveHeadPage()
+       FRender.SaveHeadPage()
     end
     else
-    begin
      DataPage(GetDetailDataset());
-    end;
     FreeList;
-  except
-    on E:Exception do
-         MessageDlg(e.Message,mtInformation,[mbOk], 0);
-  end;
 End;
 Function TReportRunTime.DoPageCount:integer;
 Var
   I :Integer;
+  DataLineHeight: Integer;
 Begin
-  try
     Result := 1;
-    If DetailLineIndex <> -1 Then
+    If DetailLineIndex =  -1 Then
+        exit ;
+    GetDetailDataset().First;
+    DataLineHeight := 0;
+    i := 0;
+    While (i < GetDetailDataset().RecordCount)  Do
     Begin
-      GetDetailDataset().First;
-      FDataLineHeight := 0;
-      i := 0;
-      While (i < GetDetailDataset().RecordCount)  Do
-      Begin
-        inc(FDataLineHeight ,ExpandDataHeight(DetailLineIndex)) ;
-        If isPageFull  Then
+        inc(DataLineHeight ,getDataLineHeight()) ;
+        If isPageFull (DataLineHeight) Then
         Begin
-          inc(Result);
-          FDataLineHeight := 0;
+            inc(Result);
+            DataLineHeight := 0;
         End else begin
-          GetDetailDataset().Next;
-          inc(I);
+            GetDetailDataset().Next;
+            inc(I);
         end;
-      End;
-    End ;
-  except
-    on E:Exception do MessageDlg(e.Message,mtInformation,[mbOk], 0);
-  end;
-End;       
+    End;
+End;  
 
 { RenderParts }
 
@@ -1451,8 +1439,8 @@ begin
   while (i < FRC.GetDetailDataset().RecordCount) do
   begin
     TempLine := FRC.ExpandLine(FRC.DetailLineIndex);
-    inc(FRC.FDataLineHeight,FRC.ExpandDataHeight(FRC.DetailLineIndex));
-    if not FRC.isPageFull then begin
+    inc(FRC.FDataLineHeight,FRC.getDataLineHeight());
+    if not FRC.isPageFull(FRC.FDataLineHeight) then begin
       FData.add(tempLine);
       FRC.SumLine(FRC.DetailLineIndex);
       FRC.GetDetailDataset().Next;
@@ -1532,28 +1520,7 @@ Begin
     End;
   End;
 End;
-function TReportRunTime.SaveToJson(fileName: String): boolean;
-begin
-      // self.FReportScale;
-      // self.FPageWidth;
-      // self.FPageHeight;
 
-      // self.FLeftMargin;
-      // self.FTopMargin;
-      // self.FRightMargin;
-      // self.FBottomMargin;
-
-      // self.FLeftMargin1;
-      // self.FTopMargin1;
-      // self.FRightMargin1;
-      // self.FBottomMargin1;
-
-      // ReadBoolean(FNewTable);
-      // self.FDataLine;
-      // self.FTablePerPage;
-
-      // self.Count1;
-end;
 
 end.
 

@@ -21,7 +21,8 @@ uses
   ujson in '..\vcl\ujson.pas',
   ureportjson in 'ureportjson.pas',
   ujson2rita in 'ujson2rita.pas',
-  ustringtest in 'ustringtest.pas';
+  ustringtest in 'ustringtest.pas',
+  uruntime in 'uruntime.pas';
 
 {$R *.res}
 

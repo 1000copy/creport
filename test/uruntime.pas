@@ -10,11 +10,11 @@ uses
   uHornCartesian,
   osservice,
   ureport,
-  ReportRunTime,creport,
+  ReportRunTime,creport,forms,
   // sys
   messages,
   Classes,
-   Math,DBClient,  db,  DBTables,  Graphics,  forms,  Windows,  SysUtils,  TestFramework,Printers;
+   Math,DBClient,  db,  DBTables,  Graphics,  Windows,  SysUtils,  TestFramework,Printers;
 
 type
 
@@ -32,6 +32,8 @@ type
   published
     procedure Reco;
     procedure pageCount;
+    procedure drawtext;
+    procedure dyndrawtext;
 
   end;
 
@@ -56,6 +58,34 @@ begin
     end;
     R.ReportFile:=strFileDir+'\'+'1.json';
     check(4=R.doPageCount,inttostr(R.doPageCount))
+end;
+procedure TReportRunTimeTest.drawtext;
+var i,j:integer;
+    CellFont: TLogFont;
+    cf: TFont;
+    F : TStringField;
+    R:TReportControl;
+begin
+    R:=TReportControl.Create(Application.MainForm);
+//    r.Visible := false;
+//    r.CalcWndSize;
+    R.loadfromjson('1.tmp.json');
+//    ShowWindow(R.Handle, SW_SHOW);
+end;
+procedure TReportRunTimeTest.dyndrawtext;
+var i,j:integer;
+    CellFont: TLogFont;
+    cf: TFont;
+    F : TStringField;
+    R:TReportControl;
+    line:TReportLine;
+    cell :TReportCell;
+begin
+    R:=TReportControl.Create(Application.MainForm);
+    r.CalcWndSize;
+    R.NewTable(2,2);
+    TReportCell(R.Lines[0].FCells[0]).celltext:='bill';
+    ShowWindow(R.Handle, SW_SHOW);
 end;
 procedure TReportRunTimeTest.Reco;
 var i,j:integer;

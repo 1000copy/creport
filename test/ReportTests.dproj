@@ -52,7 +52,7 @@
     <DCCReference Include="..\vcl\CC.pas" />
     <DCCReference Include="..\vcl\osservice.pas" />
     <DCCReference Include="..\vcl\ReportControl.pas">
-      <ModuleName>urepor</ModuleName>
+      <ModuleName>ureport</ModuleName>
     </DCCReference>
     <DCCReference Include="..\vcl\ReportControl.pas" />
     <DCCReference Include="..\vcl\ReportRunTime.pas" />
@@ -64,6 +64,7 @@
     <DCCReference Include="ujson2rita.pas" />
     <DCCReference Include="UnitTestFramework.pas" />
     <DCCReference Include="ureportjson.pas" />
+    <DCCReference Include="uruntime.pas" />
     <DCCReference Include="ustringtest.pas" />
   </ItemGroup>
 </Project>

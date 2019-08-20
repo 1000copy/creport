@@ -516,6 +516,7 @@ type
     function toJson:String;
     procedure loadFromJson(fn:string);
     procedure savetoJson(fn:string);
+    procedure savetoJson1(fn:string;LineList:TLineList);
   private
     FTextEdit:Edit;
     MouseSelect : MouseSelector;
@@ -540,10 +541,8 @@ type
     procedure MsgLoop(RectBorder:TRect);
     procedure OnMove(TempMsg: TMSG;RectBorder:TRect );
     function AddSelectedCells(Cells: TCellList): Boolean;
-    procedure InternalSavetoJSON(FLineList: TList; FileName: String;
-      PageNumber, Fpageall: integer);
-
-
+    procedure InternalSavetoJSON(FLineList: TList; FileName: String);
+    function toJson1(LineList: TLineList): String;
   protected
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
@@ -1408,6 +1407,8 @@ begin
     End;
     hTextFont := CreateFontIndirect(FLogFont);
     hPrevFont := SelectObject(hPaintDC, hTextFont);
+    // fix json loaded but text not seen
+    FTextRect := GetTextRectInternal(FCellText);
     TempRect := FTextRect;
     DrawText(hPaintDC, PChar(FCellText), Length(FCellText), TempRect, Format);
     SelectObject(hPaintDC, hPrevFont);
@@ -1419,7 +1420,7 @@ Var
   SaveDCIndex: Integer;
 Begin
   If FOwnerCell <> Nil Then
-    Exit;                          
+    Exit;
   SaveDCIndex := SaveDC(hPaintDC);
   try
     SetBkMode(hPaintDC, TRANSPARENT);
@@ -2885,17 +2886,19 @@ begin
 end;
 
 function TReportControl.toJson: String;
+begin
+  result := self.toJson1(self.linelist)
+end;
+function TReportControl.toJson1(LineList:TLineList): String;
 var
   c : string;
 begin
   c:= '"ReportScale":%d,"PageWidth":%d,"PageHeight":%d,"LeftMargin":%d,"TopMargin":%d,"RightMargin":%d,"BottomMargin":%d,"NewTable":%d,"DataLine":%d,"TablePerPage":%d,"Lines":%s';
   result := Format(c,[ReportScale,FPageWidth
-    ,FPageHeight,FLeftMargin,FTopMargin,FRightMargin,FBottomMargin,Integer(FNewTable),FDataLine,FTablePerPage,self.linelist.tojson()]);
-//  c := '"ReportScale":%d,"Lines":%s';
-//  result := Format(c,[ReportScale,self.LineList.toJson]);
+    ,FPageHeight,FLeftMargin,FTopMargin,FRightMargin,FBottomMargin,Integer(FNewTable),FDataLine,FTablePerPage,linelist.tojson()]);
   result := '{'+result +'}';
 end;
-Procedure TReportControl.InternalSavetoJSON(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);
+Procedure TReportControl.InternalSavetoJSON(FLineList:TList;FileName: String);
 Var
   TargetFile: TSimpleFileStream;
   I,j: Integer;
@@ -3114,7 +3117,7 @@ Begin
     Application.Messagebox(cc.NewTableError, '¾¯¸æ',
       MB_OK + MB_iconwarning);
     Exit;
-  End;                      
+  End;
   FirstLine := TReportLine.Create;
   FirstLine.ReportControl := Self;
   FirstLine.LineTop := FTopMargin;
@@ -3659,12 +3662,16 @@ begin
 
 end;
 procedure TReportControl.savetoJson(fn: string);
+begin
+  savetoJson1(fn,self.FlineList);
+end;
+procedure TReportControl.savetoJson1(fn: string;LineList:TLineList);
 var
   sl : TstringList;
   j:Json;
 begin
    sl := TstringList.Create;
-   sl.Text := self.toJson ;
+   sl.Text := self.toJson1(LineList) ;
    j := Json.create(sl.Text);
    j.parse;
    sl.Clear;
