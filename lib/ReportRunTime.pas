@@ -76,7 +76,7 @@ type
     Procedure SaveCurrentPage();overload;
     Procedure LoadReport;
     Procedure LoadTempFile(strFileName: String);
-    function ReadyFileName(PageNumber, Fpageall: Integer): String;
+    function ReadyFileName(PageNumber: Integer): String;
     Procedure DeleteAllTempFiles;
 //    procedure LoadPage(I: integer);
   private
@@ -194,7 +194,7 @@ Begin
   Except
   End;
 End;
-function TReportRunTime.ReadyFileName(PageNumber, Fpageall: Integer):String;
+function TReportRunTime.ReadyFileName(PageNumber: Integer):String;
   Var
     strFileDir: String;
     FileName: String;
@@ -243,7 +243,7 @@ Procedure TReportRunTime.SaveCurrentPage();
 var f :string;PageNumber: Integer;
 begin
    PageNumber:= FPageIndex;
-   f:= ReadyFileName(PageNumber, Fpageall);
+   f:= ReadyFileName(PageNumber);
    SaveTempFile(f,PageNumber);
 end;
 Procedure TReportRunTime.SaveTempFile(FileName: String;PageNumber: Integer);
