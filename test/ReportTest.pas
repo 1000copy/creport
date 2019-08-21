@@ -1621,7 +1621,7 @@ begin
     end;
     R.ReportFile:=FileName;
     R.PrintPreview(true);
-    CheckEquals(1,R.DoPageCount);
+    CheckEquals(1,R.calcPageCount);
     CheckEquals(Value,R.Cells[0,0].CellText);
   finally
      R.Free;

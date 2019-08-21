@@ -58,7 +58,7 @@ begin
         t2.AppendRecord([2]);
     end;
     R.ReportFile:=strFileDir+'\'+'1.json';
-    check(4=R.doPageCount,inttostr(R.doPageCount))
+    check(4=R.calcPageCount,inttostr(R.calcPageCount))
 end;
 procedure TReportRunTimeTest.drawtext;
 var i,j:integer;

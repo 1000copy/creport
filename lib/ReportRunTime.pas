@@ -129,7 +129,7 @@ type
     Function shpreview: boolean;
     Function PrintSET(prfile: String): boolean;
     Procedure updatepage;
-    procedure PreparePrintk();
+    procedure PreparePrintFiles();
     Procedure Print(IsDirectPrint: Boolean);
     Procedure Resetself;
     Function Cancelprint: boolean;
@@ -182,8 +182,8 @@ Begin
     tempDir := Format('%s\temp\',[AppDir]);
     If Not DirectoryExists(tempDir) Then
       Exit;
-    os.DeleteFiles(tempDir, '*.tmp.json');
-    RmDir(tempDir);
+//    os.DeleteFiles(tempDir, '*.tmp.json');
+//    RmDir(tempDir);
   Except
   End;
 End;
@@ -234,7 +234,7 @@ end;
 
 Procedure TReportRunTime.SaveCurrentPage();
 begin
-   SaveTempFile(ReadyFileName(FPageIndex));
+   SaveTempFile(ReadyFileName(FPageIndex+1));
 end;
 Procedure TReportRunTime.SaveTempFile(FileName: String);
 begin
@@ -437,7 +437,7 @@ Begin
 			Begin
 			  REPmessform.show;
 			  FpageAll := calcPageCount;
-			  PreparePrintk( );
+			  PreparePrintFiles( );
         REPmessform.Hide;
 			End;
 			FromPage := 1;
@@ -533,7 +533,7 @@ Begin
     Try
         FpageAll := calcPageCount;
         REPmessform.show;
-        PreparePrintk( );
+        PreparePrintFiles( );
         TPreviewForm.Action(ReportFile,FPageAll,bPreviewMode);
     Except
       MessageDlg(cc.ErrorRendering, mtInformation, [mbOk], 0);
@@ -555,7 +555,7 @@ Begin
     ReportFile := reportfile; 
     FpageAll := calcPageCount;
     REPmessform.show;
-    PreparePrintk( );
+    PreparePrintFiles( );
     REPmessform.Hide;
     PreviewForm.PageCount := FPageAll;
     PreviewForm.updateStatus;
@@ -728,7 +728,7 @@ Begin
   ReportFile := reportfile;
   FpageAll := calcPageCount;
   REPmessform.show;
-  PreparePrintk();
+  PreparePrintFiles();
   REPmessform.Hide;
   PreviewForm.PageCount := FPageAll;
   PreviewForm.updateStatus;
@@ -1291,7 +1291,7 @@ begin
   FDRMap.FreeItems;
   FDRMap.Clear;
 end;
-procedure TReportRunTime.PreparePrintk();
+procedure TReportRunTime.PreparePrintFiles();
 Begin
     FSummer.ResetAll;
     If DetailLineIndex = -1 Then
