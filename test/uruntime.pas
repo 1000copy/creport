@@ -30,11 +30,12 @@ type
     procedure TearDown; override;
 
   published
-    procedure Reco;
+    procedure preview;
     procedure pageCount;
     procedure drawtext;
     procedure dyndrawtext;
     procedure drawtext1;
+    procedure print;
 
   end;
 
@@ -101,7 +102,7 @@ begin
     TReportCell(R.Lines[0].FCells[0]).celltext:='bill';
     ShowWindow(R.Handle, SW_SHOW);
 end;
-procedure TReportRunTimeTest.Reco;
+procedure TReportRunTimeTest.print;
 var i,j:integer;
     CellFont: TLogFont;
     cf: TFont;
@@ -118,7 +119,26 @@ begin
         t2.AppendRecord([2]);
     end;
     R.ReportFile:=strFileDir+'\'+'1.json';
-    R.PrintPreview(true);
+    R.Print(true);
+end;
+procedure TReportRunTimeTest.preview;
+var i,j:integer;
+    CellFont: TLogFont;
+    cf: TFont;
+    F : TStringField;
+begin
+    R:=TReportRunTime.Create(Application.MainForm);
+    r.Visible := false;
+    r.CalcWndSize;
+    R.SetData(t1,t2);
+    t1.Open;
+    t2.Open;
+    for I:= 0 to 100 do begin
+        t1.AppendRecord([I,(cos(I)*1000)]);
+        t2.AppendRecord([2]);
+    end;
+    R.ReportFile:=strFileDir+'\'+'1.json';
+    R.PrintPreview();
 end;
 procedure TReportRunTimeTest.SetUp;
 var i,j:integer;

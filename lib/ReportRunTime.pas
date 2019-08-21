@@ -117,20 +117,21 @@ type
     procedure RenderCell(NewCell,ThisCell:TReportCell);
     procedure RenderBlobOnly(NewCell, ThisCell: TReportCell);
     procedure RenderTextOnly(NewCell, ThisCell: TReportCell);
+    procedure pp(preview: boolean);
 
   Public
     function calcPageCount(): integer;
     Constructor Create(AOwner: TComponent); Override;
     Destructor Destroy; Override;
     Procedure SetVarValue(strVarName, strVarValue: String);
-    Procedure PrintPreview(bPreviewMode: Boolean);
+    Procedure PrintPreview();
     function  EditReport :TReportControl;overload;
     function  EditReport (FileName:String):TReportControl;overload;
     Function shpreview: boolean;
     Function PrintSET(prfile: String): boolean;
     Procedure updatepage;
     procedure PreparePrintFiles();
-    Procedure Print(IsDirectPrint: Boolean);
+    Procedure Print();
     Procedure Resetself;
     Function Cancelprint: boolean;
     Property ReportFile: TFilename Read FFileName Write SetReportFileName;
@@ -422,38 +423,41 @@ begin
 			Printer.EndDoc;
 
 end;
-//IsDirectPrint  ��true , �����Ƿ�ֱ�Ӵ�ӡ ,false ��ʾ��Ԥ��UI�е��ô�ӡ
-Procedure TReportRunTime.Print(IsDirectPrint: Boolean);
+Procedure TReportRunTime.PrintPreview();
+Begin
+  pp(true)
+End;
+Procedure TReportRunTime.Print();
+Begin
+  pp(false)
+End;
+Procedure TReportRunTime.pp(preview:boolean);
 Var
   I: Integer;
   strFileDir: TFileName;
-  frompage, topage: integer;
+  frompage: integer;
 Begin
-	try
-		Try
-			CheckError(printer.Printers.Count = 0 ,cc.ErrorPrinterSetupRequired);
-			// ���ϻ�չ����˿��ᣬ��������ü��������Ƭ��̫ƽ�������� 2014-11-7 �販��
-			If IsDirectPrint Then
-			Begin
-			  REPmessform.show;
-			  FpageAll := calcPageCount;
-			  PreparePrintFiles( );
+  If printer.Printers.Count <= 0 Then begin
+    Application.Messagebox(cc.ErrorPrinterSetupRequired, '', MB_OK + MB_iconwarning);
+    exit;
+  end;
+  Try
+        REPmessform.show;
+        FpageAll := calcPageCount;
+        PreparePrintFiles( );
         REPmessform.Hide;
-			End;
-			FromPage := 1;
-			ToPage  := FPageAll;
-			if not GetPrintRange(frompage,topage) then exit;
-      PrintRange('C_Report',Frompage,ToPage);
-		Except
-		on E:Exception do
-		  MessageDlg(e.Message,mtInformation, [mbOk], 0);
-		End;
-	finally          
-     If IsDirectPrint  Then
-				DeleteAllTempFiles;
-	end;
+        FromPage := 1;
+        if not preview then begin
+          if not GetPrintRange(frompage,FPageAll) then exit;
+            PrintRange('CReport',Frompage,FPageAll);
+        end
+        else
+            TPreviewForm.Action(ReportFile,FPageAll);
+        DeleteAllTempFiles;
+    Except
+      on E:Exception do MessageDlg(e.Message,mtInformation, [mbOk], 0);
+    End;
 End;
-
 Procedure TReportRunTime.PrintOnePage;
 Var
   hPrinterDC: HDC;
@@ -463,6 +467,7 @@ Var
   PageSize: TSize;
   Ltemprect: tRect;
 Begin
+  FPrintLineList := FLineList;
   If FPrintLineList.Count <= 0 Then
     Exit;
 
@@ -521,30 +526,7 @@ Begin
   End;
 End;
 
-Procedure TReportRunTime.PrintPreview(bPreviewMode: Boolean);
-Var
-  i: integer;
-Begin
-  If printer.Printers.Count <= 0 Then begin
-    Application.Messagebox(cc.ErrorPrinterSetupRequired, '', MB_OK + MB_iconwarning);
-    exit;
-  end;
-  try
-    Try
-        FpageAll := calcPageCount;
-        REPmessform.show;
-        PreparePrintFiles( );
-        TPreviewForm.Action(ReportFile,FPageAll,bPreviewMode);
-    Except
-      MessageDlg(cc.ErrorRendering, mtInformation, [mbOk], 0);
-    End;
-  finally
-    FNamedDatasets.FreeItems;
-    FNamedDatasets.clear;
-    DeleteAllTempFiles;
-    REPmessform.Hide;
-  end;
-End;
+
 
 Function TReportRunTime.shpreview: boolean;
 Var

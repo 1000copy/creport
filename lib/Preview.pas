@@ -54,6 +54,7 @@ type
     procedure PrevPage;
     procedure ReloadPageFile(CurrentPage: Integer);
     procedure GoPage(CurrentPage: Integer);
+    procedure SetPreviewMode();
   public
     PageCount: Integer;
     CurrentPage: Integer;
@@ -61,10 +62,9 @@ type
 
     procedure GoFirstPage;
     procedure PrintFile(strFileName: string);
-    procedure SetPreviewMode(bPreview: Boolean);
     function RR:TReportRuntime;
     procedure updateStatus;
-    class procedure Action(ReportFile:string;FPageCount:Integer;bPreviewMode:Boolean);
+    class procedure Action(ReportFile:string;FPageCount:Integer);
   end;
 
 var
@@ -116,9 +116,9 @@ begin
   RC.PrintIt;
 end;
 
-procedure TPreviewForm.SetPreviewMode(bPreview: Boolean);
+procedure TPreviewForm.SetPreviewMode();
 begin
-  RC.IsPreview := bPreview;
+  RC.IsPreview := true;
   RC.Refresh;
 end;
 
@@ -158,7 +158,7 @@ begin
   width:= 715;
   PageCount := 1;
   CurrentPage := 1;
-  
+  self.SetPreviewMode();
 end;
 
 procedure TPreviewForm.FormShow(Sender: TObject);
@@ -279,10 +279,9 @@ begin
   StatusBar1.Panels[0].Text :=Format(cc.PageFormat,[CurrentPage,PageCount]);
 end;
 
-class procedure TPreviewForm.Action(ReportFile:string;FPageCount:Integer;bPreviewMode:Boolean);
+class procedure TPreviewForm.Action(ReportFile:string;FPageCount:Integer);
 begin
   PreviewForm := TPreviewForm.Create(nil);
-  PreviewForm.SetPreviewMode(bPreviewMode);
   PreviewForm.PageCount := FPageCount;
   PreviewForm.updateStatus();
   PreviewForm.filename.Caption := ReportFile;
