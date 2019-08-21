@@ -72,7 +72,7 @@ type
   private
     // file
     Procedure SetReportFileName(Const Value: TFilename);
-    Procedure SaveTempFile(FileName:string;PageNumber: Integer);overload;
+    Procedure SaveTempFile(FileName:string);overload;
     Procedure SaveCurrentPage();overload;
     Procedure LoadReport;
     Procedure LoadTempFile(strFileName: String);
@@ -119,7 +119,7 @@ type
     procedure RenderTextOnly(NewCell, ThisCell: TReportCell);
 
   Public
-    function DoPageCount(): integer;
+    function calcPageCount(): integer;
     Constructor Create(AOwner: TComponent); Override;
     Destructor Destroy; Override;
     Procedure SetVarValue(strVarName, strVarValue: String);
@@ -172,14 +172,6 @@ implementation
 Uses
   Preview, REPmess, Creport,margin;
 
-//Procedure TReportRunTime.LoadPage(I:integer);
-//Var
-//  FileName: String;
-//Begin
-//   FileName := osservice.PageFileName(I)+'.json';
-//   If FileExists(FileName) Then
-//        LoadTempFile(FileName);
-//End;
 
 Procedure TReportRunTime.DeleteAllTempFiles;
 Var
@@ -240,15 +232,11 @@ begin
 end;
 
 Procedure TReportRunTime.SaveCurrentPage();
-var f :string;PageNumber: Integer;
 begin
-   PageNumber:= FPageIndex;
-   f:= ReadyFileName(PageNumber);
-   SaveTempFile(f,PageNumber);
+   SaveTempFile(ReadyFileName(FPageIndex));
 end;
-Procedure TReportRunTime.SaveTempFile(FileName: String;PageNumber: Integer);
+Procedure TReportRunTime.SaveTempFile(FileName: String);
 begin
-  SaveToFile(FPrintLineList,FileName,PageNumber,Fpageall);
   SaveToJson1(FileName+'.json',FPrintLineList);
 end;
 
@@ -261,7 +249,6 @@ Begin
   except
     on E:Exception do ShowMessage(e.message);
   end;
-
 End;
 
 Constructor TReportRunTime.Create(AOwner: TComponent);
@@ -287,17 +274,13 @@ Destructor TReportRunTime.Destroy;
 Var
   I: Integer;
 Begin
-
   FNamedDatasets.FreeItems;
   FNamedDatasets.clear;
   FVarList.FreeItems;
   FVarList.Free;
-
-
   For I := FPrintLineList.Count - 1 Downto 0 Do
     TReportLine(FPrintLineList[I]).Free;
   FPrintLineList.Free;
-
   FDRMap.Free;
   FSummer.Free;
   FRender.Free ;
@@ -452,7 +435,7 @@ Begin
 			If IsDirectPrint Then
 			Begin
 			  REPmessform.show;
-			  FpageAll := DoPageCount;
+			  FpageAll := calcPageCount;
 			  PreparePrintk( );
         REPmessform.Hide;
 			End;
@@ -547,7 +530,7 @@ Begin
   end;
   try
     Try
-        FpageAll := DoPageCount;
+        FpageAll := calcPageCount;
         REPmessform.show;
         PreparePrintk( );
         TPreviewForm.Action(ReportFile,FPageAll,bPreviewMode);
@@ -569,7 +552,7 @@ Begin
   If PrintSET(reportfile)  Then
   Begin
     ReportFile := reportfile; 
-    FpageAll := DoPageCount;
+    FpageAll := calcPageCount;
     REPmessform.show;
     PreparePrintk( );
     REPmessform.Hide;
@@ -742,7 +725,7 @@ Var
   i: integer;
 Begin
   ReportFile := reportfile;
-  FpageAll := DoPageCount;
+  FpageAll := calcPageCount;
   REPmessform.show;
   PreparePrintk();
   REPmessform.Hide;
@@ -1320,7 +1303,7 @@ Begin
      DataPage(GetDetailDataset());
     FreeList;
 End;
-Function TReportRunTime.DoPageCount:integer;
+Function TReportRunTime.calcPageCount:integer;
 Var
   I :Integer;
   DataLineHeight: Integer;
