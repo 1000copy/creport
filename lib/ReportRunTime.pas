@@ -97,7 +97,7 @@ type
     function IsDataField(s: String): Boolean;
     function getDataLineHeight(): integer;
     function DetailCellIndex(NO:integer) :Integer;
-    procedure DataPage(Dataset: TDataset);
+    procedure DataPage();
     procedure FreeList;
     Procedure UpdateLines;
     Procedure UpdatePrintLines;
@@ -165,6 +165,7 @@ type
      procedure FillSumAll;
      property Head:TLineList read FHead;
      property Foot:TLineList read FFoot;
+     procedure SimplePage;
   end;
 
 implementation
@@ -1252,10 +1253,12 @@ begin
    result := GetDataSet(t);
 end;
 
-procedure TReportRunTime.DataPage(Dataset:TDataset);
+procedure TReportRunTime.DataPage();
 Var
   I:Integer;
+  Dataset:TDataset;
 Begin
+  dataset := GetDetailDataset();
   FRender.FillFixParts;
   FDataLineHeight := 0;
   i := 0;
@@ -1289,18 +1292,12 @@ begin
   FDRMap.Clear;
 end;
 procedure TReportRunTime.PreparePrintk();
-Var
-  CellIndex:Integer;
 Begin
     FSummer.ResetAll;
-    FPageIndex := 1;
     If DetailLineIndex = -1 Then
-    begin
-       FRender.FillHead();
-       FRender.SaveHeadPage()
-    end
+       FRender.SimplePage
     else
-     DataPage(GetDetailDataset());
+     DataPage;
     FreeList;
 End;
 Function TReportRunTime.calcPageCount:integer;
@@ -1438,6 +1435,12 @@ begin
    FRC.UpdatePrintLines;
    FRC.SaveCurrentPage();
 end;
+procedure RenderParts.SimplePage;
+begin
+       FillHead();
+       SaveHeadPage()
+end;
+
 procedure RenderParts.SaveHeadPage();
 begin
     FRC.AppendList(FRC.FPrintLineList, FHead);
