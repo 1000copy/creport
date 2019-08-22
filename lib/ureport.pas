@@ -235,6 +235,7 @@ type
     function TotalHeight:Integer;
     function ToJson:String;
     procedure fromJson(json:Json);
+    procedure empty;
   published
     {
     G:How do I force the linker to include a function I need during debugging?
@@ -547,7 +548,6 @@ type
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
     FPreviewStatus: Boolean;
-
     FLineList: TLineList;
     FSelectCells: TCellList;
     FEditCell: TReportCell;
@@ -752,8 +752,9 @@ type
   private
     procedure NewMapping (ThisCell,NewCell:TReportCell);
     function FindRuntimeMasterCell(ThisCell:TReportCell):TReportCell;
-  public
     procedure FreeItems;
+  public
+    procedure empty;
     procedure RuntimeMapping(NewCell, ThisCell: TReportCell);
   end;
   TDRMapping = Class(TObject)
@@ -2382,12 +2383,7 @@ Var
 Begin
   FSelectCells.Free;
   FSelectCells := Nil;
-
-  For I := FLineList.Count - 1 Downto 0 Do
-  Begin
-    ThisLine := TReportLine(FLineList[I]);
-    ThisLine.Free;
-  End;
+  FLineList.empty;
 
   FLineList.Free;
   FLineList := Nil;
@@ -4491,6 +4487,15 @@ begin
   self.R := R; 
 end;
 
+procedure TLineList.empty;var i : integer;
+begin
+  For I := Count - 1 Downto 0 Do
+  Begin
+    TReportLine(Items[I]).Free;
+  End;
+  clear;
+end;
+
 procedure TLineList.fromJson(json: Json);
 var
   i : integer;
@@ -4728,6 +4733,14 @@ var n :Integer;
 begin
     For N := Count - 1 Downto 0 Do
       TDRMapping(Items[N]).Free;
+  Clear;
+end;
+procedure TDRMappings.empty;
+var n :Integer;
+begin
+    For N := Count - 1 Downto 0 Do
+      TDRMapping(Items[N]).Free;
+  Clear;
 end;
 
 procedure TDRMappings.NewMapping(ThisCell, NewCell: TReportCell);

@@ -282,7 +282,8 @@ Begin
   FVarList.Free;
   For I := FPrintLineList.Count - 1 Downto 0 Do
     TReportLine(FPrintLineList[I]).Free;
-  FPrintLineList.Free;
+  if FPrintLineList <> FlineList then
+    FPrintLineList.Free;
   FDRMap.Free;
   FSummer.Free;
   FRender.Free ;
@@ -418,10 +419,9 @@ begin
 			  LoadPage(I);
 			  PrintOnePage;
 			  If I < ToPage Then
-				Printer.NewPage;
+  				Printer.NewPage;
 			End;
 			Printer.EndDoc;
-
 end;
 Procedure TReportRunTime.PrintPreview();
 Begin
@@ -448,7 +448,7 @@ Begin
         REPmessform.Hide;
         FromPage := 1;
         if not preview then begin
-          if not GetPrintRange(frompage,FPageAll) then exit;
+          if GetPrintRange(frompage,FPageAll) then 
             PrintRange('CReport',Frompage,FPageAll);
         end
         else
@@ -466,18 +466,29 @@ Var
   ThisCell: TReportCell;
   PageSize: TSize;
   Ltemprect: tRect;
-Begin
-  FPrintLineList := FLineList;
-  If FPrintLineList.Count <= 0 Then
-    Exit;
-
-  hPrinterDC := Printer.Handle;
+  FPrintLineList : TLineList;
+  procedure mapDevice(Printer: TPrinter;Width, Height:Integer);
+  var PageSize: TSize;
+  begin
   SetMapMode(Printer.Handle, MM_ISOTROPIC);
   PageSize.cx := Printer.PageWidth;
   PageSize.cy := Printer.PageHeight;
   SetWindowExtEx(Printer.Handle, Width, Height, @PageSize);
   SetViewPortExtEx(Printer.Handle, Printer.PageWidth, Printer.PageHeight,
     @PageSize);
+  end;
+Begin
+  FPrintLineList := FLineList;
+  If FPrintLineList.Count <= 0 Then
+    Exit;
+  MapDevice(Printer,Width, Height);
+  hPrinterDC := Printer.Handle;
+//  SetMapMode(Printer.Handle, MM_ISOTROPIC);
+//  PageSize.cx := Printer.PageWidth;
+//  PageSize.cy := Printer.PageHeight;
+//  SetWindowExtEx(Printer.Handle, Width, Height, @PageSize);
+//  SetViewPortExtEx(Printer.Handle, Printer.PageWidth, Printer.PageHeight,
+//    @PageSize);
 
   For I := 0 To FPrintLineList.Count - 1 Do
   Begin
@@ -499,21 +510,9 @@ Begin
       End;
     End;
   End;
-  // clear the temp data here
-  For I := FPrintLineList.Count - 1 Downto 0 Do
-  Begin
-    ThisLine := TReportLine(FPrintLineList[I]);
-    ThisLine.Free;
-  End;
-
-  FPrintLineList.Clear;
-
-  For I := FDRMap.Count - 1 Downto 0 Do
-    TDRMapping(FDRMap[I]).Free;
-
-  FDRMap.Clear;
+  FPrintLineList.empty;
+  FDRMap.empty;
 End;
- //LCJ: ��ֱ�ӻ���Ԥ���е������ô�ӡ����
 Function TReportRunTime.PrintSET(prfile: String): boolean;
 Begin
   Application.CreateForm(TMarginForm, MarginForm);
@@ -1270,8 +1269,7 @@ Var
   n :Integer;
 begin
   FPrintLineList.Clear;
-  FDRMap.FreeItems;
-  FDRMap.Clear;
+  FDRMap.empty;
 end;
 procedure TReportRunTime.PreparePrintFiles();
 Begin

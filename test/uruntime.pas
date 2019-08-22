@@ -59,7 +59,8 @@ begin
         t2.AppendRecord([2]);
     end;
     R.ReportFile:=strFileDir+'\'+'1.json';
-    check(4=R.calcPageCount,inttostr(R.calcPageCount))
+    check(4=R.calcPageCount,inttostr(R.calcPageCount));
+    r.free;
 end;
 procedure TReportRunTimeTest.drawtext;
 var i,j:integer;
@@ -72,6 +73,7 @@ begin
 //    r.Visible := false;
 //    r.CalcWndSize;
     R.loadfromjson('1.tmp.json');
+    r.free;
 //    ShowWindow(R.Handle, SW_SHOW);
 end;
 procedure TReportRunTimeTest.drawtext1;
@@ -85,6 +87,7 @@ begin
 //    r.Visible := false;
 //    r.CalcWndSize;
     R.loadfromjson('temp\1.tmp.json');
+    r.free;
 //    ShowWindow(R.Handle, SW_SHOW);
 end;
 procedure TReportRunTimeTest.dyndrawtext;
@@ -101,14 +104,14 @@ begin
     R.NewTable(2,2);
     TReportCell(R.Lines[0].FCells[0]).celltext:='bill';
     ShowWindow(R.Handle, SW_SHOW);
+    r.free;
 end;
 procedure TReportRunTimeTest.print;
-var i,j:integer;
-    CellFont: TLogFont;
-    cf: TFont;
-    F : TStringField;
+var i:integer;
+   form : TForm ;
 begin
-    R:=TReportRunTime.Create(Application.MainForm);
+    form := TForm.create(nil);
+    R:=TReportRunTime.Create(form);
     r.Visible := false;
     r.CalcWndSize;
     R.SetData(t1,t2);
@@ -119,7 +122,8 @@ begin
         t2.AppendRecord([2]);
     end;
     R.ReportFile:=strFileDir+'\'+'1.json';
-    R.Print(true);
+    R.Print();
+    form.free;
 end;
 procedure TReportRunTimeTest.preview;
 var i,j:integer;
@@ -139,6 +143,7 @@ begin
     end;
     R.ReportFile:=strFileDir+'\'+'1.json';
     R.PrintPreview();
+    r.free;
 end;
 procedure TReportRunTimeTest.SetUp;
 var i,j:integer;
@@ -147,8 +152,6 @@ var i,j:integer;
     F : TStringField;
 begin
     inherited;
-    Rc := TReportControl.Create(Application.MainForm);
-    rc.Visible := false;
     t1 := TClientDataset.Create(nil);
     t1.FieldDefs.Add('f1',ftString,20,true);
     t1.FieldDefs.Add('f2',ftString,20,true);
@@ -156,30 +159,12 @@ begin
     t2.FieldDefs.Add('f1',ftString,20,true);
     t1.CreateDataSet;
     t2.CreateDataSet;
-
-    RC.Visible := False;
     strFileDir := ExtractFileDir(Application.ExeName);
-    with  RC do
-    begin
-        calcwndsize;
-        NewTable(2 ,3);
-        Lines[0].Select;
-        CombineCell;
-        Cells[0,0].CellText := 'bill';
-        for j:=0 to t1.FieldDefs.Count -1  do
-        begin
-        Cells[1,j].CellText := t1.FieldDefs[j].Name;
-        Cells[2,j].CellText := '#T1.'+t1.FieldDefs[j].Name;
-        end;
-        SaveToJson(strFileDir+'\'+'1.json');
-        ResetContent;
-    end;
 end;
 
 procedure TReportRunTimeTest.TearDown;
 begin
   inherited;
-    rc.free;
     T1.free;
     T2.Free;
 
