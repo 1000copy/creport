@@ -101,7 +101,7 @@ type
     procedure FreeList;
     Procedure UpdateLines;
     Procedure UpdatePrintLines;
-    Procedure PrintOnePage;
+    Procedure PrintCurrentPage;
     Function GetFieldName(strCellText: String): String;
 
     Procedure CloneCell(NewCell, ThisCell: TReportCell);
@@ -418,7 +418,7 @@ begin
 			For I := FromPage To ToPage Do
 			Begin
 			  LoadPage(I);
-			  PrintOnePage;
+			  PrintCurrentPage;
 			  If I < ToPage Then
   				Printer.NewPage;
 			End;
@@ -462,13 +462,9 @@ End;
 procedure TReportRunTime.eachcell_paint(ThisCell:TReportCell);
 Var
   hPrinterDC: HDC;
-  I, J: Integer;
-  ThisLine: TReportLine;
-  PageSize: TSize;
   Ltemprect: tRect;
-  FPrintLineList : TLineList;
 begin
-hPrinterDC := Printer.Handle;
+      hPrinterDC := Printer.Handle;
       If ThisCell.OwnerCell = Nil Then
       Begin
         LTempRect := ThisCell.FCellRect;
@@ -479,9 +475,8 @@ hPrinterDC := Printer.Handle;
         printer.Canvas.stretchdraw(LTempRect, ThisCell.fbmp);
         ThisCell.PaintCell(hPrinterDC, True);
       End;
-
 end;
-Procedure TReportRunTime.PrintOnePage;
+Procedure TReportRunTime.PrintCurrentPage;
 Begin
   If FLineList.Count <= 0 Then
     Exit;
