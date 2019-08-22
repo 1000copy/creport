@@ -458,6 +458,7 @@ Begin
       on E:Exception do MessageDlg(e.Message,mtInformation, [mbOk], 0);
     End;
 End;
+
 Procedure TReportRunTime.PrintOnePage;
 Var
   hPrinterDC: HDC;
@@ -467,33 +468,16 @@ Var
   PageSize: TSize;
   Ltemprect: tRect;
   FPrintLineList : TLineList;
-  procedure mapDevice(Printer: TPrinter;Width, Height:Integer);
-  var PageSize: TSize;
-  begin
-  SetMapMode(Printer.Handle, MM_ISOTROPIC);
-  PageSize.cx := Printer.PageWidth;
-  PageSize.cy := Printer.PageHeight;
-  SetWindowExtEx(Printer.Handle, Width, Height, @PageSize);
-  SetViewPortExtEx(Printer.Handle, Printer.PageWidth, Printer.PageHeight,
-    @PageSize);
-  end;
+
 Begin
   FPrintLineList := FLineList;
   If FPrintLineList.Count <= 0 Then
     Exit;
   MapDevice(Printer,Width, Height);
   hPrinterDC := Printer.Handle;
-//  SetMapMode(Printer.Handle, MM_ISOTROPIC);
-//  PageSize.cx := Printer.PageWidth;
-//  PageSize.cy := Printer.PageHeight;
-//  SetWindowExtEx(Printer.Handle, Width, Height, @PageSize);
-//  SetViewPortExtEx(Printer.Handle, Printer.PageWidth, Printer.PageHeight,
-//    @PageSize);
-
   For I := 0 To FPrintLineList.Count - 1 Do
   Begin
     ThisLine := TReportLine(FPrintLineList[I]);
-
     For J := 0 To ThisLine.FCells.Count - 1 Do
     Begin
       ThisCell := TReportCell(ThisLine.FCells[J]);
