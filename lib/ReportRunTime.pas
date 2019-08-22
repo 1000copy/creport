@@ -459,24 +459,6 @@ Begin
       on E:Exception do MessageDlg(e.Message,mtInformation, [mbOk], 0);
     End;
 End;
-//Procedure TReportRunTime.eachCell(proc:eachCellProc);
-//Var
-//  ThisLine: TReportLine;
-//  ThisCell: TReportCell;I, J: Integer;
-//Begin
-//  FPrintLineList := FLineList;
-//  If FPrintLineList.Count <= 0 Then
-//    Exit;
-//  For I := 0 To FPrintLineList.Count - 1 Do
-//  Begin
-//    ThisLine := TReportLine(FPrintLineList[I]);
-//    For J := 0 To ThisLine.FCells.Count - 1 Do
-//    Begin
-//      ThisCell := TReportCell(ThisLine.FCells[J]);
-//      proc(thiscell);
-//    End;
-//  End;
-//End;
 procedure TReportRunTime.eachcell_paint(ThisCell:TReportCell);
 Var
   hPrinterDC: HDC;
@@ -500,15 +482,6 @@ hPrinterDC := Printer.Handle;
 
 end;
 Procedure TReportRunTime.PrintOnePage;
-Var
-  hPrinterDC: HDC;
-  I, J: Integer;
-  ThisLine: TReportLine;
-  ThisCell: TReportCell;
-  PageSize: TSize;
-  Ltemprect: tRect;
-  FPrintLineList : TLineList;
-
 Begin
   If FLineList.Count <= 0 Then
     Exit;
