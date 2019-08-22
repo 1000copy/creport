@@ -544,6 +544,7 @@ type
     function AddSelectedCells(Cells: TCellList): Boolean;
     procedure InternalSavetoJSON(FLineList: TList; FileName: String);
     function toJson1(LineList: TLineList): String;
+
   protected
     FprPageNo,FprPageXy,fpaperLength,fpaperWidth: Integer;
     Cpreviewedit: boolean;
@@ -589,7 +590,7 @@ type
     function RenderText(ThisCell: TReportCell): String;virtual ;
     Procedure CreateWnd; Override;
     procedure InternalLoadFromFile(FileName:string;FLineList:TList);
-
+    procedure mapDevice(Printer: TPrinter; Width, Height: Integer);
 
   Public
     FLastPrintPageWidth, FLastPrintPageHeight: integer;
@@ -2479,6 +2480,16 @@ begin
     DeleteObject(hGrayPen);
   end;
 end;
+  procedure TReportControl.mapDevice(Printer: TPrinter;Width, Height:Integer);
+  var PageSize: TSize;
+  begin
+  SetMapMode(Printer.Handle, MM_ISOTROPIC);
+  PageSize.cx := Printer.PageWidth;
+  PageSize.cy := Printer.PageHeight;
+  SetWindowExtEx(Printer.Handle, Width, Height, @PageSize);
+  SetViewPortExtEx(Printer.Handle, Printer.PageWidth, Printer.PageHeight,
+    @PageSize);
+  end;
 // FPageWidth  和 Width的关联，就是 FReportScale。所以，下面两行代码不行，因为没有考虑到缩放比例
 //  os.SetWindowExtent(hPaintDc,1, 1);
 //  os.SetViewportExtent(hPaintDC, 1, 1,);
