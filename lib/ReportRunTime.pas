@@ -118,6 +118,7 @@ type
     procedure RenderBlobOnly(NewCell, ThisCell: TReportCell);
     procedure RenderTextOnly(NewCell, ThisCell: TReportCell);
     procedure pp(preview: boolean);
+    procedure eachcell_paint(ThisCell: TReportCell);
 
   Public
     function calcPageCount(): integer;
@@ -458,7 +459,46 @@ Begin
       on E:Exception do MessageDlg(e.Message,mtInformation, [mbOk], 0);
     End;
 End;
+//Procedure TReportRunTime.eachCell(proc:eachCellProc);
+//Var
+//  ThisLine: TReportLine;
+//  ThisCell: TReportCell;I, J: Integer;
+//Begin
+//  FPrintLineList := FLineList;
+//  If FPrintLineList.Count <= 0 Then
+//    Exit;
+//  For I := 0 To FPrintLineList.Count - 1 Do
+//  Begin
+//    ThisLine := TReportLine(FPrintLineList[I]);
+//    For J := 0 To ThisLine.FCells.Count - 1 Do
+//    Begin
+//      ThisCell := TReportCell(ThisLine.FCells[J]);
+//      proc(thiscell);
+//    End;
+//  End;
+//End;
+procedure TReportRunTime.eachcell_paint(ThisCell:TReportCell);
+Var
+  hPrinterDC: HDC;
+  I, J: Integer;
+  ThisLine: TReportLine;
+  PageSize: TSize;
+  Ltemprect: tRect;
+  FPrintLineList : TLineList;
+begin
+hPrinterDC := Printer.Handle;
+      If ThisCell.OwnerCell = Nil Then
+      Begin
+        LTempRect := ThisCell.FCellRect;
+        LTempRect.Left := ThisCell.FCellRect.Left + 3;
+        LTempRect.Top := ThisCell.FCellRect.Top + 3;
+        LTempRect.Right := ThisCell.FCellRect.Right - 3;
+        LTempRect.Bottom := ThisCell.FCellRect.Bottom - 3;
+        printer.Canvas.stretchdraw(LTempRect, ThisCell.fbmp);
+        ThisCell.PaintCell(hPrinterDC, True);
+      End;
 
+end;
 Procedure TReportRunTime.PrintOnePage;
 Var
   hPrinterDC: HDC;
@@ -470,31 +510,10 @@ Var
   FPrintLineList : TLineList;
 
 Begin
-  FPrintLineList := FLineList;
-  If FPrintLineList.Count <= 0 Then
+  If FLineList.Count <= 0 Then
     Exit;
   MapDevice(Printer,Width, Height);
-  hPrinterDC := Printer.Handle;
-  For I := 0 To FPrintLineList.Count - 1 Do
-  Begin
-    ThisLine := TReportLine(FPrintLineList[I]);
-    For J := 0 To ThisLine.FCells.Count - 1 Do
-    Begin
-      ThisCell := TReportCell(ThisLine.FCells[J]);
-
-      If ThisCell.OwnerCell = Nil Then
-      Begin
-        LTempRect := ThisCell.FCellRect;
-        LTempRect.Left := ThisCell.FCellRect.Left + 3;
-        LTempRect.Top := ThisCell.FCellRect.Top + 3;
-        LTempRect.Right := ThisCell.FCellRect.Right - 3;
-        LTempRect.Bottom := ThisCell.FCellRect.Bottom - 3;
-        printer.Canvas.stretchdraw(LTempRect, ThisCell.fbmp);
-        ThisCell.PaintCell(hPrinterDC, True);
-      End;
-    End;
-  End;
-  FPrintLineList.empty;
+  eachcell(eachcell_paint);
   FDRMap.empty;
 End;
 Function TReportRunTime.PrintSET(prfile: String): boolean;
