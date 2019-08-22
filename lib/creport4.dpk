@@ -1,7 +1,6 @@
 package creport4;
 
 {$R *.res}
-{$R 'TB97Reg.dcr'}
 {$ALIGN 8}
 {$ASSERTIONS ON}
 {$BOOLEVAL OFF}

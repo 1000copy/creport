@@ -780,7 +780,6 @@ Procedure Register;
 
 Implementation
 
-{$R ReportControl.dcr}
 //Uses Preview, REPmess, margin,Creport;
 function chop(r:string):string;
   begin

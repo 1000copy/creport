@@ -179,7 +179,7 @@ end;
 
 procedure TPreviewForm.SpeedButton1Click(Sender: TObject);
 begin
-  if tReportRunTime(owner).shpreview  then
+  if tReportRunTime(RC).shpreview  then
      GoFirstPage;
   DoFit();
 end;

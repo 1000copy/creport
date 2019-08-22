@@ -176,7 +176,7 @@ begin
         cf.Free;
       end;
       R.ReportFile:=strFileDir+'\'+'xxx.ept';
-      R.PrintPreview(true);
+      R.PrintPreview();
     finally
       T1.free;
       T2.Free;
@@ -1525,7 +1525,7 @@ begin
         cf.Free;
       end;
       R.ReportFile:=strFileDir+'\'+'xxx.ept';
-      R.PrintPreview(true);    // Ready for  Test Page_count 
+      R.PrintPreview();    // Ready for  Test Page_count
     finally
       T1.free;
       T2.Free;
@@ -1620,7 +1620,7 @@ begin
       ResetContent;
     end;
     R.ReportFile:=FileName;
-    R.PrintPreview(true);
+    R.PrintPreview();
     CheckEquals(1,R.calcPageCount);
     CheckEquals(Value,R.Cells[0,0].CellText);
   finally

@@ -136,7 +136,7 @@ begin
       end;
       R.ReportFile:=strFileDir+'\'+'1.ept';
       R.SaveToJson(strFileDir+'\'+'1.json');
-      R.PrintPreview(true);
+      R.PrintPreview();
     finally
       T1.free;
       T2.Free;
