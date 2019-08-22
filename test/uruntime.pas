@@ -36,6 +36,7 @@ type
     procedure dyndrawtext;
     procedure drawtext1;
     procedure print;
+    procedure sum;
 
   end;
 
@@ -160,6 +161,58 @@ begin
     t1.CreateDataSet;
     t2.CreateDataSet;
     strFileDir := ExtractFileDir(Application.ExeName);
+end;
+
+procedure TReportRunTimeTest.sum;
+var i,j:integer;
+    strFileDir:string;
+    CellFont: TLogFont;
+    cf: TFont;
+    R:TReportRunTime;
+    t1 ,t2: TClientDataset;
+    F : TStringField;
+begin
+  R:=TReportRunTime.Create(Application.MainForm);
+  try
+      R.Visible := true;
+      t1 := TClientDataset.Create(nil);
+      t1.FieldDefs.Add('f1',ftString,20,true);
+      t1.FieldDefs.Add('f2',ftString,20,true);
+      t2 := TClientDataset.Create(nil);
+      t2.FieldDefs.Add('f1',ftString,20,true);
+      t1.CreateDataSet;
+      t2.CreateDataSet;
+      R.SetData(t1,t2);
+      t1.Open;
+      t2.Open;
+      for I:= 0 to 100 do
+        t1.AppendRecord([I,(cos(I)*1000)]);
+      t2.AppendRecord([2]);
+      strFileDir := ExtractFileDir(Application.ExeName);
+      with  R do
+      begin
+        CalcWndSize;
+        NewTable(2 ,4);
+        Lines[0].Select;
+        CombineCell;
+        Cells[0,0].CellText := 'bill';
+        for j:=0 to t1.FieldDefs.Count -1  do
+        begin
+           Cells[1,j].CellText := t1.FieldDefs[j].Name;
+           Cells[2,j].CellText := '#T1.'+t1.FieldDefs[j].Name;
+        end;
+        Cells[3,1].CellText := 'SumAll(#T1.'+t1.FieldDefs[1].Name+')';
+        SaveToJson(strFileDir+'\'+'2.json');
+        ResetContent;
+        r.UpdateLines;
+        r.Invalidate;
+      end;
+      R.ReportFile:=strFileDir+'\'+'2.json';
+      R.PrintPreview();    
+    finally
+      T1.free;
+      T2.Free;
+    end;
 end;
 
 procedure TReportRunTimeTest.TearDown;
