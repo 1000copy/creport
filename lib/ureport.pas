@@ -2224,10 +2224,11 @@ end;
 
 function TReportCell.IsFormula: Boolean;
 begin
-  result := (Length(CellText) > 0) and
-    (UpperCase(copy(FCellText, 1, 8)) <> '`PAGENUM') And
-      (UpperCase(copy(FCellText, 1, 4)) <> '`SUM') and
-      (FCellText[1] = '`') ;
+  result := (Length(CellText) > 0) and  (CellText[1] = '`');
+//  result := (Length(CellText) > 0) and  (CellText[1] = '`');
+//    (UpperCase(copy(FCellText, 1, 8)) <> '`PAGENUM') And
+//      (UpperCase(copy(FCellText, 1, 4)) <> '`SUM') and
+//      ;
 end;
 
 procedure TReportCell.LoadCF(cf: DataField);

@@ -1,14 +1,11 @@
 ﻿<Project xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <PropertyGroup>
-    <ProjectGuid>{6f92683d-6ed1-4571-ba0c-fb5ba0191185}</ProjectGuid>
+    <ProjectGuid>{81a77ee6-31c4-45da-bbe9-48465c976ee9}</ProjectGuid>
   </PropertyGroup>
   <ItemGroup />
   <ItemGroup>
     <Projects Include="lib\creport4.dproj" />
     <Projects Include="test\ReportTests.dproj">
-      <Dependencies>lib\creport4.dproj</Dependencies>
-    </Projects>
-    <Projects Include="vcl\CReportEdit.dproj">
       <Dependencies>lib\creport4.dproj</Dependencies>
     </Projects>
   </ItemGroup>
@@ -27,15 +24,6 @@
   <Target Name="ReportTests:Make" DependsOnTargets="creport4:Make">
     <MSBuild Projects="test\ReportTests.dproj" Targets="Make" />
   </Target>
-  <Target Name="CReportEdit" DependsOnTargets="creport4">
-    <MSBuild Projects="vcl\CReportEdit.dproj" Targets="" />
-  </Target>
-  <Target Name="CReportEdit:Clean" DependsOnTargets="creport4:Clean">
-    <MSBuild Projects="vcl\CReportEdit.dproj" Targets="Clean" />
-  </Target>
-  <Target Name="CReportEdit:Make" DependsOnTargets="creport4:Make">
-    <MSBuild Projects="vcl\CReportEdit.dproj" Targets="Make" />
-  </Target>
   <Target Name="creport4">
     <MSBuild Projects="lib\creport4.dproj" Targets="" />
   </Target>
@@ -46,13 +34,13 @@
     <MSBuild Projects="lib\creport4.dproj" Targets="Make" />
   </Target>
   <Target Name="Build">
-    <CallTarget Targets="ReportTests;CReportEdit;creport4" />
+    <CallTarget Targets="ReportTests;creport4" />
   </Target>
   <Target Name="Clean">
-    <CallTarget Targets="ReportTests:Clean;CReportEdit:Clean;creport4:Clean" />
+    <CallTarget Targets="ReportTests:Clean;creport4:Clean" />
   </Target>
   <Target Name="Make">
-    <CallTarget Targets="ReportTests:Make;CReportEdit:Make;creport4:Make" />
+    <CallTarget Targets="ReportTests:Make;creport4:Make" />
   </Target>
   <Import Condition="Exists('$(MSBuildBinPath)\Borland.Group.Targets')" Project="$(MSBuildBinPath)\Borland.Group.Targets" />
 </Project>

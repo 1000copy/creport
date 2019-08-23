@@ -177,7 +177,7 @@ begin
       R.Visible := true;
       t1 := TClientDataset.Create(nil);
       t1.FieldDefs.Add('f1',ftString,20,true);
-      t1.FieldDefs.Add('f2',ftString,20,true);
+      t1.FieldDefs.Add('f2',ftInteger);
       t2 := TClientDataset.Create(nil);
       t2.FieldDefs.Add('f1',ftString,20,true);
       t1.CreateDataSet;
@@ -201,7 +201,7 @@ begin
            Cells[1,j].CellText := t1.FieldDefs[j].Name;
            Cells[2,j].CellText := '#T1.'+t1.FieldDefs[j].Name;
         end;
-        Cells[3,1].CellText := 'SumAll(#T1.'+t1.FieldDefs[1].Name+')';
+        Cells[3,1].CellText := '`SUMALL(#T1.'+t1.FieldDefs[1].Name+')';
         SaveToJson(strFileDir+'\'+'2.json');
         ResetContent;
         r.UpdateLines;

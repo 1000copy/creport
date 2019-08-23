@@ -8,7 +8,7 @@
     <DCC_DCCCompiler>DCC32</DCC_DCCCompiler>
     <DCC_DependencyCheckOutputName>c:\dcu\ReportTests.exe</DCC_DependencyCheckOutputName>
     <DCC_EnabledPackages>true</DCC_EnabledPackages>
-    <DCC_UsePackage>vcl;rtl;vclx;vclactnband;dbrtl;vcldb;vcldbx;bdertl;dsnap;dsnapcon;teeUI;teedb;tee;adortl;vclib;ibxpress;dbxcds;dbexpress;DbxCommonDriver;IndyCore;IndySystem;IndyProtocols;xmlrtl;inet;IntrawebDB_90_100;Intraweb_90_100;VclSmp;vclie;websnap;webdsnap;inetdbbde;inetdbxpress;soaprtl;creport4</DCC_UsePackage>
+    <DCC_UsePackage>vcl;rtl;vclx;vclactnband;dbrtl;vcldb;vcldbx;bdertl;dsnap;dsnapcon;teeUI;teedb;tee;adortl;vclib;ibxpress;dbxcds;dbexpress;DbxCommonDriver;IndyCore;IndySystem;IndyProtocols;xmlrtl;inet;IntrawebDB_90_100;Intraweb_90_100;VclSmp;vclie;websnap;webdsnap;inetdbbde;inetdbxpress;soaprtl;designide</DCC_UsePackage>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <Version>7.0</Version>
@@ -51,9 +51,6 @@
     <DCCReference Include="..\dunit\src\TextTestRunner.pas" />
     <DCCReference Include="..\vcl\CC.pas" />
     <DCCReference Include="..\vcl\osservice.pas" />
-    <DCCReference Include="..\vcl\ReportControl.pas">
-      <ModuleName>ureport</ModuleName>
-    </DCCReference>
     <DCCReference Include="..\vcl\ReportControl.pas" />
     <DCCReference Include="..\vcl\ReportRunTime.pas" />
     <DCCReference Include="..\vcl\uHornCartesian.pas" />

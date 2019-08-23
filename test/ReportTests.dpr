@@ -9,8 +9,6 @@ uses
   TextTestRunner in '..\dunit\src\TextTestRunner.pas',
   GUITesting in '..\dunit\src\GUITesting.pas',
   ReportTest in 'ReportTest.pas',
-  ureport in '..\vcl\ReportControl.pas',
-  ReportRunTime in '..\vcl\ReportRunTime.pas',
   osservice in '..\vcl\osservice.pas',
   uHornCartesian in '..\vcl\uHornCartesian.pas',
   RitaRestart in 'RitaRestart.pas',
