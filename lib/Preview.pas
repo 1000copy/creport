@@ -38,16 +38,13 @@ type
     procedure SpeedButton5Click(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure SpeedButton4Click(Sender: TObject);
-    procedure SpeedButton1Click(Sender: TObject);
     procedure RCMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure SpeedButton3Click(Sender: TObject);
-    procedure EditEptkClick(Sender: TObject);
     procedure PrintBtnClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
   private
      // LCJ : ×î¼ÑËõ·Å±ÈÀý
-    RC: TReportControl;
     procedure DoFit;
     procedure GoLastPage;
     procedure NextPage;
@@ -55,6 +52,7 @@ type
     procedure GoPage(CurrentPage: Integer);
     procedure SetPreviewMode();
   public
+    RC: TReportControl;
     PageCount: Integer;
     CurrentPage: Integer;
     DataNameFilst:Tlist;
@@ -71,8 +69,7 @@ var
 
 implementation
 
-uses margin, REPmess
-     , Creport,About,Border,vsplit,Color,diagonal,NewDialog; // add
+//uses margin; // add
 
 {$R *.DFM}
 
@@ -177,12 +174,6 @@ begin
 
 end;
 
-procedure TPreviewForm.SpeedButton1Click(Sender: TObject);
-begin
-  if tReportRunTime(RC).shpreview  then
-     GoFirstPage;
-  DoFit();
-end;
 
 
 procedure TPreviewForm.RCMouseUp(Sender: TObject;
@@ -206,13 +197,6 @@ begin
   ShowWindow(RC.Handle, SW_SHOW);
 end;
 
-procedure TPreviewForm.EditEptkClick(Sender: TObject);
-begin
-  TCreportForm.EditReport(filename.Caption);
-  // why RR is nil ?
-  RR.updatepage;
-  GoFirstPage;
-end;
 
 
 

@@ -780,7 +780,6 @@ Procedure Register;
 
 Implementation
 
-//Uses Preview, REPmess, margin,Creport;
 function chop(r:string):string;
   begin
     if length(r)>0 then

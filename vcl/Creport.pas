@@ -176,7 +176,6 @@ type
     procedure SpeedButton16Click(Sender: TObject);
     procedure ComboBox1Change(Sender: TObject);
   private
-    RC: TReportControl;
 
     dbarleft:integer;
     dbartop:integer;
@@ -189,6 +188,7 @@ type
 
     { Private declarations }
   public
+    RC: TReportControl;
     thefile, savefilename: string;
     zoomxxx:INTEGER;
     property ReportControl: TReportControl read RC;
