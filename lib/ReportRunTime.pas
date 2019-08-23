@@ -51,6 +51,8 @@ type
     FNamedDatasets: TDataList;
     function GetDetailDataset(): TDataset;
     Function GetDataset(strCellText: String): TDataset;
+    function getCellValue(ThisCell: TReportCell):String;
+    procedure updateLineIndexTop(ThisLine: TReportLine);
   private
     // height calc..er
     function FooterHeight():integer;
@@ -81,8 +83,8 @@ type
 //    procedure LoadPage(I: integer);
   private
     // sum
-    Function setSumAllYg(fm, ss: String): String;
-    Function setSumpageYg(fm, ss: String): String;
+    Function getSum(fm, ss: String): String;
+    Function getPageSum(fm, ss: String): String;
     procedure SumCell(ThisCell: TReportCell; j: Integer);
     procedure SumLine(HasDataNo: integer);
   private
@@ -112,15 +114,15 @@ type
     procedure PrintRange(Title: String; FromPage, ToPage: Integer);
   // render : what 's diference on RenderText vs . RenderTextOnly vs. RenderCell ?
   Protected
-    function RenderText(ThisCell: TReportCell): String;override;
+    function getFormulaValue(ThisCell: TReportCell): String;override;
   private
     procedure RenderCell(NewCell,ThisCell:TReportCell);
-    procedure RenderBlobOnly(NewCell, ThisCell: TReportCell);
-    procedure RenderTextOnly(NewCell, ThisCell: TReportCell);
+    procedure RenderBlob(NewCell, ThisCell: TReportCell);
     procedure pp(preview: boolean);
     procedure eachcell_paint(ThisCell: TReportCell);
 
   Public
+    property Summer:TSummer read FSummer;
     function calcPageCount(): integer;
     Constructor Create(AOwner: TComponent); Override;
     Destructor Destroy; Override;
@@ -209,29 +211,65 @@ begin
     DeleteFile(FileName);
   result := FileName;
 end;
-// call this function OnSave
-// todo: Sum Lines 's @t1.lb why not render ?
-function TReportRunTime.RenderText(ThisCell:TReportCell):String;
-var
-  R : String;
-  PageNumber: Integer ;
+procedure TReportRunTime.RenderCell(NewCell,ThisCell:TReportCell);
 begin
-  PageNumber := FPageIndex;
+  NewCell.CellText:= getCellValue(ThisCell);
+  RenderBlob(NewCell,ThisCell);
+end;
+function TReportRunTime.getCellValue(ThisCell: TReportCell):String;
+var
+  Dataset: TDataSet;
+  Value: string;
+  FieldName: string;
+  cf: DataField;
+  cellText: string;
+begin
+  CellText := ThisCell.FCellText;
+  if (Thiscell.IsSimpleField) then
+  begin
+    Result := CellText;exit;
+  end;
+  if ThisCell.IsFormula then
+  begin
+    Result := getFormulaValue(ThisCell);exit;
+  end;
+  if GetDataset(CellText) = nil then
+  begin
+    Result := CellText;exit;
+  end;
+  FieldName := GetFieldName(CellText);
+  Dataset := GetDataset(thisCell.CellText);
+  cf := DataField.Create(Dataset, FieldName);
+  if cf.IsBlobField and (not cf.IsNullField) then
+  begin
+    Result := '';
+  end;
+  try
+    Value := cf.GetField.AsString;
+    if cf.IsAvailableNumberField and (ThisCell.CellDispformat <> '') then
+      Value := ThisCell.FormatValue(cf.DataValue);
+    result := Value;
+    if '(Graphic)' = CellText then
+      raise Exception.create('');
+  finally
+    cf.Free;
+  end;
+end;
+function TReportRunTime.getFormulaValue(ThisCell:TReportCell):String;
+begin
+  Result := ThisCell.FCellText;
   If  ThisCell.IsPageNumFormula Then
-    R :=Format(cc.PageFormat1,[PageNumber])
+    Result :=Format(cc.PageFormat1,[FPageIndex+1])
   Else If ThisCell.IsPageNumFormula1  Then
-    R :=Format(cc.PageFormat,[PageNumber,FPageAll])
-  Else If ThisCell.IsPageNumFormula2 Then 
-    R :=Format(cc.PageFormat2,[PageNumber,FPageAll])
+    Result :=Format(cc.PageFormat,[FPageIndex,FPageAll])
+  Else If ThisCell.IsPageNumFormula2 Then
+    Result :=Format(cc.PageFormat2,[FPageIndex,FPageAll])
   Else If ThisCell.IsSumPageFormula Then
-    R := setSumpageYg(thiscell.FCellDispformat,ThisCell.FCellText)
+    Result := getPageSum(thiscell.FCellDispformat,ThisCell.FCellText)
   Else If ThisCell.IsSumAllFormula  Then
-    R := setSumAllYg(thiscell.FCellDispformat,ThisCell.FCellText)
+    Result := getSum(thiscell.FCellDispformat,ThisCell.FCellText)
   else If ThisCell.IsHeadField or thiscell.isDetailField  Then
-    R := GetValue(ThisCell)
-  else
-    R := ThisCell.FCellText;
-  Result := R;
+    Result := GetValue(ThisCell);
 end;
 
 Procedure TReportRunTime.SaveCurrentPage();
@@ -353,9 +391,6 @@ Begin
   FDRMap.RuntimeMapping(NewCell, ThisCell);
   NewCell.CalcHeight;
 End;
-
-//  ���� ,��ȫ��д�� PreparePrint,���������ÿ��в���һҳ ͳ�Ƶȹ���
-//������������Ԥ����ȷ��������ͷ���ݿ�����ģ��ĵڼ���
 function TReportRunTime.IsLastPageFull:Boolean ;
 begin
   result := (FtopMargin + HeadHeight + FDataLineHeight + SumHeight +
@@ -547,12 +582,10 @@ End;
 
 Procedure TReportRunTime.UpdatePrintLines;
 Var
-  PrevRect, TempRect: TRect;
   I, J: Integer;
   ThisLine: TReportLine;
   ThisCell: TReportCell;
 Begin
-  // ���ȼ���ϲ���ĵ�Ԫ��
   For I := 0 To FPrintLineList.Count - 1 Do
   Begin
     ThisLine := TReportLine(FPrintLineList[I]);
@@ -565,29 +598,12 @@ Begin
         ThisCell.CalcHeight;
     End;
   End;
-
-  // ����ÿ�еĸ߶�
   For I := 0 To FPrintLineList.Count - 1 Do
   Begin
     ThisLine := TReportLine(FPrintLineList[I]);
     ThisLine.UpdateLineHeight;
   End;
-
-  For I := 0 To FPrintLineList.Count - 1 Do
-  Begin
-    ThisLine := TReportLine(FPrintLineList[I]);
-
-    ThisLine.Index := I;
-
-    If I = 0 Then
-      ThisLine.LineTop := FTopMargin;
-    If I > 0 Then
-      ThisLine.LineTop := TReportLine(FPrintLineList[I - 1]).LineTop +
-        TReportLine(FPrintLineList[I - 1]).LineHeight;
-
-    PrevRect := ThisLine.PrevLineRect;
-    TempRect := ThisLine.LineRect;
-  End;
+  updateLineIndexTop(ThisLine);
 End;
 
 
@@ -631,7 +647,7 @@ End;
 
 
 
-Function TReportRunTime.SetSumAllYg(fm, ss: String): String; //add  
+Function TReportRunTime.getSum(fm, ss: String): String; //add
 var
   Value,iCode :Integer;
   slice :StrSlice;
@@ -647,7 +663,7 @@ Begin
    Result := 'N/A';
  end;
 
-Function TReportRunTime.setSumpageYg(fm, ss: String): String;
+Function TReportRunTime.getPageSum(fm, ss: String): String;
 var
   Value ,iCode:Integer;
   slice :StrSlice;
@@ -776,62 +792,9 @@ begin
   end;
 end;
 
-  procedure TReportRunTime.RenderCell(NewCell,ThisCell:TReportCell);
-begin
-  RenderTextOnly(NewCell,ThisCell);
-  RenderBlobOnly(NewCell,ThisCell);
-end;
-procedure TReportRunTime.RenderTextOnly(NewCell,ThisCell:TReportCell);
-var
-    Result,Value,cellText ,FieldName:string;
-    cf: DataField ;
-    Dataset:TDataset;
-   function IsFormatable:Boolean;
-   begin
-     Result := cf.IsAvailableNumberField and (ThisCell.CellDispformat <> '' )  
-   end;
-begin
-  try
-    CellText := ThisCell.FCellText ;
-    if (Thiscell.IsSimpleField ) then
-    begin
-      Result := CellText;
-      exit;
-    end;
-    If ThisCell.IsFormula Then
-    begin
-      Result := GetVarValue(CellText) ;
-      Exit;
-    end;
-    if GetDataset(CellText) = nil then
-    begin
-      Result := CellText;
-      exit;
-    end;
-    FieldName := GetFieldName(CellText);
-    Dataset := GetDataset(thisCell.CellText);
-    cf:= DataField.Create(Dataset,FieldName) ;
-    If  cf.IsBlobField  and (not cf.IsNullField) then
-    begin
-       Result := '';
-       exit;
-    end;
-    try
-      Value :=cf.GetField.AsString ;
-      If IsFormatable Then
-        Value :=  ThisCell.FormatValue(cf.DataValue()) ;
-      result := Value;
-      if '(Graphic)' =  CellText then
-        raise Exception.create('');
-    finally
-      cf.Free;      
-    end;
-  finally
-   NewCell.CellText:= Result ;
-  end;
-end;
 
-procedure TReportRunTime.RenderBlobOnly(NewCell,ThisCell:TReportCell);
+
+procedure TReportRunTime.RenderBlob(NewCell,ThisCell:TReportCell);
 var
     Value,cellText ,FieldName:string;
     cf: DataField ;
@@ -1221,6 +1184,7 @@ Begin
     If isPageFull(FDataLineHeight) Then
     Begin
       CheckError(FRender.FData.Count = 0,cc.RenderException);
+//      FRender.FillSumAll ;
       FRender.SavePage(FPageIndex, FpageAll);
       FRender.Reset;
       inc(FPageIndex);
@@ -1232,6 +1196,7 @@ Begin
     If (Faddspace) And (HasEmptyRoomLastPage) Then begin
       PaddingEmptyLine(DetailLineIndex,FRender.FData );
     end;
+//    FRender.FillSumAll ;
     FRender.SaveLastPage(FPageIndex, FpageAll);
   end; 
 End ;
@@ -1334,7 +1299,7 @@ procedure RenderParts.FillFixParts();
 begin
     FillHead();
     FillFoot ;
-    FillSumAll ;
+    
 end;
 procedure RenderParts.FillSumAll();
 Var
@@ -1375,6 +1340,7 @@ begin
 end;
 procedure RenderParts.SaveLastPage(fpagecount, FpageAll:Integer);
 begin
+   FillSumAll ;
    JoinList(FRC.FPrintLineList,True);
    FRC.UpdatePrintLines;
    FRC.SaveCurrentPage();
@@ -1382,6 +1348,7 @@ end;
 
 procedure RenderParts.SavePage(fpagecount, FpageAll:Integer);
 begin
+   FillSumAll ;
    JoinList(FRC.FPrintLineList,false);
    FRC.UpdatePrintLines;
    FRC.SaveCurrentPage();
@@ -1429,6 +1396,23 @@ procedure TReportRunTime.SetData(M, D: TDataSet);
 begin
   FNamedDatasets.SEtData(M,D);
 end;
+
+procedure TReportRunTime.updateLineIndexTop(ThisLine: TReportLine);
+var
+  I: Integer;
+begin
+  for I := 0 to FPrintLineList.Count - 1 do
+  begin
+    ThisLine := TReportLine(FPrintLineList[I]);
+    ThisLine.Index := I;
+    if I = 0 then
+      ThisLine.LineTop := FTopMargin;
+    if I > 0 then
+      ThisLine.LineTop := TReportLine(FPrintLineList[I - 1]).LineTop + TReportLine(FPrintLineList[I - 1]).LineHeight;
+  end;
+end;
+
+
 procedure TDataList.SetData(M, D: TDataSet);
 begin
   ClearDataset ;

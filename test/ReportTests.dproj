@@ -43,12 +43,27 @@
     <DelphiCompile Include="ReportTests.dpr">
       <MainSource>MainSource</MainSource>
     </DelphiCompile>
+    <DCCReference Include="..\cl\osservice.pas" />
+    <DCCReference Include="..\cl\uHornCartesian.pas" />
     <DCCReference Include="..\dunit\src\FastMMMemLeakMonitor.pas" />
     <DCCReference Include="..\dunit\src\GUITesting.pas" />
     <DCCReference Include="..\dunit\src\GUITestRunner.pas" />
     <DCCReference Include="..\dunit\src\TestExtensions.pas" />
     <DCCReference Include="..\dunit\src\TestFramework.pas" />
     <DCCReference Include="..\dunit\src\TextTestRunner.pas" />
+    <DCCReference Include="..\lib\CC.pas" />
+    <DCCReference Include="..\lib\osservice.pas" />
+    <DCCReference Include="..\lib\ujson.pas" />
+    <DCCReference Include="..\li\CC.pas" />
+    <DCCReference Include="..\li\osservice.pas" />
+    <DCCReference Include="..\li\uHornCartesian.pas" />
+    <DCCReference Include="..\li\ujson.pas" />
+    <DCCReference Include="..\l\CC.pas" />
+    <DCCReference Include="..\l\osservice.pas" />
+    <DCCReference Include="..\l\uHornCartesian.pas" />
+    <DCCReference Include="..\l\ujson.pas" />
+    <DCCReference Include="..\osservice.pas" />
+    <DCCReference Include="..\uHornCartesian.pas" />
     <DCCReference Include="..\vcl\CC.pas" />
     <DCCReference Include="..\vcl\osservice.pas" />
     <DCCReference Include="..\vcl\ReportControl.pas" />

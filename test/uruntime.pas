@@ -37,7 +37,6 @@ type
     procedure drawtext1;
     procedure print;
     procedure sum;
-
   end;
 
 
@@ -174,7 +173,7 @@ var i,j:integer;
 begin
   R:=TReportRunTime.Create(Application.MainForm);
   try
-      R.Visible := true;
+      R.Visible := false;
       t1 := TClientDataset.Create(nil);
       t1.FieldDefs.Add('f1',ftString,20,true);
       t1.FieldDefs.Add('f2',ftInteger);
@@ -185,7 +184,7 @@ begin
       R.SetData(t1,t2);
       t1.Open;
       t2.Open;
-      for I:= 0 to 100 do
+      for I:= 0 to 50 do
         t1.AppendRecord([I,(cos(I)*1000)]);
       t2.AppendRecord([2]);
       strFileDir := ExtractFileDir(Application.ExeName);
@@ -201,20 +200,21 @@ begin
            Cells[1,j].CellText := t1.FieldDefs[j].Name;
            Cells[2,j].CellText := '#T1.'+t1.FieldDefs[j].Name;
         end;
-        Cells[3,1].CellText := '`SUMALL(#T1.'+t1.FieldDefs[1].Name+')';
+        //Cells[3,1].CellText := '`SUMALL(#T1.'+t1.FieldDefs[1].Name+')';
+        Cells[3,1].CellText := '`SUMALL(1)';
         SaveToJson(strFileDir+'\'+'2.json');
         ResetContent;
         r.UpdateLines;
         r.Invalidate;
       end;
       R.ReportFile:=strFileDir+'\'+'2.json';
-      R.PrintPreview();    
+      R.PrintPreview();
+      check(r.Summer.GetSumAll(1) =740.00, format('%2n',[r.Summer.GetSumAll(1)]));
     finally
       T1.free;
       T2.Free;
     end;
 end;
-
 procedure TReportRunTimeTest.TearDown;
 begin
   inherited;

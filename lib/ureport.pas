@@ -587,7 +587,7 @@ type
     procedure DoEdit(str:string);
     procedure DoMouseDown(P:TPoint;Shift:Boolean);
   Protected
-    function RenderText(ThisCell: TReportCell): String;virtual ;
+    function getFormulaValue(ThisCell: TReportCell): String;virtual ;
     Procedure CreateWnd; Override;
     procedure InternalLoadFromFile(FileName:string;FLineList:TList);
     procedure mapDevice(Printer: TPrinter; Width, Height: Integer);
@@ -1157,8 +1157,6 @@ end;
 // 没有 RightMargin ,原作者把RightMargin 和LeftMargin等同，所以又下面的 FLeftMargin * 2
 Procedure TReportCell.CalcHeight;
 Begin
-//  if FCellHeight  = 0 then
-//    FCellHeight := DefaultHeight;
   If FCellWidth <= FLeftMargin * 2 Then
     exit;
   if IsNormalCell  then
@@ -1747,7 +1745,7 @@ begin
 end;
 procedure TReportCell.Save(s: TSimpleFileStream);
 begin
-  FCellText := Self.ReportControl.renderText(Self);
+  FCellText := Self.ReportControl.getFormulaValue(Self);
   Self.SaveInternal(s);
 end;
 procedure TReportCell.SaveInternal(s: TSimpleFileStream);
@@ -3591,7 +3589,7 @@ Begin
   FSelectCells[0].OwnerLine.InsertCell (FSelectCells[0]);
   UpdateLines;
 End;
-function TReportControl.RenderText(ThisCell:TReportCell):String;
+function TReportControl.getFormulaValue(ThisCell:TReportCell):String;
 begin
     Result := ThisCell.FCellText;
 end;

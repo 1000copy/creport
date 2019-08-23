@@ -37,18 +37,18 @@
     <DelphiCompile Include="creport4.dpk">
       <MainSource>MainSource</MainSource>
     </DelphiCompile>
-    <DCCReference Include="$(SystemRoot)\system32\bdertl.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\dbrtl.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\designide.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\dsnap.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\rtl.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\vcl.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\vclactnband.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\vcldb.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\vcljpg.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\vclsmp.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\vclx.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\xmlrtl.dcp" />
+    <DCCReference Include="C:\ProgramData\Microsoft\Windows\Start Menu\Programs\CodeGear RAD Studio\bdertl.dcp" />
+    <DCCReference Include="C:\ProgramData\Microsoft\Windows\Start Menu\Programs\CodeGear RAD Studio\dbrtl.dcp" />
+    <DCCReference Include="C:\ProgramData\Microsoft\Windows\Start Menu\Programs\CodeGear RAD Studio\designide.dcp" />
+    <DCCReference Include="C:\ProgramData\Microsoft\Windows\Start Menu\Programs\CodeGear RAD Studio\dsnap.dcp" />
+    <DCCReference Include="C:\ProgramData\Microsoft\Windows\Start Menu\Programs\CodeGear RAD Studio\rtl.dcp" />
+    <DCCReference Include="C:\ProgramData\Microsoft\Windows\Start Menu\Programs\CodeGear RAD Studio\vcl.dcp" />
+    <DCCReference Include="C:\ProgramData\Microsoft\Windows\Start Menu\Programs\CodeGear RAD Studio\vclactnband.dcp" />
+    <DCCReference Include="C:\ProgramData\Microsoft\Windows\Start Menu\Programs\CodeGear RAD Studio\vcldb.dcp" />
+    <DCCReference Include="C:\ProgramData\Microsoft\Windows\Start Menu\Programs\CodeGear RAD Studio\vcljpg.dcp" />
+    <DCCReference Include="C:\ProgramData\Microsoft\Windows\Start Menu\Programs\CodeGear RAD Studio\vclsmp.dcp" />
+    <DCCReference Include="C:\ProgramData\Microsoft\Windows\Start Menu\Programs\CodeGear RAD Studio\vclx.dcp" />
+    <DCCReference Include="C:\ProgramData\Microsoft\Windows\Start Menu\Programs\CodeGear RAD Studio\xmlrtl.dcp" />
     <DCCReference Include="CC.pas">
       <Form>/,  DesignEditors in 'C</Form>
       <DesignClass>Program Files (x86)\CodeGear\RAD Studio\5.0\source\ToolsAPI\DesignEditors.pas'</DesignClass>
