@@ -203,7 +203,7 @@ const
   ver = '【eReport 票据式报表软件】V3.0E';
   copyright = ver ;
   prname='创作：郭家骏、王寒松';
-  updates = '修改日期:2003.4.26 成都， ';
+  updates = '修改日期:2003.4.26 成都';
 
 var
   CreportForm: TCreportForm;
