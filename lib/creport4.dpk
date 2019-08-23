@@ -41,7 +41,7 @@ requires
 contains
   ureport in 'ureport.pas',
   osservice in 'osservice.pas',
-  CC in 'CC.pas' ,
+  CC in 'CC.pas' {/,  DesignEditors in 'C: Program Files (x86)\CodeGear\RAD Studio\5.0\source\ToolsAPI\DesignEditors.pas'},
   uHornCartesian in 'uHornCartesian.pas',
   ReportRunTime in 'ReportRunTime.pas',
   Preview in 'Preview.pas',
