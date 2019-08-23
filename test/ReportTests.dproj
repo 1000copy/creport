@@ -53,6 +53,7 @@
     <DCCReference Include="..\dunit\src\TextTestRunner.pas" />
     <DCCReference Include="..\lib\CC.pas" />
     <DCCReference Include="..\lib\osservice.pas" />
+    <DCCReference Include="..\lib\uHornCartesian.pas" />
     <DCCReference Include="..\lib\ujson.pas" />
     <DCCReference Include="..\li\CC.pas" />
     <DCCReference Include="..\li\osservice.pas" />

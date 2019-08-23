@@ -28,8 +28,9 @@ type
   protected
     procedure SetUp; override;
     procedure TearDown; override;
-
+    {$WARNINGS OFF}
   published
+  {$WARNINGS ON}
     procedure preview;
     procedure pageCount;
     procedure drawtext;
@@ -43,10 +44,7 @@ type
 implementation
 
 procedure TReportRunTimeTest.pageCount;
-var i,j:integer;
-    CellFont: TLogFont;
-    cf: TFont;
-    F : TStringField;
+var i:integer;
 begin
     R:=TReportRunTime.Create(Application.MainForm);
     r.Visible := false;
@@ -63,41 +61,22 @@ begin
     r.free;
 end;
 procedure TReportRunTimeTest.drawtext;
-var i,j:integer;
-    CellFont: TLogFont;
-    cf: TFont;
-    F : TStringField;
-    R:TReportControl;
+var R:TReportControl;
 begin
     R:=TReportControl.Create(Application.MainForm);
-//    r.Visible := false;
-//    r.CalcWndSize;
     R.loadfromjson('1.tmp.json');
     r.free;
-//    ShowWindow(R.Handle, SW_SHOW);
 end;
 procedure TReportRunTimeTest.drawtext1;
-var i,j:integer;
-    CellFont: TLogFont;
-    cf: TFont;
-    F : TStringField;
+var
     R:TReportControl;
 begin
     R:=TReportControl.Create(Application.MainForm);
-//    r.Visible := false;
-//    r.CalcWndSize;
     R.loadfromjson('temp\1.tmp.json');
     r.free;
-//    ShowWindow(R.Handle, SW_SHOW);
 end;
 procedure TReportRunTimeTest.dyndrawtext;
-var i,j:integer;
-    CellFont: TLogFont;
-    cf: TFont;
-    F : TStringField;
-    R:TReportControl;
-    line:TReportLine;
-    cell :TReportCell;
+var R:TReportControl;
 begin
     R:=TReportControl.Create(Application.MainForm);
     r.CalcWndSize;
@@ -126,10 +105,7 @@ begin
     form.free;
 end;
 procedure TReportRunTimeTest.preview;
-var i,j:integer;
-    CellFont: TLogFont;
-    cf: TFont;
-    F : TStringField;
+var i:integer;
 begin
     R:=TReportRunTime.Create(Application.MainForm);
     r.Visible := false;
@@ -146,10 +122,8 @@ begin
     r.free;
 end;
 procedure TReportRunTimeTest.SetUp;
-var i,j:integer;
-    CellFont: TLogFont;
-    cf: TFont;
-    F : TStringField;
+var i:integer;
+    
 begin
     inherited;
     t1 := TClientDataset.Create(nil);
@@ -159,6 +133,13 @@ begin
     t2.FieldDefs.Add('f1',ftString,20,true);
     t1.CreateDataSet;
     t2.CreateDataSet;
+    R:=TReportRunTime.Create(Application.MainForm);
+    R.SetData(t1,t2);
+      t1.Open;
+      t2.Open;
+      for I:= 0 to 50 do
+        t1.AppendRecord([I,(cos(I)*1000)]);
+      t2.AppendRecord([2]);
     strFileDir := ExtractFileDir(Application.ExeName);
 end;
 
@@ -167,27 +148,9 @@ var i,j:integer;
     strFileDir:string;
     CellFont: TLogFont;
     cf: TFont;
-    R:TReportRunTime;
-    t1 ,t2: TClientDataset;
     F : TStringField;
 begin
-  R:=TReportRunTime.Create(Application.MainForm);
-  try
       R.Visible := false;
-      t1 := TClientDataset.Create(nil);
-      t1.FieldDefs.Add('f1',ftString,20,true);
-      t1.FieldDefs.Add('f2',ftInteger);
-      t2 := TClientDataset.Create(nil);
-      t2.FieldDefs.Add('f1',ftString,20,true);
-      t1.CreateDataSet;
-      t2.CreateDataSet;
-      R.SetData(t1,t2);
-      t1.Open;
-      t2.Open;
-      for I:= 0 to 50 do
-        t1.AppendRecord([I,(cos(I)*1000)]);
-      t2.AppendRecord([2]);
-      strFileDir := ExtractFileDir(Application.ExeName);
       with  R do
       begin
         CalcWndSize;
@@ -210,11 +173,8 @@ begin
       R.ReportFile:=strFileDir+'\'+'2.json';
       R.PrintPreview();
       check(r.Summer.GetSumAll(1) =740.00, format('%2n',[r.Summer.GetSumAll(1)]));
-    finally
-      T1.free;
-      T2.Free;
-    end;
 end;
+//ISVar GetVar  `DATE `TIME
 procedure TReportRunTimeTest.TearDown;
 begin
   inherited;

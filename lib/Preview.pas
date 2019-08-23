@@ -10,7 +10,6 @@ type
   TPreviewForm = class(TForm)
     StatusBar1: TStatusBar;
     ScrollBox1: TScrollBox;
-    RC: TReportControl;
     filename: TLabel;
     Panel1: TPanel;
     PrevPageBtn: TSpeedButton;
@@ -48,6 +47,7 @@ type
     procedure FormShow(Sender: TObject);
   private
      // LCJ : ×î¼ÑËõ·Å±ÈÀý
+    RC: TReportControl;
     procedure DoFit;
     procedure GoLastPage;
     procedure NextPage;
@@ -152,6 +152,7 @@ end;
 
 procedure TPreviewForm.FormCreate(Sender: TObject);
 begin
+  RC:= TReportControl.Create(SELF);
   // disable template
   Self.PrintBtn.Visible := False;
   height:=550;
@@ -282,6 +283,8 @@ end;
 class procedure TPreviewForm.Action(ReportFile:string;FPageCount:Integer);
 begin
   PreviewForm := TPreviewForm.Create(nil);
+  
+
   PreviewForm.PageCount := FPageCount;
   PreviewForm.updateStatus();
   PreviewForm.filename.Caption := ReportFile;

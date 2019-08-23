@@ -193,7 +193,6 @@ Begin
 End;
 function TReportRunTime.ReadyFileName(PageNumber: Integer):String;
   Var
-    strFileDir: String;
     FileName: String;
   procedure EnsureTempDirExist;
   Var
@@ -333,7 +332,6 @@ End;
 Function TReportRunTime.GetDataset(strCellText: String): TDataset;
   Function GetDatasetName(strCellText: String): String;
   Var
-    I: Integer;
     s:StrSlice;
   Begin
     If isDataField(strCellText) Then begin
@@ -356,10 +354,6 @@ end;
 //testcase  t1.lb ->  t1
 
 Function TReportRunTime.GetFieldName(strCellText: String): String;
-Var
-  I: Integer;
-  bFlag: Boolean;
-  s:StrSlice;
 Begin
   If isDataField(strCellText) Then
     Result := StrSlice.DoSlice(StrCellText,'.')
@@ -417,7 +411,7 @@ end;
 
 function TReportRunTime.GetPrintRange(var A,Z:Integer):boolean;
 var
-  PrintDlg: TPrintDialog; I: Integer;
+  PrintDlg: TPrintDialog;
 begin
   PrintDlg := TPrintDialog.Create(Self);
   PrintDlg.MinPage := 1;
@@ -469,8 +463,6 @@ Begin
 End;
 Procedure TReportRunTime.pp(preview:boolean);
 Var
-  I: Integer;
-  strFileDir: TFileName;
   frompage: integer;
 Begin
   If printer.Printers.Count <= 0 Then begin
@@ -534,8 +526,6 @@ End;
 
 
 Function TReportRunTime.shpreview: boolean;
-Var
-  i: integer;
 Begin
   If PrintSET(reportfile)  Then
   Begin
@@ -555,7 +545,6 @@ End;
 Procedure TDataList.SetDataset(strDatasetName: String; pDataSet: TDataSet);
 Var
   TempItem: TDatasetItem;
-  dk, i: integer;
 Begin
   TempItem := TDatasetItem.Create;
   TempItem.pDataset := pDataSet;
@@ -586,6 +575,7 @@ Var
   ThisLine: TReportLine;
   ThisCell: TReportCell;
 Begin
+  ThisLine := nil;
   For I := 0 To FPrintLineList.Count - 1 Do
   Begin
     ThisLine := TReportLine(FPrintLineList[I]);
@@ -655,9 +645,11 @@ var
 Begin
   slice := StrSlice.Create(ss);
   s := slice.Slice(slice.GoUntil('(')+1,slice.GoUntil(')')-1);
+  {$Warnings Off}
   val(s, Value, iCode);
+  {$Warnings On}
   if iCode = 0 then begin
-   Value := strtoint(s) ;
+    Value := strtoint(s) ;
     Result := FormatFloat(fm,FSummer.GetSumAll(Value));
   end else
    Result := 'N/A';
