@@ -63,7 +63,7 @@ type
     function HasEmptyRoomLastPage: Boolean;
   private
     // Line copy
-    procedure CloneLine(ThisLine, Line: TReportLine);
+//    procedure CloneLine(ThisLine, Line: TReportLine);
     function ExpandLine(HasDataNo:integer):TReportLine;
     function CloneEmptyLine(thisLine: TReportLine): TReportLine;
     function CloneNewLine(ThisLine: TReportLine): TReportLine;
@@ -77,7 +77,7 @@ type
     Procedure SaveTempFile(FileName:string);overload;
     Procedure SaveCurrentPage();overload;
     Procedure LoadReport;
-    Procedure LoadTempFile(strFileName: String);
+//    Procedure LoadTempFile(strFileName: String);
     function ReadyFileName(PageNumber: Integer): String;
     Procedure DeleteAllTempFiles;
 //    procedure LoadPage(I: integer);
@@ -90,10 +90,10 @@ type
   private
     // list
     function AppendList(l1, l2: TList): Boolean;
-    function FillFootList(): TList;
-    function FillSumList(): TLineList;
-    procedure JoinAllList(FPrintLineList, HandLineList, dataLineList,
-    SumAllList, HootLineList: TList;IsLastPage:Boolean);
+//    function FillFootList(): TList;
+//    function FillSumList(): TLineList;
+//    procedure JoinAllList(FPrintLineList, HandLineList, dataLineList,
+//    SumAllList, HootLineList: TList;IsLastPage:Boolean);
   private
     // todo
     function IsDataField(s: String): Boolean;
@@ -150,7 +150,7 @@ type
   private
     FRC:TReportRuntime;
     FLineList:TLineList;
-    FDataLineList :TLineList ;
+//    FDataLineList :TLineList ;
     procedure ResetData;
     procedure SavePage(fpagecount, FpageAll:Integer);
     procedure JoinList(FPrintLineList: TList; IsLastPage: Boolean);
@@ -280,16 +280,16 @@ begin
   SaveToJson1(FileName+'.json',FPrintLineList);
 end;
 
-Procedure TReportRunTime.LoadTempFile(strFileName: String);
-Begin
-  try
-    InternalLoadFromFile(strFileName,FPrintLineList);
-    PrintPaper.Batch(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
-    UpdatePrintLines;
-  except
-    on E:Exception do ShowMessage(e.message);
-  end;
-End;
+//Procedure TReportRunTime.LoadTempFile(strFileName: String);
+//Begin
+//  try
+//    InternalLoadFromFile(strFileName,FPrintLineList);
+//    PrintPaper.Batch(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
+//    UpdatePrintLines;
+//  except
+//    on E:Exception do ShowMessage(e.message);
+//  end;
+//End;
 
 Constructor TReportRunTime.Create(AOwner: TComponent);
 Begin
@@ -645,9 +645,9 @@ var
 Begin
   slice := StrSlice.Create(ss);
   s := slice.Slice(slice.GoUntil('(')+1,slice.GoUntil(')')-1);
-  {$Warnings Off}
+   {$Warnings Off}
   val(s, Value, iCode);
-  {$Warnings On}
+   {$Warnings on}
   if iCode = 0 then begin
     Value := strtoint(s) ;
     Result := FormatFloat(fm,FSummer.GetSumAll(Value));
@@ -682,8 +682,6 @@ begin
   result := TCreportform.EditReport(FileName);
 end;
 Procedure TReportRunTime.updatepage;
-Var
-  i: integer;
 Begin
   ReportFile := reportfile;
   FpageAll := calcPageCount;
@@ -788,7 +786,7 @@ end;
 
 procedure TReportRunTime.RenderBlob(NewCell,ThisCell:TReportCell);
 var
-    Value,cellText ,FieldName:string;
+    cellText ,FieldName:string;
     cf: DataField ;
     Dataset:TDataset;
 begin
@@ -845,28 +843,26 @@ begin
   result := templine;
 end;
 // clone from ThisLine to Line
-procedure TReportRunTime.CloneLine(ThisLine,Line:TReportLine);
-var
-  LineList:TLineList;
-  i,j:integer;
-  ThisCell, NewCell: TReportCell;
-begin
-  Line.FMinHeight := ThisLine.FMinHeight;
-  Line.FDragHeight := ThisLine.FDragHeight;
-  For j := 0 To ThisLine.FCells.Count - 1 Do
-  Begin
-    ThisCell := TreportCell(ThisLine.FCells[j]);
-    NewCell := TReportCell.Create(Self);
-    Line.FCells.Add(NewCell);
-    NewCell.FOwnerLine := Line;
-    CloneCell(newcell, thiscell);
-  End;
-  Line.UpdateLineHeight;  
-end;
+//procedure TReportRunTime.CloneLine(ThisLine,Line:TReportLine);
+//var
+//  j:integer;
+//  ThisCell, NewCell: TReportCell;
+//begin
+//  Line.FMinHeight := ThisLine.FMinHeight;
+//  Line.FDragHeight := ThisLine.FDragHeight;
+//  For j := 0 To ThisLine.FCells.Count - 1 Do
+//  Begin
+//    ThisCell := TreportCell(ThisLine.FCells[j]);
+//    NewCell := TReportCell.Create(Self);
+//    Line.FCells.Add(NewCell);
+//    NewCell.FOwnerLine := Line;
+//    CloneCell(newcell, thiscell);
+//  End;
+//  Line.UpdateLineHeight;
+//end;
 function TReportRunTime.CloneNewLine(ThisLine:TReportLine):TReportLine;
 var
-  LineList:TLineList;
-  i,j:integer;
+  j:integer;
   ThisCell, NewCell: TReportCell;
   Line : TReportLine ;
 begin
@@ -925,10 +921,9 @@ begin
 end;
 function TReportRunTime.DetailCellIndex(No:integer):Integer;
 Var
-  I, J, n:Integer;
-  HandLineList, datalinelist, HootLineList, sumAllList: TList;
-  ThisLine, TempLine: TReportLine;
-  ThisCell, NewCell: TReportCell;
+  I, J:Integer;
+  ThisLine: TReportLine;
+  ThisCell: TReportCell;
 begin
   Result := -1;
   For i := No To FlineList.Count - 1 Do
@@ -945,40 +940,41 @@ begin
     End;                             
   End;
 end;
-function TReportRunTime.FillFootList( ):TList;
-  Var
-  I, J, n:Integer;
-  HandLineList, datalinelist, HootLineList, sumAllList: TList;
-  ThisLine, TempLine: TReportLine;
-  ThisCell, NewCell: TReportCell;
-begin
-  HootLineList := TList.Create;
-  For i := DetailLineIndex + 1 To FlineList.Count - 1 Do
-  Begin
-    ThisLine := TReportLine(FlineList[i]);
-    TempLine := TReportLine.Create;
-    TempLine.FMinHeight := ThisLine.FMinHeight;
-    TempLine.FDragHeight := ThisLine.FDragHeight;
-    HootLineList.Add(TempLine);
-    For j := 0 To ThisLine.FCells.Count - 1 Do
-    Begin
-      ThisCell := TreportCell(ThisLine.FCells[j]);
-      If (Length(ThisCell.CellText) > 0) And
-        (UpperCase(copy(ThisCell.FCellText, 1, 7)) = '`SUMALL') Then
-      Begin
-        HootLineList.Delete(HootLineList.count - 1);
-        break;
-      End;
-      NewCell := TReportCell.Create(Self);
-      TempLine.FCells.Add(NewCell);
-      NewCell.FOwnerLine := TempLine;
-      CloneCell( newcell, thiscell);
-    End;
-    If (UpperCase(copy(ThisCell.FCellText, 1, 7)) <> '`SUMALL') Then
-      TempLine.UpdateLineHeight;
-  End;
-  result := HootLineList;
-end;
+//function TReportRunTime.FillFootList( ):TList;
+//  Var
+//  I, J:Integer;
+//  HootLineList: TList;
+//  ThisLine, TempLine: TReportLine;
+//  ThisCell, NewCell: TReportCell;
+//begin
+//  ThisCell := nil;
+//  HootLineList := TList.Create;
+//  For i := DetailLineIndex + 1 To FlineList.Count - 1 Do
+//  Begin
+//    ThisLine := TReportLine(FlineList[i]);
+//    TempLine := TReportLine.Create;
+//    TempLine.FMinHeight := ThisLine.FMinHeight;
+//    TempLine.FDragHeight := ThisLine.FDragHeight;
+//    HootLineList.Add(TempLine);
+//    For j := 0 To ThisLine.FCells.Count - 1 Do
+//    Begin
+//      ThisCell := TreportCell(ThisLine.FCells[j]);
+//      If (Length(ThisCell.CellText) > 0) And
+//        (UpperCase(copy(ThisCell.FCellText, 1, 7)) = '`SUMALL') Then
+//      Begin
+//        HootLineList.Delete(HootLineList.count - 1);
+//        break;
+//      End;
+//      NewCell := TReportCell.Create(Self);
+//      TempLine.FCells.Add(NewCell);
+//      NewCell.FOwnerLine := TempLine;
+//      CloneCell( newcell, thiscell);
+//    End;
+//    If (UpperCase(copy(ThisCell.FCellText, 1, 7)) <> '`SUMALL') Then
+//      TempLine.UpdateLineHeight;
+//  End;
+//  result := HootLineList;
+//end;
 function TReportRunTime.FooterHeight():integer;
 var
    i:integer;
@@ -992,34 +988,33 @@ begin
    end;
 end;
 
-//���кϼƵ���(`SumAll)����һ���б���
-function TReportRunTime.FillSumList():TLineList;
-Var
-  I, J, n,  TempDataSetCount:Integer;
-  sumAllList: TLineList;
-  ThisLine, TempLine: TReportLine;
-  ThisCell, NewCell: TReportCell;
-begin
-  sumAllList := TLineList.Create(self);
-  For i := DetailLineIndex + 1 To FlineList.Count - 1 Do
-  Begin
-    ThisLine := TReportLine(FlineList[i]);
-    TempLine := TReportLine.Create;
-    TempLine.FMinHeight := ThisLine.FMinHeight;
-    TempLine.FDragHeight := ThisLine.FDragHeight;
-    sumAllList.Add(TempLine);
-    For j := 0 To ThisLine.FCells.Count - 1 Do
-    Begin
-      ThisCell := TreportCell(ThisLine.FCells[j]);
-      NewCell := TReportCell.Create(Self);
-      TempLine.FCells.Add(NewCell);
-      NewCell.FOwnerLine := TempLine;
-      CloneCell( newcell, thiscell);
-    End;                              //for j
-    TempLine.UpdateLineHeight;
-  End;
-  result :=  sumAllList;
-end ;
+//function TReportRunTime.FillSumList():TLineList;
+//Var
+//  I, J:Integer;
+//  sumAllList: TLineList;
+//  ThisLine, TempLine: TReportLine;
+//  ThisCell, NewCell: TReportCell;
+//begin
+//  sumAllList := TLineList.Create(self);
+//  For i := DetailLineIndex + 1 To FlineList.Count - 1 Do
+//  Begin
+//    ThisLine := TReportLine(FlineList[i]);
+//    TempLine := TReportLine.Create;
+//    TempLine.FMinHeight := ThisLine.FMinHeight;
+//    TempLine.FDragHeight := ThisLine.FDragHeight;
+//    sumAllList.Add(TempLine);
+//    For j := 0 To ThisLine.FCells.Count - 1 Do
+//    Begin
+//      ThisCell := TreportCell(ThisLine.FCells[j]);
+//      NewCell := TReportCell.Create(Self);
+//      TempLine.FCells.Add(NewCell);
+//      NewCell.FOwnerLine := TempLine;
+//      CloneCell( newcell, thiscell);
+//    End;                              //for j
+//    TempLine.UpdateLineHeight;
+//  End;
+//  result :=  sumAllList;
+//end ;
 function TReportRunTime.SumHeight():integer;
 var
    i:integer;
@@ -1070,14 +1065,14 @@ begin
       FSummer.Acc(j,Value);
     End;
   Except
-    raise Exception.create('ͳ��ʱ������������ģ�������Ƿ���ȷ');
+    raise Exception.create('---');
   End;
 end;
 function TReportRunTime.ExpandLine(HasDataNo:integer):TReportLine;
 var
   thisLine ,TempLine: TReportLine;
-  I, J, n,  TempDataSetCount:Integer;
-  HandLineList, datalinelist, HootLineList, sumAllList: TList;
+  J:Integer;
+
   ThisCell, NewCell: TReportCell;
 
 begin
@@ -1102,38 +1097,20 @@ end;
 
 function TReportRunTime.getDataLineHeight():integer;
 var
-  thisLine ,TempLine: TReportLine;
-  I, J, n,  TempDataSetCount:Integer;
-  ThisCell, NewCell: TReportCell;
+  thisLine : TReportLine;
 begin
   // google:$Optimization on off insite: delphibasics.co.uk
   {$Optimization on}
   ThisLine := FlineList[DetailLineIndex];
-  // painful side effects as follow 11 statements
-  {*
-  TempLine := TReportLine.Create;
-  TempLine.FMinHeight := ThisLine.FMinHeight;
-  TempLine.FDragHeight := ThisLine.FDragHeight;
-  For j := 0 To ThisLine.FCells.Count - 1 Do
-  Begin
-    ThisCell := TreportCell(ThisLine.FCells[j]);
-    NewCell := TReportCell.Create(Self);
-    TempLine.FCells.Add(NewCell);
-    NewCell.FOwnerLine := TempLine;
-    NewCell.CloneFrom(ThisCell);
-    FDRMap.RuntimeMapping(NewCell, ThisCell);
-  End;
-  *}
   Result := ThisLine.GetLineHeight;
   {$Optimization off}
 end;
 
 
 procedure TReportRunTime.SumLine(HasDataNo:integer);
-var j:integer;var thisLine ,TempLine: TReportLine;
+var j:integer;var thisLine: TReportLine;
 Var
-  I,  n,  TempDataSetCount:Integer;
-  ThisCell, NewCell: TReportCell;
+  ThisCell: TReportCell;
 begin
   ThisLine := TReportLine(FlineList[HasDataNo]);
   For j := 0 To ThisLine.FCells.Count - 1 Do
@@ -1142,16 +1119,16 @@ begin
     SumCell(ThisCell,j) ;
   End; //for j
 end;
-procedure    TReportRunTime.JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList:TList;IsLastPage:Boolean);
-
-begin
-    AppendList(  FPrintLineList, HandLineList);
-    AppendList(  FPrintLineList, dataLineList);
-    If (IsLastPage) Then
-      AppendList(  FPrintLineList, SumAllList)
-    Else
-      AppendList(  FPrintLineList, HootLineList);
-end;
+//procedure    TReportRunTime.JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList:TList;IsLastPage:Boolean);
+//
+//begin
+//    AppendList(  FPrintLineList, HandLineList);
+//    AppendList(  FPrintLineList, dataLineList);
+//    If (IsLastPage) Then
+//      AppendList(  FPrintLineList, SumAllList)
+//    Else
+//      AppendList(  FPrintLineList, HootLineList);
+//end;
 function TReportRunTime.GetDetailDataset() :TDataset;
 var
    t : string;
@@ -1193,8 +1170,6 @@ Begin
   end; 
 End ;
 procedure TReportRunTime.FreeList;
-Var
-  n :Integer;
 begin
   FPrintLineList.Clear;
   FDRMap.empty;

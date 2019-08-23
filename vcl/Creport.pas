@@ -121,7 +121,6 @@ type
     SpeedButton16: TSpeedButton;
     SpeedButton17: TSpeedButton;
     StatusBar1: TStatusBar;
-    RC: TReportControl;
     procedure FileOpen1(Sender: TObject);
     procedure FormCreate(Sender: TObject);
     procedure FileExitClick(Sender: TObject);
@@ -177,9 +176,11 @@ type
     procedure SpeedButton16Click(Sender: TObject);
     procedure ComboBox1Change(Sender: TObject);
   private
+    RC: TReportControl;
+
     dbarleft:integer;
     dbartop:integer;
-    //未存盘标志    
+    //未存盘标志
     savebz:boolean;
     procedure ListBoxDragOver(Sender, Source: TObject; X,Y: Integer; State: TDragState; var Accept: Boolean);
 
@@ -247,6 +248,8 @@ end;
 procedure TCreportForm.FormCreate(Sender: TObject);
 var i,j:integer;
 begin
+  RC:= TReportControl.Create(self.ScrollBox1);
+  rc.CalcWndSize;
   savebz:=true;
 
   dbarleft:=0;

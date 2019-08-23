@@ -7,7 +7,7 @@ uses
   // sys
   messages,
   Classes,
-   Math,DBClient,  db,  DBTables,  Graphics,  forms,  Windows,  SysUtils,  TestFramework,Printers;
+   Math,DBClient,  db,  DBTables,  Graphics,  forms,  Windows,  SysUtils,  Printers;
 
 type
    Oriention = (orLeftTop=1,orRightTop,orLeftBottom,orRightBottom);

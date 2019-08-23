@@ -52,7 +52,6 @@ type
     procedure GoLastPage;
     procedure NextPage;
     procedure PrevPage;
-    procedure ReloadPageFile(CurrentPage: Integer);
     procedure GoPage(CurrentPage: Integer);
     procedure SetPreviewMode();
   public
@@ -268,9 +267,6 @@ begin
   rc.CalcWndSize;
   RC.Invalidate;
   RuleApply ;
-end;
-procedure TPreviewForm.ReloadPageFile(CurrentPage:Integer);
-begin
 end;
 
 

@@ -44,8 +44,9 @@ contains
   CC in 'CC.pas' {/,  DesignEditors in 'C: Program Files (x86)\CodeGear\RAD Studio\5.0\source\ToolsAPI\DesignEditors.pas'},
   uHornCartesian in 'uHornCartesian.pas',
   ReportRunTime in 'ReportRunTime.pas',
+  margin in 'margin.pas',
   Preview in 'Preview.pas',
   repmess in 'repmess.PAS',
-  margin in 'margin.pas';
+  ujson in 'ujson.pas';
 
 end.
