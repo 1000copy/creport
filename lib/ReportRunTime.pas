@@ -136,6 +136,7 @@ type
   private
     FRC:TReportRuntime;
     FLineList:TLineList;
+//    FDataLineList :TLineList ;
     procedure ResetData;
     procedure SavePage(fpagecount, FpageAll:Integer);
     procedure JoinList(FPrintLineList: TList; IsLastPage: Boolean);
@@ -309,15 +310,11 @@ Procedure TReportRunTime.LoadReport;
 
 Begin
   try
-    if endsWith(FFileName,'.json') then
-      loadFromJson(FFileName)
-    else
-      InternalLoadFromFile(FFileName,FLineList);
-    PrintPaper.Batch(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
+    loadFromJson(FFileName);
     UpdateLines;
   except
     on E:Exception do ShowMessage(e.message);
-    end;
+   end;
 End;
 
 

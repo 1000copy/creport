@@ -44,6 +44,8 @@ type
     procedure averror;
     procedure pagenum;
     procedure pagenumIfWithSumline;
+    procedure pagenumIfWithSumline1;
+
   end;
 
 
@@ -239,6 +241,21 @@ begin
 end;
 
 procedure TReportRunTimeTest.pagenumIfWithSumline;
+begin
+      makereport();
+      with  R do
+      begin
+        //Cells[0,0].CellText := '@t2.f1';
+        visible := true ;
+        Cells[3,0].CellText := '`SUMALL(1)';
+        Cells[3,1].CellText := '';
+        AddLine;
+        Cells[4,0].CellText := '`PAGENUM';
+        Cells[4,1].CellText := '`PAGENUM/';
+      end;
+      r.PrintPreview;
+end;
+procedure TReportRunTimeTest.pagenumIfWithSumline1;
 begin
       makereport();
       with  R do

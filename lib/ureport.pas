@@ -3627,9 +3627,9 @@ end;
 procedure TReportControl.loadFromJson(fn: string);var sl : TStringList;op:Json;
 begin
     sl := TStringList.create;
+    sl.LoadFromFile(fn);
     op := Json.create(sl.Text);
     try
-      sl.LoadFromFile(fn);
       op.parse;
       self.fromJson(op);
     finally
