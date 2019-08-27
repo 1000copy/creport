@@ -118,52 +118,6 @@ type
    end;
   TOnChanged = procedure(Sender:TObject;str:String) of object;
 
-  TSimpleFileStream = class(TFileStream)
-  private
-    procedure ReadIntegerSkip;
-   public
-     procedure ReadWord(var a : Word);
-     procedure ReadInteger(var a: Integer);
-     procedure ReadBoolean(var a: Boolean);
-     procedure ReadRect(var a:TRect);
-     procedure ReadCardinal(var a:Cardinal);
-     procedure ReadString(var a:String);
-     procedure ReadTLOGFONT(var a:TLOGFONT);
-     procedure WriteWord(a: Word);
-     procedure WriteInteger(a: Integer);
-     procedure WriteBoolean(a: Boolean);
-     procedure WriteRect(a:TRect);
-     procedure WriteCardinal(a:Cardinal);
-     procedure WriteString(a:String);
-     procedure WriteTLOGFONT(a:TLOGFONT);
-
-   end;
-   TSimpleWriter = class
-     FStream :TSimpleFileStream;
-   public
-     function Int(a:Integer):TSimpleWriter;
-     function Word(a:Word):TSimpleWriter;
-     function Bool(a:Boolean):TSimpleWriter;
-     function Rect(a:TRect):TSimpleWriter;
-     function Cardinal(a:Cardinal):TSimpleWriter;
-     function Str(a:String):TSimpleWriter;
-     function LOGFONT(a:TLOGFONT):TSimpleWriter;
-     constructor Create(sfs :TSimpleFileStream);
-   end;
-   TSimpleReader = class
-     FStream :TSimpleFileStream;
-  private
-    function IntSkip: TSimpleReader;
-   public
-     function Int(var a:Integer):TSimpleReader;
-     function Word(var a:Word):TSimpleReader;
-     function Bool(var a:Boolean):TSimpleReader;
-     function Rect(var a:TRect):TSimpleReader;
-     function Cardinal(var a:Cardinal):TSimpleReader;
-     function Str(var a:String):TSimpleReader;
-     function LOGFONT(var a:TLOGFONT):TSimpleReader;
-     constructor Create(sfs :TSimpleFileStream);
-   end;
   CellType = (ctOwnerCell,ctSlaveCell,ctNormalCell);
   TPrinterPaper = class
   private
@@ -280,7 +234,7 @@ type
       FBackGroundColor: COLORREF);
     procedure DrawContentText(hPaintDC: HDC);
     //procedure SaveInternal(s: TSimpleFileStream; PageNumber,Fpageall: integer);
-    procedure SaveInternal(s: TSimpleFileStream);
+//    procedure SaveInternal(s: TSimpleFileStream);
   public
     procedure LoadBmp(FileName:String);
     procedure FreeBmp();
@@ -378,8 +332,8 @@ type
     Procedure SetBackGroundColor(BkColor: COLORREF);
     Procedure SetTextColor(TextColor: COLORREF);
   Public
-    procedure Load(stream:TSimpleFileStream;FileFlag:Word);
-    procedure Save(s:TSimpleFileStream);
+//    procedure Load(stream:TSimpleFileStream;FileFlag:Word);
+//    procedure Save(s:TSimpleFileStream);
     function GetCellType:CellType;
     function DefaultHeight(): integer;
     procedure Select;
@@ -487,8 +441,8 @@ type
     procedure DeleteCell(Cell:TReportCell);
     procedure CombineSelected;
     procedure CombineCells(Cells:TCellList);
-    procedure Load (s:TSimpleFileStream);
-    procedure Save(s:TSimpleFileStream);
+//    procedure Load (s:TSimpleFileStream);
+//    procedure Save(s:TSimpleFileStream);
     function IsSumAllLine:Boolean;
     function ToString:string;
   End;
@@ -526,8 +480,8 @@ type
     MouseSelect : MouseSelector;
     MouseDrag : MouseDragger;
     hClientDC: HDC;
-    procedure InternalSaveToFile(
-      FLineList: TList; FileName: String;PageNumber, Fpageall: integer);
+//    procedure InternalSaveToFile(
+//      FLineList: TList; FileName: String;PageNumber, Fpageall: integer);
     procedure DoInvalidateRect(Rect:TRect);
     procedure RecreateEdit(ThisCell: TReportCell);
     procedure DoPaint(hPaintDC: HDC; Handle: HWND; ps: TPaintStruct);
@@ -545,7 +499,7 @@ type
     procedure MsgLoop(RectBorder:TRect);
     procedure OnMove(TempMsg: TMSG;RectBorder:TRect );
     function AddSelectedCells(Cells: TCellList): Boolean;
-    procedure InternalSavetoJSON(FLineList: TList; FileName: String);
+//    procedure InternalSavetoJSON(FLineList: TList; FileName: String);
     function toJson1(LineList: TLineList): String;
 
   protected
@@ -595,7 +549,7 @@ type
   Protected
     function getFormulaValue(ThisCell: TReportCell): String;virtual ;
     Procedure CreateWnd; Override;
-    procedure InternalLoadFromFile(FileName:string;FLineList:TList);
+//    procedure InternalLoadFromFile(FileName:string;FLineList:TList);
     procedure mapDevice(Printer: TPrinter; Width, Height: Integer);
 
   Public
@@ -631,7 +585,7 @@ type
     Constructor Create(AOwner: TComponent); Override;
     Destructor Destroy; Override;
     Procedure SaveToFile(FileName: String);overload;
-    Procedure SaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);overload;
+//    Procedure SaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);overload;
 //    Procedure LoadFromFile(FileName: String);
     Procedure DoLoadBmp(Cell: Treportcell; filename: String);
     Procedure FreeBmp(Cell: Treportcell);
@@ -1666,136 +1620,6 @@ begin
   result := ctNormalCell = GetCellType()
 end;
 
-procedure TReportCell.Load(stream: TSimpleFileStream;FileFlag:Word);
-Var
-  Count1, Count2, Count3: Integer;
-  K: Integer;
-begin
-  with stream do
-  begin
-    ReadInteger(FLeftMargin);
-    ReadInteger(FCellIndex);
-
-    ReadInteger(FCellLeft);
-    ReadInteger(FCellWidth);
-
-    ReadRect(FCellRect);
-    ReadRect(FTextRect);
-    // LCJ :DELETE on the road
-    ReadInteger(FCellHeight);
-    ReadInteger(FCellHeight);
-    ReadInteger(FRequiredCellHeight);
-
-    ReadBoolean(FLeftLine);
-    ReadInteger(FLeftLineWidth);
-
-    ReadBoolean(FTopLine);
-    ReadInteger(FTopLineWidth);
-
-    ReadBoolean(FRightLine);
-    ReadInteger(FRightLineWidth);
-
-    ReadBoolean(FBottomLine);
-    ReadInteger(FBottomLineWidth);
-
-    ReadCardinal(FDiagonal);
-
-    ReadCardinal(FTextColor);
-    ReadCardinal(FBackGroundColor);
-
-    ReadInteger(FHorzAlign);
-    ReadInteger(FVertAlign);
-
-    ReadString(FCellText);
-
-    If FileFlag <> $AA55 Then
-      ReadString(FCellDispformat);
-
-    If FileFlag = $AA57 Then
-    Begin
-      read(Fbmpyn, SizeOf(FbmpYn));
-      If FbmpYn Then
-        FBmp.LoadFromStream(stream);
-    End;
-
-    ReadTLogFont(FLogFont);
-
-    ReadInteger(Count1);
-    ReadInteger(Count2);
-
-    If (Count1 < 0) Or (Count2 < 0) Then
-      FOwnerCell := Nil
-    Else
-      FOwnerCell :=
-        TReportCell(TReportLine(Self.ReportControl. FLineList[Count1]).FCells[Count2]);
-
-    ReadInteger(Count3);
-
-    For K := 0 To Count3 - 1 Do
-    Begin
-      ReadInteger(Count1);
-      ReadInteger(Count2);
-      FSlaveCells.Add(TReportCell(TReportLine(Self.ReportControl.FLineList[Count1]).FCells[Count2]));
-    End;
-   end;
-end;
-procedure TReportCell.Save(s: TSimpleFileStream);
-begin
-  FCellText := Self.ReportControl.getFormulaValue(Self);
-  Self.SaveInternal(s);
-end;
-procedure TReportCell.SaveInternal(s: TSimpleFileStream);
-var k :  integer;
-    w : TSimpleWriter;
-begin
-  w := TSimpleWriter.Create(s);
-  w.Int(FLeftMargin)
-   .Int(FCellIndex)
-   .Int(FCellLeft)
-   .Int(FCellWidth)
-   .Rect(FCellRect)
-   .Rect(FTextrect)
-   .Int(FCellHeight)
-   .Int(FCellHeight)
-   .Int(FRequiredCellHeight)
-   .Bool(FLeftLine)
-   .Int(FLeftLineWidth)
-   .Bool(FTopLine)
-   .Int(FTopLineWidth)
-   .Bool(FRightLine)
-   .Int(FRightLineWidth)
-   .Bool(FBottomLine)
-   .Int(FBottomLineWidth)
-   .Cardinal(FDiagonal)
-   .Cardinal(FTextColor )
-   .Cardinal(FBackGroundColor )
-   .Int(FHorzAlign)
-   .Int(FVertAlign)
-   .Str(FCellText)
-   .Str(FCellDispformat)
-   .Bool(Fbmpyn) ;
-    If FbmpYn Then
-      FBmp.SaveToStream(s);
-    w.LogFont(FLogFont);
-
-    // 属主CELL的行，列索引
-    If FOwnerCell <> Nil Then
-    Begin
-      w.Int(FOwnerCell.OwnerLine.FIndex)
-      .Int(FOwnerCell.FCellIndex);
-    End
-    Else
-    Begin
-      w.Int(-1).Int(-1);
-    End;
-    w.Int(FSlaveCells.Count);
-    For K := 0 To FSlaveCells.Count - 1 Do
-    Begin
-      w.Int(FSlaveCells[K].OwnerLine.FIndex);
-      w.Int(FSlaveCells[K].FCellIndex);
-    End;
-  w.free;
-end;
 
 
 procedure TReportCell.Sibling(Cell: TReportCell);
@@ -2031,26 +1855,6 @@ begin
   // 除了第一个Cell都删掉
   Cells.Delete(0);
   Cells.DeleteCells ;
-end;
-
-procedure TReportLine.Load(s: TSimpleFileStream);
-begin
-  s.ReadInteger(FIndex);
-  s.ReadInteger(FMinHeight);
-  s.ReadInteger(FDragHeight);
-  s.ReadInteger(FLineTop);
-  s.ReadRect(FLineRect);
-end;
-
-procedure TReportLine.Save(s: TSimpleFileStream);
-begin
-  with s do begin
-    WriteInteger(FIndex);
-    WriteInteger(FMinHeight);
-    WriteInteger(FDragHeight);
-    WriteInteger(FLineTop);
-    WriteRect(FLineRect);
-  end;
 end;
 
 procedure TReportLine.calcLineTop;
@@ -2878,58 +2682,7 @@ begin
     ,FPageHeight,FLeftMargin,FTopMargin,FRightMargin,FBottomMargin,Integer(FNewTable),FDataLine,FTablePerPage,linelist.tojson()]);
   result := '{'+result +'}';
 end;
-Procedure TReportControl.InternalSavetoJSON(FLineList:TList;FileName: String);
-Var
-  TargetFile: TSimpleFileStream;
-  I,j: Integer;
-  ccc : TReportCell;
-Begin
-  TargetFile := TSimpleFileStream.Create(FileName, fmOpenWrite Or fmCreate);
-  Try
-    With TargetFile Do
-    Begin  
-      WriteWord($AA57);
-      WriteInteger(FReportScale);
-      //WriteInteger(FPageWidth);
-      WriteInteger(FPageWidth);
-      WriteInteger(FPageHeight);
-      WriteInteger(FLeftMargin);
-      WriteInteger(FTopMargin);
-      WriteInteger(FRightMargin);
-      WriteInteger(FBottomMargin);
-      WriteInteger(FLeftMargin1);
-      WriteInteger(FTopMargin1);
-      WriteInteger(FRightMargin1);
-      WriteInteger(FBottomMargin1);
-      WriteBoolean(FNewTable);
-      WriteInteger(FDataLine);
-      WriteInteger(FTablePerPage);
-      WriteInteger(FLineList.Count);
-      For I := 0 To FLineList.Count - 1 Do
-        WriteInteger(TReportLine(FLineList[I]).FCells.Count);
-      //  {$Optimization off}
-      For I := 0 To FLineList.Count - 1 Do
-      Begin
-        TReportLine(FLineList[I]).Save(TargetFile);
-        For J := 0 To TReportLine(FLineList[I]).FCells.Count - 1 Do
-        begin
-          ccc := TReportCell(TReportLine(FLineList[I]).FCells[J]);
-          ccc.Save(TargetFile);
-          // Cells[I,J].Save(TargetFile);
-        end;
-      End;
-      // {$Optimization on}
-      WriteInteger(FprPageNo);
-      WriteInteger(FprPageXy);
-      WriteInteger(fPaperLength);
-      WriteInteger(fPaperWidth);
-      WriteInteger(0);//FHootNo
-    End;
-  Finally
-    // Free will call File.close before destroy finally
-    TargetFile.Free;
-  End;
-End;
+
 Procedure TReportControl.AddLine;
 Var
   TempLine: TReportLine;
@@ -3561,64 +3314,7 @@ begin
     Result := ThisCell.FCellText;
 end;
 
-Procedure TReportControl.InternalSaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);
-Var
-  TargetFile: TSimpleFileStream;
-  I,j: Integer;
-  ccc : TReportCell;
-Begin
-  TargetFile := TSimpleFileStream.Create(FileName, fmOpenWrite Or fmCreate);
-  Try
-    With TargetFile Do
-    Begin
-      WriteWord($AA57);
-      WriteInteger(FReportScale);
-      WriteInteger(FPageWidth);
-      WriteInteger(FPageHeight);
-      WriteInteger(FLeftMargin);
-      WriteInteger(FTopMargin);
-      WriteInteger(FRightMargin);
-      WriteInteger(FBottomMargin);
-      WriteInteger(FLeftMargin1);
-      WriteInteger(FTopMargin1);
-      WriteInteger(FRightMargin1);
-      WriteInteger(FBottomMargin1);
-      WriteBoolean(FNewTable);
-      WriteInteger(FDataLine);
-      WriteInteger(FTablePerPage);  
-      WriteInteger(FLineList.Count);
-      For I := 0 To FLineList.Count - 1 Do
-        WriteInteger(TReportLine(FLineList[I]).FCells.Count);
-      //  {$Optimization off}
-      For I := 0 To FLineList.Count - 1 Do
-      Begin
-        TReportLine(FLineList[I]).Save(TargetFile);
-        For J := 0 To TReportLine(FLineList[I]).FCells.Count - 1 Do
-        begin
-          ccc := TReportCell(TReportLine(FLineList[I]).FCells[J]);
-          ccc.Save(TargetFile);
-          // Cells[I,J].Save(TargetFile);
-        end;
-      End;
-      // {$Optimization on}
-      WriteInteger(FprPageNo);
-      WriteInteger(FprPageXy);
-      WriteInteger(fPaperLength);
-      WriteInteger(fPaperWidth);
-      WriteInteger(0);//FHootNo
-    End;
-  Finally
-    // Free will call File.close before destroy finally
-    TargetFile.Free;
-  End;
-End;
 
-Procedure TReportControl.SaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);
-Begin
-  PrintPaper.prDeviceMode;
-  PrintPaper.GetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
-  InternalSavetoFile(FLineList,FileName,PageNumber, Fpageall);
-End;
 procedure TReportControl.loadFromFile(fn: string);
 begin
   loadfromjson(fn);
@@ -3670,95 +3366,6 @@ begin
   FLastPrintPageHeight := FPageHeight;
   UpdateLines;
 end;
-
-Procedure TReportControl.InternalLoadFromFile(FileName:string;FLineList:TList);
-Var
-  TargetFile: TSimpleFileStream;
-  FileFlag: WORD;
-  Count1, Count2, Count3: Integer;
-  ThisLine: TReportLine;
-  ThisCell: TReportCell;
-  I, J, K: Integer;
-  TempPChar: Array[0..3000] Of Char;
-  bHasDataSet: Boolean;
-  procedure Before ;
-  var
-    I : Integer;
-  begin
-      For I := 0 To FLineList.Count - 1 Do
-      Begin
-        ThisLine := TReportLine(FLineList[I]);
-        ThisLine.Free;
-      End;
-      FLineList.Clear;
-  end;
-  procedure After;
-  begin
-      Width := FPageWidth;
-      Height := FPageHeight;
-  end;
-Begin
-  TargetFile := TSimpleFileStream.Create(FileName, fmOpenRead);
-  Try
-    With TargetFile Do
-    Begin
-      ReadWord(FileFlag);
-      If (FileFlag <> $AA55) And (FileFlag <> $AA56) And (FileFlag <> $AA57) Then
-        raise Exception.create('打开文件错误');
-
-      Before ;      
-
-      ReadInteger(FReportScale);
-      ReadInteger(FPageWidth);
-      ReadInteger(FPageHeight);
-
-      ReadInteger(FLeftMargin);
-      ReadInteger(FTopMargin);
-      ReadInteger(FRightMargin);
-      ReadInteger(FBottomMargin);
-
-      ReadInteger(FLeftMargin1);
-      ReadInteger(FTopMargin1);
-      ReadInteger(FRightMargin1);
-      ReadInteger(FBottomMargin1);
-
-      ReadBoolean(FNewTable);
-      ReadInteger(FDataLine);
-      ReadInteger(FTablePerPage);
-      // 多少行
-      ReadInteger(Count1);
-      For I := 0 To Count1 - 1 Do
-      Begin
-        ThisLine := TReportLine.Create;
-  		  if (self is TReportControl) then
-        	ThisLine.FReportControl := Self;
-        FLineList.Add(ThisLine);
-        ReadInteger(Count2);
-        ThisLine.CreateLine(0, Count2, FRightMargin - FLeftMargin);
-      End;      
-      // 每行的属性
-      For I := 0 To FLineList.Count - 1 Do
-      Begin
-        ThisLine := TReportLine(FLineList[I]);
-        ThisLine.Load(TargetFile);
-        // 每个CELL的属性
-        For J := 0 To ThisLine.FCells.Count - 1 Do
-        Begin
-          ThisCell := TReportCell(ThisLine.FCells[J]);
-          ThisCell.Load(TargetFile,FileFlag);
-        End;
-      End;
-      ReadInteger(FprPageNo);
-      ReadInteger(FprPageXy);
-      ReadInteger(fpaperLength);
-      ReadInteger(fpaperWidth);
-      ReadIntegerSkip();//FHootNo
-    End;
-  Finally
-    TargetFile.Free;
-    After;
-  End;
-End;
 
 // 垂直切分单元格。一个单元格拆分成多个横向单元格（和OwnerCell无关
 Procedure TReportControl.VSplitCell(Number: Integer);
@@ -3992,6 +3599,11 @@ Begin
   Refresh;
 End;
 
+procedure TReportControl.SaveToFile(FileName: String);
+begin
+  savetojson(filename);
+end;
+
 // 2014-11-17 张英华 酸菜 3根。好。
 // SetFileCellWidth 根据用户拖动表格线修改模板文件中单元格的宽度
 // 将变化后的单元格宽度存入全局变量数组 
@@ -4084,10 +3696,10 @@ Begin
 End;
 
 
-procedure TReportControl.SaveToFile(FileName: String);
-begin
-  SaveToFile(FLineList,FileName,0,0);
-end;
+//procedure TReportControl.SaveToFile(FileName: String);
+//begin
+//  SaveToFile(FLineList,FileName,0,0);
+//end;
 
 procedure TPrinterPaper.Batch;
 begin
@@ -4588,91 +4200,6 @@ procedure TReportControl.EachProc_UpdateLineRect(thisLine:TReportLine;Index:inte
 begin
      ThisLine.LineRect;
 end;
-procedure TSimpleFileStream.ReadWord(var a: Word);
-begin
-  Read(a,SizeOf(word))
-end;
-procedure TSimpleFileStream.WriteWord(a: Word);
-begin
-  Write(a,SizeOf(word))
-end;
-procedure TSimpleFileStream.WriteInteger(a: Integer);
-begin
-  Write(a,SizeOf(Integer))
-end;
-
-procedure TSimpleFileStream.WriteBoolean(a: Boolean);
-begin
-  Write(a,SizeOf(boolean));
-
-end;
-
-procedure TSimpleFileStream.WriteRect( a: TRect);
-begin
-  Write(a,SizeOf(TRect))
-end;
-
-procedure TSimpleFileStream.WriteCardinal(a: Cardinal);
-begin
-    Write(a,SizeOf(Cardinal))
-end;
-
-procedure TSimpleFileStream.WriteString(a: String);
-var   TempPChar: Array[0..3000] Of char;count ,k:integer;
-begin
-    Count := Length(a);
-    WriteInteger(Count);
-    StrPCopy(TempPChar, a);
-    For K := 0 To Count - 1 Do
-      Write(TempPChar[K], 1);
-end;
-
-procedure TSimpleFileStream.WriteTLOGFONT(a: TLOGFONT);
-begin
-   Write(a,SizeOf(TLOGFONT))
-end;
-
-procedure TSimpleFileStream.ReadBoolean(var a: Boolean);
-begin
-  Read(a,SizeOf(Boolean))
-end;
-
-procedure TSimpleFileStream.ReadCardinal(var a: Cardinal);
-begin
-    Read(a,SizeOf(Cardinal))
-end;
-
-procedure TSimpleFileStream.ReadInteger(var a: Integer);
-begin
-    Read(a,SizeOf(Integer))
-end;
-procedure TSimpleFileStream.ReadIntegerSkip;
-var a: Integer;
-begin
-    Read(a,SizeOf(Integer))
-end;
-
-procedure TSimpleFileStream.ReadRect(var a: TRect);
-begin
-      Read(a,SizeOf(TRect))
-end;
-
-procedure TSimpleFileStream.ReadString(var a: String);
-var count1,k:integer;TempPChar: Array[0..3000] Of char;
-begin
-    ReadInteger(Count1);
-    tempPchar := #0;
-    For K := 0 To Count1 - 1 Do
-      Read(TempPChar[K], 1);
-    TempPChar[Count1] := #0;
-    a := StrPas(TempPChar);
-end;
-
-procedure TSimpleFileStream.ReadTLOGFONT(var a: TLOGFONT);
-begin
-      Read(a,SizeOf(TLOGFONT))
-end;
-
 
 function TLineList.TotalHeight: Integer;var i :Integer;
 begin
@@ -5206,109 +4733,6 @@ begin
   result := isNumberField  and (not IsNullField) 
 end;
 
-{ TSimpleReader }
-
-function TSimpleReader.Bool(var a: Boolean): TSimpleReader;
-begin
-     FStream.ReadBoolean(a);
-  result := Self;
-end;
-
-function TSimpleReader.Cardinal(var a: Cardinal): TSimpleReader;
-begin
-   FStream.ReadCardinal(a);
-  result := Self;
-end;
-
-constructor TSimpleReader.Create(sfs: TSimpleFileStream);
-begin
-  FStream := sfs;
-end;
-
-function TSimpleReader.Int(var a: Integer): TSimpleReader;
-begin
-    FStream.ReadInteger(a);
-  result := Self;
-end;
-
-function TSimpleReader.LOGFONT(var a: TLOGFONT): TSimpleReader;
-begin
-    FStream.ReadTLOGFONT(a);
-  result := Self;
-end;
-
-function TSimpleReader.Rect(var a: TRect): TSimpleReader;
-begin
-    FStream.ReadRect(a);
-  result := Self;
-end;
-
-function TSimpleReader.Str(var a: String): TSimpleReader;
-begin
-    FStream.ReadString(a);
-  result := Self;
-end;
-
-function TSimpleReader.Word(var a: Word): TSimpleReader;
-begin
-    FStream.ReadWord(a);
-  result := Self;
-end;
-
-{ TSimpleWriter }
-
-function TSimpleWriter.Bool(a: Boolean): TSimpleWriter;
-begin
-    FStream.WriteBoolean(a);
-  result := Self;
-end;
-
-function TSimpleWriter.Cardinal(a: Cardinal): TSimpleWriter;
-begin
-    FStream.WriteCardinal(a);
-  result := Self;
-end;
-
-constructor TSimpleWriter.Create(sfs: TSimpleFileStream);
-begin
-  FStream := sfs;
-end;
-
-function TSimpleWriter.Int(a: Integer): TSimpleWriter;
-begin
-  FStream.WriteInteger(a);
-  result := Self;
-end;
-
-function TSimpleReader.IntSkip:TSimpleReader;
-begin
-  FStream.ReadIntegerSkip;
-  result := Self;
-end;
-
-function TSimpleWriter.LOGFONT(a: TLOGFONT): TSimpleWriter;
-begin
-  FStream.WriteTLOGFONT(a);
-  result := Self;
-end;
-
-function TSimpleWriter.Rect(a: TRect): TSimpleWriter;
-begin
-  FStream.WriteRect(a);
-  result := Self;
-end;
-
-function TSimpleWriter.Str(a: String): TSimpleWriter;
-begin
-  FStream.WriteString(a);
-  result := Self;
-end;
-
-function TSimpleWriter.Word(a: Word): TSimpleWriter;
-begin
-   FStream.WriteWord(a);
-  result := Self;
-end;
 
 end.
 
