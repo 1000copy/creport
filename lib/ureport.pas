@@ -126,7 +126,7 @@ type
     //LCJ: 打印文件的纸张编号：比如 A4，A3，自定义纸张等。
     FprPageNo: integer;
     // 纸张纵横方向
-    FprPageXy: integer;
+    FPageOrientation: integer;
     // 纸张长度（高度）
     fpaperLength: integer;
     fpaperWidth: integer;
@@ -137,9 +137,9 @@ type
     procedure Batch;overload;
     procedure Batch(FprPageNo,FprPageXy,fpaperLength,fpaperWidth:Integer);overload;
     Procedure prDeviceMode;
-    procedure SetPaper(FprPageNo, FprPageXy, fpaperLength,
+    procedure SetPaper(FPageSize, FPageOrientation, fpaperLength,
       fpaperWidth: Integer);
-    procedure GetPaper(var FprPageNo, FprPageXy, fpaperLength,
+    procedure GetPaper(var FPageSize, FPageOrientation, fpaperLength,
       fpaperWidth: Integer);
   end;
 
@@ -769,31 +769,31 @@ begin
     dmFields:=dmFields or DM_PAPERSIZE;
     dmPapersize:=FprPageNo;
     dmFields:=dmFields or DM_ORIENTATION;
-    dmOrientation:=FprPageXy;
+    dmOrientation:=FPageOrientation;
 
     dmPaperLength:=fpaperLength;
     dmPaperWidth:=fpaperWidth;
   end;
 end;
-procedure TPrinterPaper.SetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth:Integer);
+procedure TPrinterPaper.SetPaper(FPageSize,FPageOrientation,fpaperLength,fpaperWidth:Integer);
 begin
     Devmode^.dmFields := Devmode^.dmFields Or DM_PAPERSIZE;
-    Devmode^.dmPapersize := FprPageNo;
+    Devmode^.dmPapersize := FPageSize;
     Devmode^.dmFields := Devmode^.dmFields Or DM_ORIENTATION;
-    Devmode^.dmOrientation := FprPageXy;
+    Devmode^.dmOrientation := FPageOrientation;
 
     Devmode^.dmPaperLength := fpaperLength;
     Devmode^.dmPaperWidth := fpaperWidth;
 end;
 
-procedure TPrinterPaper.GetPaper(var FprPageNo,FprPageXy,fpaperLength,fpaperWidth:Integer);
+procedure TPrinterPaper.GetPaper(var FPageSize,FPageOrientation,fpaperLength,fpaperWidth:Integer);
 begin
   With Devmode^ Do
   Begin
     dmFields := dmFields Or DM_PAPERSIZE;
-    FprPageNo := dmPapersize;
+    FPageSize := dmPapersize;
     dmFields := dmFields Or DM_ORIENTATION;
-    FprPageXy := dmOrientation;
+    FPageOrientation := dmOrientation;
     fPaperLength := dmPaperLength;
     fPaperWidth := dmPaperWidth;
   End;
@@ -806,7 +806,7 @@ Begin
   RegisterComponents('CReport', [TReportControl]);
 End;
 
-{TReportCell}   
+{TReportCell}
 
 Procedure TReportCell.SetLeftMargin(LeftMargin: Integer);
 Begin
@@ -2268,16 +2268,6 @@ begin
     DeleteObject(hGrayPen);
   end;
 end;
-  procedure TReportControl.mapDevice(Printer: TPrinter;Width, Height:Integer);
-  var PageSize: TSize;
-  begin
-  SetMapMode(Printer.Handle, MM_ISOTROPIC);
-  PageSize.cx := Printer.PageWidth;
-  PageSize.cy := Printer.PageHeight;
-  SetWindowExtEx(Printer.Handle, Width, Height, @PageSize);
-  SetViewPortExtEx(Printer.Handle, Printer.PageWidth, Printer.PageHeight,
-    @PageSize);
-  end;
 // FPageWidth  和 Width的关联，就是 FReportScale。所以，下面两行代码不行，因为没有考虑到缩放比例
 //  os.SetWindowExtent(hPaintDc,1, 1);
 //  os.SetViewportExtent(hPaintDC, 1, 1,);
@@ -2298,9 +2288,10 @@ begin
   rectPaint := ps.rcPaint;
   //
   c := Canvas.Create(hPaintDC);
-  c.SetMapMode();
-  c.SetWindowExtent(FPageWidth, FPageHeight);
-  c.SetViewportExtent(Width, Height);
+//       FPageWidth  == Width 完全相等，不必做mapmode
+//  c.SetMapMode();
+//  c.SetWindowExtent(FPageWidth, FPageHeight);
+//  c.SetViewportExtent(Width, Height);
   os.InverseScaleRect(rectPaint,FReportScale);
   c.Rectangle(0, 0, FPageWidth, FPageHeight);
   DrawCornice(hPaintDC);
@@ -2323,7 +2314,7 @@ begin
       Rect := os.IntersectRect( ps.rcPaint,FSelectCells[I].CellRect);
       if not os.IsRectEmpty(Rect) then
         InvertRect(hPaintDC, Rect);
-    End;     
+    End;
 end;
 
 Procedure TReportControl.WMPaint(Var Message: TMessage);
@@ -3438,9 +3429,19 @@ Begin
 End;
 // 打印模板。就是不填入数据的情况下，把设计态表格打印出来 。
 // 肯定只有一页，因此不需要考虑分页问题
+procedure TReportControl.mapDevice(Printer: TPrinter;Width, Height:Integer);
+  var PageSize: TSize;
+  begin
+  SetMapMode(Printer.Handle, MM_ISOTROPIC);
+  PageSize.cx := Printer.PageWidth;
+  PageSize.cy := Printer.PageHeight;
+  SetWindowExtEx(Printer.Handle, Width, Height, @PageSize);
+  SetViewPortExtEx(Printer.Handle, Printer.PageWidth, Printer.PageHeight,
+    @PageSize);
+  end;
+
 Procedure TReportControl.PrintIt;
 Var
-  hPrinterDC: HDC;
   I, J: Integer;
   ThisLine: TReportLine;
   ThisCell: TReportCell;
@@ -3449,15 +3450,10 @@ Var
 Begin
   Printer.Title := 'C_Report';
   Printer.BeginDoc;
-  hPrinterDC := Printer.Handle;
-  SetMapMode(hPrinterDC, MM_ISOTROPIC);
-  PageSize.cx := Printer.PageWidth;
-  PageSize.cy := Printer.PageHeight;
-  SetWindowExtEx(hPrinterDC, Width, Height, @PageSize);
-  SetViewPortExtEx(hPrinterDC, Printer.PageWidth, Printer.PageHeight,@PageSize);
+  mapdevice(Printer,Width,Height);
   For I := 0 To FLineList.Count - 1 Do
   Begin
-    ThisLine := TReportLine(FLineList[I]);         
+    ThisLine := TReportLine(FLineList[I]);
     For J := 0 To TReportLine(FLineList[i]).FCells.Count - 1 Do
     Begin
       ThisCell := TReportCell(ThisLine.FCells[J]); 
@@ -3469,10 +3465,10 @@ Begin
         LTempRect.Right := ThisCell.FCellRect.Right - 3;
         LTempRect.Bottom := ThisCell.FCellRect.Bottom - 3;
         printer.Canvas.stretchdraw(LTempRect, ThisCell.fbmp);
-        ThisCell.PaintCell(hPrinterDC, True);                
+        ThisCell.PaintCell(Printer.Handle, True);                
       End;   
     End;
-  End;        
+  End;
   Printer.EndDoc;
 End;
 
