@@ -1,5 +1,5 @@
-﻿// holiday of Spring Day is coming . workmate is playing ,so noise . so now it is time to go home
-unit ReportRunTime;
+﻿unit ReportRunTime;
+{$HINTS off}
 
 interface
 uses ureport,  Windows, Messages, SysUtils,
@@ -104,7 +104,6 @@ type
     procedure PaddingEmptyLine(hasdatano: integer; var dataLineList: TLineList);overload;
     function GetPrintRange(var A, Z: Integer): boolean;
     procedure PrintRange(Title: String; FromPage, ToPage: Integer);
-  // render : what 's diference on RenderText vs . RenderTextOnly vs. RenderCell ?
   Protected
     function getFormulaValue(ThisCell: TReportCell): String;override;
   private
@@ -123,7 +122,6 @@ type
     function  EditReport (FileName:String):TReportControl;overload;
     procedure PreparePrintFiles();
     Procedure Print();
-    Procedure Resetself;
     Function Cancelprint: boolean;
     Property ReportFile: TFilename Read FFileName Write SetReportFileName;
 
@@ -138,7 +136,6 @@ type
   private
     FRC:TReportRuntime;
     FLineList:TLineList;
-//    FDataLineList :TLineList ;
     procedure ResetData;
     procedure SavePage(fpagecount, FpageAll:Integer);
     procedure JoinList(FPrintLineList: TList; IsLastPage: Boolean);
@@ -204,21 +201,24 @@ begin
     if cf.IsAvailableNumberField and (ThisCell.CellDispformat <> '') then
       Value := ThisCell.FormatValue(cf.DataValue);
     result := Value;
-    if '(Graphic)' = CellText then
-      raise Exception.create('');
   finally
     cf.Free;
   end;
 end;
 function TReportRunTime.getFormulaValue(ThisCell:TReportCell):String;
+function isvar(s:string):Boolean;begin
+  result := (s='`DATETIME') or (s='`DATE') or (s='`TIME')   
+end;
 begin
   Result := ThisCell.FCellText;
-  If  ThisCell.IsPageNumFormula Then
+  if isvar(thiscell.CellText) then
+    result := getvarvalue(thiscell.CellText)
+  else If  ThisCell.IsPageNumFormula Then
     Result :=Format(cc.PageFormat1,[FPageIndex+1])
   Else If ThisCell.IsPageNumFormula1  Then
-    Result :=Format(cc.PageFormat,[FPageIndex,FPageAll])
+    Result :=Format(cc.PageFormat,[FPageIndex+1,FPageAll])
   Else If ThisCell.IsPageNumFormula2 Then
-    Result :=Format(cc.PageFormat2,[FPageIndex,FPageAll])
+    Result :=Format(cc.PageFormat2,[FPageIndex+1,FPageAll])
   Else If ThisCell.IsSumPageFormula Then
     Result := getPageSum(thiscell.FCellDispformat,ThisCell.FCellText)
   Else If ThisCell.IsSumAllFormula  Then
@@ -511,14 +511,6 @@ Begin
 End;
 
 
-Procedure treportruntime.resetself;
-Begin
-  FNamedDatasets.clear;
-  fvarlist.clear;
-  flinelist.clear;
-  fprintlinelist.clear;
-  FDRMap.clear;
-End;
 
 Function TReportRunTime.GetVarValue(strVarName: String): String;
 begin
@@ -559,9 +551,7 @@ var
 Begin
   slice := StrSlice.Create(ss);
   s := slice.Slice(slice.GoUntil('(')+1,slice.GoUntil(')')-1);
-   {$Warnings Off}
   val(s, Value, iCode);
-   {$Warnings on}
   if iCode = 0 then begin
     Value := strtoint(s) ;
     Result := FormatFloat(fm,FSummer.GetSumAll(Value));
@@ -590,6 +580,7 @@ Begin
 function TReportRunTime.EditReport(FileName:String):TReportControl;
 begin
   loadFromJson(FileName);
+  result := nil;
 end;
 
 constructor RenderException.Create;
@@ -642,7 +633,7 @@ begin
       TDataSetItem(Items[I]).Free;
 end;
 
-// TODO :���´��붼�úúø��¡�
+
 function TReportRunTime.GetValue(ThisCell:TReportCell):String;
 var
     cellText ,FieldName:string;
@@ -1152,6 +1143,11 @@ end;
 
 function RenderParts.AppendList( l1, l2:TList):Boolean;var n :integer;
 begin
+    if l2 = nil then begin
+      result := false;
+      exit;
+    end;
+
     For n := 0 To l2.Count - 1 Do
       l1.Add(l2[n]);
     result := true;

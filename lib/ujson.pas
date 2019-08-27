@@ -297,6 +297,7 @@ begin
         end
         else
         begin
+          {$HINTS OFF}
           case JsonParser.Ch of
             '"': SpecChar := '"';
             '\': SpecChar := '\';

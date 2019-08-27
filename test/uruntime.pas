@@ -25,6 +25,7 @@ type
     strFileDir:string;
     procedure makereport;
 
+
   protected
     procedure SetUp; override;
     procedure TearDown; override;
@@ -38,6 +39,11 @@ type
     procedure drawtext1;
     procedure print;
     procedure sum1;
+    procedure tablehead;
+    procedure var1;
+    procedure averror;
+    procedure pagenum;
+    procedure pagenumIfWithSumline;
   end;
 
 
@@ -175,13 +181,84 @@ begin
       R.PrintPreview();
       check(format('%2n',[r.Summer.GetSumAll(1)]) ='1,540.30', format('%2n',[r.Summer.GetSumAll(1)]));
 end;
+
+procedure TReportRunTimeTest.var1;
+var i:integer;
+begin
+      makereport();
+      with  R do
+      begin
+//        visible := true;
+        Cells[0,0].CellText := '`DATETIME';
+        Cells[1,0].CellText := '`DATE';
+        Cells[1,1].CellText := '`TIME';
+      end;
+      t1.EmptyDataSet;
+      for I:= 0 to 1 do
+        t1.AppendRecord([I,(cos(I)*1000)]);
+      r.PrintPreview;
+end;
+procedure TReportRunTimeTest.averror;
+begin
+      makereport();
+      with  R do
+      begin
+//        visible := true;
+        Cells[0,0].CellText := '`DATETIME';
+      end;
+      t1.EmptyDataSet;
+      r.PrintPreview;
+end;
+procedure TReportRunTimeTest.tablehead;
+begin
+      makereport();
+      with  R do
+      begin
+        r.ResetContent;
+        NewTable(2,2);
+        visible := true;
+        Cells[0,0].CellText := '@t2.f1';
+      end;
+      t1.EmptyDataSet;
+      r.PrintPreview;
+end;
+procedure TReportRunTimeTest.pagenum;
+begin
+      makereport();
+      with  R do
+      begin
+        //Cells[0,0].CellText := '@t2.f1';
+        visible := true ;
+        Cells[3,0].Select;
+        r.VSplitCell(2);
+        Cells[3,0].CellText := '`PAGENUM';
+        Cells[3,1].CellText := '`PAGENUM/';
+        Cells[3,2].CellText := '`PAGENUM-';
+      end;
+      r.PrintPreview;
+end;
+
+procedure TReportRunTimeTest.pagenumIfWithSumline;
+begin
+      makereport();
+      with  R do
+      begin
+        //Cells[0,0].CellText := '@t2.f1';
+        visible := true ;
+        Cells[3,0].Select;
+        r.VSplitCell(2);
+        Cells[3,0].CellText := '`PAGENUM';
+        Cells[3,1].CellText := '`PAGENUM/';
+        Cells[3,2].CellText := '`SUMALL(1)';
+      end;
+      r.PrintPreview;
+end;
 //ISVar GetVar  `DATE `TIME
 procedure TReportRunTimeTest.TearDown;
 begin
   inherited;
     T1.free;
-    T2.Free;
-
+    T2.Free;    
 end;
 
 initialization

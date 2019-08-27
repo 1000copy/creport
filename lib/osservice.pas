@@ -84,7 +84,7 @@ type
     procedure SetViewportExtent(hPaintDC:HDC;x,y:integer);
     procedure SetWindowExtent(hPaintDC:HDC;x,y:integer);
     constructor Create;
-    destructor Destroy;
+    destructor Destroy;override;
   end;
   procedure CheckError(condition:Boolean ;msg :string);
 implementation
@@ -92,8 +92,6 @@ implementation
 { WindowsOS }
 
 function WindowsOS.UnionRect(lprcSrc1, lprcSrc2: TRect): TRect;
-var
-   r: TRect;
 begin
   if not windows.UnionRect(Result,lprcSrc1,lprcSrc2)  then
     SetRectEmpty(result);
@@ -101,8 +99,6 @@ begin
 end;
 
 class function WindowsOS.IntersectRect(lprcSrc1, lprcSrc2: TRect): TRect;
-var
-   r: TRect;
 begin
   if not windows.IntersectRect(Result,lprcSrc1,lprcSrc2)  then
     windows.SetRectEmpty(result);
@@ -142,6 +138,7 @@ end;
 destructor WindowsOS.Destroy;
 begin
     ReleaseDC(0, hDesktopDC);
+    inherited ;
 end;
 function WindowsOS.MapDots(FromHandle:THandle;ToHandle:THandle;FromLen:Integer):Integer;
 begin
@@ -151,7 +148,6 @@ end;
 function WindowsOS.Height2LogFontHeight(PointSize: Integer): Integer;
 var h : HDC;
     Var
-  hTempDC: HDC;
   pt, ptOrg: TPoint;
 begin
     h := GetDC(0);
@@ -323,12 +319,14 @@ end;
 
 procedure WindowsOS.SetViewportExtent(hPaintDC: HDC; x, y: integer);
 begin
+  {$Warn ZERO_NIL_COMPAT OFF}
   SetViewportExtEx(hPaintDC,x,y,0);
 
 end;
 
 procedure WindowsOS.SetWindowExtent(hPaintDC: HDC; x, y: integer);
 begin
+  {$Warn ZERO_NIL_COMPAT OFF}
   SetWindowExtEx(hPaintDC,x ,y,0);
 
 end;

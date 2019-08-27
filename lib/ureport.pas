@@ -236,7 +236,9 @@ type
     function ToJson:String;
     procedure fromJson(json:Json);
     procedure empty;
+    {$warn TYPEINFO_IMPLICITLY_ADDED off}
   published
+    {$warn TYPEINFO_IMPLICITLY_ADDED on}
     {
     G:How do I force the linker to include a function I need during debugging?
     You can make function published.
@@ -515,6 +517,7 @@ type
       procedure fromJson(json:Json);
   public
     function toJson:String;
+    procedure loadFromFile(fn:string);
     procedure loadFromJson(fn:string);
     procedure savetoJson(fn:string);
     procedure savetoJson1(fn:string;LineList:TLineList);
@@ -629,7 +632,7 @@ type
     Destructor Destroy; Override;
     Procedure SaveToFile(FileName: String);overload;
     Procedure SaveToFile(FLineList:TList;FileName: String;PageNumber, Fpageall:integer);overload;
-    Procedure LoadFromFile(FileName: String);
+//    Procedure LoadFromFile(FileName: String);
     Procedure DoLoadBmp(Cell: Treportcell; filename: String);
     Procedure FreeBmp(Cell: Treportcell);
     Procedure PrintIt;
@@ -934,7 +937,7 @@ Begin
     Cell := FSlaveCells[I];
     Cell.SetOwnerCell(Nil);
     Cell.CalcHeight;
-  End;                   
+  End;
   FSlaveCells.Clear;
 End;
 
@@ -1193,7 +1196,6 @@ Procedure TReportCell.CalcCellTextRect;
   Var
     R: TRect;
     SpaceHeight,HalfSpaceHeight,TextHeight,RealHeight,delta: Integer;
-    I: Integer;
   begin
     R := FCellRect;
     R.left := R.Left + FLeftMargin + 1;
@@ -1233,7 +1235,7 @@ Begin
   CalcTextRect;
 End;
 procedure TReportCell.DrawDragon(hPaintDc:HDC);
-var p1,p2:TPoint ;R:TRect;
+var p1,p2:TPoint ;
 procedure DrawLine(hPaintDC:HDC;p1,p2:TPoint);
 begin
       MoveToEx(hPaintDC,p1.x, p1.y, Nil);
@@ -1642,10 +1644,6 @@ end;
 
 function TReportCell.GetCellType: CellType;
 begin
-  if (FOwnerCell = nil) and (FSlaveCells.Count = 0) then begin
-    result := ctNormalCell ;
-    exit;
-  end;
   if (FOwnerCell = nil) and (FSlaveCells.Count > 0) then begin
     result := ctOwnerCell ;
     exit;
@@ -1653,7 +1651,8 @@ begin
   if FOwnerCell <> nil  then begin
     result := ctSlaveCell ;
     exit;
-  end;                   
+  end;
+  result := ctNormalCell ;
 end;
 
 
@@ -1669,13 +1668,8 @@ end;
 
 procedure TReportCell.Load(stream: TSimpleFileStream;FileFlag:Word);
 Var
-  TargetFile: TSimpleFileStream;
   Count1, Count2, Count3: Integer;
-  ThisLine: TReportLine;
-  ThisCell: TReportCell;
-  I, J, K: Integer;
-  TempPChar: Array[0..3000] Of Char;
-  bHasDataSet: Boolean;
+  K: Integer;
 begin
   with stream do
   begin
@@ -2015,7 +2009,6 @@ end;
 
 procedure TReportLine.CombineSelected;
 Var
-  I,J: Integer;
   Cells : TCellList;
 begin
     If IsSelected Then
@@ -2031,8 +2024,6 @@ begin
 end;
 
 procedure TReportLine.CombineCells(Cells: TCellList);
-Var
-  I,J: Integer;
 begin
   assert(cells <> nil);
   assert(cells.count > 0);
@@ -2138,6 +2129,7 @@ begin
       (
         (Length(CellText) > 0) And (FCellText[1] <> '#')
         And (FCellText[1] <> '`')
+        And (FCellText[1] <> '@')
       )
 end;
 
@@ -2320,9 +2312,6 @@ Begin
 End;
 
 Constructor TReportControl.Create(AOwner: TComponent);
-Var
-  hDesktopDC: HDC;
-  nPixelsPerInch: Integer;
 Begin
   Inherited Create(AOwner);
   FTextEdit:=Edit.Create(self);
@@ -2378,9 +2367,6 @@ Begin
 End;
 
 Destructor TReportControl.Destroy;
-Var
-  I: Integer;
-  ThisLine: TReportLine;
 Begin
   FSelectCells.Free;
   FSelectCells := Nil;
@@ -2439,13 +2425,11 @@ End;
 //   cornice 飞檐     horn 犄角
 procedure TReportControl.DrawCornice(hPaintDC:HDC);
 Var
-  I, J: Integer;
-  TempRect: TRect;
   hGrayPen, hPrevPen: HPEN;
 begin
   hGrayPen := CreatePen(PS_SOLID, 1, cc.Grey);
+  hPrevPen := SelectObject(hPaintDC, hGrayPen);
   try
-    hPrevPen := SelectObject(hPaintDC, hGrayPen);
     // 左上
     MoveToEx(hPaintDC, FLeftMargin, FTopMargin, Nil);
     LineTo(hPaintDC, FLeftMargin, FTopMargin - 25);
@@ -2550,9 +2534,7 @@ End;
 
 Procedure TReportControl.WMLButtonDBLClk(Var Message: TMessage);
 Var
-  ThisCell: TReportCell;
   TempPoint: TPoint;
-  dwStyle: DWORD;
 Begin
   If Not Cpreviewedit Then              
   Begin
@@ -2643,7 +2625,6 @@ End;
 
 procedure TReportControl.UpdateHeight(ThisCell:TReportCell;Y:Integer);
 var
-    i :integer;
     BottomCell: TReportCell;
 begin
   If ThisCell.FSlaveCells.Count <= 0 Then
@@ -2663,14 +2644,8 @@ end;
 // 当前选中Cell和它的NextCell修改CellLeft，CellWidth，然后最两个Cell的前后矩形做刷新
 procedure TReportControl.UpdateTwinCell(ThisCell:TReportCell;x:integer);
   Var
-  TempCell, TempNextCell: TReportCell;
-  ThisCellsList: TCellList;
-  TempRect, RectBorder, RectCell, RectClient: TRect;
-  hClientDC: HDC;
-  hInvertPen, hPrevPen: HPEN;
-  PrevDrawMode, PrevCellWidth, Distance: Integer;
-  I, J: Integer;
-  Top: Integer;
+  TempRect: TRect;
+  PrevCellWidth, Distance: Integer;
   var  NextCell: TReportCell;
   begin
     NextCell := ThisCell.NextCell;
@@ -2717,12 +2692,11 @@ procedure TReportControl.UpdateTwinCell(ThisCell:TReportCell;x:integer);
 procedure TReportControl.MaxDragExtent(ThisCell:TReportCell;var RectBorder: TRect);
 var
   NextCell: TReportCell;
-  ThisLine, TempLine: TReportLine;
+  ThisLine: TReportLine;
 begin
   ThisLine := ThisCell.OwnerLine;
   RectBorder.Top := ThisLine.LineTop + (cc.DRAGMARGIN div 2);
   RectBorder.Bottom := Height - cc.DRAGMARGIN;
-  NextCell := Nil;
   RectBorder.Left := ThisCell.CellLeft + cc.DRAGMARGIN;
   If ThisCell.CellIndex < ThisLine.FCells.Count - 1 Then
   Begin
@@ -2736,13 +2710,12 @@ end;
 function TReportControl.QueryMaxDragExtent(ThisCell:TReportCell):TRect;
 var
   NextCell: TReportCell;
-  ThisLine, TempLine: TReportLine;
+  ThisLine: TReportLine;
   RectBorder: TRect ;
 begin
   ThisLine := ThisCell.OwnerLine;
   RectBorder.Top := ThisLine.LineTop + (DRAGMARGIN div 2);
   RectBorder.Bottom := Height - DRAGMARGIN;
-  NextCell := Nil;
   RectBorder.Left := ThisCell.CellLeft + DRAGMARGIN;
   If ThisCell.CellIndex < ThisLine.FCells.Count - 1 Then
   Begin
@@ -2993,7 +2966,7 @@ End;
 
 Function TReportControl.CanSplit: Boolean;
 Begin
-  Result := (FSelectCells.Count = 1) and (FSelectCells[0].FSlaveCells.Count > 0)
+  Result := (FSelectCells.Count = 1) and (FSelectCells[0].FSlaveCells.Count = 0)
 //  If (FSelectCells.Count = 1) Then
 //  Begin
 //    If FSelectCells[0].FSlaveCells.Count > 0 Then
@@ -3117,7 +3090,6 @@ Procedure TReportControl.NewTable(ColNumber, RowNumber: Integer);
 Var
   I: Integer;
   FirstLine: TReportLine;
-  PaintRect: TRect;
 Begin
   If FLineList.Count > 0 Then
   Begin
@@ -3139,8 +3111,6 @@ End;
 Procedure TReportControl.SplitCell;
 Var
   c: TReportCell;
-  r : TRect;
-  I: Integer;
 Begin
   If CanSplit Then
   Begin
@@ -3338,7 +3308,7 @@ begin
   result := format('{"Index":%d,"MinHeight":%d,"DragHeight":%d,"LineTop":%d,"Cells":[%s]}',[self.FIndex,self.FMinHeight,self.FDragHeight,self.FLineTop,s]);
 end;
 procedure TReportLine.fromJson(json:Json);
-var cell : TReportcell;i:integer;s:string;
+var cell : TReportcell;i:integer;
 begin
   self.FIndex := json._int('Index');
   self.FMinHeight := json._int('MinHeight');
@@ -3362,9 +3332,8 @@ end;
 
 Procedure TReportControl.UpdateLines;
 var
-  I, J: Integer;
-  c,ThisLine: TReportLine;
-  ThisCell: TReportCell;
+  I: Integer;
+  ThisLine: TReportLine;
 Begin
   EachCell(EachCell_CalcMinCellHeight_If_Master);
   EachLine(EachLine_CalcLineHeight);
@@ -3402,6 +3371,7 @@ var i :integer;
 Begin
   for i := 0 to Cells.Count -1 do
     AddSelectedCell(Cells[i]);
+  result := true;
 End;
 
 Function TReportControl.CellFromPoint(point: TPoint): TReportCell;
@@ -3523,9 +3493,6 @@ Begin
 End;
 
 Procedure TReportControl.AddCell;
-Var
-  ThisLine: TReportLine;
-  ThisCell, NewCell: TReportCell;
 Begin
   If FSelectCells.Count <> 1 Then
     Exit;
@@ -3583,8 +3550,6 @@ Begin
 End;
 
 Procedure TReportControl.InsertCell;
-Var
-  NewCell: TReportCell;
 Begin
   If FSelectCells.Count <> 1 Then
     Exit;          
@@ -3654,12 +3619,17 @@ Begin
   PrintPaper.GetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
   InternalSavetoFile(FLineList,FileName,PageNumber, Fpageall);
 End;
+procedure TReportControl.loadFromFile(fn: string);
+begin
+  loadfromjson(fn);
+end;
+
 procedure TReportControl.loadFromJson(fn: string);var sl : TStringList;op:Json;
 begin
     sl := TStringList.create;
+    op := Json.create(sl.Text);
     try
       sl.LoadFromFile(fn);
-      op := Json.create(sl.Text);
       op.parse;
       self.fromJson(op);
     finally
@@ -3701,25 +3671,6 @@ begin
   UpdateLines;
 end;
 
-Procedure TReportControl.LoadFromFile(FileName: String);
-Var
-  TargetFile: TFileStream;
-  FileFlag: WORD;
-  Count1, Count2, Count3: Integer;
-  ThisLine: TReportLine;
-  ThisCell: TReportCell;
-  I, J, K: Integer;
-  TempPChar: Array[0..3000] Of Char;
-Begin
-  InternalLoadFromFile(FileName,Self.FLineList);
-  PrintPaper.prDeviceMode;
-  PrintPaper.SetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
-  FTextEdit.DestroyIfVisible;
-  FLastPrintPageWidth := FPageWidth;             //1999.1.23
-  FLastPrintPageHeight := FPageHeight;
-  UpdateLines;
-
-End;
 Procedure TReportControl.InternalLoadFromFile(FileName:string;FLineList:TList);
 Var
   TargetFile: TSimpleFileStream;

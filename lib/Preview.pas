@@ -57,7 +57,7 @@ type
     DataNameFilst:Tlist;
 
     procedure GoFirstPage;
-    procedure PrintFile(strFileName: string);
+//    procedure PrintFile(strFileName: string);
     function RR:TReportRuntime;
     procedure updateStatus;
     class procedure Action(ReportFile:string;FPageCount:Integer);
@@ -105,11 +105,11 @@ begin
   Close;
 end;
 
-procedure TPreviewForm.PrintFile(strFileName: string);
-begin
-  RC.LoadFromFile(strFileName);
-  RC.PrintIt;
-end;
+//procedure TPreviewForm.PrintFile(strFileName: string);
+//begin
+//  RC.LoadFromFile(strFileName);
+//  RC.PrintIt;
+//end;
 
 procedure TPreviewForm.SetPreviewMode();
 begin

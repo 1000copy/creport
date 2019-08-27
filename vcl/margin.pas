@@ -51,7 +51,7 @@ begin
   okset:=false;
   if (FileExists( filename.Caption)) then
   begin
-    ReportControl1.LoadFromFile(filename.Caption); //装入模版以做修改页面或纸张
+    ReportControl1.loadFromJson(filename.Caption); //装入模版以做修改页面或纸张
     MarginRect := ReportControl1.GetMargin;
     LeftMargin.Value := MarginRect.Left;
     TopMargin.Value := MarginRect.Top;
