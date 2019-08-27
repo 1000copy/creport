@@ -45,6 +45,7 @@ type
     procedure pagenum;
     procedure pagenumIfWithSumline;
     procedure pagenumIfWithSumline1;
+    procedure printit;
 
   end;
 
@@ -110,6 +111,25 @@ begin
     end;
     R.ReportFile:=strFileDir+'\'+'1.json';
     R.Print();
+    form.free;
+end;
+procedure TReportRunTimeTest.printit;
+var i:integer;
+   form : TForm ;
+begin
+    form := TForm.create(nil);
+    R:=TReportRunTime.Create(form);
+    r.Visible := false;
+    r.CalcWndSize;
+    R.SetData(t1,t2);
+    t1.Open;
+    t2.Open;
+    for I:= 0 to 100 do begin
+        t1.AppendRecord([I,(cos(I)*1000)]);
+        t2.AppendRecord([2]);
+    end;
+    R.ReportFile:=strFileDir+'\'+'1.json';
+    R.PrintIt();
     form.free;
 end;
 procedure TReportRunTimeTest.preview;
