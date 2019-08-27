@@ -73,7 +73,7 @@ type
     procedure TextLine_vs_RequiredHeight;
     procedure DirectLoad;
     procedure TopAlign;
-    procedure LoadSave_now_it_is_shift_to_you ;
+//    procedure LoadSave_now_it_is_shift_to_you ;
     procedure ReadTYpe ;
     procedure MeasureConvert;
     procedure SlaveHeight;
@@ -968,45 +968,45 @@ begin
     end;
 end;
 
-procedure TReportTest.LoadSave_now_it_is_shift_to_you;
-var s,b,Filename : string;
-    ThisCell:TReportCell;
-    R: TReportControl;
-    form : TCreportForm;
-Var
-  TargetFile: TSimpleFileStream;
-  FileFlag: WORD;
-  Count1, Count2, Count3: Integer;
-  ThisLine: TReportLine;
-  I, J, K: Integer;
-  TempPChar: Array[0..3000] Of Char;
-  bHasDataSet: Boolean;
-begin
-  form := TCreportForm.InitReport ;   
-  R := form.RC;
-  r.SetWndSize(1058,748);
-  r.NewTable(2 ,3);
-  r.Cells[0,0].Select;
-  r.Cells[1,0].Select;
-  r.Cells[2,0].Select;
-  r.CombineCell ;
-  r.Cells[0,0].VertAlign := TEXT_ALIGN_TOP ;
-  r.Cells[0,0].CalcHeight;
-  s := 'long text 111so is incremented absolutly ';
-  r.Cells[0,0].CellText := s ;
-  FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
-  R.SaveToFile(FileName);
-  TargetFile := TSimpleFileStream.Create(FileName, fmOpenRead);
-  Try
-    With TargetFile Do
-    Begin
-      ReadWord(FileFlag);Check($AA57=FileFlag);
-    end;
-  finally
-    targetFile.Free;
-    TCreportForm.UninitReport();
-  end;
-end;
+//procedure TReportTest.LoadSave_now_it_is_shift_to_you;
+//var s,b,Filename : string;
+//    ThisCell:TReportCell;
+//    R: TReportControl;
+//    form : TCreportForm;
+//Var
+//  TargetFile: TSimpleFileStream;
+//  FileFlag: WORD;
+//  Count1, Count2, Count3: Integer;
+//  ThisLine: TReportLine;
+//  I, J, K: Integer;
+//  TempPChar: Array[0..3000] Of Char;
+//  bHasDataSet: Boolean;
+//begin
+//  form := TCreportForm.InitReport ;   
+//  R := form.RC;
+//  r.SetWndSize(1058,748);
+//  r.NewTable(2 ,3);
+//  r.Cells[0,0].Select;
+//  r.Cells[1,0].Select;
+//  r.Cells[2,0].Select;
+//  r.CombineCell ;
+//  r.Cells[0,0].VertAlign := TEXT_ALIGN_TOP ;
+//  r.Cells[0,0].CalcHeight;
+//  s := 'long text 111so is incremented absolutly ';
+//  r.Cells[0,0].CellText := s ;
+//  FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
+//  R.SaveToFile(FileName);
+//  TargetFile := TSimpleFileStream.Create(FileName, fmOpenRead);
+//  Try
+//    With TargetFile Do
+//    Begin
+//      ReadWord(FileFlag);Check($AA57=FileFlag);
+//    end;
+//  finally
+//    targetFile.Free;
+//    TCreportForm.UninitReport();
+//  end;
+//end;
 
 
 

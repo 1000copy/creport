@@ -20,7 +20,8 @@ uses
   ureportjson in 'ureportjson.pas',
   ujson2rita in 'ujson2rita.pas',
   ustringtest in 'ustringtest.pas',
-  uruntime in 'uruntime.pas';
+  uruntime in 'uruntime.pas',
+  uprintpaper in 'uprintpaper.pas';
 
 {$R *.res}
 
