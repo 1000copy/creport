@@ -49,6 +49,9 @@
     <DCCReference Include="diagonal.pas">
       <Form>DiagonalForm</Form>
     </DCCReference>
+    <DCCReference Include="margin.pas">
+      <Form>MarginForm</Form>
+    </DCCReference>
     <DCCReference Include="NewDialog.pas">
       <Form>frmNewTable</Form>
     </DCCReference>

@@ -67,3 +67,11 @@ __recovery/
 
 # Boss dependency manager vendor folder https://github.com/HashLoad/boss
 modules/
+lib/ModelSupport_creport4/default.txaPackage
+lib/ModelSupport_creport4/osservice/default.txaPackage
+lib/ModelSupport_creport4/ReportRunTime/default.txaPackage
+lib/ModelSupport_creport4/ReportRunTime/default.txvpck
+lib/ModelSupport_creport4/ujson/default.txaPackage
+lib/ModelSupport_creport4/ujson/default.txvpck
+lib/ModelSupport_creport4/ureport/default.txaPackage
+lib/ModelSupport_creport4/ureport/default.txvpck

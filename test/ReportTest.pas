@@ -256,9 +256,9 @@ var Filename : string;
     R: TReportRunTime;
 begin
     R := TReportRunTime.Create(Application.MainForm);
-    R.Visible := false;
-    FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.ept';
-    r.SetWndSize(1058,748);
+//    R.Visible := false;
+    FileName := ExtractFileDir(Application.ExeName) + '\btnVertSplite.json';
+    r.CalcWndSize;
     r.NewTable(2 ,2);
     // 水平合并后，Cell确实减少
     r.ClearSelect ;
@@ -266,8 +266,7 @@ begin
     r.Cells[0,1].Select;
     r.CombineCell;
     assert(R.Lines[0].FCells.count = 1);
-    r.SaveToFile(Filename);
-    r.ResetContent;
+    r.savetoJson(Filename);
     R.EditReport(FileName);
 end;
 procedure TReportTest.CombineVertical;
@@ -1727,9 +1726,9 @@ end;
 
 initialization
   RegisterTests('Report',[
-      TReportRuntimeTest.Suite
-//      TReportTest.Suite,
-//      TReportUITest.Suite,
-//      TCDSTest.Suite
+      TReportRuntimeTest.Suite,
+      TReportTest.Suite,
+      TReportUITest.Suite,
+      TCDSTest.Suite
   ]);
 end.

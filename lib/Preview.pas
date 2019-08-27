@@ -41,7 +41,6 @@ type
     procedure RCMouseUp(Sender: TObject; Button: TMouseButton;
       Shift: TShiftState; X, Y: Integer);
     procedure SpeedButton3Click(Sender: TObject);
-    procedure PrintBtnClick(Sender: TObject);
     procedure FormShow(Sender: TObject);
   private
      // LCJ : ×î¼ÑËõ·Å±ÈÀý
@@ -195,16 +194,6 @@ begin
   RC.ReportScale := RC.ZoomRate(Self.ScrollBox1.Height,self.ScrollBox1.Width);
   ScrollBox1Resize(Self);
   ShowWindow(RC.Handle, SW_SHOW);
-end;
-
-
-
-
-procedure TPreviewForm.PrintBtnClick(Sender: TObject);
-begin
-//  SpeedButton2.Enabled:=True;
-//  TReportRunTime(Owner).Print(false);
-//  SpeedButton2.Enabled:=false;
 end;
 
 function TPreviewForm.RR: TReportRuntime;

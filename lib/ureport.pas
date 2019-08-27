@@ -586,6 +586,9 @@ type
     procedure InvertCell(Cell: TReportCell);
     procedure DoEdit(str:string);
     procedure DoMouseDown(P:TPoint;Shift:Boolean);
+    procedure DeleteAllTempFiles;
+    function ReadyFileName(PageNumber: Integer): String;
+
   Protected
     function getFormulaValue(ThisCell: TReportCell): String;virtual ;
     Procedure CreateWnd; Override;
@@ -3982,7 +3985,37 @@ Begin
     Refresh;
   end;
 End;
-
+Procedure TReportControl.DeleteAllTempFiles;
+Var
+  tempDir: String;
+Begin                             
+  Try
+    tempDir := Format('%s\temp\',[AppDir]);
+    If Not DirectoryExists(tempDir) Then
+      Exit;
+    os.DeleteFiles(tempDir, '*.tmp.json');
+    RmDir(tempDir);
+  Except
+  End;
+End;
+function TReportControl.ReadyFileName(PageNumber: Integer):String;
+  Var
+    FileName: String;
+  procedure EnsureTempDirExist;
+  Var
+    tempDir: String;
+  begin
+    tempDir := Format('%s\temp',[AppDir]);
+      If Not DirectoryExists(tempDir) Then
+        MkDir(tempDir);
+  end;
+begin
+  EnsureTempDirExist;
+  FileName := osservice.PageFileName(PageNumber);
+  If FileExists(FileName) Then
+    DeleteFile(FileName);
+  result := FileName;
+end;
 procedure TLineList.empty;var i : integer;
 begin
   For I := Count - 1 Downto 0 Do

@@ -8,7 +8,8 @@ uses
   NewDialog in 'NewDialog.pas' {frmNewTable},
   vsplit in 'vsplit.pas' {VSplitForm},
   about in 'about.pas' {AboutBox},
-  Creport in 'Creport.pas' {CreportForm};
+  Creport in 'Creport.pas' {CreportForm},
+  margin in 'margin.pas' {MarginForm};
 
 {$R *.RES}
 
@@ -21,6 +22,7 @@ begin
   Application.CreateForm(TfrmNewTable, frmNewTable);
   Application.CreateForm(TVSplitForm, VSplitForm);
   Application.CreateForm(Tfrm_About, frm_About);
+  Application.CreateForm(TMarginForm, MarginForm);
   Application.Run;
 end.
 

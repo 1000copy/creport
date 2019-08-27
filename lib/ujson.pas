@@ -69,7 +69,7 @@ public
     procedure format(sl:Tstringlist);
   public
     constructor create(a:string);
-    destructor destroy;
+    destructor Destroy;override;
     procedure parse;
 end;
 
@@ -99,7 +99,7 @@ implementation
     end;
     end;
     function Json._array(p:string):TJsonArray;
-    var i : integer;v : TJsonValue;
+    var i : integer;
     obj:TJsonObject;
     begin
     obj:= currentObject;
@@ -120,7 +120,7 @@ begin
   result := length(self.arr);
 end;
 function Json.locateObject(index:integer):TJsonObject;
-    var i : integer;v : TJsonValue;
+    var v : TJsonValue;
     begin
         result := nil ;
         v :=  arr[index];
@@ -146,6 +146,7 @@ end;
 destructor Json.destroy;
 begin
   self.FStack.free;
+  inherited;
 end;
 
 procedure Json.format(sl:TStringList);

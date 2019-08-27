@@ -7,12 +7,11 @@ uses ureport,  Windows, Messages, SysUtils,
    Classes, Graphics, Controls,
   Forms, Dialogs, Printers, Menus, Db,
   DesignEditors, ExtCtrls,osservice,cc;
-Procedure Register;
 
 
 type
   RenderParts =class ;
-   TSummer = class
+  TSummer = class
      SumPage, SumAll: Array[0..40] Of real;
    public
      procedure Acc(j:integer;value:real);
@@ -78,8 +77,6 @@ type
     Procedure SaveCurrentPage();overload;
     Procedure LoadReport;
 //    Procedure LoadTempFile(strFileName: String);
-    function ReadyFileName(PageNumber: Integer): String;
-    Procedure DeleteAllTempFiles;
   private
     // sum
     Function getSum(fm, ss: String): String;
@@ -123,11 +120,7 @@ type
     Destructor Destroy; Override;
     Procedure SetVarValue(strVarName, strVarValue: String);
     Procedure PrintPreview();
-    function  EditReport :TReportControl;overload;
     function  EditReport (FileName:String):TReportControl;overload;
-    Function shpreview: boolean;
-    Function PrintSET(prfile: String): boolean;
-    Procedure updatepage;
     procedure PreparePrintFiles();
     Procedure Print();
     Procedure Resetself;
@@ -170,41 +163,9 @@ type
 implementation
 
 Uses
-  Preview, REPmess, Creport,margin;
+  Preview;
 
 
-Procedure TReportRunTime.DeleteAllTempFiles;
-Var
-  tempDir: String;
-Begin                             
-  Try
-    tempDir := Format('%s\temp\',[AppDir]);
-    If Not DirectoryExists(tempDir) Then
-      Exit;
-//    os.DeleteFiles(tempDir, '*.tmp.json');
-//    RmDir(tempDir);
-  Except
-  End;
-End;
-function TReportRunTime.ReadyFileName(PageNumber: Integer):String;
-  Var
-    FileName: String;
-  procedure EnsureTempDirExist;
-  Var
-    tempDir: String;
-  begin
-    tempDir := Format('%s\temp',[AppDir]);
-      If Not DirectoryExists(tempDir) Then
-        MkDir(tempDir);
-  end;
-begin
-  REPmessform.Label1.Caption := inttostr(PageNumber);
-  EnsureTempDirExist;
-  FileName := osservice.PageFileName(PageNumber);
-  If FileExists(FileName) Then
-    DeleteFile(FileName);
-  result := FileName;
-end;
 procedure TReportRunTime.RenderCell(NewCell,ThisCell:TReportCell);
 begin
   NewCell.CellText:= getCellValue(ThisCell);
@@ -275,17 +236,6 @@ begin
   SaveToJson1(FileName+'.json',FPrintLineList);
 end;
 
-//Procedure TReportRunTime.LoadTempFile(strFileName: String);
-//Begin
-//  try
-//    InternalLoadFromFile(strFileName,FPrintLineList);
-//    PrintPaper.Batch(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
-//    UpdatePrintLines;
-//  except
-//    on E:Exception do ShowMessage(e.message);
-//  end;
-//End;
-
 Constructor TReportRunTime.Create(AOwner: TComponent);
 Begin
   Inherited create(AOwner);
@@ -299,7 +249,6 @@ Begin
   FVarList := TVarList.Create;
   FPrintLineList := TLineList.Create(self);
   FDRMap := TDRMappings.Create;
-  repmessForm := TrepmessForm.Create(Self);
   //FHeaderHeight := 0;
   If FFileName <> '' Then
     LoadReport;
@@ -465,10 +414,8 @@ Begin
     exit;
   end;
   Try
-        REPmessform.show;
         FpageAll := calcPageCount;
         PreparePrintFiles( );
-        REPmessform.Hide;
         FromPage := 1;
         if not preview then begin
           if GetPrintRange(frompage,FPageAll) then 
@@ -506,36 +453,8 @@ Begin
   eachcell(eachcell_paint);
   FDRMap.empty;
 End;
-Function TReportRunTime.PrintSET(prfile: String): boolean;
-Begin
-  Application.CreateForm(TMarginForm, MarginForm);
-  MarginForm.filename.Caption := prfile;
-  Try
-    MarginForm.ShowModal;
-    result :=  MarginForm.okset ;
-  Finally
-    MarginForm.free;
-  End;
-End;
 
 
-
-Function TReportRunTime.shpreview: boolean;
-Begin
-  If PrintSET(reportfile)  Then
-  Begin
-    ReportFile := reportfile; 
-    FpageAll := calcPageCount;
-    REPmessform.show;
-    PreparePrintFiles( );
-    REPmessform.Hide;
-    PreviewForm.PageCount := FPageAll;
-    PreviewForm.updateStatus;
-    result := true;
-  End
-  Else
-    result := false;
-End;
 
 Procedure TDataList.SetDataset(strDatasetName: String; pDataSet: TDataSet);
 Var
@@ -668,28 +587,10 @@ Begin
 
 
 
-function TReportRunTime.EditReport:TReportControl;
-begin
-  result := TCreportform.EditReport(ReportFile);
-end;
 function TReportRunTime.EditReport(FileName:String):TReportControl;
 begin
-  result := TCreportform.EditReport(FileName);
+  loadFromJson(FileName);
 end;
-Procedure TReportRunTime.updatepage;
-Begin
-  ReportFile := reportfile;
-  FpageAll := calcPageCount;
-  REPmessform.show;
-  PreparePrintFiles();
-  REPmessform.Hide;
-  PreviewForm.PageCount := FPageAll;
-  PreviewForm.updateStatus;
-End;
-Procedure Register;
-Begin
-  RegisterComponents('CReport', [TReportRunTime]);
-End;
 
 constructor RenderException.Create;
 begin
@@ -1305,7 +1206,5 @@ Begin
     End;
   End;
 End;
-
-
 end.
 

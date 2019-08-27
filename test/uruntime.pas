@@ -20,8 +20,7 @@ type
 
   TReportRunTimeTest = class(TTestCase)
   private
-      R:TReportRunTime;
-    Rc : TReportControl;
+    R:TReportRunTime;
     t1 ,t2: TClientDataset;
     strFileDir:string;
     procedure makereport;
@@ -146,9 +145,6 @@ end;
 procedure TReportRunTimeTest.makereport;
 var j:integer;
     strFileDir:string;
-    CellFont: TLogFont;
-    cf: TFont;
-    F : TStringField;
 begin
       R.Visible := false;
       with  R do
@@ -170,11 +166,7 @@ begin
       R.ReportFile:=strFileDir+'\'+'2.json';
 end;
 procedure TReportRunTimeTest.sum1;
-var i,j:integer;
-    strFileDir:string;
-    CellFont: TLogFont;
-    cf: TFont;
-    F : TStringField;
+var i:integer;
 begin
       makereport();
       t1.EmptyDataSet;
