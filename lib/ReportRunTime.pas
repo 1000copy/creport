@@ -80,7 +80,6 @@ type
 //    Procedure LoadTempFile(strFileName: String);
     function ReadyFileName(PageNumber: Integer): String;
     Procedure DeleteAllTempFiles;
-//    procedure LoadPage(I: integer);
   private
     // sum
     Function getSum(fm, ss: String): String;
@@ -90,10 +89,6 @@ type
   private
     // list
     function AppendList(l1, l2: TList): Boolean;
-//    function FillFootList(): TList;
-//    function FillSumList(): TLineList;
-//    procedure JoinAllList(FPrintLineList, HandLineList, dataLineList,
-//    SumAllList, HootLineList: TList;IsLastPage:Boolean);
   private
     // todo
     function IsDataField(s: String): Boolean;
@@ -842,24 +837,6 @@ begin
   End;
   result := templine;
 end;
-// clone from ThisLine to Line
-//procedure TReportRunTime.CloneLine(ThisLine,Line:TReportLine);
-//var
-//  j:integer;
-//  ThisCell, NewCell: TReportCell;
-//begin
-//  Line.FMinHeight := ThisLine.FMinHeight;
-//  Line.FDragHeight := ThisLine.FDragHeight;
-//  For j := 0 To ThisLine.FCells.Count - 1 Do
-//  Begin
-//    ThisCell := TreportCell(ThisLine.FCells[j]);
-//    NewCell := TReportCell.Create(Self);
-//    Line.FCells.Add(NewCell);
-//    NewCell.FOwnerLine := Line;
-//    CloneCell(newcell, thiscell);
-//  End;
-//  Line.UpdateLineHeight;
-//end;
 function TReportRunTime.CloneNewLine(ThisLine:TReportLine):TReportLine;
 var
   j:integer;
@@ -940,41 +917,6 @@ begin
     End;                             
   End;
 end;
-//function TReportRunTime.FillFootList( ):TList;
-//  Var
-//  I, J:Integer;
-//  HootLineList: TList;
-//  ThisLine, TempLine: TReportLine;
-//  ThisCell, NewCell: TReportCell;
-//begin
-//  ThisCell := nil;
-//  HootLineList := TList.Create;
-//  For i := DetailLineIndex + 1 To FlineList.Count - 1 Do
-//  Begin
-//    ThisLine := TReportLine(FlineList[i]);
-//    TempLine := TReportLine.Create;
-//    TempLine.FMinHeight := ThisLine.FMinHeight;
-//    TempLine.FDragHeight := ThisLine.FDragHeight;
-//    HootLineList.Add(TempLine);
-//    For j := 0 To ThisLine.FCells.Count - 1 Do
-//    Begin
-//      ThisCell := TreportCell(ThisLine.FCells[j]);
-//      If (Length(ThisCell.CellText) > 0) And
-//        (UpperCase(copy(ThisCell.FCellText, 1, 7)) = '`SUMALL') Then
-//      Begin
-//        HootLineList.Delete(HootLineList.count - 1);
-//        break;
-//      End;
-//      NewCell := TReportCell.Create(Self);
-//      TempLine.FCells.Add(NewCell);
-//      NewCell.FOwnerLine := TempLine;
-//      CloneCell( newcell, thiscell);
-//    End;
-//    If (UpperCase(copy(ThisCell.FCellText, 1, 7)) <> '`SUMALL') Then
-//      TempLine.UpdateLineHeight;
-//  End;
-//  result := HootLineList;
-//end;
 function TReportRunTime.FooterHeight():integer;
 var
    i:integer;
@@ -988,33 +930,6 @@ begin
    end;
 end;
 
-//function TReportRunTime.FillSumList():TLineList;
-//Var
-//  I, J:Integer;
-//  sumAllList: TLineList;
-//  ThisLine, TempLine: TReportLine;
-//  ThisCell, NewCell: TReportCell;
-//begin
-//  sumAllList := TLineList.Create(self);
-//  For i := DetailLineIndex + 1 To FlineList.Count - 1 Do
-//  Begin
-//    ThisLine := TReportLine(FlineList[i]);
-//    TempLine := TReportLine.Create;
-//    TempLine.FMinHeight := ThisLine.FMinHeight;
-//    TempLine.FDragHeight := ThisLine.FDragHeight;
-//    sumAllList.Add(TempLine);
-//    For j := 0 To ThisLine.FCells.Count - 1 Do
-//    Begin
-//      ThisCell := TreportCell(ThisLine.FCells[j]);
-//      NewCell := TReportCell.Create(Self);
-//      TempLine.FCells.Add(NewCell);
-//      NewCell.FOwnerLine := TempLine;
-//      CloneCell( newcell, thiscell);
-//    End;                              //for j
-//    TempLine.UpdateLineHeight;
-//  End;
-//  result :=  sumAllList;
-//end ;
 function TReportRunTime.SumHeight():integer;
 var
    i:integer;
@@ -1119,16 +1034,6 @@ begin
     SumCell(ThisCell,j) ;
   End; //for j
 end;
-//procedure    TReportRunTime.JoinAllList(FPrintLineList, HandLineList,dataLineList,SumAllList,HootLineList:TList;IsLastPage:Boolean);
-//
-//begin
-//    AppendList(  FPrintLineList, HandLineList);
-//    AppendList(  FPrintLineList, dataLineList);
-//    If (IsLastPage) Then
-//      AppendList(  FPrintLineList, SumAllList)
-//    Else
-//      AppendList(  FPrintLineList, HootLineList);
-//end;
 function TReportRunTime.GetDetailDataset() :TDataset;
 var
    t : string;
@@ -1403,7 +1308,4 @@ End;
 
 
 end.
-
-
-
 
