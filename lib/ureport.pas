@@ -3983,18 +3983,28 @@ Begin
   end;
 End;
 
+procedure TLineList.empty;var i : integer;
+begin
+  For I := Count - 1 Downto 0 Do
+  Begin
+    TReportLine(Items[I]).Free;
+  End;
+  clear;
+end;
+
 Procedure TReportControl.ResetContent;
 Var
   I: Integer;
   ThisLine: TReportLine;
 Begin
   FSelectCells.Clear;
-  For I := FLineList.Count - 1 Downto 0 Do
-  Begin
-    ThisLine := TReportLine(FLineList[I]);
-    ThisLine.Free;
-  End;
-  FLineList.Clear;
+//  For I := FLineList.Count - 1 Downto 0 Do
+//  Begin
+//    ThisLine := TReportLine(FLineList[I]);
+//    ThisLine.Free;
+//  End;
+//  FLineList.Clear;
+  FLineList.empty;
   Refresh;
 End;
 
@@ -4495,14 +4505,6 @@ begin
   self.R := R; 
 end;
 
-procedure TLineList.empty;var i : integer;
-begin
-  For I := Count - 1 Downto 0 Do
-  Begin
-    TReportLine(Items[I]).Free;
-  End;
-  clear;
-end;
 
 procedure TLineList.fromJson(json: Json);
 var

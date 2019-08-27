@@ -24,6 +24,7 @@ type
     Rc : TReportControl;
     t1 ,t2: TClientDataset;
     strFileDir:string;
+    procedure makereport;
 
   protected
     procedure SetUp; override;
@@ -37,7 +38,7 @@ type
     procedure dyndrawtext;
     procedure drawtext1;
     procedure print;
-    procedure sum;
+    procedure sum1;
   end;
 
 
@@ -128,7 +129,7 @@ begin
     inherited;
     t1 := TClientDataset.Create(nil);
     t1.FieldDefs.Add('f1',ftString,20,true);
-    t1.FieldDefs.Add('f2',ftString,20,true);
+    t1.FieldDefs.Add('f2',ftFloat);
     t2 := TClientDataset.Create(nil);
     t2.FieldDefs.Add('f1',ftString,20,true);
     t1.CreateDataSet;
@@ -142,9 +143,8 @@ begin
       t2.AppendRecord([2]);
     strFileDir := ExtractFileDir(Application.ExeName);
 end;
-
-procedure TReportRunTimeTest.sum;
-var i,j:integer;
+procedure TReportRunTimeTest.makereport;
+var j:integer;
     strFileDir:string;
     CellFont: TLogFont;
     cf: TFont;
@@ -163,16 +163,25 @@ begin
            Cells[1,j].CellText := t1.FieldDefs[j].Name;
            Cells[2,j].CellText := '#T1.'+t1.FieldDefs[j].Name;
         end;
-        //Cells[3,1].CellText := '`SUMALL(#T1.'+t1.FieldDefs[1].Name+')';
         Cells[3,1].CellText := '`SUMALL(1)';
         SaveToJson(strFileDir+'\'+'2.json');
-        ResetContent;
-        r.UpdateLines;
-        r.Invalidate;
+        ResetContent;  
       end;
       R.ReportFile:=strFileDir+'\'+'2.json';
+end;
+procedure TReportRunTimeTest.sum1;
+var i,j:integer;
+    strFileDir:string;
+    CellFont: TLogFont;
+    cf: TFont;
+    F : TStringField;
+begin
+      makereport();
+      t1.EmptyDataSet;
+      for I:= 0 to 1 do
+        t1.AppendRecord([I,(cos(I)*1000)]);
       R.PrintPreview();
-      check(r.Summer.GetSumAll(1) =740.00, format('%2n',[r.Summer.GetSumAll(1)]));
+      check(format('%2n',[r.Summer.GetSumAll(1)]) ='1,540.30', format('%2n',[r.Summer.GetSumAll(1)]));
 end;
 //ISVar GetVar  `DATE `TIME
 procedure TReportRunTimeTest.TearDown;
