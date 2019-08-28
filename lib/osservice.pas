@@ -3,8 +3,16 @@ unit osservice;
 interface
 
 uses
-   Graphics,windows ,classes,SysUtils,Math,Forms,cc,messages;
-
+   Graphics,windows ,classes,SysUtils,Math,Forms,cc,messages,printers;
+  function inflate(Rect:TRect;i:integer):TRect;
+  procedure mapDevice(Width, Height:Integer);
+function SysPrinter:TPrinter;
+  procedure msgok(a,b:PChar);
+const A4 = Windows.DMPAPER_A4;
+const A3 = Windows.DMPAPER_A3;
+const A5 = Windows.DMPAPER_A5;
+const PORTRAIT =  Windows.DMORIENT_PORTRAIT; // ×ÝÏò
+const LANDSCAPE =  Windows.DMORIENT_LANDSCAPE;       // ºáÏò
 function  PageFileName(CurrentPage:Integer):string;
 function AppDir:String;
 type
@@ -51,6 +59,7 @@ type
   private
     nPixelsPerInch:integer;
     hDesktopDC :THandle;
+    function geta4: Integer;
   public
     FEditBrush: HBRUSH;
 
@@ -85,6 +94,7 @@ type
     procedure SetWindowExtent(hPaintDC:HDC;x,y:integer);
     constructor Create;
     destructor Destroy;override;
+    property DMPAPER_A4 :Integer read geta4;
   end;
   procedure CheckError(condition:Boolean ;msg :string);
 implementation
@@ -140,6 +150,11 @@ begin
     ReleaseDC(0, hDesktopDC);
     inherited ;
 end;
+function WindowsOS.geta4: Integer;
+begin
+  result := windows.DMPAPER_A4;
+end;
+
 function WindowsOS.MapDots(FromHandle:THandle;ToHandle:THandle;FromLen:Integer):Integer;
 begin
   result := trunc(FromLen / GetDeviceCaps(FromHandle,LOGPIXELSX)
@@ -541,4 +556,28 @@ procedure Canvas.Rectangle(x1,y1,x2,y2:integer);
 begin
   windows.Rectangle(dc,x1,y1,x2,y2);
 end;
+procedure mapDevice(Width, Height:Integer);
+  var PageSize: TSize;
+begin
+  SetMapMode(SysPrinter.Handle, MM_ISOTROPIC);
+  PageSize.cx := SysPrinter.PageWidth;
+  PageSize.cy := SysPrinter.PageHeight;
+  SetWindowExtEx(SysPrinter.Handle, Width, Height, @PageSize);
+  SetViewPortExtEx(SysPrinter.Handle, SysPrinter.PageWidth, SysPrinter.PageHeight,
+    @PageSize);
+end;
+  function inflate(Rect:TRect;i:integer):TRect;
+  begin
+        result.Left := Rect.Left + i;
+        result.Top := Rect.Top + i;
+        result.Right := Rect.Right - i;
+        result.Bottom := Rect.Bottom - i;
+  end;
+procedure msgok(a,b:PChar);begin
+  Application.Messagebox(a,b, MB_OK + MB_iconwarning);
+end;
+function SysPrinter:TPrinter;begin
+  result := Printers.Printer;
+end;
+
 end.

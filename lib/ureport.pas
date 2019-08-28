@@ -33,10 +33,10 @@ Interface
 Uses
   ujson,
   Windows, Messages, SysUtils,Math,cc,
-  {$WARNINGS OFF}FileCtrl,{$WARNINGS ON}
-   Classes, Graphics, Controls,
-  Forms, Dialogs, Printers, Menus, Db,
-  ExtCtrls,osservice,Contnrs;
+  Classes, Graphics, Controls,
+  Forms, Dialogs, Menus, Db,
+  ExtCtrls,Contnrs
+  ,osservice;
   Const
   // Horz Align
   TEXT_ALIGN_LEFT = 0;
@@ -122,9 +122,9 @@ type
   TPrinterPaper = class
   private
     // google : msdn DEVMODE structure
-    DevMode: PdeviceMode;
+    //DevMode: PdeviceMode;
     //LCJ: 打印文件的纸张编号：比如 A4，A3，自定义纸张等。
-    FprPageNo: integer;
+    FPageSize: integer; //osservice.A4 A5 A3 etc.
     // 纸张纵横方向
     FPageOrientation: integer;
     // 纸张长度（高度）
@@ -135,10 +135,8 @@ type
   public
     procedure SetPaperWithCurrent;
     procedure Batch;overload;
-    procedure Batch(FprPageNo,FprPageXy,fpaperLength,fpaperWidth:Integer);overload;
-    Procedure prDeviceMode;
-    procedure SetPaper(FPageSize, FPageOrientation, fpaperLength,
-      fpaperWidth: Integer);
+    procedure SetPaper(PageSize, PageOrientation, PaperLength,
+      PaperWidth: Integer);
     procedure GetPaper(var FPageSize, FPageOrientation, fpaperLength,
       fpaperWidth: Integer);
   end;
@@ -521,10 +519,10 @@ type
 
     FcellFont: TlogFont;
     // Margin :by mm
-    FLeftMargin1: Integer;
-    FRightMargin1: Integer;
-    FTopMargin1: Integer;
-    FBottomMargin1: Integer;
+    FLeftMarginMM: Integer;
+    FRightMarginMM: Integer;
+    FTopMarginMM: Integer;
+    FBottomMarginMM: Integer;
     //表尾的第一行在整个页的第几行
     //FHootNo: integer;
     // 换页加表头（不加表头）
@@ -550,7 +548,7 @@ type
     function getFormulaValue(ThisCell: TReportCell): String;virtual ;
     Procedure CreateWnd; Override;
 //    procedure InternalLoadFromFile(FileName:string;FLineList:TList);
-    procedure mapDevice(Printer: TPrinter; Width, Height: Integer);
+//    procedure mapDevice(Printer: TPrinter; Width, Height: Integer);
 
   Public
     FLastPrintPageWidth, FLastPrintPageHeight: integer;
@@ -561,7 +559,6 @@ type
     property     RightMargin: Integer read FRightMargin ;
     property     TopMargin: Integer read FTopMargin ;
     property     BottomMargin: Integer read FBottomMargin ;
-    procedure LoadPage(I: Integer);
     function IsEditing :boolean;
     procedure CancelEditing;
     procedure EachCell(EachProc: EachCellProc);
@@ -639,7 +636,7 @@ type
     Procedure SetCellAlignHorzAlign(NewHorzAlign: Integer);
     Procedure SetCellAlignNewVertAlign(NewVertAlign: Integer);
     Procedure SetCellBackColor(NewBackColor: COLORREF);
-    Procedure SetMargin(nLeftMargin, nTopMargin, nRightMargin, nBottomMargin:
+    Procedure SetMargin(left, top, right, bottom:
       Integer);
     Function GetMargin: TRect;
     Function getcellfont: tfont;
@@ -748,47 +745,63 @@ function chop(r:string):string;
   end;
   
 
-Procedure TPrinterPaper.prDeviceMode;
-var
-  Adevice, Adriver, Aport: Array[0..255] Of char;
-  DeviceHandle: THandle;
-Begin
-  Printer.GetPrinter(Adevice, Adriver, Aport, DeviceHandle);
-  If DeviceHandle = 0 Then
-    Raise Exception.Create('Could Not Initialize TdeviceMode Structure')
-  Else
-    DevMode := GlobalLock(DeviceHandle);
-End;
+
 procedure TPrinterPaper.SetPaperWithCurrent;
 begin
   // LCJ : 我说好好的A4，干嘛总是进入信纸状态呢:)
-  if  FprPageNo = 0 then
+  if  FPageSize = 0 then begin
     exit;
-  with Devmode^ do  
+  end;
+  SetPaper(FPageSize,FPageOrientation,fpaperLength,fpaperWidth);
+//  FprPageNo
+end;
+//http://delphi-kb.blogspot.com/2009/04/how-to-set-printer-paper-size.html
+procedure TPrinterPaper.SetPaper(PageSize,PageOrientation,PaperLength,PaperWidth:Integer);
+var
+  Device, Driver, Port: array[0..80] of Char;
+  DevMode: THandle;
+  pDevmode: PDeviceMode;
+begin
+  SysPrinter.GetPrinter(Device, Driver, Port, DevMode);
+  {force reload of DEVMODE}
+  SysPrinter.SetPrinter(Device, Driver, Port, 0);
+  SysPrinter.GetPrinter(Device, Driver, Port, DevMode);
+  if Devmode <> 0 then
   begin
-    dmFields:=dmFields or DM_PAPERSIZE;
-    dmPapersize:=FprPageNo;
-    dmFields:=dmFields or DM_ORIENTATION;
-    dmOrientation:=FPageOrientation;
-
-    dmPaperLength:=fpaperLength;
-    dmPaperWidth:=fpaperWidth;
+    {lock it to get pointer to DEVMODE record}
+    pDevMode := GlobalLock(Devmode);
+    if pDevmode <> nil then
+    try
+      with pDevmode^ do
+      begin
+        {tell printer driver that dmPapersize field contains data it needs to inspect}
+        dmFields := dmFields or DM_PAPERSIZE;
+            dmFields:=dmFields or DM_ORIENTATION;
+        {modify paper size}
+        dmPapersize := PageSize;
+        //dmPapersize := DMPAPER_B5;
+        dmOrientation:=PageOrientation;
+        dmPaperLength:=PaperLength;
+        dmPaperWidth:=PaperWidth;
+      end;
+    finally
+      GlobalUnlock(Devmode);
+    end;
   end;
 end;
-procedure TPrinterPaper.SetPaper(FPageSize,FPageOrientation,fpaperLength,fpaperWidth:Integer);
-begin
-    Devmode^.dmFields := Devmode^.dmFields Or DM_PAPERSIZE;
-    Devmode^.dmPapersize := FPageSize;
-    Devmode^.dmFields := Devmode^.dmFields Or DM_ORIENTATION;
-    Devmode^.dmOrientation := FPageOrientation;
-
-    Devmode^.dmPaperLength := fpaperLength;
-    Devmode^.dmPaperWidth := fpaperWidth;
-end;
-
 procedure TPrinterPaper.GetPaper(var FPageSize,FPageOrientation,fpaperLength,fpaperWidth:Integer);
+var
+  Device, Driver, Port: array[0..80] of Char;
+  DevMode: THandle;
+  pDevmode: PDeviceMode;
 begin
-  With Devmode^ Do
+  SysPrinter.GetPrinter(Device, Driver, Port, DevMode);
+  SysPrinter.SetPrinter(Device, Driver, Port, 0);
+  SysPrinter.GetPrinter(Device, Driver, Port, DevMode);
+  if Devmode =  0 then exit;
+  try
+  pDevMode := GlobalLock(Devmode);
+  With pDevmode^ Do
   Begin
     dmFields := dmFields Or DM_PAPERSIZE;
     FPageSize := dmPapersize;
@@ -797,6 +810,9 @@ begin
     fPaperLength := dmPaperLength;
     fPaperWidth := dmPaperWidth;
   End;
+  finally
+      GlobalUnlock(Devmode);
+  end;
 end;
 
 
@@ -2147,10 +2163,10 @@ Begin
   FPageHeight := 0;
 
   // 以毫米为单位
-  FLeftMargin1 := 20;
-  FRightMargin1 := 10;
-  FTopMargin1 := 20;
-  FBottomMargin1 := 15;
+  FLeftMarginMM := 20;
+  FRightMarginMM := 10;
+  FTopMarginMM := 20;
+  FBottomMarginMM := 15;
   // 以Dot为单位
   //  hDesktopDC := GetDC(0);
   //  nPixelsPerInch := GetDeviceCaps(hDesktopDC, LOGPIXELSX);
@@ -2159,10 +2175,10 @@ Begin
   //  FTopMargin := trunc(nPixelsPerInch * FTopMargin1 / 25 + 0.5);
   //  FBottomMargin := trunc(nPixelsPerInch * FBottomMargin1 / 25 + 0.5);
   //  ReleaseDC(0, hDesktopDC);
-  FLeftMargin := os.MM2Dot(FLeftMargin1);
-  FRightMargin := os.MM2Dot(FRightMargin1);
-  FTopMargin := os.MM2Dot(FTopMargin1);
-  FBottomMargin := os.MM2Dot(FBottomMargin1);
+  FLeftMargin := os.MM2Dot(FLeftMarginMM);
+  FRightMargin := os.MM2Dot(FRightMarginMM);
+  FTopMargin := os.MM2Dot(FTopMarginMM);
+  FBottomMargin := os.MM2Dot(FBottomMarginMM);
   // 鼠标操作支持
   FMousePoint.x := 0;
   FMousePoint.y := 0;
@@ -2192,37 +2208,20 @@ Var
   hClientDC: HDC;
 
 Begin
-  If printer.Printers.Count <= 0 Then
+  If SysPrinter.Printers.Count <= 0 Then
   Begin
-    If FLastPrintPageWidth <> 0 Then
-    Begin
-      FPageWidth := FLastPrintPageWidth;
-      FPageHeight := FLastPrintPageHeight;
-    End;
-  End;
-
-  // 根据用户选择的纸来确定报表窗口的大小并对该窗口进行设置。
-
-  If FLastPrintPageWidth = 0 Then
-  Begin
-    If printer.Printers.Count <= 0 Then
-    Begin
-      FPageWidth := 768;
-      FPageHeight := 1058;
-    End
-    Else
-    Begin
+      FPageWidth := 768;    // a4 794    26
+      FPageHeight := 1058;  // a4 1123   65
+  End else begin
+      // 根据用户选择的纸来确定报表窗口的大小并对该窗口进行设置。
       hClientDC := GetDC(0);
       try
-        FPageWidth :=os.MapDots(Printer.Handle, hClientDC,Printer.PageWidth);
-        FPageHeight :=os.MapDots(Printer.Handle, hClientDC,Printer.PageHeight);
+        FPageWidth :=os.MapDots(SysPrinter.Handle, hClientDC,SysPrinter.PageWidth);
+        FPageHeight :=os.MapDots(SysPrinter.Handle, hClientDC,SysPrinter.PageHeight);
       finally
         ReleaseDC(0, hClientDC);
       end;
-    End;
-  End;
-  FLastPrintPageWidth := FPageWidth;
-  FLastPrintPageHeight := FPageHeight;
+  end;
   Width := trunc(FPageWidth * FReportScale / 100 + 0.5);
   Height := trunc(FPageHeight * FReportScale / 100 + 0.5);
 End;
@@ -2456,11 +2455,12 @@ procedure TReportControl.UpdateTwinCell(ThisCell:TReportCell;x:integer);
 
     If PrevCellWidth <> ThisCell.CellWidth Then
     Begin
-      InvalidateRect(Handle, @TempRect, False);
+      self.DoInvalidateRect(TempRect);
+//      os.InvalidateRect(Handle, TempRect, False);
       TempRect := ThisCell.CellRect;
       TempRect.Right := TempRect.Right + 1;
       TempRect.Bottom := TempRect.Bottom + 1;
-      InvalidateRect(Handle, @TempRect, False);
+      self.DoInvalidateRect(TempRect);
     End;
 
     If NextCell <> Nil Then
@@ -2475,11 +2475,11 @@ procedure TReportControl.UpdateTwinCell(ThisCell:TReportCell;x:integer);
 
       If PrevCellWidth <> NextCell.CellWidth Then
       Begin
-        InvalidateRect(Handle, @TempRect, False);
+        self.DoInvalidateRect(TempRect);
         TempRect := NextCell.CellRect;
         TempRect.Right := TempRect.Right + 1;
         TempRect.Bottom := TempRect.Bottom + 1;
-        InvalidateRect(Handle, @TempRect, False);
+        self.DoInvalidateRect(TempRect);
       End;
     End;
   end;
@@ -2909,7 +2909,7 @@ Begin
   For I := 0 To FSelectCells.Count - 1 Do
   Begin
     TReportCell(FSelectCells[I]).TextColor := NewTextColor;
-    InvalidateRect(Handle, @TReportCell(FSelectCells[I]).CellRect, False);
+    self.DoInvalidateRect(TReportCell(FSelectCells[I]).CellRect);
   End;
 End;
 
@@ -2921,7 +2921,7 @@ Begin
   Begin
     TReportCell(FSelectCells[I]).TextColor := NewTextColor;
     TReportCell(FSelectCells[I]).BkColor := NewBackColor;
-    InvalidateRect(Handle, @TReportCell(FSelectCells[I]).CellRect, False);
+    self.DoInvalidateRect(TReportCell(FSelectCells[I]).CellRect);
   End;
 End;
 
@@ -2933,7 +2933,7 @@ Begin
   Begin
     TReportCell(FSelectCells[I]).HorzAlign := NewHorzAlign;
     TReportCell(FSelectCells[I]).VertAlign := NewVertAlign;
-    InvalidateRect(Handle, @TReportCell(FSelectCells[I]).CellRect, False);
+    self.DoInvalidateRect(TReportCell(FSelectCells[I]).CellRect);
   End;
   UpdateLines;
 End;
@@ -2945,7 +2945,7 @@ Begin
   For I := 0 To FSelectCells.Count - 1 Do
   Begin
     TReportCell(FSelectCells[I]).Diagonal := NewDiagonal;
-    InvalidateRect(Handle, @TReportCell(FSelectCells[I]).CellRect, False);
+    self.DoInvalidateRect(TReportCell(FSelectCells[I]).CellRect);
   End;
 End;
 Procedure TReportControl.SetSelectedCellFont(cf: TFont);
@@ -2969,7 +2969,8 @@ Begin
     CellRect.Top := CellRect.top - 1;
     CellRect.Right := CellRect.Right + 1;
     CellRect.Bottom := CellRect.Bottom + 1;
-    InvalidateRect(Handle, @CellRect, false);
+    //CellRect := osservice.inflate(cellrect,-1)
+    self.DoInvalidateRect(CellRect);
   End;
   UpdateLines;
 
@@ -2998,7 +2999,7 @@ Begin
 
     CellRect := FSelectCells[I].CellRect;
     os.InflateRect(CellRect,1,1);
-    InvalidateRect(Handle, @CellRect, false);
+    self.DoInvalidateRect(CellRect);
   End;
   UpdateLines;
 End;
@@ -3027,7 +3028,7 @@ begin
     Begin
       ThisCell := TReportCell(FCells[J]);
       If ThisCell.OwnerCell <> Nil Then
-        InvalidateRect(ReportControl.Handle, @ThisCell.OwnerCell.CellRect, False);
+        self.ReportControl.DoInvalidateRect( ThisCell.OwnerCell.CellRect);
     End;
     // end comment
     PrevRect.Right := PrevRect.Right + 1;
@@ -3037,7 +3038,8 @@ begin
     R := Reportcontrol.os.UnionRect(r,prevRect);
     R := Reportcontrol.os.UnionRect(r,TempRect);
   End;
-  InvalidateRect(Reportcontrol.Handle, @R, False);
+//  self.ReportControl.os.InvalidateRect(Reportcontrol.Handle, R, False);
+  self.reportcontrol.DoInvalidateRect(R);
 end;
 function TReportLine.toJson: string;
 var cell : TReportcell;i:integer;s:string;
@@ -3343,20 +3345,7 @@ begin
    sl.SaveToFile(fn);
 end;
 
-Procedure TReportControl.LoadPage(I:Integer);
-var FileName: String;
-begin
-  self.LineList.Clear;
-  fileName := osservice.PageFileName(I)+'.json' ;
-//  LoadFromFile(FileName);
-  loadfromJson(fileName);
-  PrintPaper.prDeviceMode;
-  PrintPaper.SetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
-  FTextEdit.DestroyIfVisible;
-  FLastPrintPageWidth := FPageWidth;             //1999.1.23
-  FLastPrintPageHeight := FPageHeight;
-  UpdateLines;
-end;
+
 
 // 垂直切分单元格。一个单元格拆分成多个横向单元格（和OwnerCell无关
 Procedure TReportControl.VSplitCell(Number: Integer);
@@ -3385,7 +3374,8 @@ begin
   //  UpdateLines;
   ThisCell.OwnerLine.UpdateCellIndex ;
   ThisCell.OwnerLine.UpdateCellLeft ;
-  InvalidateRect(Handle, @rect, False);
+//  os.InvalidateRect(Handle, rect, False);
+  self.DoInvalidateRect(rect);
 end;
 
 Procedure TReportControl.DoVertSplitCell(ThisCell : TReportCell;SplitCount: Integer);
@@ -3429,16 +3419,7 @@ Begin
 End;
 // 打印模板。就是不填入数据的情况下，把设计态表格打印出来 。
 // 肯定只有一页，因此不需要考虑分页问题
-procedure TReportControl.mapDevice(Printer: TPrinter;Width, Height:Integer);
-  var PageSize: TSize;
-  begin
-  SetMapMode(Printer.Handle, MM_ISOTROPIC);
-  PageSize.cx := Printer.PageWidth;
-  PageSize.cy := Printer.PageHeight;
-  SetWindowExtEx(Printer.Handle, Width, Height, @PageSize);
-  SetViewPortExtEx(Printer.Handle, Printer.PageWidth, Printer.PageHeight,
-    @PageSize);
-  end;
+
 
 Procedure TReportControl.PrintIt;
 Var
@@ -3448,9 +3429,9 @@ Var
   PageSize: TSize;
   Ltemprect: Trect;
 Begin
-  Printer.Title := 'C_Report';
-  Printer.BeginDoc;
-  mapdevice(Printer,Width,Height);
+  SysPrinter.Title := 'C_Report';
+  SysPrinter.BeginDoc;
+  osservice.mapdevice(Width,Height);
   For I := 0 To FLineList.Count - 1 Do
   Begin
     ThisLine := TReportLine(FLineList[I]);
@@ -3464,12 +3445,12 @@ Begin
         LTempRect.Top := ThisCell.FCellRect.Top + 3;
         LTempRect.Right := ThisCell.FCellRect.Right - 3;
         LTempRect.Bottom := ThisCell.FCellRect.Bottom - 3;
-        printer.Canvas.stretchdraw(LTempRect, ThisCell.fbmp);
-        ThisCell.PaintCell(Printer.Handle, True);                
+        SysPrinter.Canvas.stretchdraw(LTempRect, ThisCell.fbmp);
+        ThisCell.PaintCell(SysPrinter.Handle, True);
       End;   
     End;
   End;
-  Printer.EndDoc;
+  SysPrinter.EndDoc;
 End;
 
 // add by wang han song
@@ -3496,37 +3477,40 @@ End;
 
 Function TReportControl.GetMargin: TRect;
 Begin
-  Result.Left := FLeftMargin1;
-  Result.Top := FTopMargin1;
-  Result.Right := FRightMargin1;
-  Result.Bottom := FBottomMargin1;
+  Result.Left := FLeftMarginMM;
+  Result.Top := FTopMarginMM;
+  Result.Right := FRightMarginMM;
+  Result.Bottom := FBottomMarginMM;
 End;
 
-Procedure TReportControl.SetMargin(nLeftMargin, nTopMargin, nRightMargin,
-  nBottomMargin: Integer);
+Procedure TReportControl.SetMargin(left, top, right,
+  bottom: Integer);
 Var
   RectClient: TRect;
+  function isChange(left, top, right,bottom: Integer):boolean;begin
+    result := (FLeftMarginMM <> left) Or
+    (FTopMarginMM <> top) Or
+    (FRightMarginMM <> right) Or
+    (FBottomMarginMM <> bottom);
+  end;
 Begin
   // 将毫米数转化为象素点
-  If (FLeftMargin1 <> nLeftMargin) Or
-    (FTopMargin1 <> nTopMargin) Or
-    (FRightMargin1 <> nRightMargin) Or
-    (FBottomMargin1 <> nBottomMargin) Then
+  If isChange(left, top, right,bottom) Then
   Begin
+    FLeftMarginMM := left;
+    FTopMarginMM := top;
+    FRightMarginMM := right;
+    FBottomMarginMM := bottom;
 
-    FLeftMargin1 := nLeftMargin;
-    FTopMargin1 := nTopMargin;
-    FRightMargin1 := nRightMargin;
-    FBottomMargin1 := nBottomMargin;
-
-    FLeftMargin := os.mm2dot(nLeftMargin );
-    FTopMargin := os.mm2dot(nTopMargin);
-    FRightMargin := os.mm2dot(nRightMargin);
-    FBottomMargin := os.mm2dot(nBottomMargin);
+    FLeftMargin := os.mm2dot(left );
+    FTopMargin := os.mm2dot(top);
+    FRightMargin := os.mm2dot(right);
+    FBottomMargin := os.mm2dot(bottom);
     
     UpdateLines;
     RectClient := ClientRect;
-    InvalidateRect(Handle, @RectClient, False);
+//    os.InvalidateRect(Handle, RectClient, False);
+    self.DoInvalidateRect(RectClient);
   End;
 End;
 
@@ -3682,7 +3666,7 @@ end;
 Procedure TReportControl.DoLoadBmp(Cell: Treportcell; filename: String);
 begin
   Cell.LoadBmp(filename);
-  InvalidateRect(Handle,@Cell.FCellRect,false);
+  self.DoInvalidateRect(Cell.FCellRect);
 End;
 
 
@@ -3699,15 +3683,10 @@ End;
 
 procedure TPrinterPaper.Batch;
 begin
-    prDeviceMode;
+
     SetPaperWithCurrent;
 end;
 
-procedure TPrinterPaper.Batch(FprPageNo,FprPageXy,fpaperLength,fpaperWidth:Integer);
-begin
-    prDeviceMode;
-    SetPaper(FprPageNo,FprPageXy,fpaperLength,fpaperWidth);
-end;
 
 function TReportControl.ZoomRate(height,width:integer):Integer;
   function PercentRate (a,b:Integer):integer;
@@ -3996,7 +3975,8 @@ end;
 
 procedure TReportControl.DoInvalidateRect(Rect: TRect);
 begin
-  os.InvalidateRect(Handle, @Rect, False);
+//  os.InvalidateRect(Handle, Rect, False);
+  self.DoInvalidateRect(Rect);
 end;
 
 function TReportControl.IsEditing: boolean;

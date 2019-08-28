@@ -51,7 +51,7 @@ type
     procedure GoPage(CurrentPage: Integer);
     procedure SetPreviewMode();
   public
-    RC: TReportControl;
+    RC: TReportRuntime;
     PageCount: Integer;
     CurrentPage: Integer;
     DataNameFilst:Tlist;
@@ -147,7 +147,7 @@ end;
 
 procedure TPreviewForm.FormCreate(Sender: TObject);
 begin
-  RC:= TReportControl.Create(SELF);
+  RC:= TReportRuntime(SELF);
   // disable template
   Self.PrintBtn.Visible := False;
   height:=550;

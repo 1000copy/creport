@@ -430,7 +430,6 @@ var
       fpaperWidth: Integer ;
 begin
   p := TPrinterPaper.Create;
-  p.prDeviceMode;
   p.SetPaper(DMPAPER_A4,DMORIENT_PORTRAIT,2970,2100);
   p.GetPaper(FprPageNo, FprPageXy, fpaperLength,
       fpaperWidth);

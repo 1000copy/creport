@@ -31,15 +31,30 @@ type
   published
   {$WARNINGS ON}
     procedure var1;
+    procedure paper;
   end;
 
 
 implementation
 
 
+procedure TReportPaperTest.paper;
+var FPageSize,FPageOrientation,fpaperLength,fpaperWidth:Integer;
+begin
+      R.Visible := false;
+      with  R do
+      begin
+        // 设置是无效的
+        R.PrintPaper.SetPaper(osservice.A3,osservice.PORTRAIT,0,0);
+        R.PrintPaper.GetPaper(FPageSize,FPageOrientation,fpaperLength,fpaperWidth);
+        check(osservice.A4 = FpageSize);
+        check(osservice.LANDSCAPE = FPageOrientation);
+      end;
+end;
+
 procedure TReportPaperTest.SetUp;
 var i:integer;
-    
+
 begin
     inherited;
     t1 := TClientDataset.Create(nil);

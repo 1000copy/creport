@@ -180,7 +180,7 @@ type
     dbarleft:integer;
     dbartop:integer;
     //未存盘标志
-    savebz:boolean;
+    isSave:boolean;
     procedure ListBoxDragOver(Sender, Source: TObject; X,Y: Integer; State: TDragState; var Accept: Boolean);
 
 //    function  LFindComponent(Owner: TComponent; Name: String): TComponent;
@@ -189,7 +189,7 @@ type
     { Private declarations }
   public
     RC: TReportControl;
-    thefile, savefilename: string;
+    thefile, saveFileName: string;
     zoomxxx:INTEGER;
     property ReportControl: TReportControl read RC;
     procedure DoCenter ;
@@ -250,7 +250,7 @@ var i,j:integer;
 begin
   RC:= TReportControl.Create(self.ScrollBox1);
   rc.CalcWndSize;
-  savebz:=true;
+  isSave:=true;
 
   dbarleft:=0;
   dbartop:=0;
@@ -275,7 +275,7 @@ begin
     RC.LoadFromFile(ParamStr(1));
     caption:=ParamStr(1);
     Thefile :=ParamStr(1);
-    savefilename := Thefile;
+    saveFileName := Thefile;
   End;
   RC.CalcWndSize;
 
@@ -323,7 +323,7 @@ begin
     else
       RC.LoadFromFile(theFile);
     Creportform.caption := thefile ;
-    savefilename := thefile;
+    saveFileName := thefile;
     updateOldies(thefile, sender);
     thefile := '';
     zoomxxx:=100;
@@ -338,7 +338,7 @@ procedure TCreportForm.FileOpen1(Sender: TObject);
 begin
   RC.LoadFromFile(theFile);
   Creportform.caption := thefile ;
-  savefilename := thefile;
+  saveFileName := thefile;
   updateOldies(thefile, sender);
   thefile := '';
 end;
@@ -354,7 +354,7 @@ end;
 procedure TCreportForm.InsertLineClick(Sender: TObject);
 begin
   RC.InsertLine;
-      savebz:=false;
+      isSave:=false;
 
 end;
 
@@ -363,14 +363,14 @@ begin
 if self.RC.SelectedCells.Count > 0  then
 begin
       RC.AddLine;
-      savebz:=false;
+      isSave:=false;
 end;
 end;
 
 procedure TCreportForm.CombineCellsClick(Sender: TObject);
 begin
   RC.CombineCell;
-      savebz:=false;
+      isSave:=false;
 
 end;
 
@@ -378,7 +378,7 @@ procedure TCreportForm.SplitCellClick(Sender: TObject);
 begin
   RC.SplitCell;
   fontboxChange(Sender);
-    savebz:=false;
+    isSave:=false;
 
 end;
 
@@ -389,27 +389,27 @@ end;
 procedure TCreportForm.DeleteLineClick(Sender: TObject);
 begin
   RC.DeleteLine;
-      savebz:=false;
+      isSave:=false;
 
 end;
 
 procedure TCreportForm.AddCellClick(Sender: TObject);
 begin
   RC.AddCell;
-      savebz:=false;
+      isSave:=false;
 
 end;
 
 procedure TCreportForm.InsertCellClick(Sender: TObject);
 begin
   RC.InsertCell;
-  savebz:=false;
+  isSave:=false;
 end;
 
 procedure TCreportForm.DeleteCellClick(Sender: TObject);
 begin
   RC.DeleteCell;
-  savebz:=false;
+  isSave:=false;
 end;
 
 procedure TCreportForm.CellBorderLineClick(Sender: TObject);
@@ -436,7 +436,7 @@ begin
         RightLine.Checked,
         BottomLine.Checked,
         SpinEdit1.Value, SpinEdit2.Value, SpinEdit3.Value, SpinEdit4.Value);
-    savebz:=false;
+    isSave:=false;
 
   end
   else Application.Messagebox('请选择单元格!!!', '警告', MB_OK + MB_iconwarning);
@@ -471,7 +471,7 @@ begin
       if RightDiagonal3.Checked then
         nDiagonal := nDiagonal or LINE_RIGHT3;
       RC.SetCellDiagonal(nDiagonal);
-    savebz:=false;
+    isSave:=false;
     end;
   end;
 end;
@@ -499,7 +499,7 @@ begin
       Windows.GetObject(FontDialog1.Font.Handle, SizeOf(CellFont), @CellFont);
       RC.SetCellFont(CellFont);
       RC.SetCellColor(FontDialog1.Font.color, ColorForm.Panel1.Color);
-      savebz:=false;
+      isSave:=false;
     end;
   end
   else Application.Messagebox('请选择单元格!!!', '警告', MB_OK + MB_iconwarning);
@@ -512,7 +512,7 @@ begin
     if ColorForm.ShowModal = mrOK then
     begin
       RC.SetCellColor(ColorForm.Panel1.Font.Color, ColorForm.Panel1.Color);
-    savebz:=false;
+    isSave:=false;
     end;
   end
   else Application.Messagebox('请选择单元格!!!', '警告', MB_OK + MB_iconwarning);
@@ -520,12 +520,12 @@ end;
 
 procedure TCreportForm.FileSaveClick(Sender: TObject);
 begin
-  savedialog1.filename := savefilename;
+  savedialog1.filename := saveFileName;
   if SaveDialog1.Execute then
   begin
     RC.SaveToFile(SaveDialog1.FileName);
     thefile := SaveDialog1.Filename;
-    savefilename := thefile;
+    saveFileName := thefile;
     Creportform.caption := thefile ;
     updateOldies(thefile, sender);
     thefile := '';
@@ -544,7 +544,7 @@ if RC.SelectedCells.Count >0  then
   if VSplitForm.ShowModal = mrOK then
   begin
     RC.VSplitCell(VSplitForm.VSplitCount.Value);
-        savebz:=false;
+        isSave:=false;
 end;
 end;
 
@@ -567,9 +567,7 @@ begin
         MarginForm.TopMargin.Value,
         MarginForm.RightMargin.Value,
         MarginForm.BottomMargin.Value);
-      savebz:=false;
-      RC.FLastPrintPageWidth:=0;
-      RC.CalcWndSize;
+      isSave:=false;
       RC.CalcWndSize;
   end;
 end;
@@ -584,7 +582,7 @@ begin
     RC.CalcWndSize;
     Creportform.caption := '[无文件名] ' ;
     thefile := '';
-    savefilename := '';
+    saveFileName := '';
   end;
 end;
 
@@ -751,7 +749,7 @@ procedure TCreportForm.N29Click(Sender: TObject);
 var
   t: string;
 begin
-  if savefilename = '' then
+  if saveFileName = '' then
   begin
     if SaveDialog1.Execute then
     begin
@@ -759,9 +757,9 @@ begin
       thefile := SaveDialog1.Filename;
       updateOldies(thefile, sender);
       Creportform.caption := thefile ;
-      savefilename := thefile;
+      saveFileName := thefile;
       thefile := '';
-      savebz:=true;
+      isSave:=true;
     end;
   end
   else
@@ -769,11 +767,11 @@ begin
     if endsWith(saveFileName,'.json') or endsWith(saveFileName,'.txt')then
        RC.savetoJson(saveFileName)
     else
-      RC.SaveToFile(SaveFilename);
-    thefile := SaveFilename;
+      RC.SaveToFile(saveFileName);
+    thefile := saveFileName;
     updateOldies(thefile, sender);
     thefile := '';
-    savebz:=true;
+    isSave:=true;
 
   end;
 end;
@@ -809,7 +807,7 @@ begin
   if medium1.Down then v := 1;
   if bottom1.down then v := 2;
   RC.SetCellAlign(H, v);
-  savebz:=false;
+  isSave:=false;
 
 end;
 
@@ -833,7 +831,7 @@ begin
     Windows.GetObject(cf.Handle, SizeOf(CellFont), @CellFont);
     cf.Free;
     RC.SetCellFont(CellFont);
-    savebz:=false;
+    isSave:=false;
   end;
 end;
 
@@ -841,10 +839,10 @@ procedure TCreportForm.FormCloseQuery(Sender: TObject; var CanClose: Boolean);
 var
   key: integer;
 begin
-if not savebz then
+if not isSave then
 begin
   canclose:=false;
-  if (savefilename <> '') then
+  if (saveFileName <> '') then
   begin
     key := Application.Messagebox('保存文件按“是”，不保存文件按“否”，取消本次操作按“取消”', '注意', MB_YESNOCANCEL + MB_ICONEXCLAMATION); //+MB_ICONQUESTION);
     if key = Mryes then n29click(sender);
@@ -874,7 +872,7 @@ begin
     Windows.GetObject(cf.Handle, SizeOf(CellFont), @CellFont);
     cf.Free;
     RC.SetCellFont(CellFont);
-        savebz:=false;
+        isSave:=false;
 
   end;
 end;
@@ -996,7 +994,7 @@ begin
 if RC.SelectedCells.Count >0  then
 begin
    RC.SetCellDispFormt(CellDispFormt.items[CellDispFormt.itemindex]);
-    savebz:=false;
+    isSave:=false;
 end;   
 end;
 
@@ -1009,7 +1007,7 @@ begin
    celldisp.CellText:=Lsum.Items[Lsum.ItemIndex];
    RC.SetCellSumText('`'+Lsum.items[Lsum.itemindex]);
    fontboxChange(Sender);
-       savebz:=false;
+       isSave:=false;
 
 end;
 end;
@@ -1026,7 +1024,7 @@ try
   if OpenPictureDialog1.Execute then
   begin
     RC.DoLoadBmp(celldisp,OpenPictureDialog1.FileName);
-        savebz:=false;
+        isSave:=false;
   end;
 except
    //
@@ -1045,7 +1043,7 @@ if RC.SelectedCells.Count >0  then
 begin
    celldisp := RC.SelectedCells[0];
    RC.FreeBmp(celldisp);
-    savebz:=false;
+    isSave:=false;
 
   ShowWindow(RC.Handle, SW_HIDE);
   ScrollBox1Resize(Self);
@@ -1115,7 +1113,7 @@ begin
   Creportform.Caption:= filename;
 
   Creportform.Thefile :=filename;
-  Creportform.savefilename := filename;
+  Creportform.saveFileName := filename;
   creportform.DoCenter;
   Creportform.showmodal;
   Creportform.Free;

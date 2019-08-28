@@ -2,11 +2,13 @@
 {$HINTS off}
 
 interface
-uses ureport,  Windows, Messages, SysUtils,
-  {$WARNINGS OFF}FileCtrl,{$WARNINGS ON}
-   Classes, Graphics, Controls,
-  Forms, Dialogs, Printers, Menus, Db,
-  DesignEditors, ExtCtrls,osservice,cc;
+uses SysUtils,
+   Classes,
+  Forms, Dialogs,  Menus, Db,
+  //DesignEditors,
+  //ExtCtrls,
+  //{$WARNINGS OFF}FileCtrl,{$WARNINGS ON}
+  ureport,osservice,cc;
 
 
 type
@@ -110,7 +112,7 @@ type
     procedure RenderCell(NewCell,ThisCell:TReportCell);
     procedure RenderBlob(NewCell, ThisCell: TReportCell);
     procedure pp(preview: boolean);
-    procedure eachcell_paint(ThisCell: TReportCell);
+    procedure eachcell_print(ThisCell: TReportCell);
 
   Public
     property Summer:TSummer read FSummer;
@@ -127,10 +129,13 @@ type
 
     Published
     Property AddSpace: boolean Read FAddSpace Write FAddSpace;
+    procedure loadPage(i: Integer);
+
     // TEST section
     Published
     function FillHeadList: TList;
     procedure SetData(M,D:TDataSet);
+
     End;
   RenderParts = class
   private
@@ -382,17 +387,29 @@ end;
 procedure TReportRunTime.PrintRange(Title:String;FromPage,ToPage:Integer);
 Var
   I: Integer;
+var FileName: String;
 begin
-			Printer.Title := Title;
-			Printer.BeginDoc;
+			SysPrinter.Title := Title;
+			SysPrinter.BeginDoc;
 			For I := FromPage To ToPage Do
 			Begin
-			  LoadPage(I);
+        self.LineList.Clear;
+        fileName := osservice.PageFileName(I)+'.json' ;
+        loadfromJson(fileName);
+        UpdateLines;
 			  PrintCurrentPage;
 			  If I < ToPage Then
-  				Printer.NewPage;
+  				SysPrinter.NewPage;
 			End;
-			Printer.EndDoc;
+			SysPrinter.EndDoc;
+end;
+procedure TReportRunTime.loadPage(i:Integer);
+var FileName: String;
+begin
+      self.LineList.Clear;
+      fileName := osservice.PageFileName(I)+'.json' ;
+      loadfromJson(fileName);
+      UpdateLines;
 end;
 Procedure TReportRunTime.PrintPreview();
 Begin
@@ -406,8 +423,9 @@ Procedure TReportRunTime.pp(preview:boolean);
 Var
   frompage: integer;
 Begin
-  If printer.Printers.Count <= 0 Then begin
-    Application.Messagebox(cc.ErrorPrinterSetupRequired, '', MB_OK + MB_iconwarning);
+  If SysPrinter.Printers.Count <= 0 Then begin
+    osservice.MsgOK(cc.ErrorPrinterSetupRequired, '');
+
     exit;
   end;
   Try
@@ -425,29 +443,20 @@ Begin
       on E:Exception do MessageDlg(e.Message,mtInformation, [mbOk], 0);
     End;
 End;
-procedure TReportRunTime.eachcell_paint(ThisCell:TReportCell);
-Var
-  hPrinterDC: HDC;
-  Ltemprect: tRect;
+procedure TReportRunTime.eachcell_print(ThisCell:TReportCell);
 begin
-      hPrinterDC := Printer.Handle;
       If ThisCell.OwnerCell = Nil Then
       Begin
-        LTempRect := ThisCell.FCellRect;
-        LTempRect.Left := ThisCell.FCellRect.Left + 3;
-        LTempRect.Top := ThisCell.FCellRect.Top + 3;
-        LTempRect.Right := ThisCell.FCellRect.Right - 3;
-        LTempRect.Bottom := ThisCell.FCellRect.Bottom - 3;
-        printer.Canvas.stretchdraw(LTempRect, ThisCell.fbmp);
-        ThisCell.PaintCell(hPrinterDC, True);
+        SysPrinter.Canvas.stretchdraw(osservice.inflate(ThisCell.FCellRect,3), ThisCell.fbmp);
+        ThisCell.PaintCell(SysPrinter.Handle, True);
       End;
 end;
 Procedure TReportRunTime.PrintCurrentPage;
 Begin
   If FLineList.Count <= 0 Then
     Exit;
-  MapDevice(Printer,Width, Height);
-  eachcell(eachcell_paint);
+  osservice.MapDevice(Width, Height);
+  eachcell(eachcell_print);
   FDRMap.empty;
 End;
 
@@ -530,8 +539,8 @@ End;
 Function treportruntime.cancelprint: boolean;
 Begin
   Try
-    If printer.printing Then
-      printer.abort;
+    If osservice.SysPrinter.printing Then
+      osservice.SysPrinter.abort;
     result := true;
   Except
     result := false;
