@@ -103,7 +103,7 @@ begin
       makereport();
       with  R do
       begin
-//        visible := true;
+        visible := true;
         Cells[0,0].CellText := '`DATETIME';
         Cells[1,0].CellText := '`DATE';
         Cells[1,1].CellText := '`TIME';

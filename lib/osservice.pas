@@ -76,7 +76,7 @@ type
     function IsRectEmpty(r: TRect): boolean;
     function MakeRect(FMousePoint, TempPoint: TPoint): TRect;
     function DeleteFiles(FilePath, FileMask: String): Boolean;
-    function InvalidateRect(hWnd: HWND; lpRect: PRect; bErase: BOOL): BOOL;
+    function InvalidateRect1(hWnd: HWND; lpRect: TRect; bErase: BOOL): BOOL;
     function RectEquals(r1, r2: TRect): Boolean;
     procedure InflateRect(var r: TRect; dx, dy: integer);
     function Inflate(r: TRect; dx, dy: integer):TRect;
@@ -233,10 +233,10 @@ begin
   result := r;
 end;
 
-function WindowsOS.InvalidateRect(hWnd: HWND; lpRect: PRect;
+function WindowsOS.InvalidateRect1(hWnd: HWND; lpRect: TRect;
   bErase: BOOL): BOOL;
 begin
-  result := Windows.InvalidateRect(hwnd,lprect,berase);
+  result := Windows.InvalidateRect(hwnd,@lprect,berase);
 end;
 Function WindowsOS.DeleteFiles(FilePath, FileMask: String): Boolean;
 Var
