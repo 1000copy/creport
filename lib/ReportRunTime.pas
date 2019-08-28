@@ -2,9 +2,7 @@
 {$HINTS off}
 
 interface
-uses SysUtils,
-   Classes,
-  Forms, Dialogs,  Menus, Db,
+uses SysUtils,Classes,Forms, Dialogs,  Menus, Db,
   //DesignEditors,
   //ExtCtrls,
   //{$WARNINGS OFF}FileCtrl,{$WARNINGS ON}
