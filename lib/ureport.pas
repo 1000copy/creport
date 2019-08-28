@@ -3975,8 +3975,8 @@ end;
 
 procedure TReportControl.DoInvalidateRect(Rect: TRect);
 begin
-//  os.InvalidateRect(Handle, Rect, False);
-  self.DoInvalidateRect(Rect);
+  os.InvalidateRect1(Handle, Rect, False);
+//  self.DoInvalidateRect(Rect);
 end;
 
 function TReportControl.IsEditing: boolean;
