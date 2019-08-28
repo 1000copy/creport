@@ -1838,7 +1838,7 @@ begin
       result := true;
       break;
     end;
-   end;             
+   end;
 end;
 
 procedure TReportLine.DeleteCell(Cell: TReportCell);
@@ -4400,7 +4400,7 @@ Begin
     Result := datetostr(date);
   If UpperCase(Key) = '`TIME' Then
     Result := timetostr(time);
-  If UpperCase(Key) = '`DATETIME' Then 
+  If UpperCase(Key) = '`DATETIME' Then
     Result := datetimetostr(now);
   Key := Uppercase(KeepAlphaOnly(Key));
   ThisItem := FindKey(Key);
