@@ -147,7 +147,7 @@ end;
 
 procedure TPreviewForm.FormCreate(Sender: TObject);
 begin
-  RC:= TReportRuntime(SELF);
+  RC:= TReportRuntime.create(SELF);
   // disable template
   Self.PrintBtn.Visible := False;
   height:=550;
