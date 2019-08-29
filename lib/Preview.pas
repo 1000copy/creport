@@ -24,9 +24,6 @@ type
     Bevel3: TBevel;
     SpeedButton1: TSpeedButton;
     SpeedButton3: TSpeedButton;
-    EditEptk: TSpeedButton;
-    Panel2: TPanel;
-    Panel3: TPanel;
     PrintBtn: TSpeedButton;
     procedure ScrollBox1Resize(Sender: TObject);
     procedure NextPageBtnClick(Sender: TObject);
@@ -42,6 +39,7 @@ type
       Shift: TShiftState; X, Y: Integer);
     procedure SpeedButton3Click(Sender: TObject);
     procedure FormShow(Sender: TObject);
+    procedure PrintBtnClick(Sender: TObject);
   private
      // LCJ : ×î¼ÑËõ·Å±ÈÀý
     procedure DoFit;
@@ -49,7 +47,6 @@ type
     procedure NextPage;
     procedure PrevPage;
     procedure GoPage(CurrentPage: Integer);
-    procedure SetPreviewMode();
   public
     RC: TReportRuntime;
     PageCount: Integer;
@@ -68,24 +65,24 @@ var
 
 implementation
 
-//uses margin; // add
 
 {$R *.DFM}
 
 procedure TPreviewForm.ScrollBox1Resize(Sender: TObject);
+procedure AlignCenter(ClientRect:TRect;var rc:TReportRuntime);
+var space : integer;
 begin
-
-///////////////////////////// add
-  if ClientRect.Right > RC.Width + 20 then
-    RC.Left := (ClientRect.Right - RC.Width-20) div 2
-  else
-    RC.Left := 23;
-
-   if ((height-110-RC.Height) div 2)+10 >10 then
-      RC.top:= ((height-110-RC.Height) div 2)+10
-   else
-     RC.top:=10;
-//////////////////////////
+  RC.Left := 23;
+  RC.top:= 10;
+  space := ClientRect.Right - RC.Width - 20 ;
+  if space > 0  then
+    RC.Left := space div 2;
+  space := ((height-110-RC.Height) div 2)+10;
+  if space > 10 then
+      RC.top:= space ;
+end;
+begin
+  AlignCenter(clientrect,rc)
 end;
 
 procedure TPreviewForm.NextPageBtnClick(Sender: TObject);
@@ -100,21 +97,14 @@ begin
 end;
 
 
+procedure TPreviewForm.PrintBtnClick(Sender: TObject);
+begin
+  rc.Print;
+end;
+
 procedure TPreviewForm.CloseBtnClick(Sender: TObject);
 begin
   Close;
-end;
-
-//procedure TPreviewForm.PrintFile(strFileName: string);
-//begin
-//  RC.LoadFromFile(strFileName);
-//  RC.PrintIt;
-//end;
-
-procedure TPreviewForm.SetPreviewMode();
-begin
-  RC.IsPreview := true;
-  RC.Refresh;
 end;
 
 procedure TPreviewForm.btnFirstClick(Sender: TObject);
@@ -147,14 +137,13 @@ end;
 
 procedure TPreviewForm.FormCreate(Sender: TObject);
 begin
-  RC:= TReportRuntime.create(SELF);
+  RC:= TReportRuntime.create(SELF.ScrollBox1);
   // disable template
   Self.PrintBtn.Visible := False;
-  height:=550;
-  width:= 715;
+  self.SpeedButton1.Visible := False;
+  self.SpeedButton2.Visible := False;
   PageCount := 1;
   CurrentPage := 1;
-  self.SetPreviewMode();
 end;
 
 procedure TPreviewForm.FormShow(Sender: TObject);

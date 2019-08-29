@@ -1518,11 +1518,11 @@ begin
            Cells[1,j].CellText := t1.FieldDefs[j].Name;
            Cells[2,j].CellText := '#T1.'+t1.FieldDefs[j].Name;
         end;
-        SaveToFile(strFileDir+'\'+'xxx.ept');
+        SaveToFile(strFileDir+'\'+'p1.json');
         ResetContent;
         cf.Free;
       end;
-      R.ReportFile:=strFileDir+'\'+'xxx.ept';
+      R.ReportFile:=strFileDir+'\'+'p1.json';
       R.PrintPreview();    // Ready for  Test Page_count
     finally
       T1.free;

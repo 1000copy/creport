@@ -88,6 +88,7 @@ type
     function AppendList(l1, l2: TList): Boolean;
   private
     // todo
+    isPreparedPrint : Boolean;
     function IsDataField(s: String): Boolean;
     function getDataLineHeight(): integer;
     function DetailCellIndex(NO:integer) :Integer;
@@ -423,20 +424,21 @@ Var
 Begin
   If SysPrinter.Printers.Count <= 0 Then begin
     osservice.MsgOK(cc.ErrorPrinterSetupRequired, '');
-
     exit;
   end;
   Try
         FpageAll := calcPageCount;
-        PreparePrintFiles( );
+        if not isPreparedPrint then begin
+          PreparePrintFiles( );
+          isPreparedPrint := true;
+        end;
         FromPage := 1;
         if not preview then begin
-          if GetPrintRange(frompage,FPageAll) then 
+          if GetPrintRange(frompage,FPageAll) then
             PrintRange('CReport',Frompage,FPageAll);
         end
         else
             TPreviewForm.Action(ReportFile,FPageAll);
-        DeleteAllTempFiles;
     Except
       on E:Exception do MessageDlg(e.Message,mtInformation, [mbOk], 0);
     End;
