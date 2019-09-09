@@ -58,18 +58,18 @@ Uses
   LINE_RIGHT3 = $400;                   // right top to bottom
 
 type
-  TReportControl = class ;
+  TReportPage = class ;
   TReportCell =class     ;
   MouseBase = class
   protected
-    FControl :TReportControl ;
+    FControl :TReportPage ;
     procedure DoMouseMove(Msg:TMsg);virtual;abstract;
     procedure MsgLoop;
   end;
   MouseSelector = class(MouseBase)
   private
   public
-    constructor Create(RC:TReportControl);
+    constructor Create(RC:TReportPage);
     procedure DoMouseMove(Msg:TMsg); override;
     procedure StartMouseSelect(point: TPoint; Shift: Boolean);
   end;
@@ -83,8 +83,6 @@ type
     class function DoSlice(str: String; FromChar:char): string;
   end;
   MouseDragger = class(MouseBase)
-    //FControl :TReportControl ;
-    //hClientDC: HDC;
     c : Canvas ;
     RectBorder: TRect;
     ThisCell: TReportCell;
@@ -93,7 +91,7 @@ type
     procedure RegularPointY(var P: TPoint);
     procedure Bound(var Value: Integer);
   public
-    constructor Create(RC:TReportControl);
+    constructor Create(RC:TReportPage);
     procedure DoMouseMove(Msg: TMSG); override;
     procedure StartMouseDrag_Horz(point: TPoint);
   end;
@@ -146,12 +144,12 @@ type
   TLineList = class;
   TCellList = class(TList)
   private
-    ReportControl:TReportControl;
+    ReportControl:TReportPage;
     function GetCell(Index: Integer): TReportCell;
     procedure CheckAllNextCellIsBiggerBottom;
     procedure CheckAllNextCellIsSlave;
   public
-    constructor Create(ReportControl:TReportControl);
+    constructor Create(ReportControl:TReportPage);
     //清除掉不在选中矩形中的CELL  
     procedure ClearBySelection(R:TRect);
     function IsRegularForCombine():Boolean;
@@ -176,10 +174,10 @@ type
   end;
   TLineList = class(TList)
   private
-    R:TReportControl;
+    R:TReportPage;
     function Get(Index: Integer): TReportLine;
   public
-    constructor Create(R:TReportControl);
+    constructor Create(R:TReportPage);
     procedure CombineHorz;
     property Items[Index: Integer]: TReportLine read Get ;default;
     procedure MakeSelectedLines(FLineList:TLineList);
@@ -210,7 +208,7 @@ type
   private
 
     NearResolution : integer;
-    ReportControl:TReportControl;
+    ReportControl:TReportPage;
     function GetOwnerCellHeight: Integer;
     function MaxSplitNum :integer;
     function GetBottomest(FOwnerCell: TReportCell): TReportCell;overload;
@@ -240,7 +238,7 @@ type
     procedure DrawImage;
     function IsSlave:Boolean;
     function Calc_RequiredCellHeight: Integer;
-    function GetReportControl: TReportControl;
+    function GetReportControl: TReportPage;
     function GetSelected: Boolean;
     function GetTextRectInternal(Str: String): TRect;
     function NearBottom(P:TPoint):Boolean ;
@@ -351,7 +349,7 @@ type
     procedure Sibling(Cell:TReportCell);
     Procedure CopyCell(Cell: TReportCell; bInsert: Boolean);overload;
     Procedure CopyCell(Cell: TReportCell; bInsert: Boolean;OwnerLine:TReportLine);overload;
-    Constructor Create(R:TReportControl);
+    Constructor Create(R:TReportPage);
     Destructor Destroy; Override;
     Property LeftMargin: Integer Read FLeftMargin Write SetLeftMargin;
     Property OwnerLine: TReportLine Read FOwnerLine Write SetOwnerLine;
@@ -388,7 +386,7 @@ type
     Property CellDispformat: String Read FCellDispformat Write SetCellDispformat;
     // font
     Property LogFont: TLOGFONT Read FLogFont Write SetLogFont;
-    property R: TReportControl read GetReportControl;
+    property R: TReportPage read GetReportControl;
     property IsSelected :Boolean read GetSelected;
   End;
   TReportLine = Class(TObject)
@@ -403,7 +401,7 @@ type
     function getCellCount: Integer;
   public
     { Private declarations }
-    FReportControl: TReportControl;     // Report Control的指针
+    FReportControl: TReportPage;     // Report Control的指针
     FCells: TList;                      // 保存所有在该行中的CELL
     FIndex: Integer;                    // 行的索引
 
@@ -422,7 +420,7 @@ type
     procedure UpdateCellIndex;
     procedure UpdateCellLeft;
     procedure UpdateLineHeight;
-    Property ReportControl: TReportControl Read FReportControl Write
+    Property ReportControl: TReportPage Read FReportControl Write
       FReportControl;
     Property Index: Integer Read FIndex Write FIndex;
     Property LineHeight: Integer Read GetLineHeight Write SetDragHeight;
@@ -448,7 +446,7 @@ type
   EachLineProc =  procedure (ThisLine:TReportLine)of object;
   EachLineIndexProc = procedure (ThisLine:TReportLine;Index:Integer)of object;
   Edit = class
-    FControl : TReportControl;
+    FControl : TReportPage;
     FEditWnd: HWND;
     FEditBrush: HBRUSH;
     FEditFont: HFONT;
@@ -462,9 +460,9 @@ type
     procedure DestroyWindow;
     function CreateBrush(color: Cardinal): HBRUSH;
   public
-    constructor Create(R:TReportControl);
+    constructor Create(R:TReportPage);
   end;
-  TReportControl = Class(TWinControl)
+  TReportPage = Class(TWinControl)
   private
       procedure fromJson(json:Json);
   public
@@ -475,19 +473,13 @@ type
     procedure savetoJson1(fn:string;LineList:TLineList);
   private
     FTextEdit:Edit;
-    MouseSelect : MouseSelector;
-    MouseDrag : MouseDragger;
     hClientDC: HDC;
-//    procedure InternalSaveToFile(
-//      FLineList: TList; FileName: String;PageNumber, Fpageall: integer);
+    function QueryMaxDragExtent(ThisCell:TReportCell):TRect;
+    procedure MaxDragExtent(ThisCell: TReportCell; var RectBorder: TRect);
     procedure DoInvalidateRect(Rect:TRect);
     procedure RecreateEdit(ThisCell: TReportCell);
     procedure DoPaint(hPaintDC: HDC; Handle: HWND; ps: TPaintStruct);
     procedure DrawCornice(hPaintDC: HDC);
-    procedure StartMouseDrag_Horz(point: TPoint);
-    procedure StartMouseDrag_Verz(point: TPoint);
-    procedure MaxDragExtent(ThisCell: TReportCell; var RectBorder: TRect);
-    function QueryMaxDragExtent(ThisCell:TReportCell):TRect;
     procedure UpdateHeight(ThisCell: TReportCell; Y: Integer);
     procedure UpdateTwinCell(ThisCell: TReportCell; x: integer);
     function Interference(ThisCell: TReportCell): boolean;
@@ -540,16 +532,12 @@ type
     function GetCells(Row, Col: Integer): TReportCell;
     procedure InvertCell(Cell: TReportCell);
     procedure DoEdit(str:string);
-    procedure DoMouseDown(P:TPoint;Shift:Boolean);
     procedure DeleteAllTempFiles;
     function ReadyFileName(PageNumber: Integer): String;
 
   Protected
     function getFormulaValue(ThisCell: TReportCell): String;virtual ;
     Procedure CreateWnd; Override;
-//    procedure InternalLoadFromFile(FileName:string;FLineList:TList);
-//    procedure mapDevice(Printer: TPrinter; Width, Height: Integer);
-
   Public
     FLastPrintPageWidth, FLastPrintPageHeight: integer;
     PrintPaper:TPrinterPaper;
@@ -595,13 +583,6 @@ type
     function MousePoint(Message: TMessage):TPoint;
     procedure DoDoubleClick(p:TPoint);
     // Message Handler
-    Procedure WMLButtonDown(Var m: TMessage); Message WM_LBUTTONDOWN;
-    Procedure WMLButtonDBLClk(Var Message: TMessage); Message WM_LBUTTONDBLCLK;
-    Procedure WMMouseMove(Var m: TMessage); Message WM_MOUSEMOVE;
-    Procedure WMContextMenu(Var Message: TMessage); Message WM_CONTEXTMENU;
-    Procedure WMPaint(Var Message: TMessage); Message WM_PAINT;
-    Procedure WMCOMMAND(Var Message: TMessage); Message WM_COMMAND;
-    Procedure WMCtlColor(Var Message: TMessage); Message WM_CTLCOLOREDIT;
     // Window size
     Procedure CalcWndSize;
     //在定义动态报表时,设置纸的大小 不调用windows的打印设置对框时
@@ -643,10 +624,6 @@ type
     Procedure UpdateLines;
     //取销编辑状态
     Procedure FreeEdit;
-    Procedure StartMouseDrag(point: TPoint);
-//    Procedure StartMouseSelect(point: TPoint; Shift: Boolean );
-//    Procedure DoMouseMove(p: TPoint;Shift:Boolean);
-    Procedure StartMouseSelect(point: TPoint; Shift: Boolean );
 //    Procedure DoMouseMove(p: TPoint;Shift:Boolean);
     procedure SelectLine(row: integer);
     // 选中区的操作
@@ -666,18 +643,12 @@ type
     property Cells[Row: Integer;Col: Integer]: TReportCell read GetCells ;
     property  AllowPreviewEdit: boolean read CPreviewEdit write CPreviewEdit;
   Published
-    Property Left;
     Property Top;
     Property Cursor;
     Property Hint;
     Property Visible Default True;
     Property Enabled Default True;
-    Property OnMouseMove;
-    Property OnMouseDown;
-    Property OnMouseUp;
     Property ShowHint;
-    Property OnDragOver;
-    Property OnDragDrop;
   End;
   TDatasetItem = Class(TObject)
     pDataset: TDataset;
@@ -722,15 +693,43 @@ type
 
 type
   Combinator = class
-    ReportControl:TReportControl ;
+    ReportControl:TReportPage ;
     CellList:TCellList;
     bigrect : TRect;
   private
     function IsPit(c : TReportCell): Boolean;
     procedure TakeupRect;
   public
-    constructor Create(R:TReportControl;CellList:TCellList);
+    constructor Create(R:TReportPage;CellList:TCellList);
     function IsRegularForCombine(): Boolean;
+  end;
+  TReportControl = class (TReportPage)
+    MouseSelect : MouseSelector;
+    MouseDrag : MouseDragger;
+    procedure StartMouseDrag_Horz(point: TPoint);
+    procedure StartMouseDrag_Verz(point: TPoint);
+public
+    procedure DoMouseDown(P:TPoint;Shift:Boolean);
+    Procedure StartMouseDrag(point: TPoint);
+//    Procedure StartMouseSelect(point: TPoint; Shift: Boolean );
+//    Procedure DoMouseMove(p: TPoint;Shift:Boolean);
+    Procedure StartMouseSelect(point: TPoint; Shift: Boolean );      
+    Procedure WMLButtonDown(Var m: TMessage); Message WM_LBUTTONDOWN;
+    Procedure WMLButtonDBLClk(Var Message: TMessage); Message WM_LBUTTONDBLCLK;
+    Procedure WMMouseMove(Var m: TMessage); Message WM_MOUSEMOVE;
+    Procedure WMContextMenu(Var Message: TMessage); Message WM_CONTEXTMENU;
+    Procedure WMPaint(Var Message: TMessage); Message WM_PAINT;
+    Procedure WMCOMMAND(Var Message: TMessage); Message WM_COMMAND;
+    Procedure WMCtlColor(Var Message: TMessage); Message WM_CTLCOLOREDIT;
+    constructor create(Owner:TComponent);override;
+    destructor destroy;override;
+published
+    Property OnMouseMove;
+    Property OnMouseDown;
+    Property OnMouseUp;
+    Property OnDragOver;
+    Property OnDragDrop;
+
   end;
 
 Procedure Register;
@@ -819,7 +818,7 @@ end;
 
 Procedure Register;
 Begin
-  RegisterComponents('CReport', [TReportControl]);
+  RegisterComponents('CReport', [TReportPage]);
 End;
 
 {TReportCell}
@@ -1407,7 +1406,7 @@ Begin
   end;
 End;
 
-Constructor TReportCell.Create(R:TReportControl);
+Constructor TReportCell.Create(R:TReportPage);
 Var
   hTempDC: HDC;
   pt, ptOrg: TPoint;
@@ -1559,7 +1558,7 @@ begin
   End;
 end;
 
-function TReportCell.GetReportControl: TReportControl;
+function TReportCell.GetReportControl: TReportPage;
 begin
   Result := ReportControl ;
 end;
@@ -2123,7 +2122,7 @@ end;
 
 {TReportControl}
 
-Procedure TReportControl.CreateWnd;
+Procedure TReportPage.CreateWnd;
 Begin
   Inherited;
 
@@ -2131,12 +2130,10 @@ Begin
     SetClassLong(Handle, GCL_HCURSOR, 0);
 End;
 
-Constructor TReportControl.Create(AOwner: TComponent);
+Constructor TReportPage.Create(AOwner: TComponent);
 Begin
   Inherited Create(AOwner);
   FTextEdit:=Edit.Create(self);
-  mouseSelect := MouseSelector.Create(Self);
-  MouseDrag := MouseDragger.Create(Self);
   Os := WindowsOS.create;
   Parent := TWinControl(aOwner);
   PrintPaper:= TPrinterPaper.Create;
@@ -2186,7 +2183,7 @@ Begin
   CalcWndSize;
 End;
 
-Destructor TReportControl.Destroy;
+Destructor TReportPage.Destroy;
 Begin
   FSelectCells.Free;
   FSelectCells := Nil;
@@ -2196,14 +2193,12 @@ Begin
   FLineList := Nil;
   PrintPaper.Free;
   Os.Free;
-  mouseSelect.Free;
-  MouseDrag.Free;
   FTextEdit.Free;
   Inherited Destroy;
 End;
 
 
-Procedure TReportControl.CalcWndSize;
+Procedure TReportPage.CalcWndSize;
 Var
   hClientDC: HDC;
 
@@ -2226,7 +2221,7 @@ Begin
   Height := trunc(FPageHeight * FReportScale / 100 + 0.5);
 End;
 //   cornice 飞檐     horn 犄角
-procedure TReportControl.DrawCornice(hPaintDC:HDC);
+procedure TReportPage.DrawCornice(hPaintDC:HDC);
 Var
   hGrayPen, hPrevPen: HPEN;
 begin
@@ -2275,7 +2270,7 @@ end;
 //  这函数名，读起来，像是卡带。你读下试试？
 //  SetWindowExtEx(hPaintDC, FPageWidth, FPageHeight, @WndSize);
 //  SetViewPortExtEx(hPaintDC, Width, Height, @WndSize);
-procedure TReportControl.DoPaint(hPaintDC:HDC;Handle:HWND;ps:TPaintStruct);
+procedure TReportPage.DoPaint(hPaintDC:HDC;Handle:HWND;ps:TPaintStruct);
 Var
   I: Integer;
   Rect: TRect;
@@ -2403,6 +2398,7 @@ Begin
   End;
 End;
 
+
 Procedure TReportControl.StartMouseDrag(point: TPoint);
 Var
   ThisCell: TReportCell;
@@ -2417,7 +2413,8 @@ Begin
     StartMouseDrag_Verz(Point) ;
 End;
 
-procedure TReportControl.UpdateHeight(ThisCell:TReportCell;Y:Integer);
+
+procedure TReportPage.UpdateHeight(ThisCell:TReportCell;Y:Integer);
 var
     BottomCell: TReportCell;
 begin
@@ -2436,7 +2433,7 @@ begin
 end;
 
 // 当前选中Cell和它的NextCell修改CellLeft，CellWidth，然后最两个Cell的前后矩形做刷新
-procedure TReportControl.UpdateTwinCell(ThisCell:TReportCell;x:integer);
+procedure TReportPage.UpdateTwinCell(ThisCell:TReportCell;x:integer);
   Var
   TempRect: TRect;
   PrevCellWidth, Distance: Integer;
@@ -2484,7 +2481,7 @@ procedure TReportControl.UpdateTwinCell(ThisCell:TReportCell;x:integer);
     End;
   end;
 
-procedure TReportControl.MaxDragExtent(ThisCell:TReportCell;var RectBorder: TRect);
+procedure TReportPage.MaxDragExtent(ThisCell:TReportCell;var RectBorder: TRect);
 var
   NextCell: TReportCell;
   ThisLine: TReportLine;
@@ -2502,7 +2499,7 @@ begin
     RectBorder.Right := ClientRect.Right - cc.DRAGMARGIN;
 end;
 
-function TReportControl.QueryMaxDragExtent(ThisCell:TReportCell):TRect;
+function TReportPage.QueryMaxDragExtent(ThisCell:TReportCell):TRect;
 var
   NextCell: TReportCell;
   ThisLine: TReportLine;
@@ -2523,7 +2520,7 @@ begin
 end;
   // 选区和拖放区互相干涉否
   // 若无选中的CELL,或者要改变宽度的CELL和NEXTCELL不在选中区中
-function TReportControl.Interference( ThisCell: TReportCell) :boolean;
+function TReportPage.Interference( ThisCell: TReportCell) :boolean;
 var r:boolean ;
 begin
   r := False;
@@ -2540,7 +2537,7 @@ begin
     r := True;
   result := not r;
 end;
-function TReportControl.RectBorder1(ThisCell: TReportCell;ThisCellsList: TCellList):TRect;
+function TReportPage.RectBorder1(ThisCell: TReportCell;ThisCellsList: TCellList):TRect;
 var R: TRect;
 begin
   MaxDragExtent(ThisCell,R) ;
@@ -2549,7 +2546,7 @@ begin
   result := R;
 end;
 
-procedure TReportControl.DrawIndicatorLine(var x:Integer;RectBorder:TRect );
+procedure TReportPage.DrawIndicatorLine(var x:Integer;RectBorder:TRect );
 var  RectClient:TRect;
 Begin
   x:= RegularPoint(x);
@@ -2559,14 +2556,14 @@ Begin
     Windows.GetClientRect(Handle, RectClient);
   LineTo(hClientDC, x, RectClient.Bottom);
 End;
-procedure TReportControl.OnMove(TempMsg: TMSG;RectBorder:TRect );
+procedure TReportPage.OnMove(TempMsg: TMSG;RectBorder:TRect );
 begin
   DrawIndicatorLine(FMousePoint.x,RectBorder);
   FMousePoint := TempMsg.pt;
   Windows.ScreenToClient(Handle, FMousePoint);
   DrawIndicatorLine(FMousePoint.x,RectBorder);
 end;
-procedure TReportControl.MsgLoop(RectBorder:TRect);
+procedure TReportPage.MsgLoop(RectBorder:TRect);
 var TempMsg: TMSG;
 begin
   While GetCapture = Handle Do
@@ -2644,7 +2641,7 @@ begin
   MouseSelect.StartMouseSelect(point,shift);
 end;
 
-procedure TReportControl.fromJson(json: Json);
+procedure TReportPage.fromJson(json: Json);
 begin
     self.FReportScale := json._int('ReportScale');
     self.FReportScale := json._int('ReportScale');
@@ -2660,11 +2657,11 @@ begin
     self.LineList.fromJson(json);
 end;
 
-function TReportControl.toJson: String;
+function TReportPage.toJson: String;
 begin
   result := self.toJson1(self.linelist)
 end;
-function TReportControl.toJson1(LineList:TLineList): String;
+function TReportPage.toJson1(LineList:TLineList): String;
 var
   c : string;
 begin
@@ -2674,7 +2671,7 @@ begin
   result := '{'+result +'}';
 end;
 
-Procedure TReportControl.AddLine;
+Procedure TReportPage.AddLine;
 Var
   TempLine: TReportLine;
 Begin
@@ -2692,7 +2689,7 @@ Begin
   UpdateLines;
 End;
 
-Function TReportControl.CanAdd: Boolean;
+Function TReportPage.CanAdd: Boolean;
 Begin
   If FSelectCells.Count < 2 Then
     Result := True
@@ -2700,7 +2697,7 @@ Begin
     Result := False;
 End;
 
-Function TReportControl.CanInsert: Boolean;
+Function TReportPage.CanInsert: Boolean;
 Begin
   If FSelectCells.Count > 0 Then
     Result := True
@@ -2708,7 +2705,7 @@ Begin
     Result := False;
 End;
 
-Function TReportControl.CanSplit: Boolean;
+Function TReportPage.CanSplit: Boolean;
 Begin
   Result := (FSelectCells.Count = 1) and (FSelectCells[0].FSlaveCells.Count = 0)
 //  If (FSelectCells.Count = 1) Then
@@ -2740,7 +2737,7 @@ End;
 // LCJ : 然后，另一个声音响起：你他妈听不清楚，是另外一个人说的，不是我说的吗？
 // LCJ : 然后，说明，我累了。累了才会响起曾经的不愉快的事情。
 
-Procedure TReportControl.CombineCell;
+Procedure TReportPage.CombineCell;
 var
     OwnerCell: TReportCell;
     I, J: Integer;
@@ -2763,7 +2760,7 @@ Begin
   OwnerCell.Select;
 End;
 
-Procedure TReportControl.DeleteLine;
+Procedure TReportPage.DeleteLine;
 Var
   I, J: Integer;
   LineArray: TList;
@@ -2814,7 +2811,7 @@ Begin
   UpdateLines;
 End;
 
-Procedure TReportControl.InsertLine;
+Procedure TReportPage.InsertLine;
 Var
   NewLine,ThisLine: TReportLine;
 Begin
@@ -2830,7 +2827,7 @@ Begin
   UpdateLines;
 End;
 
-Procedure TReportControl.NewTable(ColNumber, RowNumber: Integer);
+Procedure TReportPage.NewTable(ColNumber, RowNumber: Integer);
 Var
   I: Integer;
   FirstLine: TReportLine;
@@ -2852,7 +2849,7 @@ Begin
     AddLine;
 End;
 
-Procedure TReportControl.SplitCell;
+Procedure TReportPage.SplitCell;
 Var
   c: TReportCell;
 Begin
@@ -2869,7 +2866,7 @@ Begin
   End;
 End;
 
-Procedure TReportControl.SetCellAlignHorzAlign(NewHorzAlign: Integer);
+Procedure TReportPage.SetCellAlignHorzAlign(NewHorzAlign: Integer);
 Var
   I: Integer;
 Begin    
@@ -2880,7 +2877,7 @@ Begin
   End;
 End;
 
-Procedure TReportControl.SetCellAlignNewVertAlign(NewVertAlign: Integer);
+Procedure TReportPage.SetCellAlignNewVertAlign(NewVertAlign: Integer);
 Var
   I: Integer;
 Begin
@@ -2891,7 +2888,7 @@ Begin
   End;
 End;
 
-Procedure TReportControl.SetCellBackColor(NewBackColor: COLORREF);
+Procedure TReportPage.SetCellBackColor(NewBackColor: COLORREF);
 Var
   I: Integer;
 Begin
@@ -2902,7 +2899,7 @@ Begin
   End;
 End;
 
-Procedure TReportControl.SetCellTextColor(NewTextColor: COLORREF);
+Procedure TReportPage.SetCellTextColor(NewTextColor: COLORREF);
 Var
   I: Integer;
 Begin
@@ -2913,7 +2910,7 @@ Begin
   End;
 End;
 
-Procedure TReportControl.SetCellColor(NewTextColor, NewBackColor: COLORREF);
+Procedure TReportPage.SetCellColor(NewTextColor, NewBackColor: COLORREF);
 Var
   I: Integer;
 Begin
@@ -2925,7 +2922,7 @@ Begin
   End;
 End;
 
-Procedure TReportControl.SetCellAlign(NewHorzAlign, NewVertAlign: Integer);
+Procedure TReportPage.SetCellAlign(NewHorzAlign, NewVertAlign: Integer);
 Var
   I: Integer;
 Begin
@@ -2938,7 +2935,7 @@ Begin
   UpdateLines;
 End;
 
-Procedure TReportControl.SetCellDiagonal(NewDiagonal: UINT);
+Procedure TReportPage.SetCellDiagonal(NewDiagonal: UINT);
 Var
   I: Integer;
 Begin
@@ -2948,7 +2945,7 @@ Begin
     self.DoInvalidateRect(TReportCell(FSelectCells[I]).CellRect);
   End;
 End;
-Procedure TReportControl.SetSelectedCellFont(cf: TFont);
+Procedure TReportPage.SetSelectedCellFont(cf: TFont);
 var CellFont: TLOGFONT;
 begin
       {$WARN UNSAFE_CODE OFF}
@@ -2956,7 +2953,7 @@ begin
       {$WARN UNSAFE_CODE  ON}
       SetCellFont(CellFont);
 end;
-Procedure TReportControl.SetCellFont(CellFont: TLOGFONT);
+Procedure TReportPage.SetCellFont(CellFont: TLOGFONT);
 Var
   I: Integer;
   CellRect: TRect;
@@ -2976,7 +2973,7 @@ Begin
 
 End;
 
-Procedure TReportControl.SetCellLines(bLeftLine, bTopLine, bRightLine,
+Procedure TReportPage.SetCellLines(bLeftLine, bTopLine, bRightLine,
   bBottomLine: Boolean; nLeftLineWidth, nTopLineWidth, nRightLineWidth,
   nBottomLineWidth: Integer);
 Var
@@ -3004,7 +3001,7 @@ Begin
   UpdateLines;
 End;
 
-procedure TReportControl.EachCell_CalcMinCellHeight_If_Master(c:TReportCell);
+procedure TReportPage.EachCell_CalcMinCellHeight_If_Master(c:TReportCell);
 begin
    If c.FSlaveCells.Count > 0 Then
       c.CalcHeight;
@@ -3076,7 +3073,7 @@ begin
   result := FCells.count;
 end;
 
-Procedure TReportControl.UpdateLines;
+Procedure TReportPage.UpdateLines;
 var
   I: Integer;
   ThisLine: TReportLine;
@@ -3092,7 +3089,7 @@ Begin
   End;       
 End;
 
-procedure TReportControl.InvertCell(Cell:TReportCell);
+procedure TReportPage.InvertCell(Cell:TReportCell);
 Var
   hClientDC: HDC;
 begin
@@ -3101,7 +3098,7 @@ begin
     ReleaseDC(Handle, hClientDC);
 end;
 
-Function TReportControl.AddSelectedCell(Cell: TReportCell): Boolean;
+Function TReportPage.AddSelectedCell(Cell: TReportCell): Boolean;
 Begin
   If IsCellSelected(Cell) Or (Cell = Nil) Then
     Result := False
@@ -3112,7 +3109,7 @@ Begin
   End;
 End;
 
-Function TReportControl.AddSelectedCells(Cells: TCellList): Boolean;
+Function TReportPage.AddSelectedCells(Cells: TCellList): Boolean;
 var i :integer;
 Begin
   for i := 0 to Cells.Count -1 do
@@ -3120,7 +3117,7 @@ Begin
   result := true;
 End;
 
-Function TReportControl.CellFromPoint(point: TPoint): TReportCell;
+Function TReportPage.CellFromPoint(point: TPoint): TReportCell;
 Var
   I, J: Integer;
   ThisLine: TReportLine;
@@ -3152,7 +3149,7 @@ Begin
   End;
 End;
 
-Function TReportControl.IsCellSelected(Cell: TReportCell): Boolean;
+Function TReportPage.IsCellSelected(Cell: TReportCell): Boolean;
 Begin
 
   If Cell = Nil Then
@@ -3169,7 +3166,7 @@ Begin
     Result := False;
 End;
 
-Procedure TReportControl.ClearSelect;
+Procedure TReportPage.ClearSelect;
 Var
   ThisCell: TReportCell;
   hClientDC: HDC;
@@ -3186,7 +3183,7 @@ Begin
   ReleaseDC(Handle, hClientDC);
 End;
 
-Function TReportControl.RemoveSelectedCell(Cell: TReportCell): Boolean;
+Function TReportPage.RemoveSelectedCell(Cell: TReportCell): Boolean;
 Var
   hClientDC: HDC;
 Begin
@@ -3238,7 +3235,7 @@ Begin
   End;
 End;
 
-Procedure TReportControl.AddCell;
+Procedure TReportPage.AddCell;
 Begin
   If FSelectCells.Count <> 1 Then
     Exit;
@@ -3248,12 +3245,12 @@ End;
 
 
 
-Function TReportControl.CountFcells(crow: integer): integer;
+Function TReportPage.CountFcells(crow: integer): integer;
 Begin
   Result := TReportLine(FLineList[crow]).FCells.Count;
 End;
 
-Procedure TReportControl.DeleteCell;
+Procedure TReportPage.DeleteCell;
 Var
   I, J: Integer;
   ThisCell, TempCell: TReportCell;
@@ -3295,25 +3292,25 @@ Begin
   End;
 End;
 
-Procedure TReportControl.InsertCell;
+Procedure TReportPage.InsertCell;
 Begin
   If FSelectCells.Count <> 1 Then
     Exit;          
   FSelectCells[0].OwnerLine.InsertCell (FSelectCells[0]);
   UpdateLines;
 End;
-function TReportControl.getFormulaValue(ThisCell:TReportCell):String;
+function TReportPage.getFormulaValue(ThisCell:TReportCell):String;
 begin
     Result := ThisCell.FCellText;
 end;
 
 
-procedure TReportControl.loadFromFile(fn: string);
+procedure TReportPage.loadFromFile(fn: string);
 begin
   loadfromjson(fn);
 end;
 
-procedure TReportControl.loadFromJson(fn: string);var sl : TStringList;op:Json;
+procedure TReportPage.loadFromJson(fn: string);var sl : TStringList;op:Json;
 begin
     sl := TStringList.create;
     sl.LoadFromFile(fn);
@@ -3327,11 +3324,11 @@ begin
     end;
 
 end;
-procedure TReportControl.savetoJson(fn: string);
+procedure TReportPage.savetoJson(fn: string);
 begin
   savetoJson1(fn,self.FlineList);
 end;
-procedure TReportControl.savetoJson1(fn: string;LineList:TLineList);
+procedure TReportPage.savetoJson1(fn: string;LineList:TLineList);
 var
   sl : TstringList;
   j:Json;
@@ -3348,7 +3345,7 @@ end;
 
 
 // 垂直切分单元格。一个单元格拆分成多个横向单元格（和OwnerCell无关
-Procedure TReportControl.VSplitCell(Number: Integer);
+Procedure TReportPage.VSplitCell(Number: Integer);
 Begin
   If FSelectCells.Count <> 1 Then
     Exit;
@@ -3356,7 +3353,7 @@ Begin
   DoVSplit(FSelectCells[0],Number);
 
 End;
-procedure TReportControl.DoVSplit(ThisCell:TReportCell;Number: Integer);
+procedure TReportPage.DoVSplit(ThisCell:TReportCell;Number: Integer);
 Var
   MaxCellCount,ActullyNum: Integer;
   rect : trect;
@@ -3378,7 +3375,7 @@ begin
   self.DoInvalidateRect(rect);
 end;
 
-Procedure TReportControl.DoVertSplitCell(ThisCell : TReportCell;SplitCount: Integer);
+Procedure TReportPage.DoVertSplitCell(ThisCell : TReportCell;SplitCount: Integer);
 Var
   CurrentCell, Cell,ChildCell: TReportCell;
   xx, I, J, CellWidth: Integer;
@@ -3421,7 +3418,7 @@ End;
 // 肯定只有一页，因此不需要考虑分页问题
 
 
-Procedure TReportControl.PrintIt;
+Procedure TReportPage.PrintIt;
 Var
   I, J: Integer;
   ThisLine: TReportLine;
@@ -3455,7 +3452,7 @@ End;
 
 // add by wang han song
 
-Function TreportControl.GetCellFont: Tfont;
+Function TReportPage.GetCellFont: Tfont;
 Var
   i: integer;
   AFont: TFont;
@@ -3475,7 +3472,7 @@ Begin
   End;
 End;
 
-Function TReportControl.GetMargin: TRect;
+Function TReportPage.GetMargin: TRect;
 Begin
   Result.Left := FLeftMarginMM;
   Result.Top := FTopMarginMM;
@@ -3483,7 +3480,7 @@ Begin
   Result.Bottom := FBottomMarginMM;
 End;
 
-Procedure TReportControl.SetMargin(left, top, right,
+Procedure TReportPage.SetMargin(left, top, right,
   bottom: Integer);
 Var
   RectClient: TRect;
@@ -3514,7 +3511,7 @@ Begin
   End;
 End;
 
-Procedure TReportControl.SetScale(Const Value: Integer);
+Procedure TReportPage.SetScale(Const Value: Integer);
 Begin
   if FReportScale <>  Value then
   begin
@@ -3523,7 +3520,7 @@ Begin
     Refresh;
   end;
 End;
-Procedure TReportControl.DeleteAllTempFiles;
+Procedure TReportPage.DeleteAllTempFiles;
 Var
   tempDir: String;
 Begin                             
@@ -3536,7 +3533,7 @@ Begin
   Except
   End;
 End;
-function TReportControl.ReadyFileName(PageNumber: Integer):String;
+function TReportPage.ReadyFileName(PageNumber: Integer):String;
   Var
     FileName: String;
   procedure EnsureTempDirExist;
@@ -3563,7 +3560,7 @@ begin
   clear;
 end;
 
-Procedure TReportControl.ResetContent;
+Procedure TReportPage.ResetContent;
 Var
   I: Integer;
   ThisLine: TReportLine;
@@ -3579,7 +3576,7 @@ Begin
   Refresh;
 End;
 
-procedure TReportControl.SaveToFile(FileName: String);
+procedure TReportPage.SaveToFile(FileName: String);
 begin
   savetojson(filename);
 end;
@@ -3589,7 +3586,7 @@ end;
 // 将变化后的单元格宽度存入全局变量数组 
 
 
-Procedure TReportControl.FreeEdit;
+Procedure TReportPage.FreeEdit;
 Begin
   Windows.SetFocus(0);
   FTextEdit.DestroyIfVisible;
@@ -3598,7 +3595,7 @@ Begin
 End;
 
 
-Procedure TReportControl.SetCellDispFormt(mek: String);  
+Procedure TReportPage.SetCellDispFormt(mek: String);
 Var
   i: integer;
 Begin
@@ -3606,7 +3603,7 @@ Begin
     TReportCell(FSelectCells[I]).CellDispformat := mek;
 End;
 
-Procedure TReportControl.SetCellSumText(mek: String);
+Procedure TReportPage.SetCellSumText(mek: String);
 Var
   i: integer;
 Begin
@@ -3615,7 +3612,7 @@ Begin
 End;
 
 
-Procedure TReportControl.SetCellFocus(row, col: integer);
+Procedure TReportPage.SetCellFocus(row, col: integer);
 Var
   thiscell: TreportCell;
   ThisLine: Treportline;
@@ -3624,15 +3621,15 @@ Begin
   ThisCell := TreportCell(ThisLine.FCells[col]);
   AddSelectedCell(ThisCell);
 End;
-Procedure TReportControl.SelectLine(row : integer);
+Procedure TReportPage.SelectLine(row : integer);
 Begin
   SetCellsFocus(row,0,row,TReportLine(FlineList[row]).FCells.Count -1);
 End;
-Procedure TReportControl.SelectLines(row1,row2 : integer);
+Procedure TReportPage.SelectLines(row1,row2 : integer);
 Begin
   SetCellsFocus(row1,0,row2,TReportLine(FlineList[row1]).FCells.Count -1);
 End;
-Procedure TReportControl.SetCellsFocus(row1, col1, row2, col2: integer);  
+Procedure TReportPage.SetCellsFocus(row1, col1, row2, col2: integer);
 Var
   i, j: integer;
 Begin
@@ -3642,7 +3639,7 @@ Begin
 End;
 
 
-Procedure TReportControl.SetWndSize(w, h: integer);  
+Procedure TReportPage.SetWndSize(w, h: integer);
 Begin
   FPageWidth := w;
   FPageHeight := h;
@@ -3652,34 +3649,30 @@ Begin
   Height := trunc(FPageHeight * FReportScale / 100 + 0.5);
 End;
 
-function TReportControl.Get(Index: Integer): TReportLine;
+function TReportPage.Get(Index: Integer): TReportLine;
 begin
   result := TReportLine(FLineList[Index ]);
 end;
 
 
-function TReportControl.GetCells(Row, Col: Integer): TReportCell;
+function TReportPage.GetCells(Row, Col: Integer): TReportCell;
 begin
   result := TReportCell(TReportLine(FLineList[Row ]).FCells[Col]);
 end;
 
-Procedure TReportControl.DoLoadBmp(Cell: Treportcell; filename: String);
+Procedure TReportPage.DoLoadBmp(Cell: Treportcell; filename: String);
 begin
   Cell.LoadBmp(filename);
   self.DoInvalidateRect(Cell.FCellRect);
 End;
 
 
-Procedure TReportControl.FreeBmp(Cell: Treportcell);
+Procedure TReportPage.FreeBmp(Cell: Treportcell);
 Begin
   Cell.FreeBmp;
 End;
 
 
-//procedure TReportControl.SaveToFile(FileName: String);
-//begin
-//  SaveToFile(FLineList,FileName,0,0);
-//end;
 
 procedure TPrinterPaper.Batch;
 begin
@@ -3688,7 +3681,7 @@ begin
 end;
 
 
-function TReportControl.ZoomRate(height,width:integer):Integer;
+function TReportPage.ZoomRate(height,width:integer):Integer;
   function PercentRate (a,b:Integer):integer;
   begin
     if  a  < b then
@@ -3747,7 +3740,7 @@ begin
   SelectedLines.Free;
 end;
 
-constructor TCellList.Create(ReportControl:TReportControl);
+constructor TCellList.Create(ReportControl:TReportPage);
 begin
   self.ReportControl := ReportControl;
 end;
@@ -3772,7 +3765,7 @@ function TCellList.GetCell(Index: Integer): TReportCell;
 begin
   Result := TReportCell(get(Index));
 end;
-constructor Combinator.Create(R: TReportControl;CellList:TCellList);
+constructor Combinator.Create(R: TReportPage;CellList:TCellList);
 begin
   self.ReportControl := R ;
   Self.CellList := CellList;
@@ -3960,31 +3953,31 @@ begin
   End;
 end;
 
-procedure TReportControl.DoEdit(str: string);
+procedure TReportPage.DoEdit(str: string);
 begin
   FEditCell.CellText := str;
 end;
 
 
-procedure TReportControl.EachLine_CalcLineHeight(c: TReportLine);
+procedure TReportPage.EachLine_CalcLineHeight(c: TReportLine);
 begin
     c.UpdateLineHeight;
     c.UpdateCellIndex;
     c.UpdateCellLeft;
 end;
 
-procedure TReportControl.DoInvalidateRect(Rect: TRect);
+procedure TReportPage.DoInvalidateRect(Rect: TRect);
 begin
   os.InvalidateRect1(Handle, Rect, False);
 //  self.DoInvalidateRect(Rect);
 end;
 
-function TReportControl.IsEditing: boolean;
+function TReportPage.IsEditing: boolean;
 begin
   result := FTextEdit.IsWindowVisible() ;
 end;
 
-procedure TReportControl.CancelEditing;
+procedure TReportPage.CancelEditing;
 var
   str: Array[0..3000] Of Char;
 begin
@@ -3997,7 +3990,7 @@ begin
     FEditCell := Nil;   
 end;
 
-procedure TReportControl.ClearPaintMessage;
+procedure TReportPage.ClearPaintMessage;
 var   TempMsg: TMSG;
 begin
   // 清除消息队列中的WM_PAINT消息，防止画出飞线
@@ -4008,6 +4001,20 @@ begin
     DispatchMessage(TempMsg);
   End;
 
+end;
+
+constructor TReportControl.create(Owner: TComponent);
+begin
+  inherited;
+  mouseSelect := MouseSelector.Create(Self);
+  MouseDrag := MouseDragger.Create(Self);
+end;
+
+destructor TReportControl.destroy;
+begin
+  mouseSelect.Free;
+  MouseDrag.Free;
+  inherited;
 end;
 
 procedure TReportControl.DoMouseDown(P: TPoint; Shift: Boolean);
@@ -4021,17 +4028,17 @@ begin
     StartMouseSelect(P, Shift) ;
 end;
 
-function TReportControl.MousePoint(Message: TMessage): TPoint;
+function TReportPage.MousePoint(Message: TMessage): TPoint;
 begin
   Result.x := LOWORD(Message.lParam);
   Result.y := HIWORD(Message.lParam);
 end;
-procedure TReportControl.RecreateEdit(ThisCell:TReportCell);
+procedure TReportPage.RecreateEdit(ThisCell:TReportCell);
 begin
   FTextEdit.DestroyIfVisible ;
   FTextEdit.CreateEdit(Handle,ThisCell.TextRect,ThisCell.LogFont,ThisCell.CellText,ThisCell.FHorzAlign);
 end;
-procedure TReportControl.DoDoubleClick(p: TPoint);   
+procedure TReportPage.DoDoubleClick(p: TPoint);
 Var
   ThisCell: TReportCell;                             
 begin
@@ -4072,7 +4079,7 @@ begin
   Result := OwnerCell ;
 
 end;
-constructor TLineList.Create(R:TReportControl);
+constructor TLineList.Create(R:TReportPage);
 begin
   self.R := R; 
 end;
@@ -4113,7 +4120,7 @@ begin
 end;
 
 
-procedure TReportControl.EachCell(EachProc:EachCellProc);
+procedure TReportPage.EachCell(EachProc:EachCellProc);
 var
   ThisLine: TReportLine;
   ThisCell: TReportCell;
@@ -4129,7 +4136,7 @@ begin
     End;
    End;
 end;
-procedure TReportControl.EachLine(EachProc:EachLineProc);
+procedure TReportPage.EachLine(EachProc:EachLineProc);
 var
   ThisLine: TReportLine;
   ThisCell: TReportCell;
@@ -4141,7 +4148,7 @@ begin
     EachProc(ThisLine);
    End;
 end;
-procedure TReportControl.EachLineIndex(EachProc:EachLineIndexProc);
+procedure TReportPage.EachLineIndex(EachProc:EachLineIndexProc);
 var
   ThisLine: TReportLine;
   ThisCell: TReportCell;
@@ -4153,18 +4160,18 @@ begin
     EachProc(ThisLine,I);
    End;
 end;
-procedure TReportControl.EachCell_CalcHeight(ThisCell:TReportCell);
+procedure TReportPage.EachCell_CalcHeight(ThisCell:TReportCell);
 begin
   If ThisCell.FSlaveCells.Count > 0 Then
     thisCell.CalcHeight ;
 end;
 
 //
-procedure TReportControl.EachProc_UpdateIndex(thisLine:TReportLine;I:integer);
+procedure TReportPage.EachProc_UpdateIndex(thisLine:TReportLine;I:integer);
 begin
     ThisLine.Index := I;
 end;
-procedure TReportControl.EachProc_UpdateLineTop(thisLine:TReportLine;I:integer);
+procedure TReportPage.EachProc_UpdateLineTop(thisLine:TReportLine;I:integer);
 begin
    If I = 0 Then
     ThisLine.LineTop := FTopMargin
@@ -4172,7 +4179,7 @@ begin
     ThisLine.LineTop := TReportLine(FLineList[I - 1]).LineTop +
                               TReportLine(FLineList[I - 1]).LineHeight;
 end;
-procedure TReportControl.EachProc_UpdateLineRect(thisLine:TReportLine;Index:integer);
+procedure TReportPage.EachProc_UpdateLineRect(thisLine:TReportLine;Index:integer);
 begin
      ThisLine.LineRect;
 end;
@@ -4470,7 +4477,7 @@ begin
     NewMapping(ThisCell,NewCell);
 end;
 
-constructor MouseSelector.Create(RC: TReportControl);
+constructor MouseSelector.Create(RC: TReportPage);
 begin
   FControl := rc;
 end;
@@ -4511,7 +4518,7 @@ Begin
 End;
 { MouseDragger }
 
-constructor MouseDragger.Create(RC: TReportControl);
+constructor MouseDragger.Create(RC: TReportPage);
 begin
   FControl := RC;
 end;
@@ -4629,7 +4636,7 @@ end;
 
 { Edit }
 
-constructor Edit.Create(R: TReportControl);
+constructor Edit.Create(R: TReportPage);
 begin
   FControl := R;
   FEditWnd := INVALID_HANDLE_VALUE;

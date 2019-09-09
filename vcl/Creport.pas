@@ -200,10 +200,10 @@ type
 
 const
   DefIni = 'EReport.ini';
-  ver = '【eReport 票据式报表软件】V3.0E';
+  ver = 'eReport 5.0'
   copyright = ver ;
-  prname='创作：郭家骏、王寒松';
-  updates = '修改日期:2003.4.26 成都';
+  prname='创作：王寒松';
+  updates = '修改日期:2019.9 MTK"
 
 var
   CreportForm: TCreportForm;

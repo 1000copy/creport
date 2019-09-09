@@ -34,7 +34,7 @@ type
     constructor Create;
   end;
   //bridge for LineList -> PrintLineList
-  TReportRunTime = Class(TReportControl)
+  TReportRunTime = Class(TReportPage)
   private
     FRender:RenderParts ;
     FSummer:TSummer;
@@ -120,7 +120,7 @@ type
     Destructor Destroy; Override;
     Procedure SetVarValue(strVarName, strVarValue: String);
     Procedure PrintPreview();
-    function  EditReport (FileName:String):TReportControl;overload;
+    function  EditReport (FileName:String):TReportPage;overload;
     procedure PreparePrintFiles();
     Procedure Print();
     Function Cancelprint: boolean;
@@ -583,7 +583,7 @@ Begin
 
 
 
-function TReportRunTime.EditReport(FileName:String):TReportControl;
+function TReportRunTime.EditReport(FileName:String):TReportPage;
 begin
   loadFromJson(FileName);
   result := nil;
