@@ -4,7 +4,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  ureport, StdCtrls, Buttons, Menus, IniFiles,ExtCtrls, ToolWin,
+  ureportcontrol, ureport,StdCtrls, Buttons, Menus, IniFiles,ExtCtrls, ToolWin,
   ComCtrls, Spin,  printers , ExtDlgs,cc,db;
 
 type
@@ -200,10 +200,10 @@ type
 
 const
   DefIni = 'EReport.ini';
-  ver = 'eReport 5.0'
+  ver = 'eReport 5.0';
   copyright = ver ;
   prname='创作：王寒松';
-  updates = '修改日期:2019.9 MTK"
+  updates = '修改日期:2019.9 MTK';
 
 var
   CreportForm: TCreportForm;

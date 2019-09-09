@@ -5,7 +5,7 @@ interface
 
 uses
   Windows, Messages, SysUtils, Classes, Graphics, Controls, Forms, Dialogs,
-  StdCtrls, Buttons, Spin, uReport,printers;
+  StdCtrls, Buttons, Spin, uReport,printers,ureportcontrol;
 
 type
   TMarginForm = class(TForm)

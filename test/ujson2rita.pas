@@ -4,7 +4,7 @@ interface
 
 uses
   // user
-  ureport,
+  ureport,ureportcontrol,
  ujson,TestFramework,sysutils,classes,forms;
 
 type

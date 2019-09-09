@@ -127,7 +127,6 @@ end;
 procedure TPreviewForm.SpeedButton5Click(Sender: TObject);
 begin
   //add
-  RC.FreeEdit;
   ShowWindow(RC.Handle, SW_HIDE);
   RC.ReportScale := RC.ReportScale -10;
   ScrollBox1Resize(Self);
@@ -154,7 +153,6 @@ end;
 procedure TPreviewForm.SpeedButton4Click(Sender: TObject);
 begin
 
-  RC.FreeEdit;
   ShowWindow(RC.Handle, SW_HIDE);
   RC.ReportScale := RC.ReportScale + 10;
   ScrollBox1Resize(Self);
@@ -178,7 +176,6 @@ end;
 
 procedure TPreviewForm.DoFit();
 begin
-  RC.FreeEdit;
   ShowWindow(RC.Handle, SW_HIDE);
   RC.ReportScale := RC.ZoomRate(Self.ScrollBox1.Height,self.ScrollBox1.Width);
   ScrollBox1Resize(Self);

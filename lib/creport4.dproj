@@ -28,6 +28,198 @@
     <Borland.ProjectType>Package</Borland.ProjectType>
     <BorlandProject>
 <BorlandProject><Delphi.Personality><Parameters><Parameters Name="UseLauncher">False</Parameters><Parameters Name="LoadAllSymbols">True</Parameters><Parameters Name="LoadUnspecifiedSymbols">False</Parameters></Parameters><Package_Options><Package_Options Name="ImplicitBuild">False</Package_Options><Package_Options Name="DesigntimeOnly">False</Package_Options><Package_Options Name="RuntimeOnly">False</Package_Options></Package_Options><VersionInfo><VersionInfo Name="IncludeVerInfo">True</VersionInfo><VersionInfo Name="AutoIncBuild">False</VersionInfo><VersionInfo Name="MajorVer">1</VersionInfo><VersionInfo Name="MinorVer">0</VersionInfo><VersionInfo Name="Release">0</VersionInfo><VersionInfo Name="Build">0</VersionInfo><VersionInfo Name="Debug">False</VersionInfo><VersionInfo Name="PreRelease">False</VersionInfo><VersionInfo Name="Special">False</VersionInfo><VersionInfo Name="Private">False</VersionInfo><VersionInfo Name="DLL">False</VersionInfo><VersionInfo Name="Locale">2052</VersionInfo><VersionInfo Name="CodePage">936</VersionInfo></VersionInfo><VersionInfoKeys><VersionInfoKeys Name="CompanyName"></VersionInfoKeys><VersionInfoKeys Name="FileDescription"></VersionInfoKeys><VersionInfoKeys Name="FileVersion">1.0.0.0</VersionInfoKeys><VersionInfoKeys Name="InternalName"></VersionInfoKeys><VersionInfoKeys Name="LegalCopyright"></VersionInfoKeys><VersionInfoKeys Name="LegalTrademarks"></VersionInfoKeys><VersionInfoKeys Name="OriginalFilename"></VersionInfoKeys><VersionInfoKeys Name="ProductName"></VersionInfoKeys><VersionInfoKeys Name="ProductVersion">1.0.0.0</VersionInfoKeys><VersionInfoKeys Name="Comments"></VersionInfoKeys></VersionInfoKeys><Source><Source Name="MainSource">creport4.dpk</Source></Source><Excluded_Packages>
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
+      
       <Excluded_Packages Name="$(BDS)\bin\dcloffice2k100.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
       <Excluded_Packages Name="$(BDS)\bin\dclofficexp100.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
     </Excluded_Packages></Delphi.Personality><ModelSupport>True</ModelSupport></BorlandProject></BorlandProject>
@@ -37,18 +229,18 @@
     <DelphiCompile Include="creport4.dpk">
       <MainSource>MainSource</MainSource>
     </DelphiCompile>
-    <DCCReference Include="$(SystemRoot)\system32\bdertl.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\dbrtl.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\designide.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\dsnap.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\rtl.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\vcl.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\vclactnband.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\vcldb.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\vcljpg.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\vclsmp.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\vclx.dcp" />
-    <DCCReference Include="$(SystemRoot)\system32\xmlrtl.dcp" />
+    <DCCReference Include="..\test\bdertl.dcp" />
+    <DCCReference Include="..\test\dbrtl.dcp" />
+    <DCCReference Include="..\test\designide.dcp" />
+    <DCCReference Include="..\test\dsnap.dcp" />
+    <DCCReference Include="..\test\rtl.dcp" />
+    <DCCReference Include="..\test\vcl.dcp" />
+    <DCCReference Include="..\test\vclactnband.dcp" />
+    <DCCReference Include="..\test\vcldb.dcp" />
+    <DCCReference Include="..\test\vcljpg.dcp" />
+    <DCCReference Include="..\test\vclsmp.dcp" />
+    <DCCReference Include="..\test\vclx.dcp" />
+    <DCCReference Include="..\test\xmlrtl.dcp" />
     <DCCReference Include="CC.pas">
       <Form>/,  DesignEditors in 'C</Form>
       <DesignClass>Program Files (x86)\CodeGear\RAD Studio\5.0\source\ToolsAPI\DesignEditors.pas'</DesignClass>
@@ -59,12 +251,15 @@
     <DCCReference Include="uHornCartesian.pas" />
     <DCCReference Include="ujson.pas" />
     <DCCReference Include="ureport.pas" />
+    <DCCReference Include="ureportcontrol.pas" />
     <None Include="ModelSupport_creport4\default.txaPackage" />
     <None Include="ModelSupport_creport4\osservice\default.txaPackage" />
+    <None Include="ModelSupport_creport4\Preview\default.txaPackage" />
     <None Include="ModelSupport_creport4\ReportRunTime\default.txaPackage" />
     <None Include="ModelSupport_creport4\ReportRunTime\default.txvpck" />
     <None Include="ModelSupport_creport4\ujson\default.txaPackage" />
     <None Include="ModelSupport_creport4\ujson\default.txvpck" />
+    <None Include="ModelSupport_creport4\ureportcontrol\default.txaPackage" />
     <None Include="ModelSupport_creport4\ureport\default.txaPackage" />
     <None Include="ModelSupport_creport4\ureport\default.txvpck" />
   </ItemGroup>

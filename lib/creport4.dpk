@@ -45,6 +45,7 @@ contains
   uHornCartesian in 'uHornCartesian.pas',
   ReportRunTime in 'ReportRunTime.pas',
   Preview in 'Preview.pas',
-  ujson in 'ujson.pas';
+  ujson in 'ujson.pas',
+  ureportcontrol in 'ureportcontrol.pas';
 
 end.

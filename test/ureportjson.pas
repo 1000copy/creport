@@ -3,7 +3,7 @@ unit ureportjson;
 interface
 
 uses
-  ureport,
+  ureport,ureportcontrol,
   ReportRunTime,
   // sys
   forms,

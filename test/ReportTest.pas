@@ -8,7 +8,7 @@ uses
   cc,
   uHornCartesian,
   osservice,
-  ureport,
+  ureport,ureportcontrol,
   ReportRunTime,creport,
   // sys
   messages,

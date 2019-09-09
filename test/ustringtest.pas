@@ -1,7 +1,7 @@
 unit ustringtest;
 
 interface
-uses TestFramework,ureport,forms;
+uses TestFramework,ureport,forms,ureportcontrol;
 type
   TStrings = class(TTestCase)
   private

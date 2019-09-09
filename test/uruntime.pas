@@ -9,7 +9,7 @@ uses
   cc,
   uHornCartesian,
   osservice,
-  ureport,
+  ureport,ureportcontrol,
   ReportRunTime,creport,forms,
   // sys
   messages,
