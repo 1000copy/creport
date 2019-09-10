@@ -90,7 +90,7 @@ var j:integer;
 begin
   try
       R:=TReportRunTime.Create(Application.MainForm);
-      R.Visible := False;
+      R.Visible := false;
       t1 := TClientDataset.Create(nil);
       t1.FieldDefs.Add('f1',ftString,20,true);
       t1.FieldDefs.Add('f2',ftString,20,true);
@@ -111,7 +111,7 @@ begin
       strFileDir := ExtractFileDir(Application.ExeName);
       with  R do
       begin
-        CalcWndSize; 
+        CalcWndSize;
         NewTable(2 ,3);
         Lines[0].Select;
         CombineCell;

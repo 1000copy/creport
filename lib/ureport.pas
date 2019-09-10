@@ -452,7 +452,9 @@ type
     function QueryMaxDragExtent(ThisCell:TReportCell):TRect;
     procedure MaxDragExtent(ThisCell: TReportCell; var RectBorder: TRect);
     procedure DoInvalidateRect(Rect:TRect);
+    procedure DoPaint(hPaintDC: HDC; Handle: HWND; ps: TPaintStruct);
   private
+    Procedure WMPaint(Var Message: TMessage); Message WM_PAINT;
 
   protected
     hClientDC: HDC;
@@ -4107,5 +4109,54 @@ begin
     Result := s.Slice(s.GoUntil(FromChar)+1);
     s.Free ;
 end;
+procedure TReportPage.DoPaint(hPaintDC:HDC;Handle:HWND;ps:TPaintStruct);
+Var
+  I: Integer;
+  Rect: TRect;
+
+  rectPaint: TRect;
+  Cells : TCellList;
+  c : Canvas;
+begin
+  rectPaint := ps.rcPaint;
+  //
+  c := Canvas.Create(hPaintDC);
+//       FPageWidth  == Width 完全相等，不必做mapmode
+//  c.SetMapMode();
+//  c.SetWindowExtent(FPageWidth, FPageHeight);
+//  c.SetViewportExtent(Width, Height);
+  os.InverseScaleRect(rectPaint,FReportScale);
+  c.Rectangle(0, 0, FPageWidth, FPageHeight);
+  DrawCornice(hPaintDC);
+  Cells := TCellList.Create(self);
+  try
+    Cells.MakeInteractWith(rectPaint);
+    for i:= 0 to Cells.Count - 1 do
+    begin
+        Cells[i].DrawImage ;
+        If not Cells[i].IsSlave Then
+          Cells[i].PaintCell(hPaintDC, FPreviewStatus);
+    end;
+  finally
+    Cells.Free;
+    c.Free;
+  end;
+  if not FPreviewStatus then
+    For I := 0 To FSelectCells.Count - 1 Do
+    Begin
+      Rect := os.IntersectRect( ps.rcPaint,FSelectCells[I].CellRect);
+      if not os.IsRectEmpty(Rect) then
+        InvertRect(hPaintDC, Rect);
+    End;
+end;
+Procedure TReportPage.WMPaint(Var Message: TMessage);
+Var
+  hPaintDC: HDC;
+  ps: TPaintStruct;
+Begin
+  hPaintDC := BeginPaint(Handle, ps);
+  DoPaint(hPaintDc,Handle,ps);
+  EndPaint(Handle, ps);
+End;
 
 end.

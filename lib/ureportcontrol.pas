@@ -26,7 +26,7 @@ type
     procedure DoDoubleClick(p:TPoint);
     procedure MsgLoop(RectBorder:TRect);
     procedure ClearPaintMessage;
-    procedure DoPaint(hPaintDC: HDC; Handle: HWND; ps: TPaintStruct);
+    
     procedure DrawIndicatorLine(var x: Integer; RectBorder: TRect);
     procedure OnMove(TempMsg: TMsg;RectBorder:TRect );
   public
@@ -36,8 +36,7 @@ type
     Procedure WMLButtonDown(Var m: TMessage); Message WM_LBUTTONDOWN;
     Procedure WMLButtonDBLClk(Var Message: TMessage); Message WM_LBUTTONDBLCLK;
     Procedure WMMouseMove(Var m: TMessage); Message WM_MOUSEMOVE;
-    Procedure WMContextMenu(Var Message: TMessage); Message WM_CONTEXTMENU;
-    Procedure WMPaint(Var Message: TMessage); Message WM_PAINT;
+    Procedure WMContextMenu(Var Message: TMessage); Message WM_CONTEXTMENU;      
     Procedure WMCOMMAND(Var Message: TMessage); Message WM_COMMAND;
     Procedure WMCtlColor(Var Message: TMessage); Message WM_CTLCOLOREDIT;
     constructor create(Owner:TComponent);override;
@@ -79,56 +78,7 @@ type
   end;
 implementation
 
-procedure TReportControl.DoPaint(hPaintDC:HDC;Handle:HWND;ps:TPaintStruct);
-Var
-  I: Integer;
-  Rect: TRect;
 
-  rectPaint: TRect;
-  Cells : TCellList;
-  c : Canvas;
-begin
-  rectPaint := ps.rcPaint;
-  //
-  c := Canvas.Create(hPaintDC);
-//       FPageWidth  == Width 完全相等，不必做mapmode
-//  c.SetMapMode();
-//  c.SetWindowExtent(FPageWidth, FPageHeight);
-//  c.SetViewportExtent(Width, Height);
-  os.InverseScaleRect(rectPaint,FReportScale);
-  c.Rectangle(0, 0, FPageWidth, FPageHeight);
-  DrawCornice(hPaintDC);
-  Cells := TCellList.Create(self);
-  try
-    Cells.MakeInteractWith(rectPaint);
-    for i:= 0 to Cells.Count - 1 do
-    begin
-        Cells[i].DrawImage ;
-        If not Cells[i].IsSlave Then
-          Cells[i].PaintCell(hPaintDC, FPreviewStatus);
-    end;
-  finally
-    Cells.Free;
-    c.Free;
-  end;
-  if not FPreviewStatus then
-    For I := 0 To FSelectCells.Count - 1 Do
-    Begin
-      Rect := os.IntersectRect( ps.rcPaint,FSelectCells[I].CellRect);
-      if not os.IsRectEmpty(Rect) then
-        InvertRect(hPaintDC, Rect);
-    End;
-end;
-
-Procedure TReportControl.WMPaint(Var Message: TMessage);
-Var
-  hPaintDC: HDC;
-  ps: TPaintStruct;
-Begin
-  hPaintDC := BeginPaint(Handle, ps);
-  DoPaint(hPaintDc,Handle,ps);
-  EndPaint(Handle, ps);
-End;
 
 Procedure TReportControl.WMLButtonDBLClk(Var Message: TMessage);
 Var
