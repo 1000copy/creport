@@ -179,7 +179,7 @@ type
   TReportCell = Class(TObject)
   public
     function toJson:String;
-    procedure fromJson(json:Json);
+    procedure fromJson(json:Json;CellIndex:Integer);
   private
 
     NearResolution : integer;
@@ -367,7 +367,7 @@ type
   TReportLine = Class(TObject)
   public
     function toJson():string;
-    procedure fromJson(json:Json);
+    procedure fromJson(json:Json;LineIndex:integer);
   private
     function GetSelected: Boolean;
     procedure DoInvalidate;
@@ -416,6 +416,7 @@ type
 //    procedure Save(s:TSimpleFileStream);
     function IsSumAllLine:Boolean;
     function ToString:string;
+    property CellList: TList read Fcells; 
   End;
   EachCellProc =  procedure (ThisCell:TReportCell) of object;
   EachLineProc =  procedure (ThisLine:TReportLine)of object;
@@ -2016,27 +2017,27 @@ result := format(s,[FCellIndex,FCellLeft,FCellWidth,FLeftMargin,integer(FLeftLin
     result := '{'+result+'}';
   end;
 
-procedure TReportCell.fromJson(json: Json);
+procedure TReportCell.fromJson(json: Json;CellIndex:Integer);
 begin
-    FCellIndex:= json._int('CellIndex');
-    FCellLeft:= json._int('CellLeft');
-    FCellWidth:= json._int('CellWidth');
-    FLeftMargin:= json._int('LeftMargin');
-    FLeftLine := Boolean(json._int('LeftLine'));
-    FLeftLineWidth:= json._int('LeftLineWidth');
-    FTopLine:= Boolean(json._int('TopLine'));
-    FTopLineWidth:= json._int('TopLineWidth');
-    FRightLine:= Boolean(json._int('RightLine'));
-    FRightLineWidth:= json._int('RightLineWidth');
-    BottomLine:= Boolean(json._int('BottomLine'));
-    FBottomLineWidth:= json._int('BottomLineWidth');
-    FDiagonal:= json._int('Diagonal');
-    FTextColor := json._int('TextColor');
-    FBackGroundColor := json._int('BackGroundColor');
-    FHorzAlign:= json._int('HorzAlign');
-    FVertAlign:= json._int('VertAlign');
+    FCellIndex:= CellIndex ;//json._int('CellIndex',0);
+    FCellLeft:= json._int('CellLeft',0);
+    FCellWidth:= json._int('CellWidth',1);
+    FLeftMargin:= json._int('LeftMargin',5);
+    FLeftLine := Boolean(json._int('LeftLine',0));
+    FLeftLineWidth:= json._int('LeftLineWidth',1);
+    FTopLine:= Boolean(json._int('TopLine',0));
+    FTopLineWidth:= json._int('TopLineWidth',1);
+    FRightLine:= Boolean(json._int('RightLine',0));
+    FRightLineWidth:= json._int('RightLineWidth',1);
+    BottomLine:= Boolean(json._int('BottomLine',0));
+    FBottomLineWidth:= json._int('BottomLineWidth',1);
+    FDiagonal:= json._int('Diagonal',0);
+    FTextColor := json._int('TextColor',0);
+    FBackGroundColor := json._int('BackGroundColor',16777215);
+    FHorzAlign:= json._int('HorzAlign',1);
+    FVertAlign:= json._int('VertAlign',1);
     FCellText:= json._string('CellText');
-    Fbmpyn:= Boolean(json._int('bmpyn'));
+    Fbmpyn:= Boolean(json._int('bmpyn',0));
 end;
 
 {TReportControl}
@@ -2311,17 +2312,16 @@ end;
 
 procedure TReportPage.fromJson(json: Json);
 begin
-    self.FReportScale := json._int('ReportScale');
-    self.FReportScale := json._int('ReportScale');
-    self.FPageWidth := json._int('PageWidth');
-    self.FPageHeight := json._int('PageHeight');
-    self.FLeftMargin := json._int('LeftMargin');
-    self.FTopMargin := json._int('TopMargin');
-    self.FRightMargin := json._int('RightMargin');
-    self.FBottomMargin := json._int('BottomMargin');
-    self.FNewTable := Boolean(json._int('NewTable'));
-    self.FDataLine := json._int('DataLine');
-    self.FTablePerPage := json._int('TablePerPage');
+    self.FReportScale := json._int('ReportScale',100);
+    self.FPageWidth := json._int('PageWidth',698);
+    self.FPageHeight := json._int('PageHeight',1027);
+    self.FLeftMargin := json._int('LeftMargin',77);
+    self.FTopMargin := json._int('TopMargin',77);
+    self.FRightMargin := json._int('RightMargin',38);
+    self.FBottomMargin := json._int('BottomMargin',58);
+    self.FNewTable := Boolean(json._int('NewTable',1));
+    self.FDataLine := json._int('DataLine',2000);
+    self.FTablePerPage := json._int('TablePerPage',1);
     self.LineList.fromJson(json);
 end;
 
@@ -2691,20 +2691,20 @@ begin
     delete(s,length(s),1);
   result := format('{"Index":%d,"MinHeight":%d,"DragHeight":%d,"LineTop":%d,"Cells":[%s]}',[self.FIndex,self.FMinHeight,self.FDragHeight,self.FLineTop,s]);
 end;
-procedure TReportLine.fromJson(json:Json);
+procedure TReportLine.fromJson(json:Json;LineIndex:integer);
 var cell : TReportcell;i:integer;
 begin
-  self.FIndex := json._int('Index');
-  self.FMinHeight := json._int('MinHeight');
-  self.FDragHeight:= json._int('DragHeight');
-  self.FLineTop := json._int('LineTop');
+  self.FIndex := LineIndex;//json._int('Index',0);
+  self.FMinHeight := json._int('MinHeight',33);
+  self.FDragHeight:= json._int('DragHeight',80);
+  self.FLineTop := json._int('LineTop',77);
 //  s:= '';
   json.locateArray('Cells');
   for I := 0 to json.getCurrentArrayLength - 1 do begin
     cell := TReportCell.Create(self.FReportControl);
     cell.OwnerLine := self;
     json.locateObject(i);
-    cell.fromJson(json);
+    cell.fromJson(json,i);
     self.FCells.Add(cell)
   end;
 end;
@@ -3612,7 +3612,7 @@ begin
     line.ReportControl := self.R;
     json.locateObject(i);
     json.push;
-    line.FromJson(json);
+    line.FromJson(json,i);
     json.pop;
     self.Add(line);
   end;

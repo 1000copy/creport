@@ -52,3 +52,4 @@ initialization
     TStrings.Suite
   ]);
 end.
+

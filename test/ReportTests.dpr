@@ -21,7 +21,8 @@ uses
   ujson2rita in 'ujson2rita.pas',
   ustringtest in 'ustringtest.pas',
   uruntime in 'uruntime.pas',
-  uprintpaper in 'uprintpaper.pas';
+  uprintpaper in 'uprintpaper.pas',
+  uslimjson in 'uslimjson.pas';
 
 {$R *.res}
 

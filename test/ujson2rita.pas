@@ -83,7 +83,7 @@ begin
     a := sl.Text;
     op := Json.create(a);
     op.parse;
-    check(op._int('ReportScale') = 100);
+    check(op._int('ReportScale',100) = 100);
     sl.free;
 end;
 
@@ -108,16 +108,16 @@ begin
     c := 0 ;
     op := Json.create(a);
     op.parse;
-    check(op._int('PageWidth') = 1);
+    check(op._int('PageWidth',1) = 1);
     op.locateArray('lines');
     // line
     op.locateObject(0);
-    check( op._int('lineTop') = 10) ;
-    check(op._int('lineIndex') = 5) ;
+    check( op._int('lineTop',10) = 10) ;
+    check(op._int('lineIndex',5) = 5) ;
     // cell
     op.locateArray('cells');
     op.locateObject(0);
-    check(1 = op._int('CellIndex'));
+    check(1 = op._int('CellIndex',1));
 end;
 
 

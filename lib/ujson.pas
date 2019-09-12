@@ -57,7 +57,7 @@ type Json = class
     procedure check;
 public
     function _array(p: string): TJsonArray;
-    function _int(p: string): Integer;
+    function _int(p:string;default:integer):Integer;
     function locateObject(index: integer): TJsonObject;
     procedure setCurrent(obj:TJSonObject);
     procedure locateArray(a:string);
@@ -74,18 +74,19 @@ public
 end;
 
 implementation
- function Json._int(p:string):Integer;
+ function Json._int(p:string;default:integer):Integer;
     var i : integer;obj:TJsonObject;
-    begin
+ begin
     obj:= currentObject;
-    result := 0 ;
+    result := default;
     for i:= 0 to length(obj)-1 do begin
         if (obj[i].key = p) and (obj[i].Value.Kind = JVKNumber) then begin
         result :=  trunc( output.Numbers[obj[i].value.Index]);
         break;
         end;
     end;
-    end;
+
+ end;
     function Json._string(p:string):String;
     var i : integer;obj:TJsonObject;
     begin
