@@ -154,9 +154,9 @@ type
   public
     constructor Create(R:TReportPage);
     procedure CombineHorz;
+    function CombineVert:TReportCell;
     property Items[Index: Integer]: TReportLine read Get ;default;
     procedure MakeSelectedLines(FLineList:TLineList);
-    function CombineVert:TReportCell;
     function TotalHeight:Integer;
     function ToJson:String;
     procedure fromJson(json:Json);
@@ -518,8 +518,14 @@ type
       I: integer);
     procedure EachCell_CalcMinCellHeight_If_Master(c: TReportCell);
     procedure EachLine_CalcLineHeight(c:TReportLine);
-
+  public // split and combine cell
+    Procedure CombineCell;
+    Procedure SplitCell;
+    Procedure VSplitCell(Number: Integer);
+    procedure DoVSplit(ThisCell:TReportCell;Number: Integer);
+    Function CanSplit: Boolean;
     procedure DoVertSplitCell(ThisCell : TReportCell;SplitCount: Integer);
+  public // end split and combine cell
     property SelectedCells: TCellList read FSelectCells ;
     { Public declarations }
     Procedure SetSelectedCellFont(cf: TFont);
@@ -553,11 +559,6 @@ type
     Procedure InsertCell;
     Procedure DeleteCell;
     Procedure AddCell;
-    Procedure CombineCell;
-    Procedure SplitCell;
-    Procedure VSplitCell(Number: Integer);
-    procedure DoVSplit(ThisCell:TReportCell;Number: Integer);
-    Function CanSplit: Boolean;
     Function CountFcells(crow: integer): integer;
     Procedure SetCellLines(bLeftLine, bTopLine, bRightLine, bBottomLine:
       Boolean;

@@ -34,9 +34,6 @@ type
   {$WARNINGS ON}
     procedure preview;
     procedure pageCount;
-    procedure drawtext;
-    procedure dyndrawtext;
-    procedure drawtext1;
     procedure print;
     procedure sum1;
     procedure tablehead;
@@ -46,6 +43,7 @@ type
     procedure pagenumIfWithSumline;
     procedure pagenumIfWithSumline1;
     procedure printit;
+    procedure dyndrawtext;
 
   end;
 
@@ -67,21 +65,6 @@ begin
     end;
     R.ReportFile:=strFileDir+'\'+'1.json';
     check(4=R.calcPageCount,inttostr(R.calcPageCount));
-    r.free;
-end;
-procedure TReportRunTimeTest.drawtext;
-var R:TReportControl;
-begin
-    R:=TReportControl.Create(Application.MainForm);
-    R.loadfromjson('1.tmp.json');
-    r.free;
-end;
-procedure TReportRunTimeTest.drawtext1;
-var
-    R:TReportControl;
-begin
-    R:=TReportControl.Create(Application.MainForm);
-    R.loadfromjson('temp\1.tmp.json');
     r.free;
 end;
 procedure TReportRunTimeTest.dyndrawtext;
