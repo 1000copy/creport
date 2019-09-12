@@ -1,0 +1,147 @@
+{
+    "ReportScale": 100,
+    "PageWidth": 698,
+    "PageHeight": 1027,
+    "LeftMargin": 77,
+    "TopMargin": 77,
+    "RightMargin": 38,
+    "BottomMargin": 58,
+    "NewTable": 1,
+    "DataLine": 2000,
+    "TablePerPage": 1,
+    "Lines":
+    [
+        {
+            "Index": 0,
+            "MinHeight": 33,
+            "DragHeight": 80,
+            "LineTop": 77,
+            "Cells":
+            [
+                {
+                    "CellIndex": 0,
+                    "CellLeft": 77,
+                    "CellWidth": 584,
+                    "LeftMargin": 5,
+                    "LeftLine": 0,
+                    "LeftLineWidth": 1,
+                    "TopLine": 0,
+                    "TopLineWidth": 1,
+                    "RightLine": 0,
+                    "RightLineWidth": 1,
+                    "BottomLine": 0,
+                    "BottomLineWidth": 1,
+                    "Diagonal": 0,
+                    "TextColor": 0,
+                    "BackGroundColor": 16777215,
+                    "HorzAlign": 1,
+                    "VertAlign": 1,
+                    "CellText": "bill",
+                    "Bmpyn": 0
+                }
+            ]
+        },
+        {
+            "Index": 1,
+            "MinHeight": 20,
+            "DragHeight": 0,
+            "LineTop": 157,
+            "Cells":
+            [
+                {
+                    "CellIndex": 0,
+                    "CellLeft": 77,
+                    "CellWidth": 292,
+                    "LeftMargin": 5,
+                    "LeftLine": 1,
+                    "LeftLineWidth": 1,
+                    "TopLine": 1,
+                    "TopLineWidth": 1,
+                    "RightLine": 1,
+                    "RightLineWidth": 1,
+                    "BottomLine": 1,
+                    "BottomLineWidth": 1,
+                    "Diagonal": 0,
+                    "TextColor": 0,
+                    "BackGroundColor": 16777215,
+                    "HorzAlign": 0,
+                    "VertAlign": 1,
+                    "CellText": "f1",
+                    "Bmpyn": 0
+                },
+                {
+                    "CellIndex": 1,
+                    "CellLeft": 369,
+                    "CellWidth": 292,
+                    "LeftMargin": 5,
+                    "LeftLine": 1,
+                    "LeftLineWidth": 1,
+                    "TopLine": 1,
+                    "TopLineWidth": 1,
+                    "RightLine": 1,
+                    "RightLineWidth": 1,
+                    "BottomLine": 1,
+                    "BottomLineWidth": 1,
+                    "Diagonal": 0,
+                    "TextColor": 0,
+                    "BackGroundColor": 16777215,
+                    "HorzAlign": 0,
+                    "VertAlign": 1,
+                    "CellText": "f2",
+                    "Bmpyn": 0
+                }
+            ]
+        },
+        {
+            "Index": 2,
+            "MinHeight": 20,
+            "DragHeight": 0,
+            "LineTop": 177,
+            "Cells":
+            [
+                {
+                    "CellIndex": 0,
+                    "CellLeft": 77,
+                    "CellWidth": 292,
+                    "LeftMargin": 5,
+                    "LeftLine": 1,
+                    "LeftLineWidth": 1,
+                    "TopLine": 1,
+                    "TopLineWidth": 1,
+                    "RightLine": 1,
+                    "RightLineWidth": 1,
+                    "BottomLine": 1,
+                    "BottomLineWidth": 1,
+                    "Diagonal": 0,
+                    "TextColor": 0,
+                    "BackGroundColor": 16777215,
+                    "HorzAlign": 0,
+                    "VertAlign": 1,
+                    "CellText": "#T1.f1",
+                    "Bmpyn": 0
+                },
+                {
+                    "CellIndex": 1,
+                    "CellLeft": 369,
+                    "CellWidth": 292,
+                    "LeftMargin": 5,
+                    "LeftLine": 1,
+                    "LeftLineWidth": 1,
+                    "TopLine": 1,
+                    "TopLineWidth": 1,
+                    "RightLine": 1,
+                    "RightLineWidth": 1,
+                    "BottomLine": 1,
+                    "BottomLineWidth": 1,
+                    "Diagonal": 0,
+                    "TextColor": 0,
+                    "BackGroundColor": 16777215,
+                    "HorzAlign": 0,
+                    "VertAlign": 1,
+                    "CellText": "#T1.f2",
+                    "Bmpyn": 0
+                }
+            ]
+        }
+    ]
+}
