@@ -4,13 +4,11 @@
     "Lines":
     [
         {
-            "MinHeight": 33,
-            "DragHeight": 80,
+            "LineHeight": 80,
             "LineTop": 77,
             "Cells":
             [
                 {
-                    "CellIndex": 0,
                     "CellLeft": 77,
                     "CellWidth": 584,
                     "CellText": "bill",
@@ -18,8 +16,7 @@
             ]
         },
         {
-            "MinHeight": 20,
-            "DragHeight": 0,
+            "LineHeight": 20,
             "LineTop": 157,
             "Cells":
             [
@@ -37,8 +34,7 @@
             ]
         },
         {
-            "MinHeight": 20,
-            "DragHeight": 0,
+            "LineHeight": 20,
             "LineTop": 177,
             "Cells":
             [

@@ -380,13 +380,12 @@ type
     FCells: TList;                      // 保存所有在该行中的CELL
     FIndex: Integer;                    // 行的索引
 
-    FMinHeight: Integer;
-    FDragHeight: Integer;
+    FLineHeight: Integer;
     FLineTop: Integer;
     FLineRect: TRect;
     Function GetLineHeight: Integer;
     Function GetLineRect: TRect;
-    Procedure SetDragHeight(Const Value: Integer);
+    Procedure SetLineHeight(Const Value: Integer);
     Procedure SetLineTop(Const Value: Integer);
     procedure calcLineTop;
 
@@ -398,7 +397,7 @@ type
     Property ReportControl: TReportPage Read FReportControl Write
       FReportControl;
     Property Index: Integer Read FIndex Write FIndex;
-    Property LineHeight: Integer Read GetLineHeight Write SetDragHeight;
+    Property LineHeight: Integer Read GetLineHeight Write SetLineHeight;
     Property LineTop: Integer Read FLineTop Write SetLineTop;
     Property LineRect: TRect Read GetLineRect;
     Property PrevLineRect: TRect Read FLineRect;
@@ -1581,8 +1580,8 @@ Begin
   For I := 0 To FCells.Count - 1 Do
   Begin
     ThisCell := TReportCell(FCells[I]);
-    If ThisCell.CellHeight > FMinHeight Then
-      FMinHeight := ThisCell.CellHeight;
+    If ThisCell.CellHeight > FLineHeight Then
+      FLineHeight := ThisCell.CellHeight;
   End;
 End;
 
@@ -1621,8 +1620,7 @@ Begin
   If Line = Nil Then
     Exit;
 
-  FDragHeight := 0;
-  FMinHeight := 20;
+  FLineHeight := 20;
   FReportControl := Line.FReportControl;
 
   For I := 0 To Line.FCells.Count - 1 Do
@@ -1639,8 +1637,7 @@ Begin
   FCells := TList.Create;
   FIndex := 0;
 
-  FMinHeight := 0;
-  FDragHeight := 0;
+  FLineHeight := 0;
   FLineTop := 0;
   FLineRect.left := 0;
   FLineRect.top := 0;
@@ -1685,10 +1682,7 @@ End;
 
 Function TReportLine.GetLineHeight: Integer;
 Begin
-  If FMinHeight > FDragHeight Then
-    Result := FMinHeight
-  Else
-    Result := FDragHeight;
+    Result := FLineHeight;
 End;
 
 Function TReportLine.GetLineRect: TRect;
@@ -1714,9 +1708,9 @@ Begin
   FLineRect := Result;
 End;
 
-Procedure TReportLine.SetDragHeight(Const Value: Integer);
+Procedure TReportLine.SetLineHeight(Const Value: Integer);
 Begin
-  FDragHeight := Value;
+  FLineHeight := Value;
 End;
 
 Procedure TReportLine.SetLineTop(Const Value: Integer);
@@ -2689,14 +2683,13 @@ begin
   end;
   if length(s)>0 then
     delete(s,length(s),1);
-  result := format('{"Index":%d,"MinHeight":%d,"DragHeight":%d,"LineTop":%d,"Cells":[%s]}',[self.FIndex,self.FMinHeight,self.FDragHeight,self.FLineTop,s]);
+  result := format('{"Index":%d,"LineHeight":%d,"LineTop":%d,"Cells":[%s]}',[self.FIndex,self.FLineHeight,self.FLineTop,s]);
 end;
 procedure TReportLine.fromJson(json:Json;LineIndex:integer);
 var cell : TReportcell;i:integer;
 begin
   self.FIndex := LineIndex;//json._int('Index',0);
-  self.FMinHeight := json._int('MinHeight',33);
-  self.FDragHeight:= json._int('DragHeight',80);
+  self.FLineHeight:= json._int('LineHeight',80);
   self.FLineTop := json._int('LineTop',77);
 //  s:= '';
   json.locateArray('Cells');

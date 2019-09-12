@@ -724,7 +724,7 @@ Var
 begin
   templine := Treportline.Create;
   TempLine.FMinHeight := ThisLine.FMinHeight;
-  TempLine.FDragHeight := ThisLine.FDragHeight;
+  TempLine.FLineHeight := ThisLine.FLineHeight;
   For j := 0 To ThisLine.FCells.Count - 1 Do
   Begin
     ThisCell := TreportCell(ThisLine.FCells[j]);
@@ -743,7 +743,7 @@ var
 begin
   Line := TReportLine.Create;
   Line.FMinHeight := ThisLine.FMinHeight;
-  Line.FDragHeight := ThisLine.FDragHeight;
+  Line.FLineHeight := ThisLine.FLineHeight;
   For j := 0 To ThisLine.FCells.Count - 1 Do
   Begin
     ThisCell := TreportCell(ThisLine.FCells[j]);
@@ -892,7 +892,7 @@ begin
   ThisLine := TReportLine(FlineList[HasDataNo]);
   TempLine := TReportLine.Create;
   TempLine.FMinHeight := ThisLine.FMinHeight;
-  TempLine.FDragHeight := ThisLine.FDragHeight;
+  TempLine.FLineHeight := ThisLine.FLineHeight;
   For j := 0 To ThisLine.FCells.Count - 1 Do
   Begin
     ThisCell := TreportCell(ThisLine.FCells[j]);
