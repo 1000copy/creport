@@ -723,7 +723,6 @@ Var
   ThisCell, NewCell: TReportCell;
 begin
   templine := Treportline.Create;
-  TempLine.FMinHeight := ThisLine.FMinHeight;
   TempLine.FLineHeight := ThisLine.FLineHeight;
   For j := 0 To ThisLine.FCells.Count - 1 Do
   Begin
@@ -742,7 +741,6 @@ var
   Line : TReportLine ;
 begin
   Line := TReportLine.Create;
-  Line.FMinHeight := ThisLine.FMinHeight;
   Line.FLineHeight := ThisLine.FLineHeight;
   For j := 0 To ThisLine.FCells.Count - 1 Do
   Begin
@@ -891,7 +889,6 @@ var
 begin
   ThisLine := TReportLine(FlineList[HasDataNo]);
   TempLine := TReportLine.Create;
-  TempLine.FMinHeight := ThisLine.FMinHeight;
   TempLine.FLineHeight := ThisLine.FLineHeight;
   For j := 0 To ThisLine.FCells.Count - 1 Do
   Begin
@@ -900,7 +897,7 @@ begin
     TempLine.FCells.Add(NewCell);
     NewCell.FOwnerLine := TempLine;
     CloneCell(newcell, thiscell);
-  End; 
+  End;
   TempLine.UpdateLineHeight;
   result := TempLine;
 end;
