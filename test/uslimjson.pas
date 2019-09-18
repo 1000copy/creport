@@ -2,7 +2,7 @@ unit uslimjson;
 
 
 interface
-uses TestFramework,ureport,forms,ureportcontrol,ujson,sysutils;
+uses TestFramework,ureport,forms,ureportcontrol,ujson,sysutils,windows,graphics,classes;
 type
   TJsonSlim = class(TTestCase)
   private
@@ -16,6 +16,9 @@ type
     procedure Test;
     procedure TestJson1;
     procedure TestReportLineIndex;
+    procedure dojsonloaded;
+    procedure TestSlaveCells;
+
 end;
 implementation
 
@@ -38,17 +41,35 @@ begin
 end;
 procedure TJsonSlim.TestJson1;
 var
-  JsonParser: TJsonParser;
-  I, J: Integer;
-  pairs : TJsonObject;
-  key:string;
-  value : TJsonValue;
-  c : Integer;
-  var a:string;
-  op : Json;
+ color : COLORREF;
 begin
-
+  color := clwhite;
+  check(color = 16777215,inttostr(color));
+  color := $ffffff;
+  check(color = 16777215,inttostr(color));
+  check($ffffff=16777215)
 end;
+procedure Split(Delimiter: Char; Str: string; ListOfStrings: TStrings) ;
+begin
+   ListOfStrings.Clear;
+   ListOfStrings.Delimiter       := Delimiter;
+   ListOfStrings.StrictDelimiter := True; // Requires D2006 or newer.
+   ListOfStrings.DelimitedText   := Str;
+end;
+
+procedure TJsonSlim.dojsonloaded;var row,col:integer;sl:TstringList;
+const a = '1,2;3,4';
+begin
+  sl:=TstringList.create;
+  try
+     Split(',', a, sl) ;
+     row := strtoint(sl.Strings[0]);
+     col := strtoint(sl.Strings[1]);
+   finally
+     sl.Free;
+   end;
+end;
+
 procedure TJsonSlim.TestJson;
 var
   JsonParser: TJsonParser;
@@ -93,6 +114,16 @@ begin
   check(rp.Cells[0,0].CellIndex = 0 );
   check(rp.Cells[1,0].CellIndex = 0 );
   check(rp.Cells[1,1].CellIndex = 1 );
+  rp.free;
+end;
+procedure TJsonSlim.TestSlaveCells;
+var rp : TReportPage;
+begin
+  rp := TReportPage.Create(nil);
+  rp.loadFromJson('slaves.json');
+  check(rp.Cells[0,0].SlaveCellsStr = '1,0;2,0',rp.Cells[0,0].CellText);
+  check(rp.Cells[0,0].IsMaster = true,'false');
+  check(rp.Cells[0,0].SlaveCells.count = 2,inttostr(rp.Cells[0,0].SlaveCells.count));
   rp.free;
 end;
 initialization

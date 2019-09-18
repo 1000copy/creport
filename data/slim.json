@@ -10,9 +10,15 @@
             [
                 {
                     "CellLeft": 77,
-                    "CellWidth": 584,
+                    "CellWidth": 100,
+                    "CellText": "bill",
+                },
+                {
+                    "CellLeft": 177,
+                    "CellWidth": 484,
                     "CellText": "bill",
                 }
+
             ]
         },
         {
@@ -24,6 +30,7 @@
                     "CellLeft": 77,
                     "CellWidth": 292,
                     "CellText": "f1",
+                    "SlaveCells":"1,0"
                 },
                 {
                     

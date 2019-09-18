@@ -181,9 +181,10 @@ type
     function toJson:String;
     procedure fromJson(json:Json;CellIndex:Integer);
   private
-
+    FSlaveCellsStr:string;
     NearResolution : integer;
     ReportControl:TReportPage;
+
     function GetOwnerCellHeight: Integer;
     function MaxSplitNum :integer;
     function GetBottomest(FOwnerCell: TReportCell): TReportCell;overload;
@@ -282,6 +283,9 @@ type
     function GetTextRect():TRect;
     function Payload: Integer;
     function IsNormalCell:Boolean;
+  private
+    procedure SetSlaveCells(const Value: string);
+
   Protected
     Procedure SetLeftMargin(LeftMargin: Integer);
     Procedure SetOwnerLine(OwnerLine: TReportLine);
@@ -302,7 +306,10 @@ type
     Procedure SetLogFont(NewFont: TLOGFONT);               
     Procedure SetBackGroundColor(BkColor: COLORREF);
     Procedure SetTextColor(TextColor: COLORREF);
+
+  published
   Public
+      property SlaveCellsStr:string read FSlaveCellsStr write SetSlaveCells;
 //    procedure Load(stream:TSimpleFileStream;FileFlag:Word);
 //    procedure Save(s:TSimpleFileStream);
     function GetCellType:CellType;
@@ -316,6 +323,7 @@ type
     Function IsCellOwned(Cell: TReportCell): Boolean;
     Procedure CalcCellTextRect;
     function IsMaster :Boolean ;
+    property SlaveCells : TCellList read FSlaveCells;
     function IsBottomest():Boolean;
     Procedure CalcHeight;
     Procedure PaintCell(hPaintDC: HDC; bPrint: Boolean);
@@ -439,9 +447,11 @@ type
   end;
   TReportPage = Class(TWinControl)
   private
+    FAfterLoadJson:TNotifyEvent;
     procedure fromJson(json:Json);
     function toJson1(LineList: TLineList): String;
   public
+    property AfterLoadJson:TNotifyEvent read FAfterLoadJson write FAfterLoadJson;
     function toJson:String;
     procedure loadFromFile(fn:string);
     procedure loadFromJson(fn:string);
@@ -495,6 +505,9 @@ type
     function ReadyFileName(PageNumber: Integer): String;
     procedure DrawCornice(hPaintDC: HDC);
     function Interference(ThisCell: TReportCell): boolean;
+  private
+    procedure doLoadJson(Sender: TObject);
+    procedure loadJson_eachcell(ThisCell: TReportCell);
   Protected
     function getFormulaValue(ThisCell: TReportCell): String;virtual ;
     Procedure CreateWnd; Override;
@@ -525,6 +538,7 @@ type
     procedure DoVSplit(ThisCell:TReportCell;Number: Integer);
     Function CanSplit: Boolean;
     procedure DoVertSplitCell(ThisCell : TReportCell;SplitCount: Integer);
+  published
   public // end split and combine cell
     property SelectedCells: TCellList read FSelectCells ;
     { Public declarations }
@@ -932,6 +946,17 @@ Begin
   CalcHeight;
   CalcCellTextRect;
 End;
+procedure Split(Delimiter: Char; Str: string; ListOfStrings: TStrings) ;
+begin
+   ListOfStrings.Clear;
+   ListOfStrings.Delimiter       := Delimiter;
+   ListOfStrings.StrictDelimiter := True; // Requires D2006 or newer.
+   ListOfStrings.DelimitedText   := Str;
+end;
+procedure TReportCell.SetSlaveCells(const Value: string);
+begin
+  FSlaveCellsStr := Value;
+end;
 
 Procedure TReportCell.SetBottomLine(BottomLine: Boolean);
 Begin
@@ -2027,13 +2052,13 @@ begin
     FBottomLineWidth:= json._int('BottomLineWidth',1);
     FDiagonal:= json._int('Diagonal',0);
     FTextColor := json._int('TextColor',0);
-    FBackGroundColor := json._int('BackGroundColor',16777215);
+    FBackGroundColor := json._int('BackGroundColor',$ffffff);//16777215
     FHorzAlign:= json._int('HorzAlign',1);
     FVertAlign:= json._int('VertAlign',1);
     FCellText:= json._string('CellText');
+    SlaveCellsStr:= json._string('SlaveCells');
     Fbmpyn:= Boolean(json._int('bmpyn',0));
 end;
-
 {TReportControl}
 
 Procedure TReportPage.CreateWnd;
@@ -2317,6 +2342,34 @@ begin
     self.FDataLine := json._int('DataLine',2000);
     self.FTablePerPage := json._int('TablePerPage',1);
     self.LineList.fromJson(json);
+    doloadJson(self);
+end;
+procedure TReportPage.loadJson_eachcell(ThisCell:TReportCell);
+var
+  cellList,numberList: TStringList;i,row,col:integer;numberstrs:string;
+begin
+  if thiscell.SlaveCellsStr = '' then
+    exit;
+  try
+    cellList := TStringList.Create;
+    cellList.Delimiter := ';';
+    cellList.DelimitedText := thiscell.SlaveCellsStr ;
+    for I := 0 to cellList.Count - 1 do begin
+       numberstrs := cellList.strings[i];
+       numberList := TStringList.Create;
+       numberList.CommaText := numberstrs;
+       row := strtoint(numberList.Strings[0]);
+       col := strtoint(numberList.Strings[1]);
+       if self.Cells[row,col]<>nil then
+         thiscell.Own(self.Cells[row,col]);
+       numberlist.free;
+    end
+  finally
+    celllist.free;
+  end;                  
+end;
+procedure TReportPage.doLoadJson(Sender: TObject);begin
+  self.EachCell(loadJson_eachcell);
 end;
 
 function TReportPage.toJson: String;
@@ -2917,6 +2970,7 @@ begin
     try
       op.parse;
       self.fromJson(op);
+
     finally
       op.free;
       sl.free;
