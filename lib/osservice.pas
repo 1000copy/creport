@@ -6,6 +6,7 @@ uses
    Graphics,windows ,classes,SysUtils,Math,Forms,cc,messages,printers;
   function inflate(Rect:TRect;i:integer):TRect;
   procedure mapDevice(Width, Height:Integer);
+function chop(r:string):string;
 function SysPrinter:TPrinter;
   procedure msgok(a,b:PChar);
 const A4 = Windows.DMPAPER_A4;
@@ -127,7 +128,7 @@ type
     destructor Destroy;override;
     property DMPAPER_A4 :Integer read geta4;
   end;
-    Edit = class
+  Edit = class
     os : WindowsOS;
     FEditWnd: HWND;
     FEditBrush: HBRUSH;
@@ -143,7 +144,7 @@ type
     procedure DestroyWindow;
     function CreateBrush(color: Cardinal): HBRUSH;
     constructor Create();
-    destructor destroy;override;
+    destructor Destroy;override;
   end;
   procedure CheckError(condition:Boolean ;msg :string);
 implementation
@@ -816,5 +817,11 @@ begin
     SetPaperWithCurrent;
 end;
 
+function chop(r:string):string;
+begin
+    if length(r)>0 then
+    delete(r,length(r),1);
+    result := r;
+end;
 
 end.

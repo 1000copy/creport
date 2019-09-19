@@ -3701,6 +3701,28 @@ begin
   Add(m);
 end;
 
+// 运行逻辑：如果设计态是Slave，在runtime时也得是奴隶，通过这个FOwnerCellList找到自己的新主人
+// 若隶属的CELL不为空则判断是否在同一页，若不在同一页则将自己加入到CELL对照表中去
+// 若找到隶属的CELL则将自己加入到该CELL中去
+// 科幻小说程序员版本：
+// 设计态和运行态，是一对平行宇宙，在这个宇宙，你有一个主人，当迁移到另外一个宇宙时，你也得找到你的主人，不能做流浪的Cell
+procedure TDRMappings.RuntimeMapping(NewCell, ThisCell:TReportCell);
+var
+  TempOwnerCell: TReportCell;
+begin
+  If ThisCell.OwnerCell <> Nil Then
+  Begin
+    TempOwnerCell := FindRuntimeMasterCell(ThisCell);
+    If TempOwnerCell = Nil Then
+      NewMapping(ThisCell.OwnerCell,NewCell)
+    Else
+      TempOwnerCell.Own(NewCell);
+  End;
+  If ThisCell.FSlaveCells.Count > 0 Then
+    NewMapping(ThisCell,NewCell);
+end;
+
+
 function TLineList.ToJson: String;
 var
   i : integer;
@@ -3864,28 +3886,7 @@ begin
   For I := Count - 1 Downto 0 Do
     TVarTableItem(Items[I]).Free;
 end;
-// 运行逻辑：如果设计态是Slave，在runtime时也得是奴隶，通过这个FOwnerCellList找到自己的新主人
-// 若隶属的CELL不为空则判断是否在同一页，若不在同一页则将自己加入到CELL对照表中去
-// 若找到隶属的CELL则将自己加入到该CELL中去
-// 科幻小说程序员版本：
-// 设计态和运行态，是一对平行宇宙，在这个宇宙，你有一个主人，当迁移到另外一个宇宙时，你也得找到你的主人，不能做流浪的Cell
-procedure TDRMappings.RuntimeMapping(NewCell, ThisCell:TReportCell);
-var
-  TempOwnerCell: TReportCell;
-begin
-  If ThisCell.OwnerCell <> Nil Then
-  Begin
-    TempOwnerCell := FindRuntimeMasterCell(ThisCell);
-    If TempOwnerCell = Nil Then
-      NewMapping(ThisCell.OwnerCell,NewCell)
-    Else
-      TempOwnerCell.Own(NewCell);
-  End;
-  If ThisCell.FSlaveCells.Count > 0 Then
-    NewMapping(ThisCell,NewCell);
-end;
 
-                         
 procedure TCellList.ClearBySelection(R: TRect);
 var
   i : integer;
@@ -3943,10 +3944,6 @@ begin
   rectPaint := ps.rcPaint;
   //
   c := Canvas.Create(hPaintDC);
-//       FPageWidth  == Width 完全相等，不必做mapmode
-//  c.SetMapMode();
-//  c.SetWindowExtent(FPageWidth, FPageHeight);
-//  c.SetViewportExtent(Width, Height);
   os.InverseScaleRect(rectPaint,FReportScale);
   c.Rectangle(0, 0, FPageWidth, FPageHeight);
   DrawCornice(hPaintDC);

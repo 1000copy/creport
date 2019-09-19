@@ -10,6 +10,21 @@ uses SysUtils,Classes,Forms, Dialogs,  Menus, Db,
 
 
 type
+  // ThisCell 设计态的Master Cell
+  // NewCell  运行态的Master Cell
+  TDRMappings = class(TList)
+  private
+    procedure NewMapping (ThisCell,NewCell:TReportCell);
+    function FindRuntimeMasterCell(ThisCell:TReportCell):TReportCell;
+    procedure FreeItems;
+  public
+    procedure empty;
+    procedure RuntimeMapping(NewCell, ThisCell: TReportCell);
+  end;
+  TDRMapping = Class(TObject)
+    DesignMasterCell: TReportCell;
+    RuntimeMasterCell: TReportCell;
+  End;
   RenderParts =class ;
   TSummer = class
      SumPage, SumAll: Array[0..40] Of real;
@@ -1205,5 +1220,68 @@ Begin
     End;
   End;
 End;
+
+{ TDRMappings }
+
+
+
+function TDRMappings.FindRuntimeMasterCell(ThisCell: TReportCell): TReportCell;
+var r : TReportCell;L:Integer;
+begin
+  R := Nil;
+  // 若找到隶属的CELL则将自己加入到该CELL中去
+  For L := 0 To Count - 1 Do
+  Begin
+    If ThisCell.OwnerCell = TDRMapping(Self[L]).DesignMasterCell Then
+      R := TDRMapping(Self[L]).RuntimeMasterCell;
+  End;
+  result:= R;
+end;
+
+procedure TDRMappings.FreeItems;
+var n :Integer;
+begin
+    For N := Count - 1 Downto 0 Do
+      TDRMapping(Items[N]).Free;
+  Clear;
+end;
+procedure TDRMappings.empty;
+var n :Integer;
+begin
+    For N := Count - 1 Downto 0 Do
+      TDRMapping(Items[N]).Free;
+  Clear;
+end;
+
+procedure TDRMappings.NewMapping(ThisCell, NewCell: TReportCell);
+var
+  m : TDRMapping ;
+begin
+  m := TDRMapping.Create;
+  m.DesignMasterCell := ThisCell;
+  m.RuntimeMasterCell := NewCell;
+  Add(m);
+end;
+
+// 运行逻辑：如果设计态是Slave，在runtime时也得是奴隶，通过这个FOwnerCellList找到自己的新主人
+// 若隶属的CELL不为空则判断是否在同一页，若不在同一页则将自己加入到CELL对照表中去
+// 若找到隶属的CELL则将自己加入到该CELL中去
+// 科幻小说程序员版本：
+// 设计态和运行态，是一对平行宇宙，在这个宇宙，你有一个主人，当迁移到另外一个宇宙时，你也得找到你的主人，不能做流浪的Cell
+procedure TDRMappings.RuntimeMapping(NewCell, ThisCell:TReportCell);
+var
+  TempOwnerCell: TReportCell;
+begin
+  If ThisCell.OwnerCell <> Nil Then
+  Begin
+    TempOwnerCell := FindRuntimeMasterCell(ThisCell);
+    If TempOwnerCell = Nil Then
+      NewMapping(ThisCell.OwnerCell,NewCell)
+    Else
+      TempOwnerCell.Own(NewCell);
+  End;
+  If ThisCell.FSlaveCells.Count > 0 Then
+    NewMapping(ThisCell,NewCell);
+end;
 end.
 
