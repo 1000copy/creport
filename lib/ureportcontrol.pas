@@ -354,7 +354,7 @@ begin
   FEditCell := Nil;
   mouseSelect := MouseSelector.Create(Self);
   MouseDrag := MouseDragger.Create(Self);
-  FTextEdit:=Edit.Create(self);
+  FTextEdit:=Edit.Create();
   // 鼠标操作支持
   FMousePoint.x := 0;
   FMousePoint.y := 0;

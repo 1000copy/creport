@@ -96,6 +96,24 @@ type
     destructor Destroy;override;
     property DMPAPER_A4 :Integer read geta4;
   end;
+    Edit = class
+    os : WindowsOS;
+    FEditWnd: HWND;
+    FEditBrush: HBRUSH;
+    FEditFont: HFONT;
+  private
+  public
+    function CreateEdit(Handle: HWND; Rect: TRect;LogFont: TLOGFONT;
+      Text: String; FHorzAlign: Integer): HWND;
+    function GetText: String;
+    procedure MoveRect(TextRect: TRect);
+    procedure DestroyIfVisible;
+    function IsWindowVisible: Boolean;
+    procedure DestroyWindow;
+    function CreateBrush(color: Cardinal): HBRUSH;
+    constructor Create();
+    destructor destroy;override;
+  end;
   procedure CheckError(condition:Boolean ;msg :string);
 implementation
 
@@ -578,6 +596,85 @@ procedure msgok(a,b:PChar);begin
 end;
 function SysPrinter:TPrinter;begin
   result := Printers.Printer;
+end;
+{ Edit }
+
+constructor Edit.Create(R: TReportPage);
+begin
+  os := WindowsOS.Create;
+  FEditWnd := INVALID_HANDLE_VALUE;
+  FEditBrush := INVALID_HANDLE_VALUE;
+  FEditFont := INVALID_HANDLE_VALUE;
+end;
+function Edit.CreateEdit(Handle:HWND;Rect: TRect; LogFont: TLOGFONT;Text: String;FHorzAlign:Integer): HWND;
+var
+  dwStyle: DWORD;
+begin
+  If FEditFont <> INVALID_HANDLE_VALUE Then
+    DeleteObject(FEditFont);
+  FEditFont := CreateFontIndirect(LogFont);
+  dwStyle :=
+      WS_VISIBLE Or
+      WS_CHILD Or
+      ES_MULTILINE or
+      ES_AUTOVSCROLL or
+      os.HAlign2DT(FHorzAlign);
+  FEditWnd := CreateWindow('EDIT', '', dwStyle, 0, 0, 0, 0, Handle, 1,
+    hInstance, Nil);
+  SendMessage(FEditWnd, WM_SETFONT, FEditFont, 1); // 1 means TRUE here.
+  SendMessage(FEditWnd, EM_LIMITTEXT, 3000, 0);
+  MoveWindow(FEditWnd, Rect.left, Rect.Top,
+    Rect.Right - Rect.Left,
+    Rect.Bottom - Rect.Top, True);
+  SetWindowText(FEditWnd, PChar(Text));
+  ShowWindow(FEditWnd, SW_SHOWNORMAL);
+  Windows.SetFocus(FEditWnd);
+  result := FEditWnd ;
+end;
+destructor Edit.destroy;
+begin
+  os.free;
+  inherited;
+end;
+
+function Edit.GetText(): String;
+var
+  TempChar: Array[0..3000] Of Char;
+begin
+  GetWindowText(FEditWnd, TempChar, 3000);
+  Result := TempChar;
+end;
+
+procedure Edit.MoveRect(TextRect:TRect);
+begin
+  MoveWindow(FEditWnd, TextRect.left, TextRect.Top,
+    TextRect.Right - TextRect.Left,
+    TextRect.Bottom - TextRect.Top, True);
+end;
+procedure Edit.DestroyIfVisible();
+begin
+  If IsWindowVisible() Then
+    DestroyWindow();
+end;
+
+function Edit.IsWindowVisible():Boolean;
+begin
+  result := windows.IsWindowVisible(FEditWnd) ;
+end;
+procedure Edit.DestroyWindow();
+begin
+  windows.DestroyWindow(FEditWnd);
+end;
+function Edit.CreateBrush(Color:Cardinal):HBRUSH;
+var
+  TempLogBrush: TLOGBRUSH;
+begin
+    If FEditBrush <> INVALID_HANDLE_VALUE Then
+      DeleteObject(FEditBrush);
+    TempLogBrush.lbStyle := PS_SOLID;
+    TempLogBrush.lbColor := Color;
+    FEditBrush := CreateBrushIndirect(TempLogBrush);
+    Result := FEditBrush;
 end;
 
 end.
