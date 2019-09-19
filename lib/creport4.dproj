@@ -96,22 +96,6 @@
       
       
       
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
-      
       <Excluded_Packages Name="$(BDS)\bin\dcloffice2k100.bpl">Microsoft Office 2000 Sample Automation Server Wrapper Components</Excluded_Packages>
       <Excluded_Packages Name="$(BDS)\bin\dclofficexp100.bpl">Microsoft Office XP Sample Automation Server Wrapper Components</Excluded_Packages>
     </Excluded_Packages></Delphi.Personality><ModelSupport>True</ModelSupport></BorlandProject></BorlandProject>
@@ -121,18 +105,18 @@
     <DelphiCompile Include="creport4.dpk">
       <MainSource>MainSource</MainSource>
     </DelphiCompile>
-    <DCCReference Include="$(SystemRoot)\System32\bdertl.dcp" />
-    <DCCReference Include="$(SystemRoot)\System32\dbrtl.dcp" />
-    <DCCReference Include="$(SystemRoot)\System32\designide.dcp" />
-    <DCCReference Include="$(SystemRoot)\System32\dsnap.dcp" />
-    <DCCReference Include="$(SystemRoot)\System32\rtl.dcp" />
-    <DCCReference Include="$(SystemRoot)\System32\vcl.dcp" />
-    <DCCReference Include="$(SystemRoot)\System32\vclactnband.dcp" />
-    <DCCReference Include="$(SystemRoot)\System32\vcldb.dcp" />
-    <DCCReference Include="$(SystemRoot)\System32\vcljpg.dcp" />
-    <DCCReference Include="$(SystemRoot)\System32\vclsmp.dcp" />
-    <DCCReference Include="$(SystemRoot)\System32\vclx.dcp" />
-    <DCCReference Include="$(SystemRoot)\System32\xmlrtl.dcp" />
+    <DCCReference Include="..\vcl\bdertl.dcp" />
+    <DCCReference Include="..\vcl\dbrtl.dcp" />
+    <DCCReference Include="..\vcl\designide.dcp" />
+    <DCCReference Include="..\vcl\dsnap.dcp" />
+    <DCCReference Include="..\vcl\rtl.dcp" />
+    <DCCReference Include="..\vcl\vcl.dcp" />
+    <DCCReference Include="..\vcl\vclactnband.dcp" />
+    <DCCReference Include="..\vcl\vcldb.dcp" />
+    <DCCReference Include="..\vcl\vcljpg.dcp" />
+    <DCCReference Include="..\vcl\vclsmp.dcp" />
+    <DCCReference Include="..\vcl\vclx.dcp" />
+    <DCCReference Include="..\vcl\xmlrtl.dcp" />
     <DCCReference Include="CC.pas">
       <Form>/,  DesignEditors in 'C</Form>
       <DesignClass>Program Files (x86)\CodeGear\RAD Studio\5.0\source\ToolsAPI\DesignEditors.pas'</DesignClass>

@@ -12,6 +12,7 @@ type
   MouseDragger = class;
   TReportControl = class (TReportPage)
   private
+    hClientDC :HDC;
     FMousePoint: TPoint;
     FTextEdit:Edit;
     FEditCell: TReportCell;
