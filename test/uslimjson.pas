@@ -6,8 +6,6 @@ uses TestFramework,ureport,forms,ureportcontrol,ujson,sysutils,windows,graphics,
 type
   TJsonSlim = class(TTestCase)
   private
-
-
   protected
     procedure SetUp; override;
     procedure TearDown; override;
@@ -18,7 +16,7 @@ type
     procedure TestReportLineIndex;
     procedure dojsonloaded;
     procedure TestSlaveCells;
-
+    procedure TestSlaveCells2Str;
 end;
 implementation
 
@@ -124,6 +122,14 @@ begin
   check(rp.Cells[0,0].SlaveCellsStr = '1,0;2,0',rp.Cells[0,0].CellText);
   check(rp.Cells[0,0].IsMaster = true,'false');
   check(rp.Cells[0,0].SlaveCells.count = 2,inttostr(rp.Cells[0,0].SlaveCells.count));
+  rp.free;
+end;
+procedure TJsonSlim.TestSlaveCells2Str;
+var rp : TReportPage;
+begin
+  rp := TReportPage.Create(nil);
+  rp.loadFromJson('slaves.json');
+  check(rp.Cells[0,0].CalcSlaveCellStr = '1,0;2,0',rp.Cells[0,0].CalcSlaveCellStr);
   rp.free;
 end;
 initialization

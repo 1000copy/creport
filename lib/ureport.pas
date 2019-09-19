@@ -178,6 +178,7 @@ type
   end;
   TReportCell = Class(TObject)
   public
+    function CalcSlaveCellStr:String;
     function toJson:String;
     procedure fromJson(json:Json;CellIndex:Integer);
   private
@@ -285,6 +286,8 @@ type
     function IsNormalCell:Boolean;
   private
     procedure SetSlaveCells(const Value: string);
+  private
+    function GetSlaveCell2Str: String;
 
   Protected
     Procedure SetLeftMargin(LeftMargin: Integer);
@@ -307,6 +310,7 @@ type
     Procedure SetBackGroundColor(BkColor: COLORREF);
     Procedure SetTextColor(TextColor: COLORREF);
 
+  published
   published
   Public
       property SlaveCellsStr:string read FSlaveCellsStr write SetSlaveCells;
@@ -1082,6 +1086,16 @@ Begin
   if IsMaster  then
     FSlaveCells.Last.ExpandHeight (Calc_RequiredCellHeight - GetOwnerCellHeight);
 end;
+function TReportCell.CalcSlaveCellStr: String;
+var i :Integer;
+begin
+  for i := 0 to self.SlaveCells.Count - 1 do begin
+    result := result + format('%d,%d;',[self.SlaveCells[i].OwnerLine.Index ,self.SlaveCells[i].CellIndex]);
+  end;
+  if (length(result)> 0 )and (result[length(result)]  = ';') then
+    result := copy(result,1,length(result) -1);
+end;
+
 procedure TReportCell.ExpandHeight(delta:integer);
 begin
   if delta <= 0  Then
@@ -1513,6 +1527,11 @@ begin
 end;
 
 
+
+function TReportCell.GetSlaveCell2Str: String;
+begin
+  result := '-';
+end;
 
 function TReportCell.GetBottomest(FOwnerCell:TReportCell):TReportCell;
 var BottomCell,ThisCell:TReportCell;I,Top:Integer ;
@@ -2027,12 +2046,13 @@ begin
   +'"CellWidth":%d,"LeftMargin":%d,"LeftLine":%d,"LeftLineWidth":%d'+',"TopLine":%d,'
   +'"TopLineWidth":%d,"RightLine":%d,"RightLineWidth":%d,"BottomLine":%d,"BottomLineWidth":%d,"Diagonal":%d,'
   +'"TextColor" :%d,"BackGroundColor" :%d,'
-  +'"HorzAlign":%d,"VertAlign":%d,"CellText":"%s","Bmpyn":%d'
+  +'"HorzAlign":%d,"VertAlign":%d,"CellText":"%s","Bmpyn":%d,"SlaveCells":"%s"'
   ;
 //dword - integer is OK?
 result := format(s,[FCellIndex,FCellLeft,FCellWidth,FLeftMargin,integer(FLeftLine)
     ,FLeftLineWidth,integer(FTopLine),FTopLineWidth,integer(FRightLine),FRightLineWidth,
-    integer(FBottomLine),FBottomLineWidth,FDiagonal,Integer(FTextColor) ,Integer(FBackGroundColor) ,FHorzAlign,FVertAlign,FCellText,Integer(Fbmpyn)]);
+    integer(FBottomLine),FBottomLineWidth,FDiagonal,Integer(FTextColor) ,Integer(FBackGroundColor) ,
+    FHorzAlign,FVertAlign,FCellText,Integer(Fbmpyn),self.CalcSlaveCellStr]);
     result := '{'+result+'}';
   end;
 
