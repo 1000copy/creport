@@ -16,6 +16,37 @@ const LANDSCAPE =  Windows.DMORIENT_LANDSCAPE;       // 横向
 function  PageFileName(CurrentPage:Integer):string;
 function AppDir:String;
 type
+  TPrinterPaper = class
+  private
+    // google : msdn DEVMODE structure
+    //DevMode: PdeviceMode;
+    //LCJ: 打印文件的纸张编号：比如 A4，A3，自定义纸张等。
+    FPageSize: integer; //osservice.A4 A5 A3 etc.
+    // 纸张纵横方向
+    FPageOrientation: integer;
+    // 纸张长度（高度）
+    fpaperLength: integer;
+    fpaperWidth: integer;
+  private
+    //取得当前打印机的DeviceMode的结构成员
+  public
+    procedure SetPaperWithCurrent;
+    procedure Batch;overload;
+    procedure SetPaper(PageSize, PageOrientation, PaperLength,
+      PaperWidth: Integer);
+    procedure GetPaper(var FPageSize, FPageOrientation, fpaperLength,
+      fpaperWidth: Integer);
+  end;
+  StrSlice=class
+    FStr :string;
+  public
+    constructor Create(str:String);
+    function GoUntil(c:char):integer;
+    function Slice(b,e:integer):string;overload;
+    function Slice(b:integer):string;overload;
+    class function DoSlice(str: String; FromChar:char): string;
+  end;
+
   Canvas = class
     handle:HWND;
     dc : HDC ;
@@ -599,7 +630,7 @@ function SysPrinter:TPrinter;begin
 end;
 { Edit }
 
-constructor Edit.Create(R: TReportPage);
+constructor Edit.Create();
 begin
   os := WindowsOS.Create;
   FEditWnd := INVALID_HANDLE_VALUE;
@@ -676,5 +707,114 @@ begin
     FEditBrush := CreateBrushIndirect(TempLogBrush);
     Result := FEditBrush;
 end;
+constructor StrSlice.Create(str: String);
+begin
+  FStr := str;
+end;
+function StrSlice.GoUntil(c: char): integer;
+var i : integer;
+begin
+  i := 2;
+  while  (i < Length(FStr)) and  ( FStr[I] <> c ) do
+    inc(i);
+  result := i ;
+end;
+
+function StrSlice.Slice(b, e: integer): string;
+var i : integer;
+begin
+   result := '';
+   i := b ;
+   while i <=e do begin
+    result := result + FStr[i];
+    inc(i);
+   end;
+end;
+
+function StrSlice.Slice(b: integer): string;
+begin
+  result := Slice(b,Length(FStr));
+end;
+
+class function StrSlice.DoSlice(str: String; FromChar:char): string;
+var   s:StrSlice;
+begin
+    s:=StrSlice.Create(str);
+    Result := s.Slice(s.GoUntil(FromChar)+1);
+    s.Free ;
+end;
+
+procedure TPrinterPaper.SetPaperWithCurrent;
+begin
+  // LCJ : 我说好好的A4，干嘛总是进入信纸状态呢:)
+  if  FPageSize = 0 then begin
+    exit;
+  end;
+  SetPaper(FPageSize,FPageOrientation,fpaperLength,fpaperWidth);
+end;
+//http://delphi-kb.blogspot.com/2009/04/how-to-set-printer-paper-size.html
+procedure TPrinterPaper.SetPaper(PageSize,PageOrientation,PaperLength,PaperWidth:Integer);
+var
+  Device, Driver, Port: array[0..80] of Char;
+  DevMode: THandle;
+  pDevmode: PDeviceMode;
+begin
+  SysPrinter.GetPrinter(Device, Driver, Port, DevMode);
+  {force reload of DEVMODE}
+  SysPrinter.SetPrinter(Device, Driver, Port, 0);
+  SysPrinter.GetPrinter(Device, Driver, Port, DevMode);
+  if Devmode <> 0 then
+  begin
+    {lock it to get pointer to DEVMODE record}
+    pDevMode := GlobalLock(Devmode);
+    if pDevmode <> nil then
+    try
+      with pDevmode^ do
+      begin
+        {tell printer driver that dmPapersize field contains data it needs to inspect}
+        dmFields := dmFields or DM_PAPERSIZE;
+            dmFields:=dmFields or DM_ORIENTATION;
+        {modify paper size}
+        dmPapersize := PageSize;
+        //dmPapersize := DMPAPER_B5;
+        dmOrientation:=PageOrientation;
+        dmPaperLength:=PaperLength;
+        dmPaperWidth:=PaperWidth;
+      end;
+    finally
+      GlobalUnlock(Devmode);
+    end;
+  end;
+end;
+procedure TPrinterPaper.GetPaper(var FPageSize,FPageOrientation,fpaperLength,fpaperWidth:Integer);
+var
+  Device, Driver, Port: array[0..80] of Char;
+  DevMode: THandle;
+  pDevmode: PDeviceMode;
+begin
+  SysPrinter.GetPrinter(Device, Driver, Port, DevMode);
+  SysPrinter.SetPrinter(Device, Driver, Port, 0);
+  SysPrinter.GetPrinter(Device, Driver, Port, DevMode);
+  if Devmode =  0 then exit;
+  try
+  pDevMode := GlobalLock(Devmode);
+  With pDevmode^ Do
+  Begin
+    dmFields := dmFields Or DM_PAPERSIZE;
+    FPageSize := dmPapersize;
+    dmFields := dmFields Or DM_ORIENTATION;
+    FPageOrientation := dmOrientation;
+    fPaperLength := dmPaperLength;
+    fPaperWidth := dmPaperWidth;
+  End;
+  finally
+      GlobalUnlock(Devmode);
+  end;
+end;
+procedure TPrinterPaper.Batch;
+begin
+    SetPaperWithCurrent;
+end;
+
 
 end.
